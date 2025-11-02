@@ -1,7 +1,7 @@
 This repository demonstrates one possible approach of implementing a simple CI/CD system that automatically self-deploys Swift web server applications when changes are pushed to the remote github repository. It uses the Vapor framework. 
 
 > [!WARNING]
-> This is just a proof of concept implementation and not at all production ready!
+> This is a proof-of-concept implementation and ready for production!
 
 ## Overview
 
