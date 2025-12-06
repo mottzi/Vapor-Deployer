@@ -3,7 +3,14 @@ import Vapor
 
 extension Application
 {
-    func useRoutes(config: Deployer.Configuration)
+    func useCommand(config: Deployer.Configuration)
+    {
+        self.useCommandRoute(config: config)
+        
+        self.asyncCommands.use(Deployer.Command(config: config), as: "deploy")
+    }
+    
+    func useCommandRoute(config: Deployer.Configuration)
     {
         self.post("\(config.deployerConfig.productName)/deploy")
         { request async throws -> String in

@@ -23,16 +23,13 @@ extension Application
             app.migrations.add(Deployment.Table())
             try await app.autoMigrate()
             
+            app.views.use(.leaf)
             app.mist.socketPath = config.mistSocketPath
             await app.mist.use(config.deploymentRow, config.deploymentStatus)
             
-            app.views.use(.leaf)
-            
             app.environment.useVariables()
             app.useWebhook(config: config)
-            app.useRoutes(config: config)
-            
-            app.asyncCommands.use(Command(config: config), as: "deploy")
+            app.useCommand(config: config)
         }
     }
     
@@ -59,19 +56,19 @@ extension Application.Deployer
                 mistSocketPath: ["deployment", "ws"],
                 deploymentRow: DeploymentRow(),
                 deploymentStatus: DeploymentStatus(),
-                serverConfig: .init(
+                serverConfig: Pipeline.Configuration(
                     productName: "Mottzi",
                     supervisorJob: "mottzi",
                     workingDirectory: "/var/www/mottzi",
                     buildConfiguration: "debug",
                     pusheventPath: ["pushevent", "mottzi"]
                 ),
-                deployerConfig: .init(
-                    productName: "Deployer",
-                    supervisorJob: "deployer",
-                    workingDirectory: "/var/www/deployer",
+                deployerConfig: Pipeline.Configuration(
+                    productName: "Mottzi-deployer",
+                    supervisorJob: "mottzi-deployer",
+                    workingDirectory: "/var/www/mottzi-deployer",
                     buildConfiguration: "debug",
-                    pusheventPath: ["pushevent", "deployer"]
+                    pusheventPath: ["pushevent", "mottzi-deployer"]
                 )
             )
         }
