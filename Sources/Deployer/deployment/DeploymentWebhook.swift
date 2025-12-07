@@ -4,10 +4,17 @@ extension Application
 {
     func useWebhook(config: Deployer.Configuration)
     {
-        Deployer.Webhook.register(config.serverConfig.pusheventPath, on: self)
-        { request async in
+        Deployer.Webhook.register(using: config.serverConfig, on: self)
+        { request, config async in
             
-            let pipeline = Deployer.Pipeline(config: config.serverConfig)
+            let pipeline = Deployer.Pipeline(config: config)
+            await pipeline.deploy(message: request.commitMessage, on: self)
+        }
+        
+        Deployer.Webhook.register(using: config.deployerConfig, on: self)
+        { request, config async in
+            
+            let pipeline = Deployer.Pipeline(config: config)
             await pipeline.deploy(message: request.commitMessage, on: self)
         }
     }
@@ -17,16 +24,19 @@ extension Application.Deployer
 {
     struct Webhook
     {
-        static func register(_ endpoint: [PathComponent], on app: Application, action: @Sendable @escaping (Request) async -> Void)
+        static func register(
+            using config: Pipeline.Configuration,
+            on app: Application,
+            onPush: @Sendable @escaping (Request, Pipeline.Configuration) async -> Void)
         {
-            let accepted = Response(status: .ok, body: .init(stringLiteral: "[mottzi] Push event accepted."))
-            let denied = Response(status: .forbidden, body: .init(stringLiteral: "[mottzi] Push event denied."))
+            let accepted = Response(status: .ok, body: .init(stringLiteral: "[\(config.productName)] Push event accepted."))
+            let denied = Response(status: .forbidden, body: .init(stringLiteral: "[\(config.productName)] Push event denied."))
 
-            app.post(endpoint)
+            app.post(config.pusheventPath)
             { request async -> Response in
                 
                 guard validateSignature(of: request) else { return denied }
-                Task.detached { await action(request) }
+                Task.detached { await onPush(request, config) }
                 return accepted
             }
         }
