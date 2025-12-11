@@ -41,7 +41,6 @@ extension Application.Deployer
     public struct Configuration: Sendable
     {
         var port: Int
-//        var workingDirectory: String
         var dbFile: String
         var buildConfiguration: String
         var serverConfig: Pipeline.Configuration
@@ -55,18 +54,17 @@ extension Application.Deployer
         {
             Configuration(
                 port: 8081,
-                //workingDirectory: "/home/vapor/mottzi",
                 dbFile: "deploy/deployer.db",
                 buildConfiguration: "debug",
                 serverConfig: Pipeline.Configuration(
                     productName: "mottzi",
-                    workingDirectory: "/var/www/mottzi",
+                    workingDirectory: "/home/vapor/mottzi",
                     buildConfiguration: "debug",
                     pusheventPath: ["pushevent", "mottzi"]
                 ),
                 deployerConfig: Pipeline.Configuration(
                     productName: "mottzi-deployer",
-                    workingDirectory: "/var/www/mottzi-deployer",
+                    workingDirectory: "/home/vapor/mottzi-deployer",
                     buildConfiguration: "debug",
                     pusheventPath: ["pushevent", "mottzi-deployer"]
                 ),
