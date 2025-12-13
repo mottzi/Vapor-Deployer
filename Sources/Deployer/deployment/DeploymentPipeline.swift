@@ -285,7 +285,7 @@ extension Application.Deployer.Pipeline
 
     func build(_ deployment: Deployment) async throws
     {
-        try await execute("swift build -c \(pipelineConfig.buildConfiguration) --product \(deployment.productName)")
+        try await execute("swift build -c \(pipelineConfig.buildConfiguration)")
     }
 
     func restart(_ deployment: Deployment) async throws
