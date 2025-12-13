@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deployment Dashboard</title>
   <link rel="icon" type="image/png" href="/mottzi.png">
-  <link rel="stylesheet" href="/deployment.css">
+  <link rel="stylesheet" href="/deployer.css">
   <link href="https://rsms.me/inter/inter.css" rel="stylesheet">
   <style>
     html { font-family: 'Inter', sans-serif; }
@@ -68,7 +68,7 @@
     </div>
   </div>
   <script src="/morphdom.js"></script>
-  <script src="/mist.js" data-url="/deployment/ws/"></script>
+  <script src="/mist.js" data-url="/deployer/ws/"></script>
 </body>
 </html>
 
