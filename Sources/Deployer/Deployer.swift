@@ -30,6 +30,7 @@ extension Application
             app.environment.useVariables()
             app.deployer.useWebhook(config: config, on: app)
             app.useCommand(config: config)
+            app.usePanel(config: config)
         }
     }
     
