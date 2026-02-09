@@ -45,6 +45,27 @@ extension Application.Deployer
         var rowComponent: any Mist.Component
         var statusComponent: any Mist.Component
         
+        public init(port: Int,
+                    dbFile: String,
+                    buildConfiguration: String,
+                    serverConfig: Pipeline.Configuration,
+                    deployerConfig: Pipeline.Configuration,
+                    mistSocketPath: [PathComponent],
+                    panelRoute: [PathComponent],
+                    rowComponent: any Mist.Component = DeploymentRow(),
+                    statusComponent: any Mist.Component = DeploymentStatus())
+        {
+            self.port = port
+            self.dbFile = dbFile
+            self.buildConfiguration = buildConfiguration
+            self.serverConfig = serverConfig
+            self.deployerConfig = deployerConfig
+            self.mistSocketPath = mistSocketPath
+            self.panelRoute = panelRoute
+            self.rowComponent = rowComponent
+            self.statusComponent = statusComponent
+        }
+        
         public static var standard: Configuration
         {
             Configuration(

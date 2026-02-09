@@ -2,22 +2,29 @@ import Vapor
 import Fluent
 import Mist
 
-struct DeploymentRow: Mist.InstanceComponent
+public struct DeploymentRow: Mist.InstanceComponent
 {
-    let models: [any Mist.Model.Type] = [Deployment.self]
-    let actions: [any Action] = [DeleteDeploymentAction(), ToggleDeploymentErrorAction()]
-    let template: Template = .file(path: "Deployer/DeploymentRow")
+    public let models: [any Mist.Model.Type]// = [Deployment.self]
+    public let actions: [any Action]// = [DeleteDeploymentAction(), ToggleDeploymentErrorAction()]
+    public let template: Template// = .file(path: "Deployer/DeploymentRow")
     
-    var defaultState: MistState
+    public var defaultState: MistState
     {
         ["errorExpanded": .bool(false)]
     }
 
-    func allModels(on db: Database) async -> [any Mist.Model]?
+    public func allModels(on db: Database) async -> [any Mist.Model]?
     {
         return try? await Deployment.query(on: db)
             .sort(\.$startedAt, .descending)
             .all()
+    }
+    
+    public init()
+    {
+        self.models = [Deployment.self]
+        self.actions = [DeleteDeploymentAction(), ToggleDeploymentErrorAction()]
+        self.template = .file(path: "Deployer/DeploymentRow")
     }
 }
 
