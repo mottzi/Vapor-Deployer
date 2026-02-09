@@ -12,6 +12,13 @@ extension Application.Deployer
         {
             await start(message: message, on: app)
         }
+        
+        public init(pipelineConfig: Configuration,
+                    deployerConfig: Application.Deployer.Configuration)
+        {
+            self.pipelineConfig = pipelineConfig
+            self.deployerConfig = deployerConfig
+        }
     }
 }
 
@@ -23,6 +30,17 @@ extension Application.Deployer.Pipeline
         let workingDirectory: String
         let buildConfiguration: String
         var pusheventPath: [PathComponent]
+        
+        public init(productName: String,
+                    workingDirectory: String,
+                    buildConfiguration: String,
+                    pusheventPath: [PathComponent])
+        {
+            self.productName = productName
+            self.workingDirectory = workingDirectory
+            self.buildConfiguration = buildConfiguration
+            self.pusheventPath = pusheventPath
+        }
     }
 }
 
