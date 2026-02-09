@@ -5,7 +5,7 @@ extension Application.Deployer
 {
     struct Pipeline
     {
-        let pipelineConfig: Application.Deployer.Pipeline.Configuration
+        let pipelineConfig: Application.Deployer.Pipeline.Configuration // !!!
         let deployerConfig: Application.Deployer.Configuration
         
         public func deploy(message: String? = nil, on app: Application) async

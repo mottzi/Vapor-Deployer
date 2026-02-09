@@ -7,14 +7,8 @@ extension Application
     public struct Deployer: Sendable
     {
         public let app: Application
-         
-//        public var socketPath: [PathComponent]
-//        {
-//            get { _socketPath }
-//            nonmutating set { _socketPath = newValue }
-//        }
         
-        public func use(config: Configuration, on app: Application) async throws
+        public func use(config: Configuration) async throws
         {
             app.http.server.configuration.port = config.port
             app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
