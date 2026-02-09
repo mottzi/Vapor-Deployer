@@ -3,7 +3,7 @@ import Vapor
 
 extension Application.Deployer
 {
-    struct Pipeline
+    public struct Pipeline
     {
         let pipelineConfig: Application.Deployer.Pipeline.Configuration // !!!
         let deployerConfig: Application.Deployer.Configuration
