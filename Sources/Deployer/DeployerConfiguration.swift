@@ -7,8 +7,8 @@ public struct DeployerConfiguration: Sendable
     let port: Int
     let dbFile: String
     let buildConfiguration: String
-    let serverConfig: PipelineConfiguration
-    let deployerConfig: PipelineConfiguration
+    let server: PipelineConfiguration
+    let deployer: PipelineConfiguration
     let mistSocketPath: [PathComponent]
     let panelRoute: [PathComponent]
     let rowComponent: any Mist.Component
@@ -18,8 +18,8 @@ public struct DeployerConfiguration: Sendable
         port: Int,
         dbFile: String,
         buildConfiguration: String,
-        serverConfig: PipelineConfiguration,
-        deployerConfig: PipelineConfiguration,
+        server: PipelineConfiguration,
+        deployer: PipelineConfiguration,
         mistSocketPath: [PathComponent],
         panelRoute: [PathComponent],
         rowComponent: any Mist.Component = DeploymentRow(),
@@ -28,8 +28,8 @@ public struct DeployerConfiguration: Sendable
         self.port = port
         self.dbFile = dbFile
         self.buildConfiguration = buildConfiguration
-        self.serverConfig = serverConfig
-        self.deployerConfig = deployerConfig
+        self.server = server
+        self.deployer = deployer
         self.mistSocketPath = mistSocketPath
         self.panelRoute = panelRoute
         self.rowComponent = rowComponent

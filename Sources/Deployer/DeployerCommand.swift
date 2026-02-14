@@ -22,7 +22,7 @@ struct DeployCommand: AsyncCommand
     {
         self.app = app
         self.config = config
-        self.help = "Pulls, builds, moves and restarts \(config.deployerConfig.productName)."
+        self.help = "Pulls, builds, moves and restarts \(config.deployer.productName)."
     }
 
     func run(using context: CommandContext, signature: Signature) async throws
@@ -45,7 +45,7 @@ extension DeployCommand
 {
     func useRoute(config: DeployerConfiguration)
     {
-        self.app.post("\(config.panelRoute)/deploy")
+        app.post("\(config.panelRoute)/deploy")
         { request async throws -> String in
 
             guard let providedSecret = request.headers.first(name: "X-Deploy-Secret"),
@@ -57,8 +57,8 @@ extension DeployCommand
             
             Task.detached
             {
-                let pipeline = DeployerPipeline(pipelineConfig: config.deployerConfig, deployerConfig: config)
-                await pipeline.deploy(message: "[CLI] \(config.deployerConfig.productName)", on: app)
+                let pipeline = DeploymentPipeline(pipeline: config.deployer, deployer: config, on: app)
+                await pipeline.deploy(message: "[CLI] \(config.deployer.productName)")
             }
 
             return "Started deployment pipeline"

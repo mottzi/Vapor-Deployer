@@ -99,12 +99,10 @@ extension Deployment
 {
     func setCurrent(on database: Database) async throws
     {
-        // set the new deployment as current
         self.isCurrent = true
         self.status = "deployed"
         try await self.save(on: database)
 
-        // unset the old ones
         let oldCurrentDeployments = try await Deployment.query(on: database)
             .filter(\.$isCurrent, .equal, true)
             .filter(\.$productName, .equal, self.productName)

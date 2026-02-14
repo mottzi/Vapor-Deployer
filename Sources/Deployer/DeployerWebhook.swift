@@ -4,18 +4,18 @@ extension Deployer
 {
     func useWebhook(config: DeployerConfiguration)
     {
-        DeployerWebhook.register(using: config.serverConfig, on: self.app)
+        DeployerWebhook.register(using: config.server, on: self.app)
         { request, serverConfig async in
             
-            let pipeline = DeployerPipeline(pipelineConfig: serverConfig, deployerConfig: config)
-            await pipeline.deploy(message: request.commitMessage, on: self.app)
+            let pipeline = DeploymentPipeline(pipeline: serverConfig, deployer: config, on: app)
+            await pipeline.deploy(message: request.commitMessage)
         }
         
-        DeployerWebhook.register(using: config.deployerConfig, on: self.app)
+        DeployerWebhook.register(using: config.deployer, on: self.app)
         { request, deployerConfig async in
             
-            let pipeline = DeployerPipeline(pipelineConfig: deployerConfig, deployerConfig: config)
-            await pipeline.deploy(message: request.commitMessage, on: self.app)
+            let pipeline = DeploymentPipeline(pipeline: deployerConfig, deployer: config, on: app)
+            await pipeline.deploy(message: request.commitMessage)
         }
     }
 }
@@ -64,30 +64,27 @@ struct DeployerWebhook
     }
 }
 
-extension DeployerWebhook
+struct DeployerPayload: Codable
 {
-    struct Payload: Codable
+    let headCommit: Commit
+    
+    struct Commit: Codable
     {
-        let headCommit: Commit
-        
-        struct Commit: Codable
-        {
-            let message: String
-        }
+        let message: String
     }
 }
 
 extension Request
 {
-    var payload: DeployerWebhook.Payload?
+    var payload: DeployerPayload?
     {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         
-        guard let bodyString = self.body.string else { return nil }
+        guard let bodyString = body.string else { return nil }
         guard let jsonData = bodyString.data(using: .utf8) else { return nil }
         
-        return try? decoder.decode(DeployerWebhook.Payload.self, from: jsonData)
+        return try? decoder.decode(DeployerPayload.self, from: jsonData)
     }
     
     var commitMessage: String? { payload?.headCommit.message }
