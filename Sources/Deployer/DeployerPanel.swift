@@ -3,11 +3,11 @@ import Mist
 
 typealias MistModelContainer = Mist.ModelContainer
 
-extension Application
+extension Deployer
 {
     func usePanel(config: DeployerConfiguration)
     {
-        self.get(config.panelRoute)
+        app.get(config.panelRoute)
         { request async throws -> View in
             
             let componentsContext = await DeploymentRow().makeContext(ofAll: request.db)

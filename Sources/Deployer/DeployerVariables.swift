@@ -1,6 +1,6 @@
 import Vapor
 
-extension Application.Deployer
+extension Deployer
 {
     func useVariables()
     {
