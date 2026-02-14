@@ -1,50 +1,26 @@
 import Fluent
 import Vapor
 
-extension Application.Deployer
+public struct DeployerPipeline
 {
-    public struct Pipeline
+    let pipelineConfig: PipelineConfiguration
+    let deployerConfig: DeployerConfiguration
+    
+    public func deploy(message: String? = nil, on app: Application) async
     {
-        let pipelineConfig: Application.Deployer.Pipeline.Configuration // !!!
-        let deployerConfig: Application.Deployer.Configuration
-        
-        public func deploy(message: String? = nil, on app: Application) async
-        {
-            await start(message: message, on: app)
-        }
-        
-        public init(pipelineConfig: Configuration,
-                    deployerConfig: Application.Deployer.Configuration)
-        {
-            self.pipelineConfig = pipelineConfig
-            self.deployerConfig = deployerConfig
-        }
+        await start(message: message, on: app)
+    }
+    
+    public init(
+        pipelineConfig: PipelineConfiguration,
+        deployerConfig: DeployerConfiguration
+    ) {
+        self.pipelineConfig = pipelineConfig
+        self.deployerConfig = deployerConfig
     }
 }
 
-extension Application.Deployer.Pipeline
-{
-    public struct Configuration: Sendable
-    {
-        let productName: String
-        let workingDirectory: String
-        let buildConfiguration: String
-        var pusheventPath: [PathComponent]
-        
-        public init(productName: String,
-                    workingDirectory: String,
-                    buildConfiguration: String,
-                    pusheventPath: [PathComponent])
-        {
-            self.productName = productName
-            self.workingDirectory = workingDirectory
-            self.buildConfiguration = buildConfiguration
-            self.pusheventPath = pusheventPath
-        }
-    }
-}
-
-extension Application.Deployer.Pipeline
+extension DeployerPipeline
 {
     private func start(message: String?, on app: Application) async
     {
@@ -98,7 +74,7 @@ extension Application.Deployer.Pipeline
     }
 }
 
-extension Application.Deployer.Pipeline
+extension DeployerPipeline
 {
     private func run(_ deployment: Deployment, on app: Application) async throws
     {
@@ -125,7 +101,7 @@ extension Application.Deployer.Pipeline
     }
 }
 
-extension Application.Deployer.Pipeline
+extension DeployerPipeline
 {
     private func findNextDeployment(after deployment: Deployment, on app: Application) async throws -> Deployment?
     {
@@ -240,7 +216,7 @@ extension Application.Deployer.Pipeline
     }
 }
 
-extension Application.Deployer.Pipeline
+extension DeployerPipeline
 {
     private enum PipelineError: Error, LocalizedError
     {
@@ -374,7 +350,7 @@ extension Application.Deployer.Pipeline
     }
 }
 
-extension Application.Deployer.Pipeline
+extension DeployerPipeline
 {
     actor Manager
     {

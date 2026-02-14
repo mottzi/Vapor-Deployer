@@ -5,7 +5,7 @@ typealias MistModelContainer = Mist.ModelContainer
 
 extension Application
 {
-    func usePanel(config: Deployer.Configuration)
+    func usePanel(config: DeployerConfiguration)
     {
         self.get(config.panelRoute)
         { request async throws -> View in

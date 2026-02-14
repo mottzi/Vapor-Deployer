@@ -4,9 +4,9 @@ import Mist
 
 public struct DeploymentRow: Mist.InstanceComponent
 {
-    public let models: [any Mist.Model.Type]// = [Deployment.self]
-    public let actions: [any Action]// = [DeleteDeploymentAction(), ToggleDeploymentErrorAction()]
-    public let template: Template// = .file(path: "Deployer/DeploymentRow")
+    public let models: [any Mist.Model.Type]
+    public let actions: [any Action]
+    public let template: Template
     
     public var defaultState: MistState
     {
