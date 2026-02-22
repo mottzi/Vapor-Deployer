@@ -4,8 +4,8 @@ import Vapor
 
 public struct DeploymentStatus: QueryComponent
 {
-    public let models: [any Mist.Model.Type]
-    public let template: Template
+    public let models: [any Mist.Model.Type] = [Deployment.self]
+    public let template: Template = .file(path: "Deployer/DeploymentStatus")
     public let productName: String
 
     public func queryModel(on db: Database) async -> (any Mist.Model)?
@@ -15,8 +15,6 @@ public struct DeploymentStatus: QueryComponent
     
     public init(productName: String)
     {
-        self.models = [Deployment.self]
-        self.template = .file(path: "Deployer/DeploymentStatus")
         self.productName = productName
     }
 }

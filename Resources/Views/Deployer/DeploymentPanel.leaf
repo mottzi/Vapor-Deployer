@@ -42,10 +42,15 @@
     <div class="deployment-content">
       <div class="deployment-content-scroll">
         <div class="deployment-content-inner">
-          <div class="deployment-table-container">
+
+          #for(table in tables):
+          <h2 class="deployment-title" style="margin-top: 1rem; margin-bottom: 1rem; font-size: 1.2rem;">
+            #(table.title)
+          </h2>
+          <div class="deployment-table-container" style="margin-bottom: 3rem;">
             <div class="deployment-table-wrapper">
               <table class="deployment-table">
-                <thead class="deployment-thead" mist-container="DeploymentRow" mist-insert-position="afterend">
+                <thead class="deployment-thead" mist-container="DeploymentRow-#(table.productName)" mist-insert-position="afterend">
                   <tr>
                     <th class="deployment-th">Mode</th>
                     <th class="deployment-th">Product</th>
@@ -57,18 +62,48 @@
                     <th class="deployment-th">Actions</th>
                   </tr>
                 </thead>
-                  #for(component in components):
+                  #for(component in table.rows):
                     #extend("Deployer/DeploymentRow")
                   #endfor
               </table>
             </div>
           </div>
+          #endfor
+
         </div>
       </div>
     </div>
+    
   </div>
   <script src="/morphdom.js"></script>
   <script src="/mist.js" data-url="/deployer/ws/"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

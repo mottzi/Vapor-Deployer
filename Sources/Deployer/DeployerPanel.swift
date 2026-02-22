@@ -8,7 +8,8 @@ extension Deployer
         app.get(config.panelRoute)
         { request async throws -> View in
             
-            let componentsContext = await DeploymentRow().makeContext(ofAll: request.db)
+            let deployerContext = await config.deployerRowComponent.makeContext(ofAll: request.db)
+            let serverContext = await config.serverRowComponent.makeContext(ofAll: request.db)
             let currentDeployment = try? await Deployment.getCurrent(named: config.server.productName, on: request.db)
             
             let statusComponent = currentDeployment.map
@@ -18,14 +19,24 @@ extension Deployer
                 return container
             }
             
+            struct TableContext: Encodable {
+                let title: String
+                let productName: String
+                let rows: [ModelContainer]
+            }
+            
             struct DeploymentPanelContext: Encodable
             {
-                let components: [ModelContainer]
+                let tables: [TableContext]
                 let component: ModelContainer?
             }
             
+            // Pass the array of tables to Leaf
             let context = DeploymentPanelContext(
-                components: componentsContext.components,
+                tables: [
+                    TableContext(title: "Deployer Pipeline", productName: config.deployer.productName, rows: deployerContext.components),
+                    TableContext(title: "Server Pipeline", productName: config.server.productName, rows: serverContext.components)
+                ],
                 component: statusComponent
             )
             

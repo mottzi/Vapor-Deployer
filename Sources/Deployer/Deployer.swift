@@ -22,7 +22,12 @@ public struct Deployer: Sendable
         
         app.views.use(.leaf)
         app.mist.socketPath = config.mistSocketPath
-        await app.mist.use(config.rowComponent, config.statusComponent)
+        
+        await app.mist.use(
+            config.deployerRowComponent,
+            config.serverRowComponent,
+            config.statusComponent
+        )
         
         app.deployer.useVariables()
         app.deployer.useWebhook(config: config)

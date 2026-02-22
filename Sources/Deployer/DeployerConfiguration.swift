@@ -11,7 +11,8 @@ public struct DeployerConfiguration: Sendable
     let deployer: PipelineConfiguration
     let mistSocketPath: [PathComponent]
     let panelRoute: [PathComponent]
-    let rowComponent: any Mist.Component
+    let deployerRowComponent: any Mist.InstanceComponent
+    let serverRowComponent: any Mist.InstanceComponent
     let statusComponent: any Mist.Component
     
     public init(
@@ -22,7 +23,8 @@ public struct DeployerConfiguration: Sendable
         deployer: PipelineConfiguration,
         mistSocketPath: [PathComponent],
         panelRoute: [PathComponent],
-        rowComponent: (any Mist.Component)? = nil,
+        deployerRowComponent: (any Mist.InstanceComponent)? = nil,
+        serverRowComponent: (any Mist.InstanceComponent)? = nil,
         statusComponent: (any Mist.Component)? = nil
     ) {
         self.port = port
@@ -32,7 +34,8 @@ public struct DeployerConfiguration: Sendable
         self.deployer = deployer
         self.mistSocketPath = mistSocketPath
         self.panelRoute = panelRoute
-        self.rowComponent = rowComponent ?? DeploymentRow()
+        self.deployerRowComponent = deployerRowComponent ?? DeploymentRow(productName: deployer.productName)
+        self.serverRowComponent = serverRowComponent ?? DeploymentRow(productName: server.productName)
         self.statusComponent = statusComponent ?? DeploymentStatus(productName: server.productName)
     }
 }

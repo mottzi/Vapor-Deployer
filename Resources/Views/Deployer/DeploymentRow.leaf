@@ -1,5 +1,5 @@
 <tbody
-    mist-component="DeploymentRow"
+    mist-component="DeploymentRow-#(component.deployment.productName)"
     mist-id="#(component.deployment.id)"
     class="deployment-tbody"
 >

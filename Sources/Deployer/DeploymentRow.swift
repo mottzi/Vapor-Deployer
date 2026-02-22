@@ -4,9 +4,13 @@ import Mist
 
 public struct DeploymentRow: Mist.InstanceComponent
 {
-    public let models: [any Mist.Model.Type]
-    public let actions: [any Action]
-    public let template: Template
+    let productName: String
+    
+    public var name: String { "DeploymentRow-\(productName)" }
+    
+    public let models: [any Mist.Model.Type] = [Deployment.self]
+    public let actions: [any Action] = [DeleteDeploymentAction(), ToggleDeploymentErrorAction()]
+    public let template: Template = .file(path: "Deployer/DeploymentRow")
     
     public var defaultState: MistState
     {
@@ -16,15 +20,14 @@ public struct DeploymentRow: Mist.InstanceComponent
     public func allModels(on db: Database) async -> [any Mist.Model]?
     {
         return try? await Deployment.query(on: db)
+            .filter(\.$productName == productName)
             .sort(\.$startedAt, .descending)
             .all()
     }
     
-    public init()
+    public init(productName: String)
     {
-        self.models = [Deployment.self]
-        self.actions = [DeleteDeploymentAction(), ToggleDeploymentErrorAction()]
-        self.template = .file(path: "Deployer/DeploymentRow")
+        self.productName = productName
     }
 }
 
