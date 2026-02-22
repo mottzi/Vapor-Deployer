@@ -23,10 +23,9 @@ public struct PipelineConfiguration: Sendable
 
 public struct DeploymentPipeline
 {
-    let app: Application
-    
     let pipeline: PipelineConfiguration
     let deployer: DeployerConfiguration
+    let app: Application
     
     public func deploy(message: String? = nil) async
     {
@@ -52,7 +51,7 @@ extension DeploymentPipeline
 
         let newDeployment = Deployment(
             productName: pipeline.productName,
-            status: canDeploy ? "running" : "canceled",
+            status: canDeploy ? .running : .canceled,
             message: message ?? ""
         )
 
@@ -74,7 +73,7 @@ extension DeploymentPipeline
     {
         guard await Manager.shared.requestPipeline() else { return }
         
-        deployment.status = "running"
+        deployment.status = .running
         try? await deployment.save(on: app.db)
         
         do
@@ -89,7 +88,7 @@ extension DeploymentPipeline
     
     private func fail(_ deployment: Deployment, with error: Error) async
     {
-        deployment.status = "failed"
+        deployment.status = .failed
         deployment.finishedAt = .now
         deployment.errorMessage = error.localizedDescription
         try? await deployment.save(on: app.db)
@@ -109,7 +108,7 @@ extension DeploymentPipeline
             try await move(deployment, using: app)
         }
 
-        deployment.status = "success"
+        deployment.status = .success
         deployment.finishedAt = .now
         try await deployment.save(on: app.db)
         await Manager.shared.endDeployment()
@@ -130,7 +129,7 @@ extension DeploymentPipeline
     private func findNextDeployment(after deployment: Deployment, on app: Application) async throws -> Deployment?
     {
         let cancelledDeployments = try await Deployment.query(on: app.db)
-            .filter(\.$status, .equal, "canceled")
+            .filter(\.$status, .equal, .canceled)
             .sort(\.$startedAt, .descending)
             .all()
 
@@ -184,7 +183,7 @@ extension DeploymentPipeline
         {
             let hasPendingDeployerRestart = try await Deployment.query(on: app.db)
                 .filter(\.$productName, .equal, deployer.deployer.productName)
-                .filter(\.$status, .equal, "canceled")
+                .filter(\.$status, .equal, .canceled)
                 .filter(\.$mode, .equal, Deployment.Mode.restartOnly)
                 .first() != nil
 
@@ -192,7 +191,7 @@ extension DeploymentPipeline
             {
                 let deferredDeployment = Deployment(
                     productName: deployment.productName,
-                    status: "canceled",
+                    status: .canceled,
                     message: deployment.message,
                     mode: .restartOnly
                 )
@@ -231,8 +230,8 @@ extension DeploymentPipeline
             .group(.or) 
             {
                 $0
-                    .filter(\.$status, .equal, "success")
-                    .filter(\.$status, .equal, "deployed")
+                    .filter(\.$status, .equal, .success)
+                    .filter(\.$status, .equal, .deployed)
             }
             .first() != nil
 

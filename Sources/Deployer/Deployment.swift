@@ -10,6 +10,16 @@ extension Deployment
         case standard
         case restartOnly
     }
+    
+    enum Status: String, Codable, CaseIterable
+    {
+        case running
+        case canceled
+        case failed
+        case success
+        case deployed
+        case stale
+    }
 }
 
 final class Deployment: Mist.Model, Content, @unchecked Sendable
@@ -19,7 +29,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable
     @ID(key: .id) var id: UUID?
     @Enum(key: "mode") var mode: Mode
     @Field(key: "product_name") var productName: String
-    @Field(key: "status") var status: String
+    @Enum(key: "status") var status: Status
     @Field(key: "message") var message: String
     @Field(key: "is_current") var isCurrent: Bool
     @Field(key: "error_message") var errorMessage: String?
@@ -28,7 +38,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable
 
     init() {}
 
-    init(productName: String, status: String, message: String, mode: Mode = .standard)
+    init(productName: String, status: Status, message: String, mode: Mode = .standard)
     {
         self.productName = productName
         self.status = status
@@ -84,14 +94,14 @@ extension Deployment
 
     var shortID: String { String(id?.uuidString.prefix(8) ?? "") }
 
-    var displayStatus: String
+    var displayStatus: Status
     {
-        guard status == "running",
+        guard status == .running,
               let startedAt = startedAt,
               Date.now.timeIntervalSince(startedAt) > 1800
         else { return status }
         
-        return "stale"
+        return .stale
     }
 }
 
@@ -100,7 +110,7 @@ extension Deployment
     func setCurrent(on database: Database) async throws
     {
         self.isCurrent = true
-        self.status = "deployed"
+        self.status = .deployed
         try await self.save(on: database)
 
         let oldCurrentDeployments = try await Deployment.query(on: database)
@@ -112,7 +122,7 @@ extension Deployment
         for deployment in oldCurrentDeployments
         {
             deployment.isCurrent = false
-            deployment.status = "success"
+            deployment.status = .success
             try await deployment.save(on: database)
         }
     }
