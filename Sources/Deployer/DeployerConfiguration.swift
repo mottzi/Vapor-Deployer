@@ -22,8 +22,8 @@ public struct DeployerConfiguration: Sendable
         deployer: PipelineConfiguration,
         mistSocketPath: [PathComponent],
         panelRoute: [PathComponent],
-        rowComponent: any Mist.Component = DeploymentRow(),
-        statusComponent: any Mist.Component = DeploymentStatus()
+        rowComponent: (any Mist.Component)? = nil,
+        statusComponent: (any Mist.Component)? = nil
     ) {
         self.port = port
         self.dbFile = dbFile
@@ -32,7 +32,7 @@ public struct DeployerConfiguration: Sendable
         self.deployer = deployer
         self.mistSocketPath = mistSocketPath
         self.panelRoute = panelRoute
-        self.rowComponent = rowComponent
-        self.statusComponent = statusComponent
+        self.rowComponent = rowComponent ?? DeploymentRow()
+        self.statusComponent = statusComponent ?? DeploymentStatus(productName: server.productName)
     }
 }
