@@ -2,7 +2,7 @@ import Fluent
 import Mist
 import Vapor
 
-public struct DeploymentStatus: QueryComponent
+public struct DeployerPanelStatus: QueryComponent
 {
     public let models: [any Mist.Model.Type] = [Deployment.self]
     public let template: Template = .file(path: "Deployer/DeploymentStatus")

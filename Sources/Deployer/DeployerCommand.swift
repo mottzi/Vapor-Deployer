@@ -57,8 +57,10 @@ extension DeployCommand
             
             Task.detached
             {
-                let pipeline = DeploymentPipeline(pipeline: config.deployer, deployer: config, on: app)
-                await pipeline.deploy(message: "[CLI] \(config.deployer.productName)")
+                await DeploymentQueue.shared.enqueue(
+                    message: "[CLI] \(config.deployer.productName)",
+                    target: config.deployer
+                )
             }
 
             return "Started deployment pipeline"

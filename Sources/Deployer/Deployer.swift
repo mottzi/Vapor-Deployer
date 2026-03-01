@@ -1,6 +1,4 @@
 import Vapor
-import Fluent
-import Mist
 
 extension Application
 {
@@ -29,6 +27,8 @@ public struct Deployer: Sendable
             config.statusComponent
         )
         
+        await DeploymentQueue.shared.configure(app: app, deployer: config)
+    
         app.deployer.useVariables()
         app.deployer.useWebhook(config: config)
         app.deployer.useCommand(config: config)

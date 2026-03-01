@@ -170,8 +170,17 @@ class MistSocket {
                 const data = JSON.parse(event.data);
 
                 // Instance-based component messages (with ID)
+                // Instance-based component messages (with ID)
                 if (data.createInstanceComponent) {
                     const { component, id, html } = data.createInstanceComponent;
+
+                    // 1. SAFEGUARD: Prevent WebSocket Crossover Duplication
+                    // Ensure the generated HTML actually belongs to the channel it was broadcasted on
+                    if (!html.includes(`mist-component="${component}"`)) {
+                        console.log(`[Client] Dropped cross-channel broadcast for ${component}`);
+                        return;
+                    }
+
                     const existingElements = document.querySelectorAll(this.buildComponentSelector(component, id));
 
                     // If component already exists, treat as update
@@ -183,10 +192,8 @@ class MistSocket {
                     } else {
                         // Find container that accepts this component
                         const containers = document.querySelectorAll('[mist-container]');
-
                         for (const container of containers) {
                             const acceptedComponents = container.getAttribute('mist-container').split(',').map(c => c.trim());
-
                             if (acceptedComponents.includes(component)) {
                                 // Check for custom insertion position (default: 'beforeend' to append)
                                 const insertPosition = container.getAttribute('mist-insert-position') || 'beforeend';

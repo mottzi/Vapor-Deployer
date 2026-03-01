@@ -2,7 +2,7 @@ import Vapor
 import Fluent
 import Mist
 
-public struct DeploymentRow: Mist.InstanceComponent
+public struct DeployerPanelRow: Mist.InstanceComponent
 {
     let productName: String
     

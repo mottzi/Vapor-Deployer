@@ -38,8 +38,12 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable
 
     init() {}
 
-    init(productName: String, status: Status, message: String, mode: Mode = .standard)
-    {
+    init(
+        productName: String,
+        status: Status,
+        message: String,
+        mode: Mode = .standard
+    ) {
         self.productName = productName
         self.status = status
         self.message = message

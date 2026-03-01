@@ -6,16 +6,18 @@ extension Deployer
     {
         DeployerWebhook.register(using: config.server, on: self.app)
         { request, serverConfig async in
-            
-            let pipeline = DeploymentPipeline(pipeline: serverConfig, deployer: config, on: app)
-            await pipeline.deploy(message: request.commitMessage)
+            await DeploymentQueue.shared.enqueue(
+                message: request.commitMessage,
+                target: serverConfig
+            )
         }
         
         DeployerWebhook.register(using: config.deployer, on: self.app)
         { request, deployerConfig async in
-            
-            let pipeline = DeploymentPipeline(pipeline: deployerConfig, deployer: config, on: app)
-            await pipeline.deploy(message: request.commitMessage)
+            await DeploymentQueue.shared.enqueue(
+                message: request.commitMessage,
+                target: deployerConfig
+            )
         }
     }
 }
@@ -23,9 +25,9 @@ extension Deployer
 struct DeployerWebhook
 {
     static func register(
-        using config: PipelineConfiguration,
+        using config: TargetConfiguration,
         on app: Application,
-        onPush: @Sendable @escaping (Request, PipelineConfiguration) async -> Void
+        onPush: @Sendable @escaping (Request, TargetConfiguration) async -> Void
     ) {
         let accepted = Response(status: .ok, body: .init(stringLiteral: "[\(config.productName)] Push event accepted."))
         let denied = Response(status: .forbidden, body: .init(stringLiteral: "[\(config.productName)] Push event denied."))

@@ -1,14 +1,12 @@
 import Vapor
-import Fluent
 import Mist
 
 public struct DeployerConfiguration: Sendable
 {
     let port: Int
     let dbFile: String
-    let buildConfiguration: String
-    let server: PipelineConfiguration
-    let deployer: PipelineConfiguration
+    let server: TargetConfiguration
+    let deployer: TargetConfiguration
     let mistSocketPath: [PathComponent]
     let panelRoute: [PathComponent]
     let deployerRowComponent: any Mist.InstanceComponent
@@ -18,9 +16,8 @@ public struct DeployerConfiguration: Sendable
     public init(
         port: Int,
         dbFile: String,
-        buildConfiguration: String,
-        server: PipelineConfiguration,
-        deployer: PipelineConfiguration,
+        server: TargetConfiguration,
+        deployer: TargetConfiguration,
         mistSocketPath: [PathComponent],
         panelRoute: [PathComponent],
         deployerRowComponent: (any Mist.InstanceComponent)? = nil,
@@ -29,13 +26,39 @@ public struct DeployerConfiguration: Sendable
     ) {
         self.port = port
         self.dbFile = dbFile
-        self.buildConfiguration = buildConfiguration
         self.server = server
         self.deployer = deployer
         self.mistSocketPath = mistSocketPath
         self.panelRoute = panelRoute
-        self.deployerRowComponent = deployerRowComponent ?? DeploymentRow(productName: deployer.productName)
-        self.serverRowComponent = serverRowComponent ?? DeploymentRow(productName: server.productName)
-        self.statusComponent = statusComponent ?? DeploymentStatus(productName: server.productName)
+        self.deployerRowComponent = deployerRowComponent ?? DeployerPanelRow(productName: deployer.productName)
+        self.serverRowComponent = serverRowComponent ?? DeployerPanelRow(productName: server.productName)
+        self.statusComponent = statusComponent ?? DeployerPanelStatus(productName: server.productName)
+    }
+    
+    func target(for productName: String) -> TargetConfiguration?
+    {
+        if productName == server.productName { return server }
+        if productName == deployer.productName { return deployer }
+        return nil
+    }
+}
+
+public struct TargetConfiguration: Sendable
+{
+    let productName: String
+    let workingDirectory: String
+    let buildMode: String
+    var pusheventPath: [PathComponent]
+    
+    public init(
+        productName: String,
+        workingDirectory: String,
+        buildMode: String,
+        pusheventPath: [PathComponent]
+    ) {
+        self.productName = productName
+        self.workingDirectory = workingDirectory
+        self.buildMode = buildMode
+        self.pusheventPath = pusheventPath
     }
 }
