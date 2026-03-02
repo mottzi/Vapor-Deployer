@@ -1,18 +1,16 @@
 import Vapor
 
-actor DeploymentQueue
+public actor DeploymentQueue
 {
-    public static let shared = DeploymentQueue()
-    private init() {}
-
     var isDeploying: Bool = false
-    var app: Application!
-    var config: DeployerConfiguration!
     
-    func configure(app: Application, deployer: DeployerConfiguration)
+    let app: Application
+    let config: DeployerConfiguration
+    
+    public init(app: Application, config: DeployerConfiguration)
     {
         self.app = app
-        self.config = deployer
+        self.config = config
     }
     
     public func enqueue(message: String?, target: TargetConfiguration) async

@@ -57,7 +57,7 @@ extension DeployCommand
             
             Task.detached
             {
-                await DeploymentQueue.shared.enqueue(
+                await app.deployer.queue.enqueue(
                     message: "[CLI] \(config.deployer.productName)",
                     target: config.deployer
                 )

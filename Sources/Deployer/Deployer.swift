@@ -1,14 +1,9 @@
 import Vapor
 
-extension Application
-{
-    public var deployer: Deployer { Deployer(app: self) }
-}
-
 public struct Deployer: Sendable
 {
     public let app: Application
-    
+        
     public func use(config: DeployerConfiguration) async throws
     {
         app.http.server.configuration.port = config.port
@@ -26,12 +21,38 @@ public struct Deployer: Sendable
             config.serverRowComponent,
             config.statusComponent
         )
-        
-        await DeploymentQueue.shared.configure(app: app, deployer: config)
     
+        app.deployer.useQueue(config: config)
         app.deployer.useVariables()
         app.deployer.useWebhook(config: config)
         app.deployer.useCommand(config: config)
         app.deployer.usePanel(config: config)
+    }
+}
+
+extension Application
+{
+    var deployer: Deployer { Deployer(app: self) }
+
+    var _queue: DeploymentQueue?
+    {
+        get { storage[DeploymentQueueKey.self] }
+        set { storage[DeploymentQueueKey.self] = newValue }
+    }
+
+    struct DeploymentQueueKey: StorageKey { typealias Value = DeploymentQueue }
+}
+
+extension Deployer
+{
+    var queue: DeploymentQueue
+    {
+        if let queue = app._queue { return queue }
+        fatalError("Queue not initialized!")
+    }
+    
+    func useQueue(config: DeployerConfiguration)
+    {
+        app._queue = DeploymentQueue(app: app, config: config)
     }
 }

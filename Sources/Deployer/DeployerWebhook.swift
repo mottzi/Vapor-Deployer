@@ -6,7 +6,7 @@ extension Deployer
     {
         DeployerWebhook.register(using: config.server, on: self.app)
         { request, serverConfig async in
-            await DeploymentQueue.shared.enqueue(
+            await app.deployer.queue.enqueue(
                 message: request.commitMessage,
                 target: serverConfig
             )
@@ -14,7 +14,7 @@ extension Deployer
         
         DeployerWebhook.register(using: config.deployer, on: self.app)
         { request, deployerConfig async in
-            await DeploymentQueue.shared.enqueue(
+            await app.deployer.queue.enqueue(
                 message: request.commitMessage,
                 target: deployerConfig
             )
