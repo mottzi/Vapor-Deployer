@@ -35,37 +35,13 @@ struct DeployerWebhook
         app.post(config.pusheventPath)
         { request async -> Response in
             
-            guard validateSignature2(of: request) else { return denied }
+            guard validateSignature(of: request) else { return denied }
             Task.detached { await onPush(request, config) }
             return accepted
         }
     }
     
     static func validateSignature(of request: Request) -> Bool
-    {
-        let secret = DeployerVariables.GITHUB_WEBHOOK_SECRET.value
-        guard let secretData = secret.data(using: .utf8) else { return false }
-
-        guard let signatureHeader = request.headers.first(name: "X-Hub-Signature-256") else { return false }
-        guard signatureHeader.hasPrefix("sha256=") else { return false }
-        let signatureHex = String(signatureHeader.dropFirst("sha256=".count))
-
-        guard let payload = request.body.string else { return false }
-        guard let payloadData = payload.data(using: .utf8) else { return false }
-
-        let secretDataKey = SymmetricKey(data: secretData)
-        let signature = HMAC<SHA256>.authenticationCode(for: payloadData, using: secretDataKey)
-        let expectedSignatureHex = signature.map { String(format: "%02x", $0) }.joined()
-        guard expectedSignatureHex.count == signatureHex.count else { return false }
-
-        return HMAC<SHA256>.isValidAuthenticationCode(
-            signatureHex.hexadecimal ?? Data(),
-            authenticating: payloadData,
-            using: secretDataKey
-        )
-    }
-    
-    static func validateSignature2(of request: Request) -> Bool
     {
         let secret = DeployerVariables.GITHUB_WEBHOOK_SECRET.value
 
@@ -137,22 +113,4 @@ extension Request
     }
     
     var commitMessage: String? { payload?.headCommit.message }
-}
-
-extension String
-{
-    var hexadecimal: Data?
-    {
-        var data = Data(capacity: count / 2)
-        let regex = try! NSRegularExpression(pattern: "[0-9a-f]{1,2}", options: .caseInsensitive)
-
-        regex.enumerateMatches(in: self, range: NSRange(startIndex..., in: self))
-        { match, _, _ in
-            let byteString = (self as NSString).substring(with: match!.range)
-            let num = UInt8(byteString, radix: 16)!
-            data.append(num)
-        }
-
-        return data
-    }
 }
