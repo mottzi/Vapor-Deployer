@@ -32,7 +32,7 @@ public struct Deployer: Sendable
 
 extension Application
 {
-    var deployer: Deployer { Deployer(app: self) }
+    public var deployer: Deployer { Deployer(app: self) }
 
     var _queue: DeploymentQueue?
     {
