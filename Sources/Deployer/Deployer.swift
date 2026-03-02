@@ -22,8 +22,8 @@ public struct Deployer: Sendable
             config.statusComponent
         )
     
-        app.deployer.useQueue(config: config)
         app.deployer.useVariables()
+        app.deployer.useQueue(config: config)
         app.deployer.useWebhook(config: config)
         app.deployer.useCommand(config: config)
         app.deployer.usePanel(config: config)

@@ -4,7 +4,7 @@ extension Deployer
 {
     func useWebhook(config: DeployerConfiguration)
     {
-        DeployerWebhook.register(using: config.server, on: self.app)
+        DeployerWebhook.register(using: config.serverTarget, on: self.app)
         { request, serverConfig async in
             await app.deployer.queue.enqueue(
                 message: request.commitMessage,
@@ -12,7 +12,7 @@ extension Deployer
             )
         }
         
-        DeployerWebhook.register(using: config.deployer, on: self.app)
+        DeployerWebhook.register(using: config.deployerTarget, on: self.app)
         { request, deployerConfig async in
             await app.deployer.queue.enqueue(
                 message: request.commitMessage,
@@ -35,7 +35,7 @@ struct DeployerWebhook
         app.post(config.pusheventPath)
         { request async -> Response in
             
-            guard validateSignature(of: request) else { return denied }
+            guard validateSignature2(of: request) else { return denied }
             Task.detached { await onPush(request, config) }
             return accepted
         }
@@ -63,6 +63,53 @@ struct DeployerWebhook
             authenticating: payloadData,
             using: secretDataKey
         )
+    }
+    
+    static func validateSignature2(of request: Request) -> Bool
+    {
+        let secret = DeployerVariables.GITHUB_WEBHOOK_SECRET.value
+
+        guard let secretData = secret.data(using: .utf8),
+              let sigHeader  = request.headers.first(name: "X-Hub-Signature-256"),
+              sigHeader.hasPrefix("sha256=")
+        else { return false }
+
+        let signatureHex = sigHeader.dropFirst("sha256=".count)
+
+        guard signatureHex.count == 64,
+              let signatureData = signatureHex.hexadecimalData,
+              let byteBuffer    = request.body.data,
+              let payloadData   = byteBuffer.getData(at: byteBuffer.readerIndex, length: byteBuffer.readableBytes)
+        else { return false }
+
+        let key = SymmetricKey(data: secretData)
+
+        return HMAC<SHA256>.isValidAuthenticationCode(
+            signatureData,
+            authenticating: payloadData,
+            using: key
+        )
+    }
+}
+
+extension StringProtocol
+{
+    var hexadecimalData: Data?
+    {
+        guard count % 2 == 0 else { return nil }
+
+        var data = Data(capacity: count / 2)
+        var index = startIndex
+
+        while index < endIndex
+        {
+            let byteEnd = self.index(index, offsetBy: 2)
+            guard let byte = UInt8(self[index..<byteEnd], radix: 16) else { return nil }
+            data.append(byte)
+            index = byteEnd
+        }
+        
+        return data
     }
 }
 

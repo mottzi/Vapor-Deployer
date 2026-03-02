@@ -1,6 +1,6 @@
 import Vapor
 
-public actor DeploymentQueue
+actor DeploymentQueue
 {
     var isDeploying: Bool = false
     
@@ -39,15 +39,19 @@ extension DeploymentQueue {
         
         while true
         {
-            let executor = DeploymentWorker(target: currentTarget, app: app)
+            let worker = DeploymentWorker(
+                deployment: currentDeployment,
+                target: currentTarget,
+                app: app
+            )
             
             do
             {
                 if currentDeployment.mode == .standard
                 {
-                    try await executor.pull()
-                    try await executor.build(currentDeployment)
-                    try await executor.move(currentDeployment)
+                    try await worker.pull()
+                    try await worker.build()
+                    try await worker.move()
                 }
 
                 currentDeployment.status = .success
@@ -57,16 +61,17 @@ extension DeploymentQueue {
                 guard let nextDeployment = try await findNextDeployment(after: currentDeployment) else
                 {
                     try await currentDeployment.setCurrent(on: app.db)
-                    try await executor.restart(currentDeployment)
+                    try await worker.restart()
                     break
                 }
                 
-                try await handleTransition(from: currentDeployment, to: nextDeployment, worker: executor)
+                try await handleTransition(from: currentDeployment, to: nextDeployment, worker: worker)
                 
                 nextDeployment.status = .running
                 try? await nextDeployment.save(on: app.db)
                 
-                guard let nextTarget = config.target(for: nextDeployment.productName) else {
+                guard let nextTarget = config.target(for: nextDeployment.productName) else
+                {
                     nextDeployment.status = .failed
                     nextDeployment.finishedAt = .now
                     nextDeployment.errorMessage = "Configuration missing for target: \(nextDeployment.productName)"
@@ -120,7 +125,7 @@ extension DeploymentQueue {
         }
         
         let differentProductCandidates = cancelledDeploymentByProduct.values
-            .filter { $0.productName != config.deployer.productName && $0.productName != deployment.productName }
+            .filter { $0.productName != config.deployerTarget.productName && $0.productName != deployment.productName }
             .sorted { ($0.startedAt ?? .distantPast) > ($1.startedAt ?? .distantPast) }
         
         for candidate in differentProductCandidates
@@ -131,7 +136,7 @@ extension DeploymentQueue {
             }
         }
         
-        if let deployerProduct = cancelledDeploymentByProduct[config.deployer.productName]
+        if let deployerProduct = cancelledDeploymentByProduct[config.deployerTarget.productName]
         {
             if try await isSuperseded(deployerProduct) == false
             {
@@ -169,13 +174,13 @@ extension DeploymentQueue {
     
     func handleTransition(from deployment: Deployment, to nextDeployment: Deployment, worker: DeploymentWorker) async throws
     {
-        let isDeployer = deployment.productName == config.deployer.productName
+        let isDeployer = deployment.productName == config.deployerTarget.productName
         let isSameProduct = deployment.productName == nextDeployment.productName
         
         if isDeployer && !isSameProduct
         {
             let hasPendingDeployerRestart = try await Deployment.query(on: app.db)
-                .filter(\.$productName, .equal, config.deployer.productName)
+                .filter(\.$productName, .equal, config.deployerTarget.productName)
                 .filter(\.$status, .equal, .canceled)
                 .filter(\.$mode, .equal, Deployment.Mode.restartOnly)
                 .first() != nil
@@ -195,7 +200,7 @@ extension DeploymentQueue {
         else if !isSameProduct
         {
             try await deployment.setCurrent(on: app.db)
-            try await worker.restart(deployment)
+            try await worker.restart()
         }
     }
 }

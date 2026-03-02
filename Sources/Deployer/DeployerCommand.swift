@@ -22,7 +22,7 @@ struct DeployCommand: AsyncCommand
     {
         self.app = app
         self.config = config
-        self.help = "Pulls, builds, moves and restarts \(config.deployer.productName)."
+        self.help = "Pulls, builds, moves and restarts \(config.deployerTarget.productName)."
     }
 
     func run(using context: CommandContext, signature: Signature) async throws
@@ -58,8 +58,8 @@ extension DeployCommand
             Task.detached
             {
                 await app.deployer.queue.enqueue(
-                    message: "[CLI] \(config.deployer.productName)",
-                    target: config.deployer
+                    message: "[CLI] \(config.deployerTarget.productName)",
+                    target: config.deployerTarget
                 )
             }
 

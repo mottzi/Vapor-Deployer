@@ -10,22 +10,26 @@ extension Deployer
             
             let deployer = await config.deployerRowComponent.makeContext(ofAll: request.db)
             let server = await config.serverRowComponent.makeContext(ofAll: request.db)
-            let current = try? await Deployment.getCurrent(named: config.server.productName, on: request.db)
-            
-            let tables = [
-                TableContext(title: "Deployer Pipeline", productName: config.deployer.productName, rows: deployer.components),
-                TableContext(title: "Server Pipeline", productName: config.server.productName, rows: server.components)
-            ]
-            
-            let component = current.map {
-                var container = ModelContainer()
-                container.add($0, for: "deployment")
-                return container
-            }
+            let current = try? await Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
             
             let context = DeploymentPanelContext(
-                tables: tables,
-                component: component
+                tables: [
+                    TableContext(
+                        title: config.deployerTarget.productName.capitalized,
+                        productName: config.deployerTarget.productName,
+                        rows: deployer.components
+                    ),
+                    TableContext(
+                        title: config.serverTarget.productName.capitalized,
+                        productName: config.serverTarget.productName,
+                        rows: server.components
+                    )
+                ],
+                component: current.map {
+                    var container = ModelContainer()
+                    container.add($0, for: "deployment")
+                    return container
+                }
             )
             
             return try await request.view.render("Deployer/DeploymentPanel", context)

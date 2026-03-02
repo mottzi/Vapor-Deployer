@@ -2,6 +2,7 @@ import Vapor
 
 public struct DeploymentWorker: Sendable
 {
+    let deployment: Deployment
     let target: TargetConfiguration
     let app: Application
 }
@@ -13,17 +14,17 @@ extension DeploymentWorker
         try await execute("git pull")
     }
 
-    func build(_ deployment: Deployment) async throws
+    func build() async throws
     {
         try await execute("swift build -c \(target.buildMode)")
     }
 
-    func restart(_ deployment: Deployment) async throws
+    func restart() async throws
     {
         try await execute("supervisorctl restart \(deployment.productName)")
     }
 
-    func move(_ deployment: Deployment) async throws
+    func move() async throws
     {
         let eventLoop = app.eventLoopGroup.any()
         let threadPool = app.threadPool

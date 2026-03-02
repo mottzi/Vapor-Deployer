@@ -5,8 +5,8 @@ public struct DeployerConfiguration: Sendable
 {
     let port: Int
     let dbFile: String
-    let server: TargetConfiguration
-    let deployer: TargetConfiguration
+    let serverTarget: TargetConfiguration
+    let deployerTarget: TargetConfiguration
     let mistSocketPath: [PathComponent]
     let panelRoute: [PathComponent]
     let deployerRowComponent: any Mist.InstanceComponent
@@ -26,8 +26,8 @@ public struct DeployerConfiguration: Sendable
     ) {
         self.port = port
         self.dbFile = dbFile
-        self.server = server
-        self.deployer = deployer
+        self.serverTarget = server
+        self.deployerTarget = deployer
         self.mistSocketPath = mistSocketPath
         self.panelRoute = panelRoute
         self.deployerRowComponent = deployerRowComponent ?? DeployerPanelRow(productName: deployer.productName)
@@ -37,8 +37,8 @@ public struct DeployerConfiguration: Sendable
     
     func target(for productName: String) -> TargetConfiguration?
     {
-        if productName == server.productName { return server }
-        if productName == deployer.productName { return deployer }
+        if productName == serverTarget.productName { return serverTarget }
+        if productName == deployerTarget.productName { return deployerTarget }
         return nil
     }
 }

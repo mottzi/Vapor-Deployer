@@ -7,7 +7,6 @@ public struct DeployerPanelRow: Mist.InstanceComponent
     let productName: String
     
     public var name: String { "DeploymentRow-\(productName)" }
-    
     public let models: [any Mist.Model.Type] = [Deployment.self]
     public let actions: [any Action] = [DeleteDeploymentAction(), ToggleDeploymentErrorAction()]
     public let template: Template = .file(path: "Deployer/DeploymentRow")
