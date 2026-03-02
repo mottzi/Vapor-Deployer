@@ -4,6 +4,7 @@ import Vapor
 
 public struct DeployerPanelStatus: QueryComponent
 {
+    public let name = "DeploymentStatus"
     public let models: [any Mist.Model.Type] = [Deployment.self]
     public let template: Template = .file(path: "Deployer/DeploymentStatus")
     public let productName: String
