@@ -34,18 +34,18 @@ extension Application
 {
     public var deployer: Deployer { Deployer(app: self) }
 
-    var _queue: DeploymentQueue?
+    var _queue: DeployerQueue?
     {
         get { storage[DeploymentQueueKey.self] }
         set { storage[DeploymentQueueKey.self] = newValue }
     }
 
-    struct DeploymentQueueKey: StorageKey { typealias Value = DeploymentQueue }
+    struct DeploymentQueueKey: StorageKey { typealias Value = DeployerQueue }
 }
 
 extension Deployer
 {
-    var queue: DeploymentQueue
+    var queue: DeployerQueue
     {
         if let queue = app._queue { return queue }
         fatalError("Queue not initialized!")
@@ -53,6 +53,6 @@ extension Deployer
     
     func useQueue(config: DeployerConfiguration)
     {
-        app._queue = DeploymentQueue(app: app, config: config)
+        app._queue = DeployerQueue(app: app, config: config)
     }
 }

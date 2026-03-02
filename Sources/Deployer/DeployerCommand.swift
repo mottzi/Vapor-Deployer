@@ -6,7 +6,7 @@ extension Deployer
     {
         let command = DeployCommand(config: config, app: app)
         command.useRoute(config: config)
-        self.app.asyncCommands.use(command, as: "deploy")
+        app.asyncCommands.use(command, as: "deploy")
     }
 }
 

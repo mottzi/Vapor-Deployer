@@ -1,6 +1,6 @@
 import Vapor
 
-actor DeploymentQueue
+actor DeployerQueue
 {
     var isDeploying: Bool = false
     
@@ -30,7 +30,7 @@ actor DeploymentQueue
     }
 }
 
-extension DeploymentQueue {
+extension DeployerQueue {
     
     func drainQueue(startingWith initialDeployment: Deployment, initialTarget: TargetConfiguration) async
     {
@@ -39,7 +39,7 @@ extension DeploymentQueue {
         
         while true
         {
-            let worker = DeploymentWorker(
+            let worker = DeployerWorker(
                 deployment: currentDeployment,
                 target: currentTarget,
                 app: app
@@ -172,7 +172,7 @@ extension DeploymentQueue {
         return isSuperseded
     }
     
-    func handleTransition(from deployment: Deployment, to nextDeployment: Deployment, worker: DeploymentWorker) async throws
+    func handleTransition(from deployment: Deployment, to nextDeployment: Deployment, worker: DeployerWorker) async throws
     {
         let isDeployer = deployment.productName == config.deployerTarget.productName
         let isSameProduct = deployment.productName == nextDeployment.productName

@@ -1,13 +1,13 @@
 import Vapor
 
-public struct DeploymentWorker: Sendable
+public struct DeployerWorker: Sendable
 {
     let deployment: Deployment
     let target: TargetConfiguration
     let app: Application
 }
 
-extension DeploymentWorker
+extension DeployerWorker
 {
     func pull() async throws
     {
@@ -87,7 +87,7 @@ extension DeploymentWorker
     }
 }
 
-extension DeploymentWorker
+extension DeployerWorker
 {
     func execute(_ command: String) async throws
     {
@@ -127,7 +127,7 @@ extension DeploymentWorker
     }
 }
 
-extension DeploymentWorker
+extension DeployerWorker
 {
     enum PipelineError: Error, LocalizedError
     {

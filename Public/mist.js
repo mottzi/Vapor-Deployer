@@ -170,11 +170,9 @@ class MistSocket {
                 const data = JSON.parse(event.data);
 
                 // Instance-based component messages (with ID)
-                // Instance-based component messages (with ID)
                 if (data.createInstanceComponent) {
                     const { component, id, html } = data.createInstanceComponent;
 
-                    // 1. SAFEGUARD: Prevent WebSocket Crossover Duplication
                     // Ensure the generated HTML actually belongs to the channel it was broadcasted on
                     if (!html.includes(`mist-component="${component}"`)) {
                         console.log(`[Client] Dropped cross-channel broadcast for ${component}`);
