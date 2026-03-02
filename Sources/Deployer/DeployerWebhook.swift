@@ -46,23 +46,23 @@ struct DeployerWebhook
         let secret = DeployerVariables.GITHUB_WEBHOOK_SECRET.value
 
         guard let secretData = secret.data(using: .utf8),
-              let sigHeader  = request.headers.first(name: "X-Hub-Signature-256"),
-              sigHeader.hasPrefix("sha256=")
+              let signatureHeader = request.headers.first(name: "X-Hub-Signature-256"),
+              signatureHeader.hasPrefix("sha256=")
         else { return false }
 
-        let signatureHex = sigHeader.dropFirst("sha256=".count)
+        let signatureHex = signatureHeader.dropFirst("sha256=".count)
 
         guard signatureHex.count == 64,
               let signatureData = signatureHex.hexadecimalData,
-              let byteBuffer    = request.body.data,
-              let payloadData   = byteBuffer.getData(at: byteBuffer.readerIndex, length: byteBuffer.readableBytes)
+              let bodyBuffer = request.body.data,
+              let bodyData = bodyBuffer.getData(at: bodyBuffer.readerIndex, length: bodyBuffer.readableBytes)
         else { return false }
 
         let key = SymmetricKey(data: secretData)
 
         return HMAC<SHA256>.isValidAuthenticationCode(
             signatureData,
-            authenticating: payloadData,
+            authenticating: bodyData,
             using: key
         )
     }
@@ -80,7 +80,7 @@ extension StringProtocol
         while index < endIndex
         {
             let byteEnd = self.index(index, offsetBy: 2)
-            guard let byte = UInt8(self[index..<byteEnd], radix: 16) else { return nil }
+            guard let byte = UInt8(self[index ..< byteEnd], radix: 16) else { return nil }
             data.append(byte)
             index = byteEnd
         }
