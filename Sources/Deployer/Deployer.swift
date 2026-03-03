@@ -1,11 +1,17 @@
 import Vapor
 
-public struct Deployer: Sendable
-{
+extension Application {
+    
+    public var deployer: Deployer { Deployer(app: self) }
+    
+}
+
+public struct Deployer: Sendable {
+    
     public let app: Application
         
-    public func use(config: DeployerConfiguration) async throws
-    {
+    public func use(config: DeployerConfiguration) async throws {
+        
         app.http.server.configuration.port = config.port
         app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
         
@@ -15,7 +21,6 @@ public struct Deployer: Sendable
         
         app.views.use(.leaf)
         app.mist.socketPath = config.mistSocketPath
-        
         await app.mist.use(
             config.deployerRowComponent,
             config.serverRowComponent,
@@ -28,31 +33,5 @@ public struct Deployer: Sendable
         app.deployer.useCommand(config: config)
         app.deployer.usePanel(config: config)
     }
-}
-
-extension Application
-{
-    public var deployer: Deployer { Deployer(app: self) }
-
-    var _queue: DeployerQueue?
-    {
-        get { storage[DeploymentQueueKey.self] }
-        set { storage[DeploymentQueueKey.self] = newValue }
-    }
-
-    struct DeploymentQueueKey: StorageKey { typealias Value = DeployerQueue }
-}
-
-extension Deployer
-{
-    var queue: DeployerQueue
-    {
-        if let queue = app._queue { return queue }
-        fatalError("Queue not initialized!")
-    }
     
-    func useQueue(config: DeployerConfiguration)
-    {
-        app._queue = DeployerQueue(app: app, config: config)
-    }
 }
