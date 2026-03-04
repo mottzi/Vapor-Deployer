@@ -20,12 +20,10 @@ let package = Package(
                 .product(name: "Mist", package: "Vapor-Mist"),
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
             ],
-            swiftSettings: swiftSettings
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]
         ),
     ],
     swiftLanguageModes: [.v6]
 )
-
-var swiftSettings: [SwiftSetting] { [
-    .enableExperimentalFeature("StrictConcurrency"),
-] }
