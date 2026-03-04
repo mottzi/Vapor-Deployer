@@ -3,16 +3,14 @@ import Fluent
 import FluentSQLiteDriver
 import Mist
 
-extension Deployment
-{
-    enum Mode: String, Codable 
-    {
+extension Deployment {
+    
+    enum Mode: String, Codable {
         case standard
         case restartOnly
     }
     
-    enum Status: String, Codable, CaseIterable
-    {
+    enum Status: String, Codable, CaseIterable {
         case running
         case canceled
         case failed
@@ -20,10 +18,11 @@ extension Deployment
         case deployed
         case stale
     }
+    
 }
 
-final class Deployment: Mist.Model, Content, @unchecked Sendable
-{
+final class Deployment: Mist.Model, Content, @unchecked Sendable {
+    
     static let schema = "deployments"
 
     @ID(key: .id) var id: UUID?
@@ -36,7 +35,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable
     @Timestamp(key: "started_at", on: .create) var startedAt: Date?
     @Timestamp(key: "finished_at", on: .none) var finishedAt: Date?
 
-    init() {}
+    init() { }
 
     init(
         productName: String,
@@ -51,14 +50,15 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable
         self.errorMessage = nil
         self.mode = mode
     }
+    
 }
 
-extension Deployment
-{
-    struct Table: AsyncMigration
-    {
-        func prepare(on database: Database) async throws
-        {
+extension Deployment {
+    
+    struct Table: AsyncMigration {
+        
+        func prepare(on database: Database) async throws {
+            
             try await database.schema(Deployment.schema)
                 .id()
                 .field("product_name", .string, .required)
@@ -72,17 +72,17 @@ extension Deployment
                 .create()
         }
 
-        func revert(on database: Database) async throws
-        {
+        func revert(on database: Database) async throws {
             try await database.schema(Deployment.schema).delete()
         }
+        
     }
+    
 }
 
-extension Deployment
-{
-    var contextExtras: [String: any Encodable]
-    {
+extension Deployment {
+    
+    var contextExtras: [String: any Encodable] {
         [
             "durationString": durationString,
             "displayStatus": displayStatus,
@@ -90,16 +90,15 @@ extension Deployment
         ]
     }
 
-    var durationString: String?
-    {
+    var durationString: String? {
         guard let finishedAt, let startedAt else { return nil }
         return String(format: "%.1fs", finishedAt.timeIntervalSince(startedAt))
     }
 
     var shortID: String { String(id?.uuidString.prefix(8) ?? "") }
 
-    var displayStatus: Status
-    {
+    var displayStatus: Status {
+        
         guard status == .running,
               let startedAt = startedAt,
               Date.now.timeIntervalSince(startedAt) > 1800
@@ -109,10 +108,10 @@ extension Deployment
     }
 }
 
-extension Deployment
-{
-    func setCurrent(on database: Database) async throws
-    {
+extension Deployment {
+    
+    func setCurrent(on database: Database) async throws {
+        
         self.isCurrent = true
         self.status = .deployed
         try await self.save(on: database)
@@ -123,27 +122,27 @@ extension Deployment
             .filter(\.$id, .notEqual, self.id!)
             .all()
 
-        for deployment in oldCurrentDeployments
-        {
+        for deployment in oldCurrentDeployments {
             deployment.isCurrent = false
             deployment.status = .success
             try await deployment.save(on: database)
         }
     }
     
-    static func getCurrent(named productName: String, on database: Database) async throws -> Deployment?
-    {
-        return try await Deployment.query(on: database)
+    static func getCurrent(named productName: String, on database: Database) async throws -> Deployment? {
+        
+        try await Deployment.query(on: database)
             .filter(\.$isCurrent, .equal, true)
             .filter(\.$productName, .equal, productName)
             .first()
     }
 
-    static func clearCurrent(on database: Database) async throws
-    {
+    static func clearCurrent(on database: Database) async throws {
+        
         try await Deployment.query(on: database)
             .set(\.$isCurrent, to: false)
             .filter(\.$isCurrent, .equal, true)
             .update()
     }
+    
 }

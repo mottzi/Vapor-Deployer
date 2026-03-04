@@ -1,8 +1,8 @@
 import Vapor
 import Mist
 
-public struct DeployerConfiguration: Sendable
-{
+public struct DeployerConfiguration: Sendable {
+    
     let port: Int
     let dbFile: String
     let serverTarget: TargetConfiguration
@@ -35,16 +35,16 @@ public struct DeployerConfiguration: Sendable
         self.statusComponent = statusComponent ?? DeployerPanelStatus(productName: server.productName)
     }
     
-    func target(for productName: String) -> TargetConfiguration?
-    {
+    func target(for productName: String) -> TargetConfiguration? {
         if productName == serverTarget.productName { return serverTarget }
         if productName == deployerTarget.productName { return deployerTarget }
         return nil
     }
+    
 }
 
-public struct TargetConfiguration: Sendable
-{
+public struct TargetConfiguration: Sendable {
+    
     let productName: String
     let workingDirectory: String
     let buildMode: String
@@ -61,24 +61,23 @@ public struct TargetConfiguration: Sendable
         self.buildMode = buildMode
         self.pusheventPath = pusheventPath
     }
+    
 }
 
-extension Deployer
-{
-    func useVariables()
-    {
-        for variable in DeployerVariables.allCases
-        {
+extension Deployer {
+    
+    func useVariables() {
+        for variable in Variables.allCases {
             guard Environment.get(variable.rawValue) == nil else { continue }
             fatalError("\(variable.rawValue): Environment variable not found.")
         }
     }
-}
+    
+    enum Variables: String, CaseIterable {
+        case GITHUB_WEBHOOK_SECRET
+        case DEPLOY_SECRET
 
-enum DeployerVariables: String, CaseIterable
-{
-    case GITHUB_WEBHOOK_SECRET
-    case DEPLOY_SECRET
-
-    var value: String { Environment.get(self.rawValue)! }
+        var value: String { Environment.get(self.rawValue)! }
+    }
+    
 }

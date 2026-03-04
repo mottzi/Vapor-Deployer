@@ -1,29 +1,34 @@
 import Vapor
 
-extension Deployer
-{
-    func useWebhook(config: DeployerConfiguration)
-    {
-        DeployerWebhook.register(using: config.serverTarget, on: self.app)
-        { request, serverConfig async in
+extension Deployer {
+    
+    func useWebhook(config: DeployerConfiguration) {
+        
+        DeployerWebhook.register(
+            using: config.serverTarget,
+            on: self.app
+        ) { request, serverConfig async in
             await app.deployer.queue.enqueue(
                 message: request.commitMessage,
                 target: serverConfig
             )
         }
         
-        DeployerWebhook.register(using: config.deployerTarget, on: self.app)
-        { request, deployerConfig async in
+        DeployerWebhook.register(
+            using: config.deployerTarget,
+            on: self.app
+        ) { request, deployerConfig async in
             await app.deployer.queue.enqueue(
                 message: request.commitMessage,
                 target: deployerConfig
             )
         }
     }
+    
 }
 
-struct DeployerWebhook
-{
+struct DeployerWebhook {
+    
     static func register(
         using config: TargetConfiguration,
         on app: Application,
@@ -32,8 +37,7 @@ struct DeployerWebhook
         let accepted = Response(status: .ok, body: .init(stringLiteral: "[\(config.productName)] Push event accepted."))
         let denied = Response(status: .forbidden, body: .init(stringLiteral: "[\(config.productName)] Push event denied."))
         
-        app.post(config.pusheventPath)
-        { request async -> Response in
+        app.post(config.pusheventPath) { request async -> Response in
             
             guard validateSignature(of: request) else { return denied }
             Task.detached { await onPush(request, config) }
@@ -43,7 +47,7 @@ struct DeployerWebhook
     
     static func validateSignature(of request: Request) -> Bool
     {
-        let secret = DeployerVariables.GITHUB_WEBHOOK_SECRET.value
+        let secret = Deployer.Variables.GITHUB_WEBHOOK_SECRET.value
 
         guard let secretData = secret.data(using: .utf8),
               let signatureHeader = request.headers.first(name: "X-Hub-Signature-256"),
@@ -70,15 +74,14 @@ struct DeployerWebhook
 
 extension StringProtocol
 {
-    var hexadecimalData: Data?
-    {
+    var hexadecimalData: Data? {
+        
         guard count % 2 == 0 else { return nil }
 
         var data = Data(capacity: count / 2)
         var index = startIndex
 
-        while index < endIndex
-        {
+        while index < endIndex {
             let byteEnd = self.index(index, offsetBy: 2)
             guard let byte = UInt8(self[index ..< byteEnd], radix: 16) else { return nil }
             data.append(byte)
@@ -89,20 +92,20 @@ extension StringProtocol
     }
 }
 
-struct DeployerPayload: Codable
-{
+struct DeployerPayload: Codable {
+    
     let headCommit: Commit
     
-    struct Commit: Codable
-    {
+    struct Commit: Codable {
         let message: String
     }
+    
 }
 
-extension Request
-{
-    var payload: DeployerPayload?
-    {
+extension Request {
+    
+    var payload: DeployerPayload? {
+        
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         
@@ -113,4 +116,5 @@ extension Request
     }
     
     var commitMessage: String? { payload?.headCommit.message }
+    
 }

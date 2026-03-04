@@ -2,57 +2,59 @@ import Vapor
 import Fluent
 import Mist
 
-extension Deployer
-{
-    func usePanel(config: DeployerConfiguration)
-    {
-        app.get(config.panelRoute)
-        { request async throws -> View in
+extension Deployer {
+    
+    func usePanel(config: DeployerConfiguration) {
+        
+        app.get(config.panelRoute) { request async throws -> View in
             
             let deployer = await config.deployerRowComponent.makeContext(ofAll: request.db)
             let server = await config.serverRowComponent.makeContext(ofAll: request.db)
             let current = try? await Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
             
+            let tables = [
+                TableContext(
+                    title: config.deployerTarget.productName.capitalized,
+                    productName: config.deployerTarget.productName,
+                    rows: deployer.components
+                ),
+                TableContext(
+                    title: config.serverTarget.productName.capitalized,
+                    productName: config.serverTarget.productName,
+                    rows: server.components
+                )
+            ]
+            
+            let component = current.map {
+                var container = ModelContainer()
+                container.add($0, for: "deployment")
+                return container
+            }
+            
             let context = DeploymentPanelContext(
-                tables: [
-                    TableContext(
-                        title: config.deployerTarget.productName.capitalized,
-                        productName: config.deployerTarget.productName,
-                        rows: deployer.components
-                    ),
-                    TableContext(
-                        title: config.serverTarget.productName.capitalized,
-                        productName: config.serverTarget.productName,
-                        rows: server.components
-                    )
-                ],
-                component: current.map {
-                    var container = ModelContainer()
-                    container.add($0, for: "deployment")
-                    return container
-                }
+                tables: tables,
+                component: component
             )
             
             return try await request.view.render("Deployer/DeploymentPanel", context)
         }
     }
     
-    struct TableContext: Encodable
-    {
+    struct TableContext: Encodable {
         let title: String
         let productName: String
         let rows: [ModelContainer]
     }
     
-    struct DeploymentPanelContext: Encodable
-    {
+    struct DeploymentPanelContext: Encodable {
         let tables: [TableContext]
         let component: ModelContainer?
     }
+    
 }
 
-public struct DeployerPanelRow: Mist.InstanceComponent
-{
+public struct DeployerPanelRow: Mist.InstanceComponent {
+    
     let productName: String
     
     public var name: String { "DeploymentRow-\(productName)" }
@@ -62,23 +64,24 @@ public struct DeployerPanelRow: Mist.InstanceComponent
     
     public var defaultState: MistState { ["errorExpanded": .bool(false)] }
 
-    public func allModels(on db: Database) async -> [any Mist.Model]?
-    {
-        return try? await Deployment.query(on: db)
+    public func allModels(on db: Database) async -> [any Mist.Model]? {
+        
+        try? await Deployment.query(on: db)
             .filter(\.$productName == productName)
             .sort(\.$startedAt, .descending)
             .all()
     }
     
     public init(productName: String) { self.productName = productName }
+    
 }
 
-struct DeleteDeploymentAction: Mist.Action
-{
+struct DeleteDeploymentAction: Mist.Action {
+    
     let name: String = "delete"
     
-    func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult
-    {
+    func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
+        
         guard let deployment = try? await Deployment.find(id, on: db)
         else { return .failure(message: "Deployment not found") }
         
@@ -87,14 +90,15 @@ struct DeleteDeploymentAction: Mist.Action
         
         return .success()
     }
+    
 }
 
-struct ToggleDeploymentErrorAction: Mist.Action
-{
+struct ToggleDeploymentErrorAction: Mist.Action {
+    
     let name: String = "toggleError"
     
-    func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult
-    {
+    func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
+        
         guard let id, let deployment = try? await Deployment.find(id, on: db)
         else { return .failure(message: "Deployment not found") }
         
@@ -107,20 +111,19 @@ struct ToggleDeploymentErrorAction: Mist.Action
     }
 }
 
-public struct DeployerPanelStatus: QueryComponent
-{
+public struct DeployerPanelStatus: QueryComponent {
+    
     public let name = "DeploymentStatus"
     public let models: [any Mist.Model.Type] = [Deployment.self]
     public let template: Template = .file(path: "Deployer/DeploymentStatus")
     public let productName: String
 
-    public func queryModel(on db: Database) async -> (any Mist.Model)?
-    {
-        return try? await Deployment.getCurrent(named: productName, on: db)
+    public func queryModel(on db: Database) async -> (any Mist.Model)? {
+        try? await Deployment.getCurrent(named: productName, on: db)
     }
     
-    public init(productName: String)
-    {
+    public init(productName: String) {
         self.productName = productName
     }
+    
 }

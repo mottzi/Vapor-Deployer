@@ -98,8 +98,7 @@ extension DeployerQueue {
 
                 currentTarget = nextTarget
                 currentDeployment = nextDeployment
-            }
-            catch {
+            } catch {
                 currentDeployment.status = .failed
                 currentDeployment.finishedAt = .now
                 currentDeployment.errorMessage = error.localizedDescription
@@ -200,8 +199,7 @@ extension DeployerQueue {
                 
                 try await deferredDeployment.save(on: app.db)
             }
-        }
-        else if !isSameProduct {
+        } else if !isSameProduct {
             try await deployment.setCurrent(on: app.db)
             try await worker.restart()
         }
