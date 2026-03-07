@@ -14,12 +14,12 @@ extension Deployer {
             
             let tables = [
                 TableContext(
-                    title: config.deployerTarget.productName.capitalized,
+                    title: "Deployer",
                     productName: config.deployerTarget.productName,
                     rows: deployer.components
                 ),
                 TableContext(
-                    title: config.serverTarget.productName.capitalized,
+                    title: "Server",
                     productName: config.serverTarget.productName,
                     rows: server.components
                 )
