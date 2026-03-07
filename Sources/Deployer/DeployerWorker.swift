@@ -103,9 +103,8 @@ extension DeployerWorker {
             
             process.terminationHandler = { [pipe, process] _ in
                 guard process.terminationStatus != 0 else { return continuation.resume(returning: ()) }
-                let output = String(
-                    data: (try? pipe.fileHandleForReading.readToEnd()) ?? Data(),
-                    encoding: .utf8)
+                let data = try? pipe.fileHandleForReading.readToEnd()
+                let output = String(data: data ?? Data(), encoding: .utf8)
                 let error = PipelineError.executeError("Execution of '\(command)' failed with output:\n\n'\(output ?? "NO OUTPUT" )'")
                 return continuation.resume(throwing: error)
             }
@@ -113,7 +112,7 @@ extension DeployerWorker {
             do {
                 try process.run()
             } catch {
-                let error = PipelineError.initiateError("Start of '\(command)' failed with ourput:\n'\(error.localizedDescription)'")
+                let error = PipelineError.initiateError("Start of '\(command)' failed with output:\n'\(error.localizedDescription)'")
                 continuation.resume(throwing: error)
             }
         }
