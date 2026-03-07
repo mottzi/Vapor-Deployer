@@ -1,10 +1,9 @@
 <div
-    mist-component="DeploymentStatus"
-    class="deployment-status-component"
+  mist-component="DeploymentStatus"
+  class="dp-live-badge"
 >
-    <div class="deployment-status-dot"></div>
-    <span class="deployment-status-text">
-        Deployed: #(component.deployment.message)
-    </span>
+  <span class="dp-live-dot"></span>
+  <span class="dp-live-label">
+    <span class="dp-live-prefix">live ·</span>#(component.deployment.message)
+  </span>
 </div>
-

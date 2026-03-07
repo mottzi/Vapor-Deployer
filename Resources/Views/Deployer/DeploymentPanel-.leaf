@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deployment Dashboard</title>
+  <link rel="icon" type="image/png" href="/mottzi.png">
+  <link rel="stylesheet" href="/deployer.css">
+  <link href="https://rsms.me/inter/inter.css" rel="stylesheet">
+  <style>
+    html { font-family: 'Inter', sans-serif; }
+    @supports (font-variation-settings: normal) {
+      html { font-family: 'Inter var', sans-serif; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deployment-container">
+    
+    <!-- header -->
+    <header class="deployment-header">
+      <div class="deployment-header-inner">
+        <div class="deployment-title-container">
+          <h1 class="deployment-title">
+            Deployments
+          </h1>
+        </div>
+
+        <div
+            class="deployment-status-container"
+            mist-container="DeploymentStatus"
+            mist-insert-position="beforeend"
+        >
+          #if(component):
+              #extend("Deployer/DeploymentStatus")
+          #endif
+        </div>
+      </div>
+    </header>
+    
+    <!-- table -->
+    <div class="deployment-content">
+      <div class="deployment-content-scroll">
+        <div class="deployment-content-inner">
+
+          #for(table in tables):
+          <h2 class="deployment-title" style="margin-top: 1rem; margin-bottom: 1rem; font-size: 1.2rem;">
+            #(table.title)
+          </h2>
+          <div class="deployment-table-container" style="margin-bottom: 3rem;">
+            <div class="deployment-table-wrapper">
+              <table class="deployment-table">
+                <thead class="deployment-thead" mist-container="DeploymentRow-#(table.productName)" mist-insert-position="afterend">
+                  <tr>
+                    <th class="deployment-th">Mode</th>
+                    <th class="deployment-th">Product</th>
+                    <th class="deployment-th">Message</th>
+                    <th class="deployment-th deployment-th-hidden-sm">ID</th>
+                    <th class="deployment-th">Status</th>
+                    <th class="deployment-th deployment-th-hidden-sm">Started</th>
+                    <th class="deployment-th">Duration</th>
+                    <th class="deployment-th">Actions</th>
+                  </tr>
+                </thead>
+                  #for(component in table.rows):
+                    #extend("Deployer/DeploymentRow")
+                  #endfor
+              </table>
+            </div>
+          </div>
+          #endfor
+
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  <script src="/morphdom.js"></script>
+  <script src="/mist.js" data-url="/deployer/ws/"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

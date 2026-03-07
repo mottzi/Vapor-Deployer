@@ -3,107 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deployment Dashboard</title>
+  <title>Deployments</title>
   <link rel="icon" type="image/png" href="/mottzi.png">
   <link rel="stylesheet" href="/deployer.css">
-  <link href="https://rsms.me/inter/inter.css" rel="stylesheet">
-  <style>
-    html { font-family: 'Inter', sans-serif; }
-    @supports (font-variation-settings: normal) {
-      html { font-family: 'Inter var', sans-serif; }
-    }
-  </style>
 </head>
 <body>
-  <div class="deployment-container">
-    
-    <!-- header -->
-    <header class="deployment-header">
-      <div class="deployment-header-inner">
-        <div class="deployment-title-container">
-          <h1 class="deployment-title">
-            Deployments
-          </h1>
+
+  <div class="dp-shell">
+
+    <!-- ── Header ──────────────────────────────────────────── -->
+    <header class="dp-header">
+      <div class="dp-header-inner">
+
+        <div class="dp-wordmark">
+          <div class="dp-wordmark-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 1L12.5 4.25V10.75L7 14L1.5 10.75V4.25L7 1Z" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+              <circle cx="7" cy="7" r="2" fill="white"/>
+            </svg>
+          </div>
+          <span class="dp-wordmark-title">Deployer</span>
         </div>
 
         <div
-            class="deployment-status-container"
-            mist-container="DeploymentStatus"
-            mist-insert-position="beforeend"
+          class="dp-status-slot"
+          mist-container="DeploymentStatus"
+          mist-insert-position="beforeend"
         >
           #if(component):
-              #extend("Deployer/DeploymentStatus")
+            #extend("Deployer/DeploymentStatus")
           #endif
         </div>
+
       </div>
     </header>
-    
-    <!-- table -->
-    <div class="deployment-content">
-      <div class="deployment-content-scroll">
-        <div class="deployment-content-inner">
 
-          #for(table in tables):
-          <h2 class="deployment-title" style="margin-top: 1rem; margin-bottom: 1rem; font-size: 1.2rem;">
-            #(table.title)
-          </h2>
-          <div class="deployment-table-container" style="margin-bottom: 3rem;">
-            <div class="deployment-table-wrapper">
-              <table class="deployment-table">
-                <thead class="deployment-thead" mist-container="DeploymentRow-#(table.productName)" mist-insert-position="afterend">
-                  <tr>
-                    <th class="deployment-th">Mode</th>
-                    <th class="deployment-th">Product</th>
-                    <th class="deployment-th">Message</th>
-                    <th class="deployment-th deployment-th-hidden-sm">ID</th>
-                    <th class="deployment-th">Status</th>
-                    <th class="deployment-th deployment-th-hidden-sm">Started</th>
-                    <th class="deployment-th">Duration</th>
-                    <th class="deployment-th">Actions</th>
-                  </tr>
-                </thead>
-                  #for(component in table.rows):
-                    #extend("Deployer/DeploymentRow")
-                  #endfor
-              </table>
-            </div>
-          </div>
-          #endfor
+    <!-- ── Main ────────────────────────────────────────────── -->
+    <main class="dp-main">
 
+      #for(table in tables):
+      <section class="dp-section">
+
+        <!-- Section header -->
+        <div class="dp-section-header">
+          <span class="dp-section-prompt">
+            <span class="dp-section-prompt-symbol">~/</span>#(table.productName)
+          </span>
+          <div class="dp-section-line"></div>
+          <span class="dp-section-title">#(table.title)</span>
         </div>
-      </div>
-    </div>
-    
+
+        <!-- Table card -->
+        <div class="dp-card">
+          <div class="dp-table-wrap">
+            <table class="dp-table">
+
+              <thead
+                class="dp-thead"
+                mist-container="DeploymentRow-#(table.productName)"
+                mist-insert-position="afterend"
+              >
+                <tr>
+                  <th class="dp-th">Status</th>
+                  <th class="dp-th">Commit</th>
+                  <th class="dp-th dp-th-sm-hide">Mode</th>
+                  <th class="dp-th dp-th-sm-hide">ID</th>
+                  <th class="dp-th dp-th-sm-hide">Started</th>
+                  <th class="dp-th">Duration</th>
+                  <th class="dp-th"></th>
+                </tr>
+              </thead>
+
+              #for(component in table.rows):
+                #extend("Deployer/DeploymentRow")
+              #endfor
+
+            </table>
+          </div>
+        </div>
+
+      </section>
+      #endfor
+
+    </main>
+
   </div>
+
   <script src="/morphdom.js"></script>
   <script src="/mist.js" data-url="/deployer/ws/"></script>
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

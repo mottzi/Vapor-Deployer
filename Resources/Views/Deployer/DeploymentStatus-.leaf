@@ -1,0 +1,10 @@
+<div
+    mist-component="DeploymentStatus"
+    class="deployment-status-component"
+>
+    <div class="deployment-status-dot"></div>
+    <span class="deployment-status-text">
+        Deployed: #(component.deployment.message)
+    </span>
+</div>
+
