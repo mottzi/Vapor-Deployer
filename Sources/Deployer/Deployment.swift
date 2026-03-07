@@ -87,6 +87,8 @@ extension Deployment {
             "durationString": durationString,
             "displayStatus": displayStatus,
             "shortID": shortID,
+            "startedAtTime": formatStartedAt(format: "HH:mm:ss"),
+            "startedAtDate": formatStartedAt(format: "dd.MM.yy"),
         ]
     }
 
@@ -98,13 +100,19 @@ extension Deployment {
     var shortID: String { String(id?.uuidString.prefix(8) ?? "") }
 
     var displayStatus: Status {
-        
         guard status == .running,
               let startedAt = startedAt,
               Date.now.timeIntervalSince(startedAt) > 1800
         else { return status }
         
         return .stale
+    }
+    
+    func formatStartedAt(format: String) -> String? {
+        guard let startedAt else { return nil }
+        let f = DateFormatter()
+        f.dateFormat = format
+        return f.string(from: startedAt)
     }
 }
 

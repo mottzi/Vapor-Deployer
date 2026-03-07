@@ -96,8 +96,8 @@
     <!-- Started -->
     <td class="dp-td dp-td-sm-hide">
       <span class="dp-time">
-        #date(component.deployment.startedAt, "HH:mm:ss")
-        <span class="dp-time-date">#date(component.deployment.startedAt, "dd.MM.yy")</span>
+        #(component.deployment.startedAtTime)
+        <span class="dp-time-date">#(component.deployment.startedAtDate)</span>
       </span>
     </td>
 
