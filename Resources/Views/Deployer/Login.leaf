@@ -1,18 +1,166 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Deployer Login</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deployer Login</title>
+  <link rel="icon" type="image/png" href="/mottzi.png">
+  <link rel="stylesheet" href="/deployer.css">
+  <style>
+    .dp-login-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .dp-login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .dp-login-title {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .dp-login-title-symbol {
+      color: var(--text-subtle);
+      margin-right: 4px;
+    }
+
+    .dp-login-error {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      background: rgba(248, 113, 113, 0.08);
+      border: 1px solid rgba(248, 113, 113, 0.25);
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--c-failed);
+    }
+
+    .dp-login-error-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--c-failed);
+      flex-shrink: 0;
+    }
+
+    .dp-login-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dp-login-input {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 150ms;
+    }
+
+    .dp-login-input::placeholder {
+      color: var(--text-subtle);
+    }
+
+    .dp-login-input:focus {
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .dp-login-btn {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--surface-3);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 150ms, border-color 150ms;
+      letter-spacing: 0.02em;
+    }
+
+    .dp-login-btn:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+  </style>
 </head>
 <body>
-    <h1>Deployer Login</h1>
-    
-    #if(error):
-        <p style="color: red;">Incorrect password.</p>
-    #endif
 
-    <form method="POST" action="/login">
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Sign In</button>
-    </form>
+  <div class="dp-shell">
+
+    <!-- ── Header ──────────────────────────────────────────── -->
+    <header class="dp-header">
+      <div class="dp-header-inner">
+        <div class="dp-wordmark">
+          <div class="dp-wordmark-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 1L12.5 4.25V10.75L7 14L1.5 10.75V4.25L7 1Z" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+              <circle cx="7" cy="7" r="2" fill="white"/>
+            </svg>
+          </div>
+          <span class="dp-wordmark-title">Deployer</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── Login ───────────────────────────────────────────── -->
+    <div class="dp-login-wrap">
+      <div class="dp-login-card">
+
+        <span class="dp-login-title">
+          <span class="dp-login-title-symbol">~/</span>authenticate
+        </span>
+
+        #if(error):
+        <div class="dp-login-error">
+          <div class="dp-login-error-dot"></div>
+          Incorrect password.
+        </div>
+        #endif
+
+        <form method="POST" action="" style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="dp-login-field">
+            <input
+              class="dp-login-input"
+              type="password"
+              name="password"
+              placeholder="Password"
+              autocomplete="current-password"
+              autofocus
+              required
+            >
+          </div>
+          <button class="dp-login-btn" type="submit">Sign In</button>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+
 </body>
 </html>

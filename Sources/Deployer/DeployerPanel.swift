@@ -9,45 +9,31 @@ extension Deployer {
         let panelPath = "/" + config.panelRoute.map(\.description).joined(separator: "/")
         let loginPath = panelPath + "/login"
 
-        let panel = app.grouped(config.panelRoute)
-                       .grouped(app.sessions.middleware)
+        let panel = app.grouped(config.panelRoute).grouped(app.sessions.middleware)
 
         panel.get("login") { req async throws -> View in
+            
             let hasError = req.query[String.self, at: "error"] != nil
-            req.logger.warning("[Panel] GET login - hasError: \(hasError)")
             return try await req.view.render("Deployer/Login", ["error": hasError])
         }
 
         panel.post("login") { req async throws -> Response in
+            
             let form = try req.content.decode(LoginFormData.self)
             let expected = Deployer.Variables.PANEL_PASSWORD.value
-            let match = form.password == expected
-
-            req.logger.warning("[Panel] POST login - submitted: '\(form.password)' expected: '\(expected)' match: \(match)")
-
-            guard match else {
-                req.logger.warning("[Panel] POST login - FAILED, redirecting to error")
-                return req.redirect(to: loginPath + "?error=true")
-            }
+            guard form.password == expected else { return req.redirect(to: loginPath + "?error=true") }
 
             req.session.data["admin_auth"] = "true"
-            req.logger.warning("[Panel] POST login - SUCCESS, session: \(req.session.data)")
             return req.redirect(to: panelPath)
         }
 
-        let protected = panel.grouped(
-            PanelSessionMiddleware(loginPath: loginPath)
-        )
+        let protected = panel.grouped(PanelSessionMiddleware(loginPath: loginPath))
 
         protected.get { req async throws -> View in
-            req.logger.warning("[Panel] GET panel - session: \(req.session.data)")
 
             let deployer = await config.deployerRowComponent.makeContext(ofAll: req.db)
             let server = await config.serverRowComponent.makeContext(ofAll: req.db)
-            let current = try? await Deployment.getCurrent(
-                named: config.serverTarget.productName,
-                on: req.db
-            )
+            let current = try? await Deployment.getCurrent(named: config.serverTarget.productName, on: req.db)
 
             let tables = [
                 TableContext(
@@ -77,43 +63,35 @@ extension Deployer {
         }
     }
     
-    struct TableContext: Encodable {
-        let title: String
-        let productName: String
-        let rows: [ModelContainer]
-    }
-    
-    struct DeploymentPanelContext: Encodable {
-        let tables: [TableContext]
-        let component: ModelContainer?
-    }
-    
+}
+
+struct TableContext: Encodable {
+    let title: String
+    let productName: String
+    let rows: [ModelContainer]
+}
+
+struct DeploymentPanelContext: Encodable {
+    let tables: [TableContext]
+    let component: ModelContainer?
 }
 
 struct LoginFormData: Content {
     let password: String
 }
 
-struct PanelSessionMiddleware: AsyncMiddleware, Sendable {
+struct PanelSessionMiddleware: AsyncMiddleware {
+    
     let loginPath: String
     
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
-        // Explicitly check the session data dictionary
-        if request.session.data["admin_auth"] == "true" {
-            return try await next.respond(to: request)
-        }
         
-        // Not authenticated, redirect to the login page
-        return request.redirect(to: loginPath)
+        let sessionField = request.session.data["admin_auth"]
+        guard sessionField == "true" else { return request.redirect(to: loginPath) }
+        return try await next.respond(to: request)
     }
+    
 }
-
-
-
-
-
-
-
 
 public struct DeployerPanelRow: Mist.InstanceComponent {
     
