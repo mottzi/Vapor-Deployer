@@ -14,17 +14,24 @@ extension Deployer {
 
         panel.get("login") { req async throws -> View in
             let hasError = req.query[String.self, at: "error"] != nil
+            req.logger.warning("[Panel] GET login - hasError: \(hasError)")
             return try await req.view.render("Deployer/Login", ["error": hasError])
         }
 
         panel.post("login") { req async throws -> Response in
             let form = try req.content.decode(LoginFormData.self)
+            let expected = Deployer.Variables.PANEL_PASSWORD.value
+            let match = form.password == expected
 
-            guard form.password == Deployer.Variables.PANEL_PASSWORD.value else {
+            req.logger.warning("[Panel] POST login - submitted: '\(form.password)' expected: '\(expected)' match: \(match)")
+
+            guard match else {
+                req.logger.warning("[Panel] POST login - FAILED, redirecting to error")
                 return req.redirect(to: loginPath + "?error=true")
             }
 
             req.session.data["admin_auth"] = "true"
+            req.logger.warning("[Panel] POST login - SUCCESS, session: \(req.session.data)")
             return req.redirect(to: panelPath)
         }
 
@@ -33,6 +40,8 @@ extension Deployer {
         )
 
         protected.get { req async throws -> View in
+            req.logger.warning("[Panel] GET panel - session: \(req.session.data)")
+
             let deployer = await config.deployerRowComponent.makeContext(ofAll: req.db)
             let server = await config.serverRowComponent.makeContext(ofAll: req.db)
             let current = try? await Deployment.getCurrent(
