@@ -114,10 +114,40 @@ body::before {
   letter-spacing: -0.3px;
 }
 
+/* Header right slot */
+.dp-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* Status component slot */
 .dp-status-slot {
   display: flex;
   align-items: center;
+}
+
+/* ── Logout Button ───────────────────────────────────────────── */
+.dp-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 150ms, background 150ms, border-color 150ms;
+  white-space: nowrap;
+}
+.dp-logout-btn:hover {
+  color: var(--c-failed);
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.25);
 }
 
 /* ── Main Content ────────────────────────────────────────────── */

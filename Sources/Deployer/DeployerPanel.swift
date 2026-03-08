@@ -11,6 +11,12 @@ extension Deployer {
 
         let panel = app.grouped(config.panelRoute).grouped(app.sessions.middleware)
 
+        panel.post("logout") { req async throws -> Response in
+            
+            req.session.destroy()
+            return req.redirect(to: loginPath)
+        }
+        
         panel.get("login") { req async throws -> View in
             
             let hasError = req.query[String.self, at: "error"] != nil
