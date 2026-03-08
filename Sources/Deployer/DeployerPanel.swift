@@ -26,7 +26,7 @@ extension Deployer {
                 request.auth.login(AdminUser())
                 return request.redirect(to: "/" + config.panelRoute.map(\.description).joined(separator: "/"))
             } else {
-                return request.redirect(to: "/login?error=true")
+                return request.redirect(to: "/deployer/login?error=true")
             }
         }
         
@@ -34,7 +34,7 @@ extension Deployer {
         // Be sure to include the Session Authenticator BEFORE the RedirectMiddleware
         let protected = app.grouped(
             AdminSessionAuthenticator(),
-            AdminUser.redirectMiddleware(path: "/login") //
+            AdminUser.redirectMiddleware(path: "/deployer/login")
         )
         
         protected.get(config.panelRoute) { request async throws -> View in
