@@ -6,40 +6,49 @@ extension Deployer {
     
     func usePanel(config: DeployerConfiguration) {
             
-        // 1. Enable session support for the application
-        app.middleware.use(app.sessions.middleware)
+        // Construct our base paths dynamically so they are always correct
+        let panelPath = "/" + config.panelRoute.map(\.description).joined(separator: "/")
+        let loginPath = panelPath + "/login"
         
-        // 2. Add the Session Authenticator to a base group
-        // This MUST wrap the login route so it can save the session cookie on the way out!
-        let sessionRoutes = app.grouped(AdminSessionAuthenticator())
+        // 1. Group the session middleware AND the authenticator explicitly.
+        // This guarantees the order is perfect for these specific routes.
+        let sessionRoutes = app.grouped(
+            app.sessions.middleware,
+            AdminSessionAuthenticator()
+        )
         
-        // Serve the login page
+        // 2. Serve the login page
         sessionRoutes.get(config.panelRoute + ["login"]) { request async throws -> View in
             let hasError = request.query[String.self, at: "error"] != nil
             return try await request.view.render("Deployer/Login", ["error": hasError])
         }
         
-        // Process the login form
+        // 3. Process the login form
         sessionRoutes.post(config.panelRoute + ["login"]) { request async throws -> Response in
             let formData = try request.content.decode(LoginFormData.self)
             
             if formData.password == Deployer.Variables.PANEL_PASSWORD.value {
-                // Manually log the user in.
-                // The session authenticator will now catch this and save it to the cookie!
+                
+                // FIX: Explicitly tell the session to authenticate the user!
+                // This forces Vapor to write the sessionID to the cookie data immediately.
+                request.session.authenticate(AdminUser())
+                
+                // We also log them in for the current request lifecycle just in case
                 request.auth.login(AdminUser())
-                return request.redirect(to: "/" + config.panelRoute.map(\.description).joined(separator: "/"))
+                
+                return request.redirect(to: panelPath)
             } else {
-                return request.redirect(to: "/deployer/login?error=true")
+                return request.redirect(to: loginPath + "?error=true")
             }
         }
         
-        // 3. Create a protected route group specifically for the panel
+        // 4. Create a protected route group specifically for the panel
         // This adds the redirect middleware on top of the session authenticator
         let protected = sessionRoutes.grouped(
-            AdminUser.redirectMiddleware(path: "/deployer/login")
+            AdminUser.redirectMiddleware(path: loginPath)
         )
         
-        // 4. Your panel route
+        // 5. Your panel route
         protected.get(config.panelRoute) { request async throws -> View in
             
             let deployer = await config.deployerRowComponent.makeContext(ofAll: request.db)
