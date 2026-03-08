@@ -5,24 +5,27 @@ import Mist
 extension Deployer {
     
     func usePanel(config: DeployerConfiguration) {
-        
+            
         // 1. Enable session support for the application
         app.middleware.use(app.sessions.middleware)
         
-        // 2. Serve the login page
-        app.get(config.panelRoute + ["login"]) { request async throws -> View in
-            
+        // 2. Add the Session Authenticator to a base group
+        // This MUST wrap the login route so it can save the session cookie on the way out!
+        let sessionRoutes = app.grouped(AdminSessionAuthenticator())
+        
+        // Serve the login page
+        sessionRoutes.get(config.panelRoute + ["login"]) { request async throws -> View in
             let hasError = request.query[String.self, at: "error"] != nil
             return try await request.view.render("Deployer/Login", ["error": hasError])
         }
         
-        // 3. Process the login form
-        app.post(config.panelRoute + ["login"]) { request async throws -> Response in
-            
+        // Process the login form
+        sessionRoutes.post(config.panelRoute + ["login"]) { request async throws -> Response in
             let formData = try request.content.decode(LoginFormData.self)
             
             if formData.password == Deployer.Variables.PANEL_PASSWORD.value {
-                // Manually log the user in; the session authenticator will save this to the cookie
+                // Manually log the user in.
+                // The session authenticator will now catch this and save it to the cookie!
                 request.auth.login(AdminUser())
                 return request.redirect(to: "/" + config.panelRoute.map(\.description).joined(separator: "/"))
             } else {
@@ -30,13 +33,13 @@ extension Deployer {
             }
         }
         
-        // 4. Create a protected route group
-        // Be sure to include the Session Authenticator BEFORE the RedirectMiddleware
-        let protected = app.grouped(
-            AdminSessionAuthenticator(),
+        // 3. Create a protected route group specifically for the panel
+        // This adds the redirect middleware on top of the session authenticator
+        let protected = sessionRoutes.grouped(
             AdminUser.redirectMiddleware(path: "/deployer/login")
         )
         
+        // 4. Your panel route
         protected.get(config.panelRoute) { request async throws -> View in
             
             let deployer = await config.deployerRowComponent.makeContext(ofAll: request.db)
