@@ -5,38 +5,30 @@ import Mist
 extension Deployer {
     
     func usePanel(config: DeployerConfiguration) {
-            
+        
         let panelPath = "/" + config.panelRoute.map(\.description).joined(separator: "/")
         let loginPath = panelPath + "/login"
         
-        // 1. Enable sessions globally for the app
-        app.middleware.use(app.sessions.middleware)
+        let sessionRoutes = app.grouped(app.sessions.middleware)
         
-        // 2. Serve the login page
-        app.get(config.panelRoute + ["login"]) { request async throws -> View in
+        sessionRoutes.get(config.panelRoute + ["login"]) { request async throws -> View in
             let hasError = request.query[String.self, at: "error"] != nil
             return try await request.view.render("Deployer/Login", ["error": hasError])
         }
         
-        // 3. Process the login form
-        app.post(config.panelRoute + ["login"]) { request async throws -> Response in
+        sessionRoutes.post(config.panelRoute + ["login"]) { request async throws -> Response in
             let formData = try request.content.decode(LoginFormData.self)
             
             if formData.password == Deployer.Variables.PANEL_PASSWORD.value {
-                
-                // THE FOOLPROOF FIX: Write directly to the session data dictionary!
                 request.session.data["admin_auth"] = "true"
-                
                 return request.redirect(to: panelPath)
             } else {
                 return request.redirect(to: loginPath + "?error=true")
             }
         }
         
-        // 4. Protect the panel route with our custom middleware
-        let protected = app.grouped(PanelSessionMiddleware(loginPath: loginPath))
+        let protected = sessionRoutes.grouped(PanelSessionMiddleware(loginPath: loginPath))
         
-        // 5. Your panel route
         protected.get(config.panelRoute) { request async throws -> View in
             
             let deployer = await config.deployerRowComponent.makeContext(ofAll: request.db)
