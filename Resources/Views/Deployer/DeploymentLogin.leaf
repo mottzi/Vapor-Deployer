@@ -7,16 +7,19 @@
   <link rel="icon" type="image/png" href="/mottzi.png">
   <link rel="stylesheet" href="/deployer.css">
   <style>
-    .dp-header-inner {
-        justify-content: center;
-    }
-
     .dp-login-wrap {
       flex: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 16px;
       padding: 24px;
+    }
+
+    .dp-login-wrap > * {
+      width: 100%;
+      max-width: 360px;
     }
 
     .dp-login-card {
@@ -64,12 +67,6 @@
       flex-shrink: 0;
     }
 
-    .dp-login-field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
     .dp-login-input {
       width: 100%;
       background: var(--surface-2);
@@ -110,29 +107,27 @@
       background: rgba(255, 255, 255, 0.07);
       border-color: rgba(255, 255, 255, 0.2);
     }
+    .dp-wordmark {
+      padding-left: 2px;
+    }
   </style>
 </head>
 <body>
 
   <div class="dp-shell">
 
-    <!-- ── Header ──────────────────────────────────────────── -->
-    <header class="dp-header">
-      <div class="dp-header-inner">
-        <div class="dp-wordmark">
-          <div class="dp-wordmark-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 1L12.5 4.25V10.75L7 14L1.5 10.75V4.25L7 1Z" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
-              <circle cx="7" cy="7" r="2" fill="white"/>
-            </svg>
-          </div>
-          <span class="dp-wordmark-title">Deployer</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- ── Login ───────────────────────────────────────────── -->
     <div class="dp-login-wrap">
+
+      <div class="dp-wordmark">
+        <div class="dp-wordmark-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 1L12.5 4.25V10.75L7 14L1.5 10.75V4.25L7 1Z" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+            <circle cx="7" cy="7" r="2" fill="white"/>
+          </svg>
+        </div>
+        <span class="dp-wordmark-title">Deployer</span>
+      </div>
+
       <div class="dp-login-card">
 
         <span class="dp-login-title">
@@ -147,21 +142,21 @@
         #endif
 
         <form method="POST" action="" style="display: flex; flex-direction: column; gap: 12px;">
-          <div class="dp-login-field">
-            <input
-              class="dp-login-input"
-              type="password"
-              name="password"
-              placeholder="Password"
-              autocomplete="new-password"
-              autofocus
-              required
-            >
-          </div>
+          <input type="text" name="username" style="display:none" autocomplete="username">
+          <input
+            class="dp-login-input"
+            type="password"
+            name="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            autofocus
+            required
+          >
           <button class="dp-login-btn" type="submit">Sign In</button>
         </form>
 
       </div>
+
     </div>
 
   </div>
