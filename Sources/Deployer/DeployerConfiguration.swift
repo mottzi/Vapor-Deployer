@@ -76,6 +76,7 @@ extension Deployer {
     enum Variables: String, CaseIterable {
         case GITHUB_WEBHOOK_SECRET
         case DEPLOY_SECRET
+        case PANEL_PASSWORD
 
         var value: String { Environment.get(self.rawValue)! }
     }

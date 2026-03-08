@@ -6,7 +6,38 @@ extension Deployer {
     
     func usePanel(config: DeployerConfiguration) {
         
-        app.get(config.panelRoute) { request async throws -> View in
+        // 1. Enable session support for the application
+        app.middleware.use(app.sessions.middleware)
+        
+        // 2. Serve the login page
+        app.get(config.panelRoute + ["login"]) { request async throws -> View in
+            
+            let hasError = request.query[String.self, at: "error"] != nil
+            return try await request.view.render("Deployer/Login", ["error": hasError])
+        }
+        
+        // 3. Process the login form
+        app.post(config.panelRoute + ["login"]) { request async throws -> Response in
+            
+            let formData = try request.content.decode(LoginFormData.self)
+            
+            if formData.password == Deployer.Variables.PANEL_PASSWORD.value {
+                // Manually log the user in; the session authenticator will save this to the cookie
+                request.auth.login(AdminUser())
+                return request.redirect(to: "/" + config.panelRoute.map(\.description).joined(separator: "/"))
+            } else {
+                return request.redirect(to: "/login?error=true")
+            }
+        }
+        
+        // 4. Create a protected route group
+        // Be sure to include the Session Authenticator BEFORE the RedirectMiddleware
+        let protected = app.grouped(
+            AdminSessionAuthenticator(),
+            AdminUser.redirectMiddleware(path: "/login") //
+        )
+        
+        protected.get(config.panelRoute) { request async throws -> View in
             
             let deployer = await config.deployerRowComponent.makeContext(ofAll: request.db)
             let server = await config.serverRowComponent.makeContext(ofAll: request.db)
@@ -52,6 +83,34 @@ extension Deployer {
     }
     
 }
+
+// 1. A dummy user type for our single admin
+struct AdminUser: SessionAuthenticatable {
+    var sessionID: String { "admin_user" }
+}
+
+// 2. The authenticator that restores the user from the session cookie
+struct AdminSessionAuthenticator: AsyncSessionAuthenticator {
+    typealias User = AdminUser
+    
+    func authenticate(sessionID: String, for request: Request) async throws {
+        if sessionID == "admin_user" {
+            request.auth.login(AdminUser())
+        }
+    }
+}
+
+// 3. The struct to decode your HTML form POST
+struct LoginFormData: Content {
+    let password: String
+}
+
+
+
+
+
+
+
 
 public struct DeployerPanelRow: Mist.InstanceComponent {
     

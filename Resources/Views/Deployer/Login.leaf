@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deployer Login</title>
+</head>
+<body>
+    <h1>Deployer Login</h1>
+    
+    #if(error):
+        <p style="color: red;">Incorrect password.</p>
+    #endif
+
+    <form method="POST" action="/login">
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Sign In</button>
+    </form>
+</body>
+</html>
