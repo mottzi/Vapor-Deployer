@@ -5,36 +5,41 @@ import Mist
 extension Deployer {
     
     func usePanel(config: DeployerConfiguration) {
-        
+
         let panelPath = "/" + config.panelRoute.map(\.description).joined(separator: "/")
         let loginPath = panelPath + "/login"
-        
-        let sessionRoutes = app.grouped(app.sessions.middleware)
-        
-        sessionRoutes.get(config.panelRoute + ["login"]) { request async throws -> View in
-            let hasError = request.query[String.self, at: "error"] != nil
-            return try await request.view.render("Deployer/Login", ["error": hasError])
+
+        let panel = app.grouped(config.panelRoute)
+                       .grouped(app.sessions.middleware)
+
+        panel.get("login") { req async throws -> View in
+            let hasError = req.query[String.self, at: "error"] != nil
+            return try await req.view.render("Deployer/Login", ["error": hasError])
         }
-        
-        sessionRoutes.post(config.panelRoute + ["login"]) { request async throws -> Response in
-            let formData = try request.content.decode(LoginFormData.self)
-            
-            if formData.password == Deployer.Variables.PANEL_PASSWORD.value {
-                request.session.data["admin_auth"] = "true"
-                return request.redirect(to: panelPath)
-            } else {
-                return request.redirect(to: loginPath + "?error=true")
+
+        panel.post("login") { req async throws -> Response in
+            let form = try req.content.decode(LoginFormData.self)
+
+            guard form.password == Deployer.Variables.PANEL_PASSWORD.value else {
+                return req.redirect(to: loginPath + "?error=true")
             }
+
+            req.session.data["admin_auth"] = "true"
+            return req.redirect(to: panelPath)
         }
-        
-        let protected = sessionRoutes.grouped(PanelSessionMiddleware(loginPath: loginPath))
-        
-        protected.get(config.panelRoute) { request async throws -> View in
-            
-            let deployer = await config.deployerRowComponent.makeContext(ofAll: request.db)
-            let server = await config.serverRowComponent.makeContext(ofAll: request.db)
-            let current = try? await Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
-            
+
+        let protected = panel.grouped(
+            PanelSessionMiddleware(loginPath: loginPath)
+        )
+
+        protected.get { req async throws -> View in
+            let deployer = await config.deployerRowComponent.makeContext(ofAll: req.db)
+            let server = await config.serverRowComponent.makeContext(ofAll: req.db)
+            let current = try? await Deployment.getCurrent(
+                named: config.serverTarget.productName,
+                on: req.db
+            )
+
             let tables = [
                 TableContext(
                     title: "Deployer",
@@ -47,19 +52,19 @@ extension Deployer {
                     rows: server.components
                 )
             ]
-            
+
             let component = current.map {
                 var container = ModelContainer()
                 container.add($0, for: "deployment")
                 return container
             }
-            
+
             let context = DeploymentPanelContext(
                 tables: tables,
                 component: component
             )
-            
-            return try await request.view.render("Deployer/DeploymentPanel", context)
+
+            return try await req.view.render("Deployer/DeploymentPanel", context)
         }
     }
     
