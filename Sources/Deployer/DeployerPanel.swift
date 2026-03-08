@@ -6,35 +6,26 @@ extension Deployer {
     
     func usePanel(config: DeployerConfiguration) {
             
-        // Construct our base paths dynamically so they are always correct
         let panelPath = "/" + config.panelRoute.map(\.description).joined(separator: "/")
         let loginPath = panelPath + "/login"
         
-        // 1. Group the session middleware AND the authenticator explicitly.
-        // This guarantees the order is perfect for these specific routes.
-        let sessionRoutes = app.grouped(
-            app.sessions.middleware,
-            AdminSessionAuthenticator()
-        )
+        // 1. Enable sessions globally for the app
+        app.middleware.use(app.sessions.middleware)
         
         // 2. Serve the login page
-        sessionRoutes.get(config.panelRoute + ["login"]) { request async throws -> View in
+        app.get(config.panelRoute + ["login"]) { request async throws -> View in
             let hasError = request.query[String.self, at: "error"] != nil
             return try await request.view.render("Deployer/Login", ["error": hasError])
         }
         
         // 3. Process the login form
-        sessionRoutes.post(config.panelRoute + ["login"]) { request async throws -> Response in
+        app.post(config.panelRoute + ["login"]) { request async throws -> Response in
             let formData = try request.content.decode(LoginFormData.self)
             
             if formData.password == Deployer.Variables.PANEL_PASSWORD.value {
                 
-                // FIX: Explicitly tell the session to authenticate the user!
-                // This forces Vapor to write the sessionID to the cookie data immediately.
-                request.session.authenticate(AdminUser())
-                
-                // We also log them in for the current request lifecycle just in case
-                request.auth.login(AdminUser())
+                // THE FOOLPROOF FIX: Write directly to the session data dictionary!
+                request.session.data["admin_auth"] = "true"
                 
                 return request.redirect(to: panelPath)
             } else {
@@ -42,11 +33,8 @@ extension Deployer {
             }
         }
         
-        // 4. Create a protected route group specifically for the panel
-        // This adds the redirect middleware on top of the session authenticator
-        let protected = sessionRoutes.grouped(
-            AdminUser.redirectMiddleware(path: loginPath)
-        )
+        // 4. Protect the panel route with our custom middleware
+        let protected = app.grouped(PanelSessionMiddleware(loginPath: loginPath))
         
         // 5. Your panel route
         protected.get(config.panelRoute) { request async throws -> View in
@@ -96,25 +84,22 @@ extension Deployer {
     
 }
 
-// 1. A dummy user type for our single admin
-struct AdminUser: SessionAuthenticatable {
-    var sessionID: String { "admin_user" }
-}
-
-// 2. The authenticator that restores the user from the session cookie
-struct AdminSessionAuthenticator: AsyncSessionAuthenticator {
-    typealias User = AdminUser
-    
-    func authenticate(sessionID: String, for request: Request) async throws {
-        if sessionID == "admin_user" {
-            request.auth.login(AdminUser())
-        }
-    }
-}
-
-// 3. The struct to decode your HTML form POST
 struct LoginFormData: Content {
     let password: String
+}
+
+struct PanelSessionMiddleware: AsyncMiddleware, Sendable {
+    let loginPath: String
+    
+    func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
+        // Explicitly check the session data dictionary
+        if request.session.data["admin_auth"] == "true" {
+            return try await next.respond(to: request)
+        }
+        
+        // Not authenticated, redirect to the login page
+        return request.redirect(to: loginPath)
+    }
 }
 
 
