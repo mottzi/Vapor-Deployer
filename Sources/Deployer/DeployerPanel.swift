@@ -20,7 +20,7 @@ extension Deployer {
         panel.get("login") { req async throws -> View in
             
             let hasError = req.query[String.self, at: "error"] != nil
-            return try await req.view.render("Deployer/Login", ["error": hasError])
+            return try await req.view.render("Deployer/DeploymentLogin", ["error": hasError])
         }
 
         panel.post("login") { req async throws -> Response in

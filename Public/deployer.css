@@ -128,28 +128,30 @@ body::before {
 }
 
 /* ── Logout Button ───────────────────────────────────────────── */
+.dp-logout-form {
+  display: contents;
+}
+
 .dp-logout-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  background: transparent;
-  border: 1px solid var(--border-strong);
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: none;
   cursor: pointer;
+  color: var(--text-subtle);
   transition: color 150ms, background 150ms, border-color 150ms;
-  white-space: nowrap;
 }
 .dp-logout-btn:hover {
   color: var(--c-failed);
   background: rgba(248, 113, 113, 0.08);
-  border-color: rgba(248, 113, 113, 0.25);
+  border-color: rgba(248, 113, 113, 0.2);
 }
 
+/* ── Section ─────────────────────────────────────────────────── */
 /* ── Main Content ────────────────────────────────────────────── */
 .dp-main {
   flex: 1;

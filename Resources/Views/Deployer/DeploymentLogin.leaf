@@ -7,6 +7,10 @@
   <link rel="icon" type="image/png" href="/mottzi.png">
   <link rel="stylesheet" href="/deployer.css">
   <style>
+    .dp-header-inner {
+        justify-content: center;
+    }
+
     .dp-login-wrap {
       flex: 1;
       display: flex;
@@ -132,7 +136,7 @@
       <div class="dp-login-card">
 
         <span class="dp-login-title">
-          <span class="dp-login-title-symbol">~/</span>authenticate
+          <span class="dp-login-title-symbol">~/</span>authentication
         </span>
 
         #if(error):
@@ -149,7 +153,7 @@
               type="password"
               name="password"
               placeholder="Password"
-              autocomplete="current-password"
+              autocomplete="new-password"
               autofocus
               required
             >
