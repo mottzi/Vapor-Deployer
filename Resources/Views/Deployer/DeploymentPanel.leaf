@@ -75,13 +75,22 @@
                   <span class="dp-supervisor-badge dp-supervisor-badge--running">
                     <span class="dp-supervisor-dot"></span>running
                   </span>
-                  <button class="dp-supervisor-btn dp-supervisor-btn--stop" mist-action="stop">stop</button>
+                  <button class="dp-supervisor-btn dp-supervisor-btn--stop" mist-action="stop" title="Stop">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="4" width="16" height="16" rx="2"/>
+                    </svg>
+                  </button>
                 #else:
                   <span class="dp-supervisor-badge dp-supervisor-badge--stopped">
                     <span class="dp-supervisor-dot"></span>stopped
                   </span>
                 #endif
-                <button class="dp-supervisor-btn dp-supervisor-btn--restart" mist-action="restart">restart</button>
+                <button class="dp-supervisor-btn dp-supervisor-btn--restart" mist-action="restart" title="Restart">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                </button>
               </div>
             #endif
           </div>
