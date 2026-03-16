@@ -59,7 +59,7 @@ extension Deployer {
                 _ = try? await ProductStatus.upsert(productName: productName, isRunning: initiallyRunning, on: app.db)
 
                 while !app.didShutdown {
-                    try? await Task.sleep(for: .seconds(10))
+                    try? await Task.sleep(for: .seconds(3))
                     guard !app.didShutdown else { break }
                     let isRunning = await SupervisorControl.isRunning(program: productName)
                     _ = try? await ProductStatus.upsert(productName: productName, isRunning: isRunning, on: app.db)

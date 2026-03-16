@@ -106,6 +106,7 @@ struct ProductRestartAction: Mist.Action {
 
     func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
         do {
+            try await ProductStatus.upsert(productName: productName, isRunning: false, on: db)
             try await SupervisorControl.restart(program: productName)
             try await ProductStatus.upsert(productName: productName, isRunning: true, on: db)
             return .success()
