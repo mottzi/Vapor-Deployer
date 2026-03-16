@@ -22,6 +22,11 @@ public struct Deployer: Sendable {
         
         app.views.use(.leaf)
         app.mist.socketPath = config.mistSocketPath
+        app.mist.socketMiddleware = app.sessions.middleware
+        app.mist.shouldUpgrade = { request async -> HTTPHeaders? in
+            guard request.session.data["admin_auth"] == "true" else { return nil }
+            return HTTPHeaders()
+        }
         await app.mist.use(
             config.deployerRowComponent,
             config.serverRowComponent,

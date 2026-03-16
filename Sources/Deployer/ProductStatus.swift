@@ -42,7 +42,6 @@ extension ProductStatus {
 
 extension ProductStatus {
 
-    // No-op when state hasn't changed, preventing spurious Mist listener broadcasts.
     @discardableResult
     static func upsert(productName: String, isRunning: Bool, on db: Database) async throws -> ProductStatus {
 
