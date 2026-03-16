@@ -127,6 +127,34 @@
 
       </section>
       #endfor
+      
+      <!-- ── Status Legend ──────────────────────────────────── -->
+      <div class="dp-legend">
+        <span class="dp-legend-item">
+          <span class="dp-legend-dot" style="background:var(--c-running)"></span>
+          <span class="dp-legend-label">running</span>
+        </span>
+        <span class="dp-legend-item">
+          <span class="dp-legend-dot" style="background:var(--c-success)"></span>
+          <span class="dp-legend-label">success</span>
+        </span>
+        <span class="dp-legend-item">
+          <span class="dp-legend-dot" style="background:var(--c-deployed)"></span>
+          <span class="dp-legend-label">deployed</span>
+        </span>
+        <span class="dp-legend-item">
+          <span class="dp-legend-dot" style="background:var(--c-failed)"></span>
+          <span class="dp-legend-label">failed</span>
+        </span>
+        <span class="dp-legend-item">
+          <span class="dp-legend-dot" style="background:var(--c-canceled)"></span>
+          <span class="dp-legend-label">canceled</span>
+        </span>
+        <span class="dp-legend-item">
+          <span class="dp-legend-dot" style="background:var(--c-stale)"></span>
+          <span class="dp-legend-label">stale</span>
+        </span>
+      </div>
 
     </main>
 

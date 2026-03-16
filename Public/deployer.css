@@ -706,3 +706,32 @@ body::before {
   background: rgba(248, 113, 113, 0.08);
   border-color: rgba(248, 113, 113, 0.2);
 }
+
+/* ── Status Legend ───────────────────────────────────────────── */
+.dp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  padding: 0 4px;
+}
+
+.dp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dp-legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dp-legend-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-subtle);
+    letter-spacing: 0.03em;
+}
