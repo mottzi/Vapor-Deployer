@@ -90,7 +90,7 @@ extension DeployerWorker {
     
     func execute(_ command: String) async throws {
         
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        try await withCheckedThrowingContinuation { continuation in
             
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")

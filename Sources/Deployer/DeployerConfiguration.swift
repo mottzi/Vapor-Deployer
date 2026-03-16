@@ -12,6 +12,8 @@ public struct DeployerConfiguration: Sendable {
     let deployerRowComponent: any Mist.InstanceComponent
     let serverRowComponent: any Mist.InstanceComponent
     let statusComponent: any Mist.Component
+    let serverProductStatusComponent: any Mist.Component      // new
+    let deployerProductStatusComponent: any Mist.Component    // new
     
     public init(
         port: Int,
@@ -22,7 +24,9 @@ public struct DeployerConfiguration: Sendable {
         panelRoute: [PathComponent],
         deployerRowComponent: (any Mist.InstanceComponent)? = nil,
         serverRowComponent: (any Mist.InstanceComponent)? = nil,
-        statusComponent: (any Mist.Component)? = nil
+        statusComponent: (any Mist.Component)? = nil,
+        serverProductStatusComponent: (any Mist.Component)? = nil,     // new
+        deployerProductStatusComponent: (any Mist.Component)? = nil    // new
     ) {
         self.port = port
         self.dbFile = dbFile
@@ -33,6 +37,8 @@ public struct DeployerConfiguration: Sendable {
         self.deployerRowComponent = deployerRowComponent ?? DeployerPanelRow(productName: deployer.productName)
         self.serverRowComponent = serverRowComponent ?? DeployerPanelRow(productName: server.productName)
         self.statusComponent = statusComponent ?? DeployerPanelStatus(productName: server.productName)
+        self.serverProductStatusComponent = serverProductStatusComponent ?? ProductStatusComponent(productName: server.productName)
+        self.deployerProductStatusComponent = deployerProductStatusComponent ?? ProductStatusComponent(productName: deployer.productName)
     }
     
     func target(for productName: String) -> TargetConfiguration? {

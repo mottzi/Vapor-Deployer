@@ -39,12 +39,12 @@
 
           <form class="dp-logout-form" method="POST" action="/deployer/logout">
             <button type="submit" class="dp-logout-btn" title="Logout">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-              </button>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </button>
           </form>
 
         </div>
@@ -63,7 +63,28 @@
           <span class="dp-section-prompt">
             <span class="dp-section-prompt-symbol">~/</span>#(table.productName)
           </span>
-          <span class="dp-section-title">#(table.title)</span>
+
+          <div
+            class="dp-supervisor-slot"
+            mist-container="ProductStatus-#(table.productName)"
+            mist-insert-position="beforeend"
+          >
+            #if(table.productStatus):
+              <div class="dp-product-status" mist-component="ProductStatus-#(table.productStatus.productstatus.productName)">
+                #if(table.productStatus.productstatus.isRunning):
+                  <span class="dp-supervisor-badge dp-supervisor-badge--running">
+                    <span class="dp-supervisor-dot"></span>running
+                  </span>
+                  <button class="dp-supervisor-btn dp-supervisor-btn--stop" mist-action="stop">stop</button>
+                #else:
+                  <span class="dp-supervisor-badge dp-supervisor-badge--stopped">
+                    <span class="dp-supervisor-dot"></span>stopped
+                  </span>
+                #endif
+                <button class="dp-supervisor-btn dp-supervisor-btn--restart" mist-action="restart">restart</button>
+              </div>
+            #endif
+          </div>
         </div>
 
         <!-- Table card -->

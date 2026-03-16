@@ -1,0 +1,16 @@
+<div class="dp-product-status" mist-component="ProductStatus-#(component.productstatus.productName)">
+
+  #if(component.productstatus.isRunning):
+    <span class="dp-supervisor-badge dp-supervisor-badge--running">
+      <span class="dp-supervisor-dot"></span>running
+    </span>
+    <button class="dp-supervisor-btn dp-supervisor-btn--stop" mist-action="stop">stop</button>
+  #else:
+    <span class="dp-supervisor-badge dp-supervisor-badge--stopped">
+      <span class="dp-supervisor-dot"></span>stopped
+    </span>
+  #endif
+
+  <button class="dp-supervisor-btn dp-supervisor-btn--restart" mist-action="restart">restart</button>
+
+</div>

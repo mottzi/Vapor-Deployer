@@ -14,7 +14,6 @@ public struct DeployerPanelRow: Mist.InstanceComponent {
     public var defaultState: MistState { ["errorExpanded": .bool(false)] }
 
     public func allModels(on db: Database) async -> [any Mist.Model]? {
-        
         try? await Deployment.query(on: db)
             .filter(\.$productName == productName)
             .sort(\.$startedAt, .descending)
@@ -30,7 +29,6 @@ struct DeleteDeploymentAction: Mist.Action {
     let name: String = "delete"
     
     func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
-        
         guard let deployment = try? await Deployment.find(id, on: db)
         else { return .failure(message: "Deployment not found") }
         
@@ -47,7 +45,6 @@ struct ToggleDeploymentErrorAction: Mist.Action {
     let name: String = "toggleError"
     
     func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
-        
         guard let id, let deployment = try? await Deployment.find(id, on: db)
         else { return .failure(message: "Deployment not found") }
         
@@ -58,9 +55,10 @@ struct ToggleDeploymentErrorAction: Mist.Action {
         state["errorExpanded"] = .bool(!current)
         return .success()
     }
+
 }
 
-public struct DeployerPanelStatus: QueryComponent {
+public struct DeployerPanelStatus: Mist.QueryComponent {
     
     public let name = "DeploymentStatus"
     public let models: [any Mist.Model.Type] = [Deployment.self]
@@ -75,4 +73,62 @@ public struct DeployerPanelStatus: QueryComponent {
         self.productName = productName
     }
     
+}
+
+public struct ProductStatusComponent: Mist.QueryComponent {
+
+    public var name: String { "ProductStatus-\(productName)" }
+    public let models: [any Mist.Model.Type] = [ProductStatus.self]
+    public let template: Template = .file(path: "Deployer/ProductStatus")
+    public let productName: String
+    public let actions: [any Mist.Action]
+
+    public func queryModel(on db: Database) async -> (any Mist.Model)? {
+        try? await ProductStatus.query(on: db)
+            .filter(\.$productName == productName)
+            .first()
+    }
+
+    public init(productName: String) {
+        self.productName = productName
+        self.actions = [
+            ProductRestartAction(productName: productName),
+            ProductStopAction(productName: productName)
+        ]
+    }
+
+}
+
+struct ProductRestartAction: Mist.Action {
+
+    let name = "restart"
+    let productName: String
+
+    func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
+        do {
+            try await SupervisorControl.restart(program: productName)
+            try await ProductStatus.upsert(productName: productName, isRunning: true, on: db)
+            return .success()
+        } catch {
+            return .failure(message: error.localizedDescription)
+        }
+    }
+
+}
+
+struct ProductStopAction: Mist.Action {
+
+    let name = "stop"
+    let productName: String
+
+    func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
+        do {
+            try await SupervisorControl.stop(program: productName)
+            try await ProductStatus.upsert(productName: productName, isRunning: false, on: db)
+            return .success()
+        } catch {
+            return .failure(message: error.localizedDescription)
+        }
+    }
+
 }

@@ -618,3 +618,91 @@ body::before {
   .dp-header-inner { padding: 0 16px; }
   .dp-main { padding: 24px 16px 48px; }
 }
+
+/* ── Product Status Component ────────────────────────────────── */
+.dp-supervisor-slot {
+  display: flex;
+  align-items: center;
+}
+
+.dp-product-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dp-supervisor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.dp-supervisor-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dp-supervisor-badge--running {
+  color: var(--c-deployed);
+  background: rgba(52, 211, 153, 0.08);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+.dp-supervisor-badge--running .dp-supervisor-dot {
+  background: var(--c-deployed);
+  box-shadow: 0 0 5px rgba(52, 211, 153, 0.5);
+  animation: dp-pulse-green 2s ease-in-out infinite;
+}
+
+.dp-supervisor-badge--stopped {
+  color: var(--text-muted);
+  background: rgba(82, 82, 91, 0.1);
+  border-color: rgba(82, 82, 91, 0.3);
+}
+.dp-supervisor-badge--stopped .dp-supervisor-dot {
+  background: var(--text-subtle);
+}
+
+@keyframes dp-pulse-green {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 5px rgba(52, 211, 153, 0.5); }
+  50%       { opacity: 0.4; box-shadow: 0 0 2px rgba(52, 211, 153, 0.2); }
+}
+
+.dp-supervisor-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  color: var(--text-subtle);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+  transition: color 150ms, background 150ms, border-color 150ms;
+}
+
+.dp-supervisor-btn--restart:hover {
+  color: var(--c-running);
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.dp-supervisor-btn--stop:hover {
+  color: var(--c-failed);
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+}

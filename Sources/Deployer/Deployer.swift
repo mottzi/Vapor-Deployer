@@ -17,6 +17,7 @@ public struct Deployer: Sendable {
         
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
         app.migrations.add(Deployment.Table())
+        app.migrations.add(ProductStatus.Table())
         try await app.autoMigrate()
         
         app.views.use(.leaf)
@@ -24,14 +25,42 @@ public struct Deployer: Sendable {
         await app.mist.use(
             config.deployerRowComponent,
             config.serverRowComponent,
-            config.statusComponent
+            config.statusComponent,
+            config.serverProductStatusComponent,
+            config.deployerProductStatusComponent
         )
-    
+
         app.deployer.useVariables()
         app.deployer.useQueue(config: config)
         app.deployer.useWebhook(config: config)
         app.deployer.useCommand(config: config)
         app.deployer.usePanel(config: config)
+        app.deployer.useProductStatusPolling(config: config)
     }
     
+}
+
+extension Deployer {
+
+    func useProductStatusPolling(config: DeployerConfiguration) {
+
+        for target in [config.serverTarget, config.deployerTarget] {
+
+            let productName = target.productName
+
+            Task.detached { [app] in
+
+                let initiallyRunning = await SupervisorControl.isRunning(program: productName)
+                _ = try? await ProductStatus.upsert(productName: productName, isRunning: initiallyRunning, on: app.db)
+
+                while !app.didShutdown {
+                    try? await Task.sleep(for: .seconds(10))
+                    guard !app.didShutdown else { break }
+                    let isRunning = await SupervisorControl.isRunning(program: productName)
+                    _ = try? await ProductStatus.upsert(productName: productName, isRunning: isRunning, on: app.db)
+                }
+            }
+        }
+    }
+
 }
