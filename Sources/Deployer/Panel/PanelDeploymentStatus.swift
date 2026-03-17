@@ -12,7 +12,7 @@ public struct PanelDeploymentStatus: Mist.QueryComponent {
     public init(productName: String) {
         self.productName = productName
         self.models = [Deployment.self]
-        self.template = .file(path: "Deployer/DeploymentStatus")
+        self.template = .file(path: "Deployer/PanelDeploymentStatus")
     }
     
     public func queryModel(on db: Database) async -> (any Mist.Model)? {
