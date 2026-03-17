@@ -17,13 +17,13 @@ public struct Deployer: Sendable {
         
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
         app.migrations.add(Deployment.Table())
-        app.migrations.add(ProductStatus.Table())
+        app.migrations.add(DeployerProductStatus.Table())
         try await app.autoMigrate()
         
         app.views.use(.leaf)
         app.mist.socketPath = config.mistSocketPath
         app.mist.socketMiddleware = app.sessions.middleware
-        app.mist.shouldUpgrade = { request async -> HTTPHeaders? in
+        app.mist.shouldUpgrade = { request in
             guard request.session.data["admin_auth"] == "true" else { return nil }
             return HTTPHeaders()
         }
@@ -38,7 +38,6 @@ public struct Deployer: Sendable {
         app.deployer.useVariables()
         app.deployer.useQueue(config: config)
         app.deployer.useWebhook(config: config)
-        app.deployer.useCommand(config: config)
         app.deployer.usePanel(config: config)
         app.deployer.useProductStatusPolling(config: config)
     }

@@ -2,42 +2,11 @@ import Vapor
 import Fluent
 import Mist
 
-extension Deployer {
-    
-    func usePanel(config: DeployerConfiguration) {
-
-        let panel = DeployerPanel(config: config)
-        
-        let router = app.grouped(config.panelRoute).grouped(app.sessions.middleware)
-        router.get("login")     { try await panel.serveLogin(request: $0) }
-        router.post("login")    { try panel.handleLogin(request: $0) }
-        router.post("logout")   { panel.handleLogout(request: $0) }
-        
-        let authRouter = router.grouped(panel.authenticator)
-        authRouter.get()        { try await panel.servePanel(request: $0, config: config) }
-    }
-    
-}
-
-struct DeployerPanel {
-    
-    let panelPath: String
-    let loginPath: String
-    let authenticator: PanelAuthenticator
-    
-    init(config: DeployerConfiguration) {
-        panelPath = "/" + config.panelRoute.map(\.description).joined(separator: "/")
-        loginPath = panelPath + "/login"
-        authenticator = PanelAuthenticator(path: loginPath)
-    }
-    
-}
-    
 extension DeployerPanel {
     
     func serveLogin(request: Request) async throws -> View {
         let hasError = request.query[String.self, at: "error"] != nil
-        return try await request.view.render("Deployer/DeploymentLogin", ["error": hasError])
+        return try await request.view.render("Deployer/DeployerPanelLogin", ["error": hasError])
     }
 
     func handleLogin(request: Request) throws -> Response {
@@ -57,16 +26,22 @@ extension DeployerPanel {
     func servePanel(request: Request, config: DeployerConfiguration) async throws -> View {
         
         let deployerRows = await config.deployerRowComponent.makeContext(ofAll: request.db)
-        let serverRows   = await config.serverRowComponent.makeContext(ofAll: request.db)
-        let current      = try? await Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
+        let serverRows = await config.serverRowComponent.makeContext(ofAll: request.db)
+        let current = try? await Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
 
-        async let serverStatus   = ProductStatus.query(on: request.db).filter(\.$productName == config.serverTarget.productName).first()
-        async let deployerStatus = ProductStatus.query(on: request.db).filter(\.$productName == config.deployerTarget.productName).first()
+        let serverStatus = try? await DeployerProductStatus.query(on: request.db)
+            .filter(\.$productName == config.serverTarget.productName)
+            .first()
+        
+        let deployerStatus = try? await DeployerProductStatus.query(on: request.db)
+            .filter(\.$productName == config.deployerTarget.productName)
+            .first()
 
-        let serverStatusContainer: ModelContainer? = (try? await serverStatus).map {
+        let serverStatusContainer: ModelContainer? = serverStatus.map {
             var c = ModelContainer(); c.add($0, for: "productstatus"); return c
         }
-        let deployerStatusContainer: ModelContainer? = (try? await deployerStatus).map {
+        
+        let deployerStatusContainer: ModelContainer? = deployerStatus.map {
             var c = ModelContainer(); c.add($0, for: "productstatus"); return c
         }
 
@@ -93,11 +68,11 @@ extension DeployerPanel {
         
         let context = PanelContext(tables: tables, component: component)
         
-        return try await request.view.render("Deployer/DeploymentPanel", context)
+        return try await request.view.render("Deployer/DeployerPanel", context)
     }
     
 }
-     
+
 extension DeployerPanel {
     
     struct PanelContext: Encodable {

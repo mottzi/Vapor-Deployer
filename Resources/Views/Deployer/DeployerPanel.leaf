@@ -29,11 +29,11 @@
 
           <div
             class="dp-status-slot"
-            mist-container="DeploymentStatus"
+            mist-container="PanelDeploymentStatus"
             mist-insert-position="beforeend"
           >
             #if(component):
-              #extend("Deployer/DeploymentStatus")
+              #extend("Deployer/PanelDeploymentStatus")
             #endif
           </div>
 
@@ -66,11 +66,11 @@
 
           <div
             class="dp-supervisor-slot"
-            mist-container="ProductStatus-#(table.productName)"
+            mist-container="PanelProductStatus-#(table.productName)"
             mist-insert-position="beforeend"
           >
             #if(table.productStatus):
-              <div class="dp-product-status" mist-component="ProductStatus-#(table.productStatus.productstatus.productName)">
+              <div class="dp-product-status" mist-component="PanelProductStatus-#(table.productStatus.productstatus.productName)">
                 #if(table.productStatus.productstatus.isRunning):
                   <span class="dp-supervisor-badge dp-supervisor-badge--running">
                     <span class="dp-supervisor-dot"></span>running
@@ -103,7 +103,7 @@
 
               <thead
                 class="dp-thead"
-                mist-container="DeploymentRow-#(table.productName)"
+                mist-container="PanelDeploymentRow-#(table.productName)"
                 mist-insert-position="afterend"
               >
                 <tr>
@@ -118,7 +118,7 @@
               </thead>
 
               #for(component in table.rows):
-                #extend("Deployer/DeploymentRow")
+                #extend("Deployer/PanelDeploymentRow")
               #endfor
 
             </table>

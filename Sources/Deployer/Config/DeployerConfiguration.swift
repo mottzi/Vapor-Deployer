@@ -34,11 +34,11 @@ public struct DeployerConfiguration: Sendable {
         self.deployerTarget = deployer
         self.mistSocketPath = mistSocketPath
         self.panelRoute = panelRoute
-        self.deployerRowComponent = deployerRowComponent ?? DeployerPanelRow(productName: deployer.productName)
-        self.serverRowComponent = serverRowComponent ?? DeployerPanelRow(productName: server.productName)
-        self.statusComponent = statusComponent ?? DeployerPanelStatus(productName: server.productName)
-        self.serverProductStatusComponent = serverProductStatusComponent ?? ProductStatusComponent(productName: server.productName)
-        self.deployerProductStatusComponent = deployerProductStatusComponent ?? ProductStatusComponent(productName: deployer.productName)
+        self.deployerRowComponent = deployerRowComponent ?? PanelDeploymentRow(productName: deployer.productName)
+        self.serverRowComponent = serverRowComponent ?? PanelDeploymentRow(productName: server.productName)
+        self.statusComponent = statusComponent ?? PanelDeploymentStatus(productName: server.productName)
+        self.serverProductStatusComponent = serverProductStatusComponent ?? PanelProductStatus(productName: server.productName)
+        self.deployerProductStatusComponent = deployerProductStatusComponent ?? PanelProductStatus(productName: deployer.productName)
     }
     
     func target(for productName: String) -> TargetConfiguration? {
@@ -66,25 +66,6 @@ public struct TargetConfiguration: Sendable {
         self.workingDirectory = workingDirectory
         self.buildMode = buildMode
         self.pusheventPath = pusheventPath
-    }
-    
-}
-
-extension Deployer {
-    
-    func useVariables() {
-        for variable in Variables.allCases {
-            guard Environment.get(variable.rawValue) == nil else { continue }
-            fatalError("\(variable.rawValue): Environment variable not found.")
-        }
-    }
-    
-    enum Variables: String, CaseIterable {
-        case GITHUB_WEBHOOK_SECRET
-        case DEPLOY_SECRET
-        case PANEL_PASSWORD
-
-        var value: String { Environment.get(self.rawValue)! }
     }
     
 }
