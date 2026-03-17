@@ -4,10 +4,11 @@ import Mist
 
 public struct PanelProductStatus: Mist.QueryComponent {
 
+    public let productName: String
+
     public var name: String { "PanelProductStatus-\(productName)" }
     public let models: [any Mist.Model.Type] = [DeployerProductStatus.self]
     public let template: Template = .file(path: "Deployer/PanelProductStatus")
-    public let productName: String
     public let actions: [any Mist.Action]
 
     public func queryModel(on db: Database) async -> (any Mist.Model)? {

@@ -38,11 +38,11 @@ extension DeployerPanel {
             .first()
 
         let serverStatusContainer: ModelContainer? = serverStatus.map {
-            var c = ModelContainer(); c.add($0, for: "productstatus"); return c
+            var c = ModelContainer(); c.add($0, for: "deployerproductstatus"); return c
         }
         
         let deployerStatusContainer: ModelContainer? = deployerStatus.map {
-            var c = ModelContainer(); c.add($0, for: "productstatus"); return c
+            var c = ModelContainer(); c.add($0, for: "deployerproductstatus"); return c
         }
 
         let tables = [
