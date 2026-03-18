@@ -1,6 +1,3 @@
-//import Vapor
-//import Fluent
-//import FluentSQLiteDriver
 import Foundation
 
 struct Supervisor {
