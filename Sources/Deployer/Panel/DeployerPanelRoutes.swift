@@ -22,33 +22,31 @@ extension DeployerPanel {
         request.session.destroy()
         return request.redirect(to: loginPath)
     }
-
+    
     func servePanel(request: Request, config: DeployerConfiguration) async throws -> View {
 
-        let deployerRows = await config.deployerRowComponent.makeContext(ofAll: request.db)
-        let serverRows   = await config.serverRowComponent.makeContext(ofAll: request.db)
-        let current      = try? await Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
-
-        // Direct Supervisor queries — no DB model needed anymore
-        let serverIsRunning   = await Supervisor.isRunning(product: config.serverTarget.productName)
-        let deployerIsRunning = await Supervisor.isRunning(product: config.deployerTarget.productName)
+        async let deployerRows    = config.deployerRowComponent.makeContext(ofAll: request.db)
+        async let serverRows      = config.serverRowComponent.makeContext(ofAll: request.db)
+        async let current         = Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
+        async let serverRunning   = Supervisor.isRunning(product: config.serverTarget.productName)
+        async let deployerRunning = Supervisor.isRunning(product: config.deployerTarget.productName)
 
         let tables = [
             TableContext(
                 title: "Deployer",
                 productName: config.deployerTarget.productName,
-                rows: deployerRows.components,
-                isRunning: deployerIsRunning
+                rows: await deployerRows.components,
+                isRunning: await deployerRunning
             ),
             TableContext(
                 title: "Server",
                 productName: config.serverTarget.productName,
-                rows: serverRows.components,
-                isRunning: serverIsRunning
+                rows: await serverRows.components,
+                isRunning: await serverRunning
             )
         ]
 
-        let component = current.map {
+        let component = try? await current.map {
             var container = ModelContainer()
             container.add($0, for: "deployment")
             return container
