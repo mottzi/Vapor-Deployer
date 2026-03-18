@@ -15,7 +15,7 @@ public struct Deployer: Sendable {
         app.http.server.configuration.port = config.port
         app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
         
-        app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
+        app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite, isDefault: true)
         app.migrations.add(Deployment.Table())
 //        app.migrations.add(DeployerProductStatus.Table())
         try await app.autoMigrate()
