@@ -1,6 +1,6 @@
-<div class="dp-product-status" mist-component="PanelProductStatus-#(component.deployerproductstatus.productName)">
+<div class="dp-product-status" mist-component="PanelProductStatus-#(productName)">
 
-  #if(component.deployerproductstatus.isRunning):
+  #if(isRunning):
     <span class="dp-supervisor-badge dp-supervisor-badge--running">
       <span class="dp-supervisor-dot"></span>running
     </span>

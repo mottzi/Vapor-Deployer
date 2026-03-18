@@ -1,4 +1,4 @@
-// Move this file (mist.js) to: /Public 
+// Move this file (mist.js) to: /Public
 
 class MistSocket {
 
@@ -190,8 +190,10 @@ class MistSocket {
                     } else {
                         // Find container that accepts this component
                         const containers = document.querySelectorAll('[mist-container]');
+
                         for (const container of containers) {
                             const acceptedComponents = container.getAttribute('mist-container').split(',').map(c => c.trim());
+
                             if (acceptedComponents.includes(component)) {
                                 // Check for custom insertion position (default: 'beforeend' to append)
                                 const insertPosition = container.getAttribute('mist-insert-position') || 'beforeend';
@@ -204,6 +206,13 @@ class MistSocket {
                 }
                 else if (data.updateInstanceComponent) {
                     const { component, id, html } = data.updateInstanceComponent;
+
+                    // Prevent WebSocket Crossover Updates
+                    if (!html.includes(`mist-component="${component}"`)) {
+                        console.log(`[Client] Dropped cross-channel update for ${component}`);
+                        return;
+                    }
+
                     const elements = document.querySelectorAll(this.buildComponentSelector(component, id));
 
                     elements.forEach(element => {

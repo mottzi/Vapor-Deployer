@@ -24,51 +24,37 @@ extension DeployerPanel {
     }
 
     func servePanel(request: Request, config: DeployerConfiguration) async throws -> View {
-        
+
         let deployerRows = await config.deployerRowComponent.makeContext(ofAll: request.db)
-        let serverRows = await config.serverRowComponent.makeContext(ofAll: request.db)
-        let current = try? await Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
+        let serverRows   = await config.serverRowComponent.makeContext(ofAll: request.db)
+        let current      = try? await Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
 
-        let serverStatus = try? await DeployerProductStatus.query(on: request.db)
-            .filter(\.$productName == config.serverTarget.productName)
-            .first()
-        
-        let deployerStatus = try? await DeployerProductStatus.query(on: request.db)
-            .filter(\.$productName == config.deployerTarget.productName)
-            .first()
-
-        let serverStatusContainer: ModelContainer? = serverStatus.map {
-            var c = ModelContainer(); c.add($0, for: "deployerproductstatus"); return c
-        }
-        
-        let deployerStatusContainer: ModelContainer? = deployerStatus.map {
-            var c = ModelContainer(); c.add($0, for: "deployerproductstatus"); return c
-        }
+        // Direct Supervisor queries — no DB model needed anymore
+        let serverIsRunning   = await Supervisor.isRunning(product: config.serverTarget.productName)
+        let deployerIsRunning = await Supervisor.isRunning(product: config.deployerTarget.productName)
 
         let tables = [
             TableContext(
                 title: "Deployer",
                 productName: config.deployerTarget.productName,
                 rows: deployerRows.components,
-                productStatus: deployerStatusContainer
+                isRunning: deployerIsRunning
             ),
             TableContext(
                 title: "Server",
                 productName: config.serverTarget.productName,
                 rows: serverRows.components,
-                productStatus: serverStatusContainer
+                isRunning: serverIsRunning
             )
         ]
-        
+
         let component = current.map {
             var container = ModelContainer()
             container.add($0, for: "deployment")
             return container
         }
-        
-        let context = PanelContext(tables: tables, component: component)
-        
-        return try await request.view.render("Deployer/DeployerPanel", context)
+
+        return try await request.view.render("Deployer/DeployerPanel", PanelContext(tables: tables, component: component))
     }
     
 }
@@ -84,7 +70,7 @@ extension DeployerPanel {
         let title: String
         let productName: String
         let rows: [ModelContainer]
-        let productStatus: ModelContainer?
+        let isRunning: Bool
     }
 
     struct LoginFormData: Content {

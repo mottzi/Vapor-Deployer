@@ -2,30 +2,34 @@ import Vapor
 import Fluent
 import Mist
 
-public struct PanelProductStatus: Mist.QueryComponent {
+public struct PanelProductStatus: Mist.PollingComponent {
 
     public let productName: String
 
     public var name: String { "PanelProductStatus-\(productName)" }
-    public let models: [any Mist.Model.Type] = [DeployerProductStatus.self]
+    public let interval: Duration = .seconds(3)
     public let template: Template = .file(path: "Deployer/PanelProductStatus")
     public let actions: [any Mist.Action]
-
-    public func queryModel(on db: Database) async -> (any Mist.Model)? {
-        try? await DeployerProductStatus.query(on: db)
-            .filter(\.$productName == productName)
-            .first()
-    }
 
     public init(productName: String) {
         self.productName = productName
         self.actions = [RestartAction(productName: productName), StopAction(productName: productName)]
     }
 
+    public func poll(on db: Database) async -> (any Encodable)? {
+        let isRunning = await Supervisor.isRunning(product: productName)
+        return Context(productName: productName, isRunning: isRunning)
+    }
+
+    private struct Context: Encodable {
+        let productName: String
+        let isRunning: Bool
+    }
+
 }
 
 extension PanelProductStatus {
-    
+
     struct RestartAction: Mist.Action {
 
         let name = "restart"
@@ -33,9 +37,7 @@ extension PanelProductStatus {
 
         func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
             do {
-                try await DeployerProductStatus.upsert(productName: productName, isRunning: false, on: db)
                 try await Supervisor.restart(product: productName)
-                try await DeployerProductStatus.upsert(productName: productName, isRunning: true, on: db)
                 return .success()
             } catch {
                 return .failure(message: error.localizedDescription)
@@ -52,7 +54,6 @@ extension PanelProductStatus {
         func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
             do {
                 try await Supervisor.stop(product: productName)
-                try await DeployerProductStatus.upsert(productName: productName, isRunning: false, on: db)
                 return .success()
             } catch {
                 return .failure(message: error.localizedDescription)
@@ -60,5 +61,5 @@ extension PanelProductStatus {
         }
 
     }
-    
+
 }
