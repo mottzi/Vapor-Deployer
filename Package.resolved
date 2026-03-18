@@ -294,8 +294,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mottzi/Vapor-Mist.git",
       "state" : {
-        "revision" : "17641051c512c02f62e76a985c461f8a3bfa1dce",
-        "version" : "0.16.1"
+        "revision" : "90d91e97eb020e17c53a669698569e05deeb103a",
+        "version" : "0.16.2"
       }
     },
     {
