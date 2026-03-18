@@ -12,8 +12,8 @@ public struct DeployerConfiguration: Sendable {
     let deployerRowComponent: any Mist.InstanceComponent
     let serverRowComponent: any Mist.InstanceComponent
     let statusComponent: any Mist.Component
-    let serverProductStatusComponent: any Mist.Component      // new
-    let deployerProductStatusComponent: any Mist.Component    // new
+    let serverStatusComponent: any Mist.Component      // new
+    let deployerStatusComponent: any Mist.Component    // new
     
     public init(
         port: Int,
@@ -25,8 +25,8 @@ public struct DeployerConfiguration: Sendable {
         deployerRowComponent: (any Mist.InstanceComponent)? = nil,
         serverRowComponent: (any Mist.InstanceComponent)? = nil,
         statusComponent: (any Mist.Component)? = nil,
-        serverProductStatusComponent: (any Mist.Component)? = nil,     // new
-        deployerProductStatusComponent: (any Mist.Component)? = nil    // new
+        serverStatusComponent: (any Mist.Component)? = nil,     // new
+        deployerStatusComponent: (any Mist.Component)? = nil    // new
     ) {
         self.port = port
         self.dbFile = dbFile
@@ -34,11 +34,11 @@ public struct DeployerConfiguration: Sendable {
         self.deployerTarget = deployer
         self.mistSocketPath = mistSocketPath
         self.panelRoute = panelRoute
-        self.deployerRowComponent = deployerRowComponent ?? PanelDeploymentRow(productName: deployer.productName)
-        self.serverRowComponent = serverRowComponent ?? PanelDeploymentRow(productName: server.productName)
-        self.statusComponent = statusComponent ?? PanelDeploymentStatus(productName: server.productName)
-        self.serverProductStatusComponent = serverProductStatusComponent ?? PanelProductStatus(productName: server.productName)
-        self.deployerProductStatusComponent = deployerProductStatusComponent ?? PanelProductStatus(productName: deployer.productName)
+        self.deployerRowComponent = deployerRowComponent ?? RowComponent(productName: deployer.productName)
+        self.serverRowComponent = serverRowComponent ?? RowComponent(productName: server.productName)
+        self.statusComponent = statusComponent ?? LiveComponent(productName: server.productName)
+        self.serverStatusComponent = serverStatusComponent ?? StatusComponent(productName: server.productName)
+        self.deployerStatusComponent = deployerStatusComponent ?? StatusComponent(productName: deployer.productName)
     }
     
     func target(for productName: String) -> TargetConfiguration? {

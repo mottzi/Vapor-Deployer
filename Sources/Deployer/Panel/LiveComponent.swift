@@ -2,7 +2,7 @@ import Vapor
 import Fluent
 import Mist
 
-public struct PanelDeploymentStatus: Mist.QueryComponent {
+public struct LiveComponent: Mist.QueryComponent {
     
     public let productName: String
     
@@ -12,7 +12,7 @@ public struct PanelDeploymentStatus: Mist.QueryComponent {
     public init(productName: String) {
         self.productName = productName
         self.models = [Deployment.self]
-        self.template = .file(path: "Deployer/PanelDeploymentStatus")
+        self.template = .file(path: "Deployer/LiveComponent")
     }
     
     public func queryModel(on db: Database) async -> (any Mist.Model)? {

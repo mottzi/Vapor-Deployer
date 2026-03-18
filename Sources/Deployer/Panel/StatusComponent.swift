@@ -2,13 +2,13 @@ import Vapor
 import Fluent
 import Mist
 
-public struct PanelProductStatus: Mist.PollingComponent {
+public struct StatusComponent: Mist.PollingComponent {
 
     public let productName: String
 
-    public var name: String { "PanelProductStatus-\(productName)" }
+    public var name: String { "StatusComponent-\(productName)" }
     public let interval: Duration = .seconds(3)
-    public let template: Template = .file(path: "Deployer/PanelProductStatus")
+    public let template: Template = .file(path: "Deployer/StatusComponent")
     public let actions: [any Mist.Action]
 
     public init(productName: String) {
@@ -28,7 +28,7 @@ public struct PanelProductStatus: Mist.PollingComponent {
 
 }
 
-extension PanelProductStatus {
+extension StatusComponent {
 
     struct RestartAction: Mist.Action {
 

@@ -1,5 +1,5 @@
 <div
-  mist-component="PanelDeploymentStatus"
+  mist-component="LiveComponent"
   class="dp-live-badge"
 >
   <span class="dp-live-dot"></span>

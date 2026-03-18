@@ -2,7 +2,7 @@ import Vapor
 import Fluent
 import Mist
 
-public struct PanelDeploymentRow: Mist.InstanceComponent {
+public struct RowComponent: Mist.InstanceComponent {
     
     let productName: String
     
@@ -14,11 +14,11 @@ public struct PanelDeploymentRow: Mist.InstanceComponent {
     
     public init(productName: String) {
         self.productName = productName
-        self.name = "PanelDeploymentRow-\(productName)"
+        self.name = "RowComponent-\(productName)"
         self.defaultState = ["errorExpanded": .bool(false)]
         self.models = [Deployment.self]
         self.actions = [DeleteAction(), ToggleErrorAction()]
-        self.template = .file(path: "Deployer/PanelDeploymentRow")
+        self.template = .file(path: "Deployer/RowComponent")
     }
     
     public func allModels(on db: Database) async -> [any Mist.Model]? {
@@ -30,7 +30,7 @@ public struct PanelDeploymentRow: Mist.InstanceComponent {
     
 }
 
-extension PanelDeploymentRow {
+extension RowComponent {
     
     struct DeleteAction: Mist.Action {
         

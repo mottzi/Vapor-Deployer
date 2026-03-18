@@ -574,7 +574,7 @@ body::before {
   color: var(--text-subtle);
 }
 
-/* ── PanelDeploymentStatus (header badge) ────────────────────────── */
+/* ── LiveComponent (header badge) ────────────────────────── */
 .dp-live-badge {
   display: inline-flex;
   align-items: center;

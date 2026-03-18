@@ -17,7 +17,6 @@ public struct Deployer: Sendable {
         
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite, isDefault: true)
         app.migrations.add(Deployment.Table())
-//        app.migrations.add(DeployerProductStatus.Table())
         try await app.autoMigrate()
         
         app.views.use(.leaf)
@@ -31,15 +30,14 @@ public struct Deployer: Sendable {
             config.deployerRowComponent,
             config.serverRowComponent,
             config.statusComponent,
-            config.serverProductStatusComponent,
-            config.deployerProductStatusComponent
+            config.serverStatusComponent,
+            config.deployerStatusComponent
         )
 
         app.deployer.useVariables()
         app.deployer.useQueue(config: config)
         app.deployer.useWebhook(config: config)
         app.deployer.usePanel(config: config)
-//        app.deployer.useProductStatusPolling(config: config)
     }
     
 }
