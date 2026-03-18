@@ -16,12 +16,12 @@ public struct PanelProductStatus: Mist.PollingComponent {
         self.actions = [RestartAction(productName: productName), StopAction(productName: productName)]
     }
 
-    public func poll(on db: Database) async -> (any Encodable)? {
+    public func poll(on db: Database) async -> Context? {
         let isRunning = await Supervisor.isRunning(product: productName)
         return Context(productName: productName, isRunning: isRunning)
     }
 
-    private struct Context: Encodable {
+    public struct Context: Encodable, Equatable {
         let productName: String
         let isRunning: Bool
     }
