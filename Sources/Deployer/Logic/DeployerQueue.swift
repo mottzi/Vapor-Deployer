@@ -21,7 +21,7 @@ extension Deployer {
 }
 
 actor DeployerQueue {
-    
+        
     var isDeploying: Bool = false
     
     let app: Application
@@ -51,6 +51,10 @@ actor DeployerQueue {
 }
 
 extension DeployerQueue {
+    
+    func logger(_ name: String) -> Logger {
+        Logger(label: "\(name).Pipeline")
+    }
     
     func drainQueue(startingWith initialDeployment: Deployment, initialTarget: TargetConfiguration) async {
         
@@ -91,8 +95,7 @@ extension DeployerQueue {
                     nextDeployment.finishedAt = .now
                     nextDeployment.errorMessage = "Configuration missing for target: \(nextDeployment.productName)"
                     try? await nextDeployment.save(on: app.db)
-                    Logger(label: "\(currentTarget.productName).Pipeline")
-                        .error("Failed to find TargetConfiguration for '\(nextDeployment.productName)'")
+                    logger(currentTarget.productName).error("Failed to find TargetConfiguration for '\(nextDeployment.productName)'")
                     break
                 }
 
@@ -102,9 +105,11 @@ extension DeployerQueue {
                 currentDeployment.status = .failed
                 currentDeployment.finishedAt = .now
                 currentDeployment.errorMessage = error.localizedDescription
+
+                guard !app.didShutdown else { break }
                 try? await currentDeployment.save(on: app.db)
-                Logger(label: "\(currentTarget.productName).Pipeline")
-                    .error("\(error.localizedDescription)")
+                
+                logger(currentTarget.productName).error("\(error.localizedDescription)")
                 break
             }
         }
