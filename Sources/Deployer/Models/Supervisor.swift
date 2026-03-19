@@ -21,29 +21,30 @@ extension Supervisor {
     
     @discardableResult
     static func shell(_ command: String, workingDirectory: String? = nil) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            
+        try await Task.detached {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
             process.arguments = ["bash", "-c", command]
             if let workingDirectory {
                 process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
             }
-            
+
             let pipe = Pipe()
             process.standardOutput = pipe
             process.standardError = pipe
-            
-            process.terminationHandler = { [pipe, process] _ in
-                let data = (try? pipe.fileHandleForReading.readToEnd()) ?? Data()
-                let output = String(data: data, encoding: .utf8) ?? ""
-                guard process.terminationStatus != 0 else { return continuation.resume(returning: output) }
-                continuation.resume(throwing: ShellError.failed(command: command, output: output))
+
+            try process.run()
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            pipe.fileHandleForReading.closeFile()
+
+            let output = String(data: data, encoding: .utf8) ?? ""
+            guard process.terminationStatus == 0 else {
+                throw ShellError.failed(command: command, output: output)
             }
-            
-            do { try process.run() }
-            catch { continuation.resume(throwing: error) }
-        }
+            return output
+        }.value
     }
 
     enum ShellError: Error, LocalizedError {

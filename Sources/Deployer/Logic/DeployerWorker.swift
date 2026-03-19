@@ -90,32 +90,30 @@ extension DeployerWorker {
     
     func execute(_ command: String) async throws {
         
-        try await withCheckedThrowingContinuation { continuation in
+        try await Task.detached { [target, command] in
             
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
             process.arguments = ["bash", "-c", command]
             process.currentDirectoryURL = URL(fileURLWithPath: target.workingDirectory)
-            
+
             let pipe = Pipe()
             process.standardOutput = pipe
             process.standardError = pipe
-            
-            process.terminationHandler = { [pipe, process] _ in
-                guard process.terminationStatus != 0 else { return continuation.resume(returning: ()) }
-                let data = try? pipe.fileHandleForReading.readToEnd()
-                let output = String(data: data ?? Data(), encoding: .utf8)
-                let error = PipelineError.executeError("Execution of '\(command)' failed with output:\n\n'\(output ?? "NO OUTPUT" )'")
-                return continuation.resume(throwing: error)
+
+            try process.run()
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            pipe.fileHandleForReading.closeFile()
+
+            guard process.terminationStatus == 0 else {
+                let output = String(data: data, encoding: .utf8)
+                throw PipelineError.executeError(
+                    "Execution of '\(command)' failed with output:\n\n'\(output ?? "NO OUTPUT")'"
+                )
             }
-            
-            do {
-                try process.run()
-            } catch {
-                let error = PipelineError.initiateError("Start of '\(command)' failed with output:\n'\(error.localizedDescription)'")
-                continuation.resume(throwing: error)
-            }
-        }
+        }.value
     }
 }
 
