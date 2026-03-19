@@ -19,7 +19,7 @@ extension DeployerWorker {
     }
 
     func restart() async throws {
-        try await DeployerShell.execute("supervisorctl restart \(deployment.productName)", directory: target.workingDirectory)
+        try await DeployerShell.Supervisor.restart(product: deployment.productName)
     }
 
     func move() async throws {
@@ -77,18 +77,22 @@ extension DeployerWorker {
     
 }
 
-enum MoveError: Error, LocalizedError {
+extension DeployerWorker {
     
-    case binaryNotFound(String)
-    case deploymentFailed(String)
-    case deploymentAndRollbackFailed(String, String)
+    enum MoveError: Error, LocalizedError {
+        
+        case binaryNotFound(String)
+        case deploymentFailed(String)
+        case deploymentAndRollbackFailed(String, String)
 
-    var errorDescription: String? {
-        switch self {
-            case .binaryNotFound(let path): "New binary not found at \(path)"
-            case .deploymentFailed(let error): "Deployment failed: '\(error)'. Rollback successful."
-            case .deploymentAndRollbackFailed(let error, let rollback): "Deployment failed: '\(error)'. Rollback failed: '\(rollback)'."
+        var errorDescription: String? {
+            switch self {
+                case .binaryNotFound(let path): "New binary not found at \(path)"
+                case .deploymentFailed(let error): "Deployment failed: '\(error)'. Rollback successful."
+                case .deploymentAndRollbackFailed(let error, let rollback): "Deployment failed: '\(error)'. Rollback failed: '\(rollback)'."
+            }
         }
+        
     }
     
 }
