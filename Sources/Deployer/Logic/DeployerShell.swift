@@ -23,8 +23,7 @@ extension DeployerShell {
 
 struct DeployerShell {
     
-    @discardableResult
-    static func execute(_ command: String, directory: String? = nil) async throws -> String {
+    @discardableResult static func execute(_ command: String, directory: String? = nil) async throws -> String {
         
         try await Task.detached {
             

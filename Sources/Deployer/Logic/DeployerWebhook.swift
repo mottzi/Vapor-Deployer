@@ -33,8 +33,8 @@ struct DeployerWebhook {
         }
     }
     
-    static func validateSignature(of request: Request) -> Bool
-    {
+    static func validateSignature(of request: Request) -> Bool {
+        
         let secret = Deployer.Variables.GITHUB_WEBHOOK_SECRET.value
 
         guard let secretData = secret.data(using: .utf8),
@@ -52,11 +52,7 @@ struct DeployerWebhook {
 
         let key = SymmetricKey(data: secretData)
 
-        return HMAC<SHA256>.isValidAuthenticationCode(
-            signatureData,
-            authenticating: bodyData,
-            using: key
-        )
+        return HMAC<SHA256>.isValidAuthenticationCode(signatureData, authenticating: bodyData, using: key)
     }
 }
 

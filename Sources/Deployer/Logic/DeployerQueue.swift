@@ -39,7 +39,7 @@ actor DeployerQueue {
             status: !isDeploying ? .running : .canceled,
             message: message ?? ""
         )
-
+        
         try? await newDeployment.save(on: app.db)
 
         guard !isDeploying else { return }

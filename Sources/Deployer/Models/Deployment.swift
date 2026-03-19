@@ -3,24 +3,6 @@ import Fluent
 import FluentSQLiteDriver
 import Mist
 
-extension Deployment {
-    
-    enum Mode: String, Codable {
-        case standard
-        case restartOnly
-    }
-    
-    enum Status: String, Codable, CaseIterable {
-        case running
-        case canceled
-        case failed
-        case success
-        case deployed
-        case stale
-    }
-    
-}
-
 final class Deployment: Mist.Model, Content, @unchecked Sendable {
     
     static let schema = "deployments"
@@ -82,13 +64,31 @@ extension Deployment {
 
 extension Deployment {
     
+    enum Mode: String, Codable {
+        case standard
+        case restartOnly
+    }
+    
+    enum Status: String, Codable, CaseIterable {
+        case running
+        case canceled
+        case failed
+        case success
+        case deployed
+        case stale
+    }
+    
+}
+
+extension Deployment {
+    
     var contextExtras: [String: any Encodable] {
         [
             "durationString": durationString,
             "displayStatus": displayStatus,
             "shortID": shortID,
-            "startedAtTime": formatStartedAt(format: "HH:mm:ss"),
-            "startedAtDate": formatStartedAt(format: "dd.MM.yy"),
+            "startedAtTime": formattedTime,
+            "startedAtDate": formattedDate,
         ]
     }
 
@@ -108,12 +108,16 @@ extension Deployment {
         return .stale
     }
     
-    func formatStartedAt(format: String) -> String? {
+    var formattedTime: String? {
         guard let startedAt else { return nil }
-        let f = DateFormatter()
-        f.dateFormat = format
-        return f.string(from: startedAt)
+        return Deployment.timeFormatter.string(from: startedAt)
     }
+    
+    var formattedDate: String? {
+        guard let startedAt else { return nil }
+        return Deployment.timeFormatter.string(from: startedAt)
+    }
+    
 }
 
 extension Deployment {
@@ -144,5 +148,21 @@ extension Deployment {
             .filter(\.$productName, .equal, productName)
             .first()
     }
+    
+}
+
+extension Deployment {
+    
+    static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        return f
+    }()
+    
+    static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "dd.MM.yy"
+        return f
+    }()
     
 }
