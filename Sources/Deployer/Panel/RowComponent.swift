@@ -15,10 +15,10 @@ public struct RowComponent: Mist.InstanceComponent {
     public init(productName: String) {
         self.productName = productName
         self.name = "RowComponent-\(productName)"
-        self.defaultState = ["errorExpanded": .bool(false)]
         self.models = [Deployment.self]
         self.actions = [DeleteAction(), ToggleErrorAction()]
         self.template = .file(path: "Deployer/RowComponent")
+        self.defaultState = ["errorExpanded": .bool(false)]
     }
     
     public func allModels(on db: Database) async -> [any Mist.Model]? {

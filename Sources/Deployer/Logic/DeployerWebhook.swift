@@ -4,24 +4,12 @@ extension Deployer {
     
     func useWebhook(config: DeployerConfiguration) {
         
-        DeployerWebhook.register(
-            using: config.serverTarget,
-            on: self.app
-        ) { request, serverConfig async in
-            await app.deployer.queue.enqueue(
-                message: request.commitMessage,
-                target: serverConfig
-            )
+        DeployerWebhook.register(using: config.serverTarget, on: app) { request, target async in
+            await app.deployer.queue.enqueue(message: request.commitMessage, target: target)
         }
         
-        DeployerWebhook.register(
-            using: config.deployerTarget,
-            on: self.app
-        ) { request, deployerConfig async in
-            await app.deployer.queue.enqueue(
-                message: request.commitMessage,
-                target: deployerConfig
-            )
+        DeployerWebhook.register(using: config.deployerTarget, on: app) { request, target async in
+            await app.deployer.queue.enqueue(message: request.commitMessage, target: target)
         }
     }
     

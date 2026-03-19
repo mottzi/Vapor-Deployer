@@ -1,33 +1,37 @@
 import Foundation
 
-struct Supervisor {
+extension DeployerShell {
+    
+    struct Supervisor {
 
-    static func isRunning(product: String) async -> Bool {
-        guard let output = (try? await shell("supervisorctl status \(product)")) else { return false }
-        return output.contains("RUNNING")
+        static func isRunning(product: String) async -> Bool {
+            guard let output = (try? await DeployerShell.execute("supervisorctl status \(product)")) else { return false }
+            return output.contains("RUNNING")
+        }
+
+        static func restart(product: String) async throws {
+            try await DeployerShell.execute("supervisorctl restart \(product)")
+        }
+
+        static func stop(product: String) async throws {
+            try await DeployerShell.execute("supervisorctl stop \(product)")
+        }
+
     }
-
-    static func restart(product: String) async throws {
-        try await shell("supervisorctl restart \(product)")
-    }
-
-    static func stop(product: String) async throws {
-        try await shell("supervisorctl stop \(product)")
-    }
-
+    
 }
 
-extension Supervisor {
+struct DeployerShell {
     
     @discardableResult
-    static func shell(_ command: String, workingDirectory: String? = nil) async throws -> String {
+    static func execute(_ command: String, directory: String? = nil) async throws -> String {
+        
         try await Task.detached {
+            
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
             process.arguments = ["bash", "-c", command]
-            if let workingDirectory {
-                process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
-            }
+            if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory) }
 
             let pipe = Pipe()
             process.standardOutput = pipe
@@ -40,9 +44,7 @@ extension Supervisor {
             pipe.fileHandleForReading.closeFile()
 
             let output = String(data: data, encoding: .utf8) ?? ""
-            guard process.terminationStatus == 0 else {
-                throw ShellError.failed(command: command, output: output)
-            }
+            guard process.terminationStatus == 0 else { throw ShellError.failed(command: command, output: output) }
             return output
         }.value
     }

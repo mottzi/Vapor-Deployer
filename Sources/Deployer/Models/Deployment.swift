@@ -144,13 +144,5 @@ extension Deployment {
             .filter(\.$productName, .equal, productName)
             .first()
     }
-
-    static func clearCurrent(on database: Database) async throws {
-        
-        try await Deployment.query(on: database)
-            .set(\.$isCurrent, to: false)
-            .filter(\.$isCurrent, .equal, true)
-            .update()
-    }
     
 }

@@ -12,8 +12,8 @@ public struct DeployerConfiguration: Sendable {
     let deployerRowComponent: any Mist.InstanceComponent
     let serverRowComponent: any Mist.InstanceComponent
     let statusComponent: any Mist.Component
-    let serverStatusComponent: any Mist.Component      // new
-    let deployerStatusComponent: any Mist.Component    // new
+    let serverStatusComponent: any Mist.Component
+    let deployerStatusComponent: any Mist.Component
     
     public init(
         port: Int,
@@ -25,8 +25,8 @@ public struct DeployerConfiguration: Sendable {
         deployerRowComponent: (any Mist.InstanceComponent)? = nil,
         serverRowComponent: (any Mist.InstanceComponent)? = nil,
         statusComponent: (any Mist.Component)? = nil,
-        serverStatusComponent: (any Mist.Component)? = nil,     // new
-        deployerStatusComponent: (any Mist.Component)? = nil    // new
+        serverStatusComponent: (any Mist.Component)? = nil,
+        deployerStatusComponent: (any Mist.Component)? = nil
     ) {
         self.port = port
         self.dbFile = dbFile

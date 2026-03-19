@@ -11,19 +11,19 @@ public struct DeployerWorker: Sendable {
 extension DeployerWorker {
     
     func pull() async throws {
-        try await execute("git pull")
+        try await DeployerShell.execute("git pull", directory: target.workingDirectory)
     }
 
     func build() async throws {
-        try await execute("swift build -c \(target.buildMode)")
+        try await DeployerShell.execute("swift build -c \(target.buildMode)", directory: target.workingDirectory)
     }
 
     func restart() async throws {
-        try await execute("supervisorctl restart \(deployment.productName)")
+        try await DeployerShell.execute("supervisorctl restart \(deployment.productName)", directory: target.workingDirectory)
     }
 
     func move() async throws {
-        
+
         let eventLoop = app.eventLoopGroup.any()
         let threadPool = app.threadPool
 
@@ -37,13 +37,13 @@ extension DeployerWorker {
             try fileManager.createDirectory(atPath: deployDir, withIntermediateDirectories: true)
 
             guard fileManager.fileExists(atPath: buildPath) else {
-                throw PipelineError.moveError("New binary not found at \(buildPath)")
+                throw MoveError.binaryNotFound(buildPath)
             }
 
             if fileManager.fileExists(atPath: backupPath) {
                 try fileManager.removeItem(atPath: backupPath)
             }
-            
+
             if fileManager.fileExists(atPath: deployPath) {
                 try fileManager.moveItem(atPath: deployPath, toPath: backupPath)
             }
@@ -63,76 +63,32 @@ extension DeployerWorker {
                         }
                         try fileManager.moveItem(atPath: backupPath, toPath: deployPath)
                     } catch {
-                        let rollbackError = error
-
-                        throw PipelineError.moveError(
-                            """
-                            Deployment failed: '\(moveError.localizedDescription)'.
-                            Rollback failed: '\(rollbackError.localizedDescription)'.
-                            """
+                        throw MoveError.deploymentAndRollbackFailed(
+                            moveError.localizedDescription,
+                            error.localizedDescription
                         )
                     }
                 }
 
-                throw PipelineError.moveError(
-                    """
-                    Deployment failed: '\(moveError.localizedDescription)'.
-                    Rollback successfull.
-                    """
-                )
+                throw MoveError.deploymentFailed(moveError.localizedDescription)
             }
         }.get()
     }
     
 }
 
-extension DeployerWorker {
+enum MoveError: Error, LocalizedError {
     
-    func execute(_ command: String) async throws {
-        
-        try await Task.detached { [target, command] in
-            
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = ["bash", "-c", command]
-            process.currentDirectoryURL = URL(fileURLWithPath: target.workingDirectory)
+    case binaryNotFound(String)
+    case deploymentFailed(String)
+    case deploymentAndRollbackFailed(String, String)
 
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = pipe
-
-            try process.run()
-            process.waitUntilExit()
-
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            pipe.fileHandleForReading.closeFile()
-
-            guard process.terminationStatus == 0 else {
-                let output = String(data: data, encoding: .utf8)
-                throw PipelineError.executeError(
-                    "Execution of '\(command)' failed with output:\n\n'\(output ?? "NO OUTPUT")'"
-                )
-            }
-        }.value
-    }
-}
-
-extension DeployerWorker {
-    
-    enum PipelineError: Error, LocalizedError {
-
-        case initiateError(String)
-        case executeError(String)
-        case moveError(String)
-        
-        var errorDescription: String? {
-            switch self {
-                case .initiateError(let message): "Pipeline initiate error: \(message)"
-                case .executeError(let message): "Pipeline execute error: \(message)"
-                case .moveError(let message): "Pipeline move error: \(message)"
-            }
+    var errorDescription: String? {
+        switch self {
+            case .binaryNotFound(let path): "New binary not found at \(path)"
+            case .deploymentFailed(let error): "Deployment failed: '\(error)'. Rollback successful."
+            case .deploymentAndRollbackFailed(let error, let rollback): "Deployment failed: '\(error)'. Rollback failed: '\(rollback)'."
         }
-        
     }
     
 }

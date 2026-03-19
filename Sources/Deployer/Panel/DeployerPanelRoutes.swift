@@ -28,8 +28,8 @@ extension DeployerPanel {
         async let deployerRows    = config.deployerRowComponent.makeContext(ofAll: request.db)
         async let serverRows      = config.serverRowComponent.makeContext(ofAll: request.db)
         async let current         = Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
-        async let serverRunning   = Supervisor.isRunning(product: config.serverTarget.productName)
-        async let deployerRunning = Supervisor.isRunning(product: config.deployerTarget.productName)
+        async let serverRunning   = DeployerShell.Supervisor.isRunning(product: config.serverTarget.productName)
+        async let deployerRunning = DeployerShell.Supervisor.isRunning(product: config.deployerTarget.productName)
 
         let tables = [
             TableContext(
