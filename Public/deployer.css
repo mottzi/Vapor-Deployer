@@ -735,3 +735,38 @@ body::before {
     color: var(--text-subtle);
     letter-spacing: 0.03em;
 }
+
+/* ── Additional StatusComponent badge states ──────────── */
+/* Append these rules to your existing deployer.css       */
+
+/* Transitioning state (stopping / starting) — amber pulsing badge */
+.dp-supervisor-badge--transitioning {
+  color: var(--c-stale, #fbbf24);
+  border-color: color-mix(in srgb, var(--c-stale, #fbbf24) 30%, transparent);
+  background: color-mix(in srgb, var(--c-stale, #fbbf24) 8%, transparent);
+}
+
+.dp-supervisor-badge--transitioning .dp-supervisor-dot {
+  background: var(--c-stale, #fbbf24);
+}
+
+/* Fatal state — red badge (distinct from failed deployments) */
+.dp-supervisor-badge--fatal {
+  color: var(--c-failed, #f87171);
+  border-color: color-mix(in srgb, var(--c-failed, #f87171) 30%, transparent);
+  background: color-mix(in srgb, var(--c-failed, #f87171) 8%, transparent);
+}
+
+.dp-supervisor-badge--fatal .dp-supervisor-dot {
+  background: var(--c-failed, #f87171);
+}
+
+/* Pulsing dot animation for transitioning states */
+@keyframes dp-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.75); }
+}
+
+.dp-supervisor-dot--pulse {
+  animation: dp-dot-pulse 1.2s ease-in-out infinite;
+}
