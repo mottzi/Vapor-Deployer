@@ -10,7 +10,7 @@ public struct RowComponent: Mist.InstanceComponent {
     public let models: [any Mist.Model.Type]
     public let actions: [any Mist.Action]
     public let template: Template
-    public let defaultState: MistState
+    public let defaultState: Mist.ComponentState
     
     public init(productName: String) {
         self.productName = productName
@@ -36,7 +36,7 @@ extension RowComponent {
         
         let name: String = "delete"
         
-        func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
+        func perform(id: UUID?, state: inout ComponentState, on db: Database) async -> ActionResult {
             
             guard let deployment = try? await Deployment.find(id, on: db) else { return .failure(message: "Deployment not found") }
             guard (try? await deployment.delete(on: db)) != nil else { return .failure(message: "Failed to delete deployment") }
@@ -49,7 +49,7 @@ extension RowComponent {
         
         let name: String = "toggleError"
         
-        func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
+        func perform(id: UUID?, state: inout ComponentState, on db: Database) async -> ActionResult {
             
             guard let id else { return .failure(message: "No ID found") }
             guard let deployment = try? await Deployment.find(id, on: db) else { return .failure(message: "Deployment not found") }
