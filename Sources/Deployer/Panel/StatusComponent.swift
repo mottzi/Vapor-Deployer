@@ -29,15 +29,14 @@ public struct StatusComponent: Mist.StateComponent {
 
     // MARK: - State Definition
 
-    /// The component's reactive state: the product name (for template rendering)
-    /// and the current Supervisor status.
     public struct State: Encodable, Equatable, Sendable {
         public let productName: String
         public let status: String
         public let isRunning: Bool
         public let isTransitioning: Bool
 
-        public init(productName: String, status: DeployerShell.Supervisor.Status) {
+        /// Internal convenience initializer that maps from the Supervisor.Status enum.
+        init(productName: String, status: DeployerShell.Supervisor.Status) {
             self.productName = productName
             self.status = status.label
             self.isRunning = status.isRunning
@@ -47,23 +46,17 @@ public struct StatusComponent: Mist.StateComponent {
 
     // MARK: - Background Observation
 
-    /// Continuous background loop that observes the real Supervisor process state
-    /// and pushes updates to the reactive state actor. Yields whenever a user action
-    /// is actively manipulating the state (via `shouldPause`).
     public func observe(app: Application) async {
 
-        // Immediately query and push the ground truth on startup
         let initialStatus = await DeployerShell.Supervisor.status(product: productName)
         await reactiveState.set(State(productName: productName, status: initialStatus))
 
-        // Continuous observation loop
         while !app.didShutdown && !Task.isCancelled {
 
             try? await Task.sleep(for: interval)
             guard !app.didShutdown && !Task.isCancelled else { break }
 
-            // Yield to active user actions — skip this tick
-            guard !await shouldPause(on: app) else { continue }
+            guard await !shouldPause(on: app) else { continue }
 
             let currentStatus = await DeployerShell.Supervisor.status(product: productName)
             await reactiveState.set(State(productName: productName, status: currentStatus))
@@ -76,8 +69,6 @@ public struct StatusComponent: Mist.StateComponent {
 
 extension StatusComponent {
 
-    /// Restart action: orchestrates a stop → start sequence with intermediate
-    /// visual state transitions pushed to the reactive state actor.
     struct RestartAction: Mist.Action {
 
         let name = "restart"
@@ -86,21 +77,17 @@ extension StatusComponent {
 
         func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
             do {
-                // Push "stopping" visual state
                 await reactiveState.set(State(productName: productName, status: .stopping))
                 try await DeployerShell.Supervisor.stop(product: productName)
 
-                // Push "starting" visual state
                 await reactiveState.set(State(productName: productName, status: .starting))
                 try await DeployerShell.Supervisor.start(product: productName)
 
-                // Push the ground truth after startup completes
                 let finalStatus = await DeployerShell.Supervisor.status(product: productName)
                 await reactiveState.set(State(productName: productName, status: finalStatus))
 
                 return .success()
             } catch {
-                // On failure, query and push the actual state so the UI recovers
                 let recoveryStatus = await DeployerShell.Supervisor.status(product: productName)
                 await reactiveState.set(State(productName: productName, status: recoveryStatus))
                 return .failure(message: error.localizedDescription)
@@ -109,8 +96,6 @@ extension StatusComponent {
 
     }
 
-    /// Stop action: pushes a "stopping" visual state, executes the stop command,
-    /// then lets the observe loop pick up the ground truth.
     struct StopAction: Mist.Action {
 
         let name = "stop"
@@ -119,11 +104,9 @@ extension StatusComponent {
 
         func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
             do {
-                // Push "stopping" visual state
                 await reactiveState.set(State(productName: productName, status: .stopping))
                 try await DeployerShell.Supervisor.stop(product: productName)
 
-                // Push the ground truth after stop completes
                 let finalStatus = await DeployerShell.Supervisor.status(product: productName)
                 await reactiveState.set(State(productName: productName, status: finalStatus))
 
