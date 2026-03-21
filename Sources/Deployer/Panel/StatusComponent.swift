@@ -57,6 +57,16 @@ public struct StatusComponent: Mist.StateComponent {
 }
 
 extension StatusComponent {
+    
+    var statusHandler: @Sendable (DeployerShell.Supervisor.Status) async -> Void {
+        return { [state, productName] status in
+            await state.set(State(productName: productName, status: status))
+        }
+    }
+    
+}
+
+extension StatusComponent {
 
     struct RestartAction: Mist.Action {
 

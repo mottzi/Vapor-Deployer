@@ -5,7 +5,7 @@ public struct DeployerWorker: Sendable {
     let deployment: Deployment
     let target: TargetConfiguration
     let app: Application
-    let onStatusChange: (@Sendable (DeployerShell.Supervisor.Status) async -> Void)?
+    let onStatusChange: @Sendable (DeployerShell.Supervisor.Status) async -> Void
 
 }
 
@@ -21,13 +21,13 @@ extension DeployerWorker {
     
     func restart() async throws {
         let status = await DeployerShell.Supervisor.status(product: deployment.productName)
-        await onStatusChange?(status.isRunning ? .stopping : .starting)
+        await onStatusChange(status.isRunning ? .stopping : .starting)
         
         try await DeployerShell.Supervisor.restart(product: deployment.productName)
-        await onStatusChange?(.starting)
+        await onStatusChange(.starting)
         
         let finalStatus = await DeployerShell.Supervisor.status(product: deployment.productName)
-        await onStatusChange?(finalStatus)
+        await onStatusChange(finalStatus)
     }
 
     func move() async throws {

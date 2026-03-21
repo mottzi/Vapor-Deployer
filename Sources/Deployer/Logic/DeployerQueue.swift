@@ -62,10 +62,13 @@ extension DeployerQueue {
         var currentTarget = initialTarget
         
         while true {
+            let statusComponent = await app.mist.components.getComponent(usingName: "StatusComponent-\(currentTarget.productName)") as? StatusComponent
+
             let worker = DeployerWorker(
                 deployment: currentDeployment,
                 target: currentTarget,
-                app: app
+                app: app,
+                onStatusChange: statusComponent?.statusHandler ?? { @Sendable _ in }
             )
             
             do {
