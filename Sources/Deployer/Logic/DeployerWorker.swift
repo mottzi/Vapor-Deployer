@@ -5,7 +5,8 @@ public struct DeployerWorker: Sendable {
     let deployment: Deployment
     let target: TargetConfiguration
     let app: Application
-    
+    let onStatusChange: (@Sendable (DeployerShell.Supervisor.Status) async -> Void)?
+
 }
 
 extension DeployerWorker {
@@ -17,9 +18,16 @@ extension DeployerWorker {
     func build() async throws {
         try await DeployerShell.execute("swift build -c \(target.buildMode)", directory: target.workingDirectory)
     }
-
+    
     func restart() async throws {
+        let status = await DeployerShell.Supervisor.status(product: deployment.productName)
+        await onStatusChange?(status.isRunning ? .stopping : .starting)
+        
         try await DeployerShell.Supervisor.restart(product: deployment.productName)
+        await onStatusChange?(.starting)
+        
+        let finalStatus = await DeployerShell.Supervisor.status(product: deployment.productName)
+        await onStatusChange?(finalStatus)
     }
 
     func move() async throws {
