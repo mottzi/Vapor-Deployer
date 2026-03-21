@@ -31,7 +31,7 @@ extension DeployerShell.Supervisor {
 
 extension DeployerShell {
     
-    struct Supervisor {
+    public struct Supervisor {
 
         /// Query the granular process status for a named product.
         /// Uses `executeRaw` because `supervisorctl status` returns non-zero exit
@@ -74,7 +74,7 @@ extension DeployerShell {
 
 // MARK: - Shell Execution
 
-struct DeployerShell {
+public struct DeployerShell {
     
     private static func run(_ command: String, directory: String? = nil) async -> (output: String, exitCode: Int32) {
         

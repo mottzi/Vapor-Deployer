@@ -18,7 +18,7 @@ public struct Deployer: Sendable {
         
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite/*, isDefault: true*/)
         app.sessions.use(.fluent)
-        app.migrations.add(Deployment.Table(), SessionRecord.migration)
+        app.migrations.add(Deployment.migration, SessionRecord.migration)
         try await app.autoMigrate()
         
         app.views.use(.leaf)

@@ -38,7 +38,7 @@ public struct DeployerConfiguration: Sendable {
         self.serverRowComponent = serverRowComponent ?? RowComponent(productName: server.productName)
         self.statusComponent = statusComponent ?? LiveComponent(productName: server.productName)
         self.serverStatusComponent = serverStatusComponent ?? StatusComponent(productName: server.productName)
-        self.deployerStatusComponent = deployerStatusComponent ?? StatusComponent(productName: deployer.productName)
+        self.deployerStatusComponent = deployerStatusComponent ?? StatusComponent(productName: deployer.productName, initialStatus: .starting)
     }
     
     func target(for productName: String) -> TargetConfiguration? {

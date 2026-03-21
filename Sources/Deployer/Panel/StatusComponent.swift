@@ -12,10 +12,9 @@ public struct StatusComponent: Mist.StateComponent {
     public let actions: [any Mist.Action]
     public let reactiveState: ReactiveState<State>
 
-    public init(productName: String) {
-        
+    public init(productName: String, initialStatus: DeployerShell.Supervisor.Status = .unknown) {
         self.productName = productName
-        let state = ReactiveState(initialState: State(productName: productName, status: .unknown))
+        let state = ReactiveState(initialState: State(productName: productName, status: initialStatus))
         self.reactiveState = state
         self.actions = [
             RestartAction(productName: productName, reactiveState: state),

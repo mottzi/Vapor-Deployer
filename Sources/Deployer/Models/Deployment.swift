@@ -37,6 +37,8 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
 
 extension Deployment {
     
+    static var migration: Migration { Table() }
+    
     struct Table: AsyncMigration {
         
         func prepare(on database: Database) async throws {
