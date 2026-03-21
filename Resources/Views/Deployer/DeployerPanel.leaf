@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deployments</title>
   <link rel="icon" type="image/png" href="/mottzi.png">
-  <link rel="stylesheet" href="/deployer.css">
+  <link rel="stylesheet" href="/deployer/deployer.css">
 </head>
 <body>
 
@@ -161,8 +161,8 @@
 
   </div>
 
-  <script src="/morphdom.js"></script>
-  <script src="/mist.js" data-url="/deployer/ws/"></script>
+  <script src="/deployer/morphdom.js"></script>
+  <script src="/deployer/mist.js" data-url="/deployer/ws/"></script>
 
 </body>
 </html>

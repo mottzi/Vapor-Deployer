@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deployer Login</title>
   <link rel="icon" type="image/png" href="/mottzi.png">
-  <link rel="stylesheet" href="/deployer.css">
+  <link rel="stylesheet" href="/deployer/deployer.css">
   <style>
     .dp-login-wrap {
       flex: 1;
