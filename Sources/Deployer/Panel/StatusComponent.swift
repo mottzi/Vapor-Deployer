@@ -72,6 +72,9 @@ extension StatusComponent {
                 
                 try await DeployerShell.Supervisor.restart(product: productName)
                 
+                // show the "starting" transition before final status
+                await reactiveState.set(State(productName: productName, status: .starting))
+                
                 let finalStatus = await DeployerShell.Supervisor.status(product: productName)
                 await reactiveState.set(State(productName: productName, status: finalStatus))
 
