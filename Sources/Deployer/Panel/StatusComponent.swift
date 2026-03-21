@@ -77,9 +77,10 @@ extension StatusComponent {
 
         func perform(id: UUID?, state: inout MistState, on db: Database) async -> ActionResult {
             do {
-                let current = await DeployerShell.Supervisor.status(product: productName)
-                if current.isRunning {
-                    await reactiveState.set(State(productName: productName, status: .stopping))
+                let status = await DeployerShell.Supervisor.status(product: productName)
+                switch status.isRunning {
+                    case true: await reactiveState.set(State(productName: productName, status: .stopping))
+                    case false: await reactiveState.set(State(productName: productName, status: .starting))
                 }
                 
                 try await DeployerShell.Supervisor.restart(product: productName)
