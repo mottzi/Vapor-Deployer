@@ -1,4 +1,5 @@
 import Vapor
+import Fluent
 
 extension Application {
     
@@ -15,8 +16,9 @@ public struct Deployer: Sendable {
         app.http.server.configuration.port = config.port
         app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
         
-        app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite, isDefault: true)
-        app.migrations.add(Deployment.Table())
+        app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite/*, isDefault: true*/)
+        app.sessions.use(.fluent)
+        app.migrations.add(Deployment.Table(), SessionRecord.migration)
         try await app.autoMigrate()
         
         app.views.use(.leaf)
