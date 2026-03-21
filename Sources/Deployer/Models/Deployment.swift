@@ -117,7 +117,7 @@ extension Deployment {
     
     var formattedDate: String? {
         guard let startedAt else { return nil }
-        return Deployment.timeFormatter.string(from: startedAt)
+        return Deployment.dateFormatter.string(from: startedAt)
     }
     
 }
