@@ -14,11 +14,10 @@ public struct StatusComponent: Mist.StateComponent {
 
     public init(productName: String, initialStatus: DeployerShell.Supervisor.Status = .unknown) {
         self.productName = productName
-        let state = ReactiveState(initialState: State(productName: productName, status: initialStatus))
-        self.reactiveState = state
+        self.reactiveState = ReactiveState(initialState: State(productName: productName, status: initialStatus))
         self.actions = [
-            RestartAction(productName: productName, reactiveState: state),
-            StopAction(productName: productName, reactiveState: state)
+            RestartAction(productName: productName, reactiveState: reactiveState),
+            StopAction(productName: productName, reactiveState: reactiveState)
         ]
     }
 
@@ -40,15 +39,10 @@ public struct StatusComponent: Mist.StateComponent {
     // MARK: - Background Observation
 
     public func observe(app: Application) async {
-
-        let initialStatus = await DeployerShell.Supervisor.status(product: productName)
-        await reactiveState.set(State(productName: productName, status: initialStatus))
-
+        
         while !app.didShutdown && !Task.isCancelled {
-
             try? await Task.sleep(for: interval)
             guard !app.didShutdown && !Task.isCancelled else { break }
-
             guard await !shouldPause(on: app) else { continue }
 
             let currentStatus = await DeployerShell.Supervisor.status(product: productName)

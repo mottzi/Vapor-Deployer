@@ -27,7 +27,7 @@ public struct DeployerConfiguration: Sendable {
         statusComponent: (any Mist.Component)? = nil,
         serverStatusComponent: (any Mist.Component)? = nil,
         deployerStatusComponent: (any Mist.Component)? = nil
-    ) {
+    ) async {
         self.port = port
         self.dbFile = dbFile
         self.serverTarget = server
@@ -37,7 +37,8 @@ public struct DeployerConfiguration: Sendable {
         self.deployerRowComponent = deployerRowComponent ?? RowComponent(productName: deployer.productName)
         self.serverRowComponent = serverRowComponent ?? RowComponent(productName: server.productName)
         self.statusComponent = statusComponent ?? LiveComponent(productName: server.productName)
-        self.serverStatusComponent = serverStatusComponent ?? StatusComponent(productName: server.productName)
+        let serverStatus = await DeployerShell.Supervisor.status(product: server.productName)
+        self.serverStatusComponent = serverStatusComponent ?? StatusComponent(productName: server.productName, initialStatus: serverStatus)
         self.deployerStatusComponent = deployerStatusComponent ?? StatusComponent(productName: deployer.productName, initialStatus: .starting)
     }
     
