@@ -1,12 +1,10 @@
 import Foundation
 
-// MARK: - Supervisor Status Enumeration
-
 extension DeployerShell.Supervisor {
 
     /// An exhaustive, type-safe representation of `supervisorctl` process states.
     /// Maps directly to the status strings reported by Supervisor.
-    public enum Status: String, Codable, Equatable, Sendable
+    public enum Status: String
     {
         case starting  = "STARTING"
         case running   = "RUNNING"
@@ -78,35 +76,7 @@ extension DeployerShell {
 
 struct DeployerShell {
     
-    @discardableResult static func execute(_ command: String, directory: String? = nil) async throws -> String {
-        
-        try await Task.detached {
-            
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = ["bash", "-c", command]
-            if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory) }
-
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = pipe
-
-            try process.run()
-            process.waitUntilExit()
-
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            pipe.fileHandleForReading.closeFile()
-
-            let output = String(data: data, encoding: .utf8) ?? ""
-            guard process.terminationStatus == 0 else { throw ShellError.failed(command: command, output: output) }
-            return output
-        }.value
-    }
-
-    /// Execute a shell command and return the output regardless of exit code.
-    /// Used for commands like `supervisorctl status` and `supervisorctl stop`
-    /// where non-zero exits are expected and the output is still meaningful.
-    @discardableResult static func executeRaw(_ command: String, directory: String? = nil) async -> String {
+    private static func run(_ command: String, directory: String? = nil) async -> (output: String, exitCode: Int32) {
         
         await Task.detached {
             
@@ -119,14 +89,27 @@ struct DeployerShell {
             process.standardOutput = pipe
             process.standardError = pipe
 
-            guard (try? process.run()) != nil else { return "" }
+            guard (try? process.run()) != nil else { return ("", -1) }
             process.waitUntilExit()
 
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             pipe.fileHandleForReading.closeFile()
 
-            return String(data: data, encoding: .utf8) ?? ""
+            let output = String(data: data, encoding: .utf8) ?? ""
+            return (output, process.terminationStatus)
         }.value
+    }
+
+    @discardableResult
+    static func execute(_ command: String, directory: String? = nil) async throws -> String {
+        let result = await run(command, directory: directory)
+        guard result.exitCode == 0 else { throw ShellError.failed(command: command, output: result.output) }
+        return result.output
+    }
+
+    @discardableResult
+    static func executeRaw(_ command: String, directory: String? = nil) async -> String {
+        await run(command, directory: directory).output
     }
 
     enum ShellError: Error, LocalizedError {

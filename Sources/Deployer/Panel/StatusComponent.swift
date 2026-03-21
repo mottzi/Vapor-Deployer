@@ -13,21 +13,15 @@ public struct StatusComponent: Mist.StateComponent {
     public let reactiveState: ReactiveState<State>
 
     public init(productName: String) {
+        
         self.productName = productName
-
-        let state = ReactiveState<State>(
-            initialState: State(productName: productName, status: .unknown)
-        )
-
+        let state = ReactiveState(initialState: State(productName: productName, status: .unknown))
         self.reactiveState = state
-
         self.actions = [
             RestartAction(productName: productName, reactiveState: state),
             StopAction(productName: productName, reactiveState: state)
         ]
     }
-
-    // MARK: - State Definition
 
     public struct State: Encodable, Equatable, Sendable {
         public let productName: String
