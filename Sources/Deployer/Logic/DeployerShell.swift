@@ -36,16 +36,15 @@ extension DeployerShell {
     struct Supervisor {
 
         /// Query the granular process status for a named product.
-        /// Parses the output of `supervisorctl status <product>` and maps it
-        /// to the `Status` enumeration. Returns `.unknown` if parsing fails.
+        /// Uses `executeRaw` because `supervisorctl status` returns non-zero exit
+        /// codes for stopped/exited processes — that's expected, not an error.
         static func status(product: String) async -> Status {
-            guard let output = (try? await DeployerShell.execute("supervisorctl status \(product)")) else {
-                return .unknown
-            }
+            let output = await DeployerShell.executeRaw("supervisorctl status \(product)")
 
             // supervisorctl status output format:
             // <name>    <STATE>    pid <pid>, uptime <time>
-            // e.g.: "mottzi   RUNNING   pid 1234, uptime 0:01:23"
+            // e.g.: "mottzi                           RUNNING   pid 1234, uptime 0:01:23"
+            // e.g.: "mottzi                           STOPPED   Mar 21 11:30 PM"
             let tokens = output.split(whereSeparator: { $0.isWhitespace })
             guard tokens.count >= 2 else { return .unknown }
 
@@ -101,6 +100,32 @@ struct DeployerShell {
             let output = String(data: data, encoding: .utf8) ?? ""
             guard process.terminationStatus == 0 else { throw ShellError.failed(command: command, output: output) }
             return output
+        }.value
+    }
+
+    /// Execute a shell command and return the output regardless of exit code.
+    /// Used for commands like `supervisorctl status` and `supervisorctl stop`
+    /// where non-zero exits are expected and the output is still meaningful.
+    @discardableResult static func executeRaw(_ command: String, directory: String? = nil) async -> String {
+        
+        await Task.detached {
+            
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+            process.arguments = ["bash", "-c", command]
+            if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory) }
+
+            let pipe = Pipe()
+            process.standardOutput = pipe
+            process.standardError = pipe
+
+            guard (try? process.run()) != nil else { return "" }
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            pipe.fileHandleForReading.closeFile()
+
+            return String(data: data, encoding: .utf8) ?? ""
         }.value
     }
 
