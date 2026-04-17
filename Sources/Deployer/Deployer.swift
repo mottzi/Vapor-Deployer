@@ -8,7 +8,28 @@ extension Application {
     
 }
 
-@main extension Deployer {
+@main struct Deployer: Sendable {
+    
+    let app: Application
+        
+    func useCommands() {
+        app.asyncCommands.use(DeployerUpdateCommand(), as: "update")
+    }
+
+    func useServer() async throws {
+        
+        let config = try DeployerConfiguration.load()
+        app.deployer.serviceManager = config.serviceManager.makeManager()
+        app.deployer.configureHTTP(config: config)
+        try await app.deployer.configureDatabase(config: config)
+        app.deployer.configureViews()
+        app.deployer.configureMist(config: config)
+        try await app.deployer.configurePanel(config: config)
+    }
+    
+}
+
+extension Deployer {
     
     static func main() async throws {
         
@@ -36,41 +57,6 @@ extension Application {
         }
         
         try await app.asyncShutdown()
-    }
-    
-}
-
-struct Deployer: Sendable {
-    
-    let app: Application
-        
-    func useCommands() {
-        app.asyncCommands.use(DeployerUpdateCommand(), as: "update")
-    }
-
-    func useServer() async throws {
-        
-        let config = try DeployerConfiguration.load()
-        app.deployer.serviceManager = config.serviceManager.makeManager()
-        app.deployer.configureHTTP(config: config)
-        try await app.deployer.configureDatabase(config: config)
-        app.deployer.configureViews()
-        app.deployer.configureMist(config: config)
-        try await app.deployer.configurePanel(config: config)
-    }
-    
-    var serviceManager: any DeployerServiceManager {
-        get {
-            if let manager = app.storage[DeployerServiceManagerKey.self] { return manager }
-            fatalError("Service manager not initialized.")
-        }
-        nonmutating set {
-            app.storage[DeployerServiceManagerKey.self] = newValue
-        }
-    }
-    
-    private struct DeployerServiceManagerKey: StorageKey {
-        typealias Value = any DeployerServiceManager
     }
     
 }

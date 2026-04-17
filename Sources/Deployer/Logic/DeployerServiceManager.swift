@@ -1,6 +1,24 @@
 import Foundation
 import Vapor
 
+extension Deployer {
+    
+    var serviceManager: any DeployerServiceManager {
+        get {
+            if let manager = app.storage[DeployerServiceManagerKey.self] { return manager }
+            fatalError("Service manager not initialized.")
+        }
+        nonmutating set {
+            app.storage[DeployerServiceManagerKey.self] = newValue
+        }
+    }
+    
+    private struct DeployerServiceManagerKey: StorageKey {
+        typealias Value = any DeployerServiceManager
+    }
+    
+}
+
 /// A common interface for controlling and querying the lifecycle of a deployed application.
 protocol DeployerServiceManager: Sendable {
     
