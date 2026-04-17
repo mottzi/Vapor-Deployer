@@ -1603,7 +1603,7 @@ source /etc/os-release
 [[ "${ID:-}" == "ubuntu" ]] || die "This installer currently supports Ubuntu only."
 
 # Fixed installer defaults.
-DEPLOYER_REPO_URL="https://github.com/mottzi/Vapor-mottzi.de-Deployer.git"
+DEPLOYER_REPO_URL="https://github.com/mottzi/Vapor-Deployer.git"
 DEPLOYER_REPO_BRANCH="main"
 APP_BRANCH="main"
 DEPLOYER_BUILD_MODE="release"
