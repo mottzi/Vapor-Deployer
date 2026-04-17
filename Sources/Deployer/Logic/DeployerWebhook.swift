@@ -3,13 +3,8 @@ import Vapor
 extension Deployer {
     
     func useWebhook(config: DeployerConfiguration) {
-        
-        DeployerWebhook.register(using: config.serverTarget, on: app) { request, target async in
-            await app.deployer.queue.enqueue(message: request.commitMessage, target: target)
-        }
-        
-        DeployerWebhook.register(using: config.deployerTarget, on: app) { request, target async in
-            await app.deployer.queue.enqueue(message: request.commitMessage, target: target)
+        DeployerWebhook.register(using: config.target, on: app) { event, target async in
+            await app.deployer.queue.recordPush(event: event, target: target)
         }
     }
     
@@ -20,15 +15,22 @@ struct DeployerWebhook {
     static func register(
         using config: TargetConfiguration,
         on app: Application,
-        onPush: @Sendable @escaping (Request, TargetConfiguration) async -> Void
+        onPush: @Sendable @escaping (PushEvent, TargetConfiguration) async -> Void
     ) {
-        let accepted = Response(status: .ok, body: .init(stringLiteral: "[\(config.productName)] Push event accepted."))
-        let denied = Response(status: .forbidden, body: .init(stringLiteral: "[\(config.productName)] Push event denied."))
+        let accepted = Response(status: .ok, body: .init(stringLiteral: "[\(config.name)] Push event accepted."))
+        let denied = Response(status: .forbidden, body: .init(stringLiteral: "[\(config.name)] Push event denied."))
+        let unsupportedEvent = Response(status: .badRequest, body: .init(stringLiteral: "[\(config.name)] Unsupported GitHub event."))
+        let invalidPayload = Response(status: .badRequest, body: .init(stringLiteral: "[\(config.name)] Invalid push payload."))
+        let ignoredDeletedPush = Response(status: .ok, body: .init(stringLiteral: "[\(config.name)] Deleted push ignored."))
         
-        app.post(config.pusheventPath) { request async -> Response in
+        app.post(config.pusheventPath.pathComponents) { request async -> Response in
             
             guard validateSignature(of: request) else { return denied }
-            Task.detached { await onPush(request, config) }
+            guard validateEvent(of: request) else { return unsupportedEvent }
+            guard let pushEvent = request.pushEvent else { return invalidPayload }
+            guard pushEvent.deleted == false else { return ignoredDeletedPush }
+            
+            Task.detached { await onPush(pushEvent, config) }
             return accepted
         }
     }
@@ -54,6 +56,10 @@ struct DeployerWebhook {
 
         return HMAC<SHA256>.isValidAuthenticationCode(signatureData, authenticating: bodyData, using: key)
     }
+    
+    static func validateEvent(of request: Request) -> Bool {
+        request.headers.first(name: "X-GitHub-Event") == "push"
+    }
 }
 
 extension StringProtocol
@@ -76,29 +82,49 @@ extension StringProtocol
     }
 }
 
-struct DeployerPayload: Codable {
+struct PushPayload: Codable {
     
-    let headCommit: Commit
+    let after: String
+    let ref: String
+    let deleted: Bool
+    let headCommit: Commit?
     
     struct Commit: Codable {
         let message: String
     }
     
 }
+ 
+struct PushEvent: Sendable {
+    
+    let branch: String
+    let commitID: String
+    let commitMessage: String?
+    let deleted: Bool
+
+    var deploymentMessage: String {
+        commitMessage ?? "Commit \(String(commitID.prefix(8)))"
+    }
+    
+}
 
 extension Request {
     
-    var payload: DeployerPayload? {
+    var pushEvent: PushEvent? {
         
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         
-        guard let bodyString = body.string else { return nil }
-        guard let jsonData = bodyString.data(using: .utf8) else { return nil }
+        guard let bodyBuffer = body.data else { return nil }
+        guard let jsonData = bodyBuffer.getData(at: bodyBuffer.readerIndex, length: bodyBuffer.readableBytes) else { return nil }
+        guard let payload = try? decoder.decode(PushPayload.self, from: jsonData) else { return nil }
+        guard payload.after.isEmpty == false, payload.ref.isEmpty == false else { return nil }
         
-        return try? decoder.decode(DeployerPayload.self, from: jsonData)
+        return PushEvent(
+            branch: payload.ref,
+            commitID: payload.after,
+            commitMessage: payload.headCommit?.message,
+            deleted: payload.deleted
+        )
     }
-    
-    var commitMessage: String? { payload?.headCommit.message }
-    
 }

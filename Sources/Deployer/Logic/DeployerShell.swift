@@ -1,82 +1,27 @@
 import Foundation
 
-extension DeployerShell.Supervisor {
-
-    /// An exhaustive, type-safe representation of `supervisorctl` process states.
-    /// Maps directly to the status strings reported by Supervisor.
-    public enum Status: String
-    {
-        case starting  = "STARTING"
-        case running   = "RUNNING"
-        case backoff   = "BACKOFF"
-        case stopping  = "STOPPING"
-        case stopped   = "STOPPED"
-        case exited    = "EXITED"
-        case fatal     = "FATAL"
-        case unknown   = "UNKNOWN"
-
-        /// A lowercase display label suitable for UI rendering (e.g. "running", "stopping").
-        public var label: String { rawValue.lowercased() }
-
-        /// Whether this status represents a process that is actively running.
-        public var isRunning: Bool { self == .running }
-
-        /// Whether this status represents an ephemeral transition state.
-        public var isTransitioning: Bool { self == .starting || self == .stopping }
-    }
-
-}
-
-// MARK: - Supervisor Commands
-
-extension DeployerShell {
+struct DeployerShell {
     
-    public struct Supervisor {
-
-        /// Query the granular process status for a named product.
-        /// Uses `executeRaw` because `supervisorctl status` returns non-zero exit
-        /// codes for stopped/exited processes — that's expected, not an error.
-        static func status(product: String) async -> Status {
-            let output = await DeployerShell.executeRaw("supervisorctl status \(product)")
-
-            // supervisorctl status output format:
-            // <name>    <STATE>    pid <pid>, uptime <time>
-            // e.g.: "mottzi                           RUNNING   pid 1234, uptime 0:01:23"
-            // e.g.: "mottzi                           STOPPED   Mar 21 11:30 PM"
-            let tokens = output.split(whereSeparator: { $0.isWhitespace })
-            guard tokens.count >= 2 else { return .unknown }
-
-            let stateString = String(tokens[1])
-            return Status(rawValue: stateString) ?? .unknown
-        }
-
-        /// Legacy convenience: returns `true` if the product is in the RUNNING state.
-        static func isRunning(product: String) async -> Bool {
-            let currentStatus = await status(product: product)
-            return currentStatus.isRunning
-        }
-
-        static func start(product: String) async throws {
-            try await DeployerShell.execute("supervisorctl start \(product)")
-        }
-
-        static func restart(product: String) async throws {
-            try await DeployerShell.execute("supervisorctl restart \(product)")
-        }
-
-        static func stop(product: String) async throws {
-            try await DeployerShell.execute("supervisorctl stop \(product)")
-        }
-
+    struct Result: Sendable {
+        let output: String
+        let exitCode: Int32
+    }
+        
+    @discardableResult static func execute(_ command: String, directory: String? = nil) async throws -> String {
+        let result = await run(command, directory: directory)
+        guard result.exitCode == 0 else { throw ShellError(command: command, output: result.output) }
+        return result.output
     }
     
-}
-
-// MARK: - Shell Execution
-
-public struct DeployerShell {
+    @discardableResult static func executeRaw(_ command: String, directory: String? = nil) async -> String {
+        await run(command, directory: directory).output
+    }
     
-    private static func run(_ command: String, directory: String? = nil) async -> (output: String, exitCode: Int32) {
+    static func executeResult(_ command: String, directory: String? = nil) async -> Result {
+        await run(command, directory: directory)
+    }
+    
+    private static func run(_ command: String, directory: String? = nil) async -> Result {
         
         await Task.detached {
             
@@ -84,44 +29,113 @@ public struct DeployerShell {
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
             process.arguments = ["bash", "-c", command]
             if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory) }
-
+            
             let pipe = Pipe()
             process.standardOutput = pipe
             process.standardError = pipe
-
-            guard (try? process.run()) != nil else { return ("", -1) }
+            
+            guard (try? process.run()) != nil else { return Result(output: "", exitCode: -1) }
             process.waitUntilExit()
-
+            
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             pipe.fileHandleForReading.closeFile()
-
+            
             let output = String(data: data, encoding: .utf8) ?? ""
-            return (output, process.terminationStatus)
+            return Result(output: output, exitCode: process.terminationStatus)
         }.value
     }
 
-    @discardableResult
-    static func execute(_ command: String, directory: String? = nil) async throws -> String {
-        let result = await run(command, directory: directory)
-        guard result.exitCode == 0 else { throw ShellError.failed(command: command, output: result.output) }
-        return result.output
-    }
+    
+}
 
-    @discardableResult
-    static func executeRaw(_ command: String, directory: String? = nil) async -> String {
-        await run(command, directory: directory).output
-    }
-
-    enum ShellError: Error, LocalizedError {
+extension DeployerShell {
+    
+    static func getCurrentCheckout(in directory: String) async throws -> GitCheckout {
         
-        case failed(command: String, output: String)
+        let commitID = try await execute("git rev-parse HEAD", directory: directory).trimmed
+        let commitMessage = try await execute("git log -1 --pretty=%s HEAD", directory: directory).trimmed
+        let committedAtRaw = try await execute("git show -s --format=%ct HEAD", directory: directory).trimmed
         
-        var errorDescription: String? {
-            switch self {
-                case .failed(let command, let output): "'\(command)' failed with output:\n\n'\(output)'"
-            }
+        guard
+            let committedAtSeconds = TimeInterval(committedAtRaw),
+            commitID.isEmpty == false,
+            commitMessage.isEmpty == false
+        else {
+            throw ShellError(command: "git checkout inspection", output: "Failed to parse current checkout metadata.")
         }
         
+        let branch = await getCurrentBranch(in: directory)
+        
+        return GitCheckout(
+            commitID: commitID,
+            commitMessage: commitMessage,
+            branch: branch,
+            committedAt: Date(timeIntervalSince1970: committedAtSeconds)
+        )
+    }
+    
+    private static func getCurrentBranch(in directory: String) async -> String {
+        
+        let symbolicBranch = await executeRaw("git symbolic-ref -q --short HEAD", directory: directory).trimmed
+        if symbolicBranch.isEmpty == false {
+            return "refs/heads/\(symbolicBranch)"
+        }
+        
+        let remoteBranches = await executeRaw("git branch -r --contains HEAD --format='%(refname:short)'", directory: directory)
+            .split(whereSeparator: \.isNewline)
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter {
+                $0.isEmpty == false &&
+                $0.contains("->") == false &&
+                $0.hasSuffix("/HEAD") == false
+            }
+        
+        if let originBranch = remoteBranches.first(where: { $0.hasPrefix("origin/") }) {
+            return "refs/heads/\(originBranch.dropFirst("origin/".count))"
+        }
+        
+        return remoteBranches.first ?? "HEAD"
+    }
+    
+}
+
+struct GitCheckout: Sendable {
+    
+    let commitID: String
+    let commitMessage: String
+    let branch: String
+    let committedAt: Date
+    
+}
+
+struct ShellError: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible {
+    
+    let command: String
+    let output: String
+    
+    var errorDescription: String? {
+        let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedOutput.isEmpty == false else {
+            return "Command '\(command)' failed."
+        }
+
+        return "Command '\(command)' failed.\n\(trimmedOutput)"
+    }
+
+    var description: String {
+        errorDescription ?? "Shell command failed."
+    }
+
+    var debugDescription: String {
+        description
+    }
+    
+}
+
+private extension String {
+    
+    var trimmed: String {
+        trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
 }

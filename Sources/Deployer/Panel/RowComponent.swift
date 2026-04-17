@@ -1,29 +1,30 @@
 import Vapor
-import Fluent
 import Mist
+import Fluent
 
-public struct RowComponent: Mist.InstanceComponent {
+struct RowComponent: InstanceComponent {
     
     let productName: String
     
-    public let name: String
-    public let models: [any Mist.Model.Type]
-    public let actions: [any Mist.Action]
-    public let template: Template
-    public let defaultState: Mist.ComponentState
+    let name: String
+    let models: [any Mist.Model.Type] = [Deployment.self]
+    let actions: [any Action]
+    let template: any Template = LeafTemplate.file("Deployer/RowComponent")
+    let defaultState: ComponentState = ["errorExpanded": .bool(false)]
     
-    public init(productName: String) {
+    init(productName: String) {
         self.productName = productName
         self.name = "RowComponent-\(productName)"
-        self.models = [Deployment.self]
-        self.actions = [DeleteAction(), ToggleErrorAction()]
-        self.template = .file(path: "Deployer/RowComponent")
-        self.defaultState = ["errorExpanded": .bool(false)]
+        self.actions = [
+            DeployAction(productName: productName),
+            DeleteAction(productName: productName),
+            ToggleErrorAction(productName: productName)
+        ]
     }
     
-    public func allModels(on db: Database) async -> [any Mist.Model]? {
-        try? await Deployment.query(on: db)
-            .filter(\.$productName == productName)
+    func allModels(on db: Database) async throws -> [any Mist.Model] {
+        try await Deployment.query(on: db)
+            .filter(\.$product == productName)
             .sort(\.$startedAt, .descending)
             .all()
     }
@@ -32,28 +33,64 @@ public struct RowComponent: Mist.InstanceComponent {
 
 extension RowComponent {
     
-    struct DeleteAction: Mist.Action {
+    struct DeployAction: Action {
+        
+        let name: String = "deploy"
+        let productName: String
+        
+        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
+
+            guard let targetID else { return .failure("No ID found") }
+            let deployment: Deployment?
+            do { deployment = try await Deployment.find(targetID, on: app.db) }
+            catch { app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(targetID)", error))"); return .failure("Database error looking up deployment") }
+            guard let deployment else { return .failure("Deployment not found") }
+            guard deployment.product == productName else { return .failure("Deployment not found") }
+            guard deployment.canBeDeployed else { return .failure("Deployments already in progress cannot be started again") }
+            let target = app.deployer.queue.config.target
+
+            return switch await app.deployer.queue.deploy(deployment: deployment, target: target) {
+            case .started: .success("Deployment started")
+            case .queueBusy: .failure("A deployment is already running")
+            case .failure(let message): .failure(message)
+            }
+        }
+        
+    }
+    
+    struct DeleteAction: Action {
         
         let name: String = "delete"
+        let productName: String
         
-        func perform(id: UUID?, state: inout ComponentState, on db: Database) async -> ActionResult {
-            
-            guard let deployment = try? await Deployment.find(id, on: db) else { return .failure(message: "Deployment not found") }
-            guard (try? await deployment.delete(on: db)) != nil else { return .failure(message: "Failed to delete deployment") }
+        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
+
+            let deployment: Deployment?
+            do { deployment = try await Deployment.find(targetID, on: app.db) }
+            catch { app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(targetID?.uuidString ?? "nil")", error))"); return .failure("Database error looking up deployment") }
+            guard let deployment else { return .failure("Deployment not found") }
+            guard deployment.product == productName else { return .failure("Deployment not found") }
+            do { try await deployment.delete(on: app.db) }
+            catch { app.logger.error("\(MistError.databaseFetchFailed("Deployment delete id=\(deployment.id?.uuidString ?? "nil")", error))"); return .failure("Failed to delete deployment") }
             return .success()
         }
         
     }
     
-    struct ToggleErrorAction: Mist.Action {
+    struct ToggleErrorAction: Action {
         
         let name: String = "toggleError"
+        let productName: String
         
-        func perform(id: UUID?, state: inout ComponentState, on db: Database) async -> ActionResult {
-            
-            guard let id else { return .failure(message: "No ID found") }
-            guard let deployment = try? await Deployment.find(id, on: db) else { return .failure(message: "Deployment not found") }
-            guard deployment.errorMessage != nil else { return .failure(message: "No error to display") }
+        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
+
+            guard let targetID else { return .failure("No ID found") }
+            let deployment: Deployment?
+            do { deployment = try await Deployment.find(targetID, on: app.db) }
+            catch { app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(targetID)", error))"); return .failure("Database error looking up deployment") }
+            guard let deployment else { return .failure("Deployment not found") }
+            guard deployment.product == productName else { return .failure("Deployment not found") }
+            guard deployment.errorMessage != nil else { return .failure("No error to display") }
             
             let current = state["errorExpanded"]?.bool ?? false
             state["errorExpanded"] = .bool(!current)

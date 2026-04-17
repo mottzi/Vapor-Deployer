@@ -1,0 +1,114 @@
+import Vapor
+import Fluent
+import Foundation
+
+extension Deployer {
+
+    func configureHTTP(config: DeployerConfiguration) {
+        app.http.server.configuration.port = config.port
+        app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    }
+
+    func configureDatabase(config: DeployerConfiguration) async throws {
+        try createDatabaseDirectory(for: config.dbFile)
+        app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
+        app.sessions.use(.fluent)
+        app.migrations.add(Deployment.migration, SessionRecord.migration)
+        try await app.autoMigrate()
+        await seedFirstDeployment(config: config)
+    }
+
+    func configureViews() {
+        app.views.use(.leaf)
+    }
+
+    func configureMist(config: DeployerConfiguration) {
+        app.mist.socket.path = config.socketPath.pathComponents
+        app.mist.socket.middleware = app.sessions.middleware
+        app.mist.socket.shouldUpgrade = { request in
+            guard request.session.data["admin_auth"] == "true" else { return nil }
+            return HTTPHeaders()
+        }
+    }
+
+    func configurePanel(config: DeployerConfiguration) async throws {
+        let rowComponent = RowComponent(productName: config.target.name)
+        let configComponent = ConfigComponent(using: config)
+        let queueComponent = QueueComponent()
+        let statusComponent = StatusComponent(
+            product: config.target.name,
+            status: await serviceManager.status(product: config.target.name)
+        )
+
+        try useVariables()
+        useQueue(
+            config: config,
+            queueState: queueComponent.state,
+            onStatusChange: { status in
+                await statusComponent.state.set(StatusState(status))
+            }
+        )
+        useWebhook(config: config)
+        usePanel(
+            config: config,
+            row: rowComponent,
+            configPopover: configComponent
+        )
+
+        try await app.mist.use {
+            rowComponent
+            statusComponent
+            queueComponent
+            configComponent
+        }
+    }
+
+    func shouldServe() -> Bool {
+        let command = app.environment.arguments
+            .dropFirst()
+            .first { $0.hasPrefix("-") == false }
+        
+        return command == nil || command == "serve"
+    }
+    
+    func createDatabaseDirectory(for dbFile: String) throws {
+        
+        let dbDirectoryURL = URL(fileURLWithPath: dbFile).deletingLastPathComponent().standardizedFileURL
+        let workingDirectoryURL = URL(fileURLWithPath: app.directory.workingDirectory, isDirectory: true).standardizedFileURL
+        
+        guard dbDirectoryURL != workingDirectoryURL else { return }
+        try FileManager.default.createDirectory(at: dbDirectoryURL, withIntermediateDirectories: true)
+    }
+    
+    func seedFirstDeployment(config: DeployerConfiguration) async {
+        
+        do {
+            let existingDeploymentCount = try await Deployment.query(on: app.db)
+                .filter(\.$product, .equal, config.target.name)
+                .count()
+            
+            guard existingDeploymentCount == 0 else { return }
+            
+            let checkout = try await DeployerShell.getCurrentCheckout(in: config.target.directory)
+            
+            let deployment = Deployment(
+                product: config.target.name,
+                status: .deployed,
+                commitMessage: checkout.commitMessage,
+                commitID: checkout.commitID,
+                branch: checkout.branch
+            )
+            
+            deployment.isLive = true
+            try await deployment.save(on: app.db)
+            
+            deployment.startedAt = checkout.committedAt
+            deployment.finishedAt = checkout.committedAt
+            try await deployment.save(on: app.db)
+            
+        } catch {
+            app.logger.warning("Error when seeding initial deployment for '\(config.target.name)': \(error.localizedDescription)")
+        }
+    }
+    
+}

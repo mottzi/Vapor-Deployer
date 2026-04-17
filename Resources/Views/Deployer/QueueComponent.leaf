@@ -1,0 +1,20 @@
+<span
+  class="dp-queue-lock #(stateClass)"
+  mist-component="QueueComponent"
+  title="#(tooltip)"
+  aria-label="#(tooltip)"
+>
+  #if(isDeploying):
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+      <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+    </svg>
+  #else:
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+      <path d="M8 11V8a4 4 0 0 1 7-2.8"></path>
+      <path d="M15 8l2.5-2.5"></path>
+    </svg>
+  #endif
+  <span class="dp-visually-hidden">#(iconLabel)</span>
+</span>

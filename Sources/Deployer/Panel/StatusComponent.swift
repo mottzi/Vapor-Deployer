@@ -1,66 +1,142 @@
 import Vapor
-import Fluent
 import Mist
+import Elementary
 
-public struct StatusComponent: Mist.StateComponent {
-    
-    public let productName: String
+struct StatusComponent: LiveComponent {
 
-    public var name: String { "StatusComponent-\(productName)" }
-    public let interval: Duration = .seconds(3)
-    public let template: Template = .file(path: "Deployer/StatusComponent")
-    public let actions: [any Mist.Action]
-    public let state: LiveState<State>
-    
-    public struct State: Encodable, Equatable, Sendable {
-        
-        public let productName: String
-        public let status: String
-        public let isRunning: Bool
-        public let isTransitioning: Bool
+    var name: String
+    let product: String
+    var actions: [Action]
+    let state: LiveState<StatusState>
 
-        init(productName: String,
-             status: DeployerShell.Supervisor.Status
-        ) {
-            self.productName = productName
-            self.status = status.label
-            self.isRunning = status.isRunning
-            self.isTransitioning = status.isTransitioning
-        }
-        
+    func refresh(app: Application) async {
+        let currentStatus = await app.deployer.serviceManager.status(product: product)
+        await state.set(StatusState(currentStatus))
     }
-
-    public init(
-        productName: String,
-        initialStatus: DeployerShell.Supervisor.Status = .unknown
+    
+    func body(state: StatusState) -> some HTML {
+        div(
+            .class("dp-product-status"),
+            .mistComponent(value: "StatusComponent-\(product)")
+        ) {
+            if state.isRunning { stopButton }
+            if !state.isTransitioning { startButton }
+            statusBadge(of: state)
+        }
+    }
+    
+    init(
+        product: String,
+        status: DeployerServiceStatus
     ) {
-        self.productName = productName
-        self.state = LiveState(initialState: State(productName: productName, status: initialStatus))
+        self.product = product
+        self.name = "StatusComponent-\(product)"
+        self.state = LiveState(of: StatusState(status))
         self.actions = [
-            RestartAction(productName: productName, reactiveState: state),
-            StopAction(productName: productName, reactiveState: state)
+            RestartAction(productName: product, reactiveState: state),
+            StopAction(productName: product, reactiveState: state)
         ]
     }
 
-    public func observe(app: Application) async {
+}
+
+struct StatusState: ComponentData {
+
+    let status: String
+    let isRunning: Bool
+    let isTransitioning: Bool
+
+    init(_ status: DeployerServiceStatus) {
+        self.status = status.label
+        self.isRunning = status.isRunning
+        self.isTransitioning = status.isTransitioning
+    }
+
+}
+
+extension StatusComponent {
+    
+    var stopButton: some HTML {
+        button(
+            .class("dp-supervisor-btn dp-supervisor-btn--stop"),
+            .custom(name: "mist-action", value: "stop"),
+            .title("Stop")
+        ) {
+            HTMLRaw(
+                """
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="4" y="4" width="16" height="16" rx="2"/>
+                </svg>
+                """
+            )
+        }
+    }
+    
+    var startButton: some HTML {
+        button(
+            .class("dp-supervisor-btn dp-supervisor-btn--restart"),
+            .custom(name: "mist-action", value: "restart"),
+            .title("Restart")
+        ) {
+            HTMLRaw(
+                """
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                  <polyline points="23 4 23 10 17 10"/>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                """
+            )
+        }
+    }
+    
+}
+
+extension StatusComponent {
+    
+    @HTMLBuilder
+    func statusBadge(of state: StatusState) -> some HTML {
         
-        while !app.didShutdown && !Task.isCancelled {
-            try? await Task.sleep(for: interval)
-            guard !app.didShutdown && !Task.isCancelled else { break }
-            guard await !shouldPause(on: app) else { continue }
-
-            let currentStatus = await DeployerShell.Supervisor.status(product: productName)
-            await state.set(State(productName: productName, status: currentStatus))
+        switch (state.isTransitioning, state.isRunning, state.status) {
+            case (true, _, let status): transitioningBadge(status)
+            case (false, true, _): runningBadge
+            case (false, false, "fatal"): fatalBadge
+            case (false, false, let status): stoppedBadge(status)
         }
     }
 
-}
+    var runningBadge: some HTML {
+        span(.class("dp-supervisor-badge dp-supervisor-badge--running")) {
+            statusDot
+            "running"
+        }
+    }
 
-extension StatusComponent {
-    
-    var statusHandler: @Sendable (DeployerShell.Supervisor.Status) async -> Void {
-        return { [state, productName] status in
-            await state.set(State(productName: productName, status: status))
+    var fatalBadge: some HTML {
+        span(.class("dp-supervisor-badge dp-supervisor-badge--fatal")) {
+            statusDot
+            "fatal"
+        }
+    }
+
+    var statusDot: some HTML {
+        span(.class("dp-supervisor-dot")) {}
+    }
+
+    var pulsingStatusDot: some HTML {
+        span(.class("dp-supervisor-dot dp-supervisor-dot--pulse")) {}
+    }
+
+    func transitioningBadge(_ status: String) -> some HTML {
+        span(.class("dp-supervisor-badge dp-supervisor-badge--transitioning")) {
+            pulsingStatusDot
+            status
+        }
+    }
+
+    func stoppedBadge(_ status: String) -> some HTML {
+        span(.class("dp-supervisor-badge dp-supervisor-badge--stopped")) {
+            statusDot
+            status
         }
     }
     
@@ -68,57 +144,61 @@ extension StatusComponent {
 
 extension StatusComponent {
 
-    struct RestartAction: Mist.Action {
+    struct RestartAction: Action {
 
         let name = "restart"
         let productName: String
-        let reactiveState: LiveState<State>
+        let reactiveState: LiveState<StatusState>
 
-        func perform(id: UUID?, state: inout ComponentState, on db: Database) async -> ActionResult {
-            
+        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
+
             do {
-                let status = await DeployerShell.Supervisor.status(product: productName)
+                let manager = app.deployer.serviceManager
+                let status = await manager.status(product: productName)
                 switch status.isRunning {
-                    case true: await reactiveState.set(State(productName: productName, status: .stopping))
-                    case false: await reactiveState.set(State(productName: productName, status: .starting))
+                    case true: await reactiveState.set(StatusState(.stopping))
+                    case false: await reactiveState.set(StatusState(.starting))
                 }
-                
-                try await DeployerShell.Supervisor.restart(product: productName)
-                await reactiveState.set(State(productName: productName, status: .starting))
-                
-                let finalStatus = await DeployerShell.Supervisor.status(product: productName)
-                await reactiveState.set(State(productName: productName, status: finalStatus))
+
+                try await manager.restart(product: productName)
+                await reactiveState.set(StatusState(.starting))
+
+                let finalStatus = await manager.status(product: productName)
+                await reactiveState.set(StatusState(finalStatus))
 
                 return .success()
             } catch {
-                let recoveryStatus = await DeployerShell.Supervisor.status(product: productName)
-                await reactiveState.set(State(productName: productName, status: recoveryStatus))
-                return .failure(message: error.localizedDescription)
+                let manager = app.deployer.serviceManager
+                let recoveryStatus = await manager.status(product: productName)
+                await reactiveState.set(StatusState(recoveryStatus))
+                return .failure(error.localizedDescription)
             }
         }
 
     }
 
-    struct StopAction: Mist.Action {
+    struct StopAction: Action {
 
         let name = "stop"
         let productName: String
-        let reactiveState: LiveState<State>
+        let reactiveState: LiveState<StatusState>
 
-        func perform(id: UUID?, state: inout ComponentState, on db: Database) async -> ActionResult {
-            
+        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
+
             do {
-                await reactiveState.set(State(productName: productName, status: .stopping))
-                try await DeployerShell.Supervisor.stop(product: productName)
+                let manager = app.deployer.serviceManager
+                await reactiveState.set(StatusState(.stopping))
+                try await manager.stop(product: productName)
 
-                let finalStatus = await DeployerShell.Supervisor.status(product: productName)
-                await reactiveState.set(State(productName: productName, status: finalStatus))
+                let finalStatus = await manager.status(product: productName)
+                await reactiveState.set(StatusState(finalStatus))
 
                 return .success()
             } catch {
-                let recoveryStatus = await DeployerShell.Supervisor.status(product: productName)
-                await reactiveState.set(State(productName: productName, status: recoveryStatus))
-                return .failure(message: error.localizedDescription)
+                let manager = app.deployer.serviceManager
+                let recoveryStatus = await manager.status(product: productName)
+                await reactiveState.set(StatusState(recoveryStatus))
+                return .failure(error.localizedDescription)
             }
         }
 

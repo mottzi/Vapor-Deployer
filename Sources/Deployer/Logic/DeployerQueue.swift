@@ -1,9 +1,16 @@
 import Vapor
+import Mist
+
+typealias StatusHandler = @Sendable (DeployerServiceStatus) async -> Void
 
 extension Deployer {
     
-    func useQueue(config: DeployerConfiguration) {
-        queue = DeployerQueue(app: app, config: config)
+    func useQueue(
+        config: DeployerConfiguration,
+        queueState: LiveState<QueueState>,
+        onStatusChange: @escaping StatusHandler
+    ) {
+        queue = DeployerQueue(app: app, config: config, queueState: queueState, onStatusChange: onStatusChange)
     }
     
     var queue: DeployerQueue {
@@ -26,34 +33,84 @@ actor DeployerQueue {
     
     let app: Application
     let config: DeployerConfiguration
+    let queueState: LiveState<QueueState>
+    let onStatusChange: StatusHandler
     
-    public init(app: Application, config: DeployerConfiguration) {
+    init(
+        app: Application,
+        config: DeployerConfiguration,
+        queueState: LiveState<QueueState>,
+        onStatusChange: @escaping StatusHandler
+    ) {
         self.app = app
         self.config = config
+        self.queueState = queueState
+        self.onStatusChange = onStatusChange
     }
     
-    public func enqueue(message: String?, target: TargetConfiguration) async {
+    func recordPush(event: PushEvent, target: TargetConfiguration) async {
         
-        let newDeployment = Deployment(
-            productName: target.productName,
-            status: !isDeploying ? .running : .canceled,
-            message: message ?? ""
+        let status: Deployment.Status = switch target.deploymentMode {
+            case .automatic: isDeploying ? .canceled : .running
+            case .manual: .pushed
+        }
+        
+        let deployment = Deployment(
+            product: target.name,
+            status: status,
+            commitMessage: event.deploymentMessage,
+            commitID: event.commitID,
+            branch: event.branch
         )
+                
+        if deployment.status == .running {
+            await deploy(deployment: deployment, target: target)
+            return
+        }
         
-        try? await newDeployment.save(on: app.db)
-
-        guard !isDeploying else { return }
+        try? await deployment.save(on: app.db)
+        
+    }
+    
+    @discardableResult
+    func deploy(deployment: Deployment, target: TargetConfiguration) async -> StartResult {
+        
+        guard !isDeploying else { return .queueBusy }
+        
         isDeploying = true
-
-        await drainQueue(startingWith: newDeployment, initialTarget: target)
+        await updateUI()
+        
+        deployment.startedAt = .now
+        deployment.status = .running
+        deployment.finishedAt = nil
+        deployment.errorMessage = nil
+        
+        do {
+            try await deployment.save(on: app.db)
+        } catch {
+            isDeploying = false
+            await updateUI()
+            
+            return .failure("Failed to start deployment: \(error.localizedDescription)")
+        }
+        
+        Task { await self.drainQueue(startingWith: deployment, initialTarget: target) }
+        return .started
     }
     
 }
 
 extension DeployerQueue {
     
-    func logger(_ name: String) -> Logger {
-        Logger(label: "\(name).Pipeline")
+    enum StartResult: Sendable {
+        case started
+        case queueBusy
+        case failure(String)
+    }
+    
+    func updateUI() async {
+        let newState = QueueState(isDeploying: isDeploying)
+        await queueState.set(newState)
     }
     
     func drainQueue(startingWith initialDeployment: Deployment, initialTarget: TargetConfiguration) async {
@@ -62,21 +119,17 @@ extension DeployerQueue {
         var currentTarget = initialTarget
         
         while true {
-            let statusComponent = await app.mist.components.getComponent(usingName: "StatusComponent-\(currentTarget.productName)") as? StatusComponent
-
             let worker = DeployerWorker(
                 deployment: currentDeployment,
                 target: currentTarget,
                 app: app,
-                onStatusChange: statusComponent?.statusHandler ?? { @Sendable _ in }
+                onStatusChange: onStatusChange
             )
             
             do {
-                if currentDeployment.mode == .standard {
-                    try await worker.pull()
-                    try await worker.build()
-                    try await worker.move()
-                }
+                try await worker.checkout()
+                try await worker.build()
+                try await worker.move()
 
                 currentDeployment.status = .success
                 currentDeployment.finishedAt = .now
@@ -87,22 +140,11 @@ extension DeployerQueue {
                     try await worker.restart()
                     break
                 }
-                
-                try await handleTransition(from: currentDeployment, to: nextDeployment, worker: worker)
-                
+
                 nextDeployment.status = .running
                 try? await nextDeployment.save(on: app.db)
-                
-                guard let nextTarget = config.target(for: nextDeployment.productName) else {
-                    nextDeployment.status = .failed
-                    nextDeployment.finishedAt = .now
-                    nextDeployment.errorMessage = "Configuration missing for target: \(nextDeployment.productName)"
-                    try? await nextDeployment.save(on: app.db)
-                    logger(currentTarget.productName).error("Failed to find TargetConfiguration for '\(nextDeployment.productName)'")
-                    break
-                }
 
-                currentTarget = nextTarget
+                currentTarget = config.target
                 currentDeployment = nextDeployment
             } catch {
                 currentDeployment.status = .failed
@@ -111,61 +153,35 @@ extension DeployerQueue {
 
                 guard !app.didShutdown else { break }
                 try? await currentDeployment.save(on: app.db)
-                
-                logger(currentTarget.productName).error("\(error.localizedDescription)")
                 break
             }
         }
         
         isDeploying = false
+        await updateUI()
     }
     
     func findNextDeployment(after deployment: Deployment) async throws -> Deployment? {
         
-        let cancelledDeployments = try await Deployment.query(on: app.db)
+        guard let currentTime = deployment.startedAt else { return nil }
+
+        let candidate = try await Deployment.query(on: app.db)
+            .filter(\.$product, .equal, deployment.product)
             .filter(\.$status, .equal, .canceled)
-            .sort(\.$startedAt, .descending)
-            .all()
-        
-        var cancelledDeploymentByProduct: [String: Deployment] = [:]
-        for cancelledDeployment in cancelledDeployments {
-            guard cancelledDeploymentByProduct[cancelledDeployment.productName] == nil else { continue }
-            cancelledDeploymentByProduct[cancelledDeployment.productName] = cancelledDeployment
-        }
-        
-        if let sameProduct = cancelledDeploymentByProduct[deployment.productName],
-           let pendingTime = sameProduct.startedAt,
-           let currentTime = deployment.startedAt,
-           pendingTime > currentTime,
-           try await !isSuperseded(sameProduct) {
-            
-            return sameProduct
-        }
-        
-        let differentProductCandidates = cancelledDeploymentByProduct.values
-            .filter { $0.productName != config.deployerTarget.productName && $0.productName != deployment.productName }
-            .sorted { ($0.startedAt ?? .distantPast) > ($1.startedAt ?? .distantPast) }
-        
-        for candidate in differentProductCandidates
-        where try await !isSuperseded(candidate) {
-            
-            return candidate
-        }
-        
-        if let deployerProduct = cancelledDeploymentByProduct[config.deployerTarget.productName],
-           try await !isSuperseded(deployerProduct) {
-            
-            return deployerProduct
-        }
-        
-        return nil
+            .filter(\.$startedAt, .greaterThan, currentTime)
+            .sort(\.$startedAt, .descending)   // newest wins
+            .first()
+
+        guard let candidate, try await !isSuperseded(candidate) else { return nil }
+        return candidate
     }
+
     
     func isSuperseded(_ deployment: Deployment) async throws -> Bool {
         
         guard let startedAt = deployment.startedAt else { return false }
         
-        if let currentDeployment = try await Deployment.getCurrent(named: deployment.productName, on: app.db),
+        if let currentDeployment = try await Deployment.getCurrent(named: deployment.product, on: app.db),
            let currentStartedAt = currentDeployment.startedAt,
            currentStartedAt >= startedAt {
             
@@ -173,7 +189,7 @@ extension DeployerQueue {
         }
 
         let isSuperseded = try await Deployment.query(on: app.db)
-            .filter(\.$productName, .equal, deployment.productName)
+            .filter(\.$product, .equal, deployment.product)
             .filter(\.$startedAt, .greaterThan, startedAt)
             .group(.or) {
                 $0
@@ -184,33 +200,4 @@ extension DeployerQueue {
 
         return isSuperseded
     }
-    
-    func handleTransition(from deployment: Deployment, to nextDeployment: Deployment, worker: DeployerWorker) async throws {
-        
-        let isDeployer = deployment.productName == config.deployerTarget.productName
-        let isSameProduct = deployment.productName == nextDeployment.productName
-        
-        if isDeployer && !isSameProduct {
-            let hasPendingDeployerRestart = try await Deployment.query(on: app.db)
-                .filter(\.$productName, .equal, config.deployerTarget.productName)
-                .filter(\.$status, .equal, .canceled)
-                .filter(\.$mode, .equal, Deployment.Mode.restartOnly)
-                .first() != nil
-
-            if hasPendingDeployerRestart == false {
-                let deferredDeployment = Deployment(
-                    productName: deployment.productName,
-                    status: .canceled,
-                    message: deployment.message,
-                    mode: .restartOnly
-                )
-                
-                try await deferredDeployment.save(on: app.db)
-            }
-        } else if !isSameProduct {
-            try await deployment.setCurrent(on: app.db)
-            try await worker.restart()
-        }
-    }
-    
 }

@@ -1,26 +1,11 @@
 <div class="dp-product-status" mist-component="StatusComponent-#(productName)">
 
-  #if(isTransitioning):
-    <span class="dp-supervisor-badge dp-supervisor-badge--transitioning">
-      <span class="dp-supervisor-dot dp-supervisor-dot--pulse"></span>#(status)
-    </span>
-  #elseif(isRunning):
-    <span class="dp-supervisor-badge dp-supervisor-badge--running">
-      <span class="dp-supervisor-dot"></span>running
-    </span>
+  #if(isRunning):
     <button class="dp-supervisor-btn dp-supervisor-btn--stop" mist-action="stop" title="Stop">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <rect x="4" y="4" width="16" height="16" rx="2"/>
       </svg>
     </button>
-  #elseif(status == "fatal"):
-    <span class="dp-supervisor-badge dp-supervisor-badge--fatal">
-      <span class="dp-supervisor-dot"></span>fatal
-    </span>
-  #else:
-    <span class="dp-supervisor-badge dp-supervisor-badge--stopped">
-      <span class="dp-supervisor-dot"></span>#(status)
-    </span>
   #endif
 
   #if(!isTransitioning):
@@ -30,6 +15,24 @@
         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
       </svg>
     </button>
+  #endif
+
+  #if(isTransitioning):
+    <span class="dp-supervisor-badge dp-supervisor-badge--transitioning">
+      <span class="dp-supervisor-dot dp-supervisor-dot--pulse"></span>#(status)
+    </span>
+  #elseif(isRunning):
+    <span class="dp-supervisor-badge dp-supervisor-badge--running">
+      <span class="dp-supervisor-dot"></span>running
+    </span>
+  #elseif(status == "fatal"):
+    <span class="dp-supervisor-badge dp-supervisor-badge--fatal">
+      <span class="dp-supervisor-dot"></span>fatal
+    </span>
+  #else:
+    <span class="dp-supervisor-badge dp-supervisor-badge--stopped">
+      <span class="dp-supervisor-dot"></span>#(status)
+    </span>
   #endif
 
 </div>

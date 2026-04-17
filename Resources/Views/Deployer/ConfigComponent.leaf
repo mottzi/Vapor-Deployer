@@ -1,0 +1,13 @@
+<div class="dp-config-card" mist-component="#(componentName)">
+  #for(group in groups):
+    <section class="dp-config-group">
+      <h3 class="dp-config-group-title">#(group.title)</h3>
+      <dl class="dp-config-grid">
+        #for(field in group.fields):
+          <dt class="dp-config-label">#(field.label)</dt>
+          <dd class="dp-config-value">#(field.value)</dd>
+        #endfor
+      </dl>
+    </section>
+  #endfor
+</div>

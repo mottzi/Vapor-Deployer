@@ -1,45 +1,59 @@
 import Vapor
 import Fluent
+import Foundation
 
 extension Application {
     
-    public var deployer: Deployer { Deployer(app: self) }
+    var deployer: Deployer { Deployer(app: self) }
     
 }
 
-public struct Deployer: Sendable {
+@main struct Deployer: Sendable {
     
-    public let app: Application
+    let app: Application
         
-    public func use(config: DeployerConfiguration) async throws {
-        
-        app.http.server.configuration.port = config.port
-        app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-        
-        app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite/*, isDefault: true*/)
-        app.sessions.use(.fluent)
-        app.migrations.add(Deployment.migration, SessionRecord.migration)
-        try await app.autoMigrate()
-        
-        app.views.use(.leaf)
-        app.mist.socketPath = config.mistSocketPath
-        app.mist.socketMiddleware = app.sessions.middleware
-        app.mist.shouldUpgrade = { request in
-            guard request.session.data["admin_auth"] == "true" else { return nil }
-            return HTTPHeaders()
-        }
-        await app.mist.use(
-            config.deployerRowComponent,
-            config.serverRowComponent,
-            config.statusComponent,
-            config.serverStatusComponent,
-            config.deployerStatusComponent
-        )
+    func useCommands() {
+        app.asyncCommands.use(DeployerUpdateCommand(), as: "update")
+    }
 
-        app.deployer.useVariables()
-        app.deployer.useQueue(config: config)
-        app.deployer.useWebhook(config: config)
-        app.deployer.usePanel(config: config)
+    func useServer() async throws {
+
+        let config = try DeployerConfiguration.load()
+        
+        app.deployer.serviceManager = config.serviceManager.makeManager()
+        app.deployer.configureHTTP(config: config)
+        try await app.deployer.configureDatabase(config: config)
+        app.deployer.configureViews()
+        app.deployer.configureMist(config: config)
+        try await app.deployer.configurePanel(config: config)
+    }
+    
+    static func main() async throws {
+        
+        var env = try Environment.detect()
+        try LoggingSystem.bootstrap(from: &env)
+        let app = try await Application.make(env)
+        
+        app.deployer.useCommands()
+
+        if app.deployer.shouldServe() {
+            do {
+                try await app.deployer.useServer()
+            } catch {
+                app.logger.report(error: error)
+                try? await app.asyncShutdown()
+                exit(1)
+            }
+        }
+
+        do {
+            try await app.execute()
+        } catch {
+            try? await app.asyncShutdown()
+            exit(1)
+        }
+        
+        try await app.asyncShutdown()
     }
     
 }

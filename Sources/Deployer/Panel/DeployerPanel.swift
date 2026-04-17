@@ -4,11 +4,19 @@ import Mist
 
 extension Deployer {
     
-    func usePanel(config: DeployerConfiguration) {
+    func usePanel(
+        config: DeployerConfiguration,
+        row: RowComponent,
+        configPopover: ConfigComponent
+    ) {
 
-        let panel = DeployerPanel(config: config)
+        let panel = DeployerPanel(
+            config: config,
+            row: row,
+            configPopover: configPopover
+        )
         
-        let router = app.grouped(config.panelRoute).grouped(app.sessions.middleware)
+        let router = app.grouped(config.panelRoute.pathComponents).grouped(app.sessions.middleware)
         router.get("login")     { try await panel.serveLogin(request: $0) }
         router.post("login")    { try panel.handleLogin(request: $0) }
         router.post("logout")   { panel.handleLogout(request: $0) }
@@ -22,15 +30,24 @@ extension Deployer {
 struct DeployerPanel {
     
     let config: DeployerConfiguration
+    let row: RowComponent
+    let configPopover: ConfigComponent
     let panelPath: String
     let loginPath: String
     let authenticator: PanelAuthenticator
     
-    init(config: DeployerConfiguration) {
-        self.panelPath = "/" + config.panelRoute.map(\.description).joined(separator: "/")
-        self.loginPath = panelPath + "/login"
+    init(
+        config: DeployerConfiguration,
+        row: RowComponent,
+        configPopover: ConfigComponent
+    ) {
+        let joinedPanelPath = config.panelRoute.pathComponents.map(\.description).joined(separator: "/")
+        self.panelPath = joinedPanelPath.isEmpty ? "/" : "/" + joinedPanelPath
+        self.loginPath = panelPath == "/" ? "/login" : panelPath + "/login"
         self.authenticator = PanelAuthenticator(path: loginPath)
         self.config = config
+        self.row = row
+        self.configPopover = configPopover
     }
     
 }
@@ -57,35 +74,31 @@ extension DeployerPanel {
     }
     
     func servePanel(request: Request) async throws -> View {
+        let context = try await makePanelContext(request: request)
+        return try await request.view.render("Deployer/DeployerPanel", context)
+    }
 
-        async let deployerRows    = config.deployerRowComponent.makeContext(ofAll: request.db)
-        async let serverRows      = config.serverRowComponent.makeContext(ofAll: request.db)
-        async let current         = Deployment.getCurrent(named: config.serverTarget.productName, on: request.db)
-        async let serverRunning   = DeployerShell.Supervisor.isRunning(product: config.serverTarget.productName)
-        async let deployerRunning = DeployerShell.Supervisor.isRunning(product: config.deployerTarget.productName)
+    func makePanelContext(request: Request) async throws -> PanelContext {
+        async let rows = row.makeContext(ofAll: request.db)
+        async let isRunning = request.application.deployer.serviceManager.isRunning(product: config.target.name)
+        async let queueIsDeploying = request.application.deployer.queue.isDeploying
+        async let configPopoverRender = configPopover.renderCurrent(app: request.application)
 
         let tables = [
             TableContext(
-                title: "Deployer",
-                productName: config.deployerTarget.productName,
-                rows: await deployerRows.components,
-                isRunning: await deployerRunning
-            ),
-            TableContext(
-                title: "Server",
-                productName: config.serverTarget.productName,
-                rows: await serverRows.components,
-                isRunning: await serverRunning
+                productName: config.target.name,
+                rows: try await rows.contexts,
+                isRunning: await isRunning,
+                showsQueueState: true,
+                queueIsDeploying: await queueIsDeploying,
+                configPopover: ConfigPopoverContext(
+                    componentName: configPopover.name,
+                    initialHTML: await configPopoverRender.html ?? ""
+                )
             )
         ]
-
-        let component = try? await current.map {
-            var container = ModelContainer()
-            container.add($0, for: "deployment")
-            return container
-        }
-
-        return try await request.view.render("Deployer/DeployerPanel", PanelContext(tables: tables, component: component))
+        
+        return PanelContext(tables: tables)
     }
     
 }
@@ -94,14 +107,20 @@ extension DeployerPanel {
     
     struct PanelContext: Encodable {
         let tables: [TableContext]
-        let component: ModelContainer?
     }
 
     struct TableContext: Encodable {
-        let title: String
         let productName: String
-        let rows: [ModelContainer]
+        let rows: [ModelContext]
         let isRunning: Bool
+        let showsQueueState: Bool
+        let queueIsDeploying: Bool
+        let configPopover: ConfigPopoverContext
+    }
+
+    struct ConfigPopoverContext: Encodable {
+        let componentName: String
+        let initialHTML: String
     }
 
     struct LoginFormData: Content {

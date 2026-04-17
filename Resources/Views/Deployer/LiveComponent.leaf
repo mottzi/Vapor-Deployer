@@ -1,9 +1,0 @@
-<div
-  mist-component="LiveComponent"
-  class="dp-live-badge"
->
-  <span class="dp-live-dot"></span>
-  <span class="dp-live-label">
-    <span class="dp-live-prefix">live ·</span>#(component.deployment.message)
-  </span>
-</div>

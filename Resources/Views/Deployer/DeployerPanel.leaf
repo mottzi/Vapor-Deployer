@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Deployments</title>
-  <link rel="icon" type="image/png" href="/mottzi.png">
+  <link rel="icon" type="image/png" href="/deployer/mottzi.png">
   <link rel="stylesheet" href="/deployer/deployer.css">
 </head>
 <body>
@@ -16,26 +16,11 @@
       <div class="dp-header-inner">
 
         <div class="dp-wordmark">
-          <div class="dp-wordmark-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 1L12.5 4.25V10.75L7 14L1.5 10.75V4.25L7 1Z" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
-              <circle cx="7" cy="7" r="2" fill="white"/>
-            </svg>
-          </div>
+          <img class="dp-wordmark-image" src="/deployer/mottzi.png" alt="Mottzi icon" width="28" height="28">
           <span class="dp-wordmark-title">Deployer</span>
         </div>
 
         <div class="dp-header-right">
-
-          <div
-            class="dp-status-slot"
-            mist-container="LiveComponent"
-            mist-insert-position="beforeend"
-          >
-            #if(component):
-              #extend("Deployer/LiveComponent")
-            #endif
-          </div>
 
           <form class="dp-logout-form" method="POST" action="/deployer/logout">
             <button type="submit" class="dp-logout-btn" title="Logout">
@@ -63,27 +48,76 @@
           <span class="dp-section-prompt">
             <span class="dp-section-prompt-symbol">~/</span>#(table.productName)
           </span>
-
+          <div class="dp-info-overlay">
+            <span class="dp-info-trigger" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 11v5"></path>
+                <path d="M12 8h.01"></path>
+              </svg>
+            </span>
+            <div
+              class="dp-info-popover"
+              id="#(table.configPopover.componentName)"
+            >
+              <div
+                class="dp-info-popover-slot"
+                mist-container="#(table.configPopover.componentName)"
+                mist-insert-position="beforeend"
+              >
+                #unsafeHTML(table.configPopover.initialHTML)
+              </div>
+            </div>
+          </div>
+          #if(table.showsQueueState):
+            <div
+              class="dp-queue-lock-slot"
+              mist-container="QueueComponent"
+              mist-insert-position="beforeend"
+            >
+              #if(table.queueIsDeploying):
+                <span
+                  class="dp-queue-lock dp-queue-lock--locked"
+                  mist-component="QueueComponent"
+                  title="Deployment queue locked: a deployment is in progress."
+                  aria-label="Deployment queue locked: a deployment is in progress."
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+                    <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+                  </svg>
+                  <span class="dp-visually-hidden">Locked</span>
+                </span>
+              #else:
+                <span
+                  class="dp-queue-lock dp-queue-lock--unlocked"
+                  mist-component="QueueComponent"
+                  title="Deployment queue unlocked: ready for a new deployment."
+                  aria-label="Deployment queue unlocked: ready for a new deployment."
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+                    <path d="M8 11V8a4 4 0 0 1 7-2.8"></path>
+                    <path d="M15 8l2.5-2.5"></path>
+                  </svg>
+                  <span class="dp-visually-hidden">Unlocked</span>
+                </span>
+              #endif
+            </div>
+          #endif
+          <div class="dp-section-spacer"></div>
           <div
             class="dp-supervisor-slot"
             mist-container="StatusComponent-#(table.productName)"
             mist-insert-position="beforeend"
           >
             <div class="dp-product-status" mist-component="StatusComponent-#(table.productName)">
-
               #if(table.isRunning):
-                <span class="dp-supervisor-badge dp-supervisor-badge--running">
-                  <span class="dp-supervisor-dot"></span>running
-                </span>
                 <button class="dp-supervisor-btn dp-supervisor-btn--stop" mist-action="stop" title="Stop">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <rect x="4" y="4" width="16" height="16" rx="2"/>
                   </svg>
                 </button>
-              #else:
-                <span class="dp-supervisor-badge dp-supervisor-badge--stopped">
-                  <span class="dp-supervisor-dot"></span>stopped
-                </span>
               #endif
 
               <button class="dp-supervisor-btn dp-supervisor-btn--restart" mist-action="restart" title="Restart">
@@ -93,6 +127,15 @@
                 </svg>
               </button>
 
+              #if(table.isRunning):
+                <span class="dp-supervisor-badge dp-supervisor-badge--running">
+                  <span class="dp-supervisor-dot"></span>running
+                </span>
+              #else:
+                <span class="dp-supervisor-badge dp-supervisor-badge--stopped">
+                  <span class="dp-supervisor-dot"></span>stopped
+                </span>
+              #endif
             </div>
           </div>
         </div>
@@ -100,7 +143,13 @@
         <!-- Table card -->
         <div class="dp-card">
           <div class="dp-table-wrap">
-            <table class="dp-table">
+            <table
+              class="dp-table"
+              mist-behavior="sortable-collection"
+              data-mist-sort-order="desc"
+              data-mist-sort-type="number"
+              data-mist-sort-delay-ms="1000"
+            >
 
               <thead
                 class="dp-thead"
@@ -108,17 +157,16 @@
                 mist-insert-position="afterend"
               >
                 <tr>
-                  <th class="dp-th">Status</th>
-                  <th class="dp-th">Commit</th>
-                  <th class="dp-th dp-th-sm-hide">Mode</th>
-                  <th class="dp-th dp-th-sm-hide">ID</th>
-                  <th class="dp-th dp-th-sm-hide">Started</th>
-                  <th class="dp-th">Duration</th>
-                  <th class="dp-th"></th>
+                  <th class="dp-th dp-th-status">Status</th>
+                  <th class="dp-th dp-th-commit">Commit</th>
+                  <th class="dp-th dp-th-sm-hide dp-th-mobile-hide">ID</th>
+                  <th class="dp-th dp-th-started">Started</th>
+                  <th class="dp-th dp-th-duration dp-th-mobile-hide">Duration</th>
+                  <th class="dp-th dp-th-action"></th>
                 </tr>
               </thead>
 
-              #for(component in table.rows):
+              #for(context in table.rows):
                 #extend("Deployer/RowComponent")
               #endfor
 
@@ -131,6 +179,10 @@
       
       <!-- ── Status Legend ──────────────────────────────────── -->
       <div class="dp-legend">
+        <span class="dp-legend-item">
+          <span class="dp-legend-dot" style="background:var(--c-pushed)"></span>
+          <span class="dp-legend-label">pushed</span>
+        </span>
         <span class="dp-legend-item">
           <span class="dp-legend-dot" style="background:var(--c-running)"></span>
           <span class="dp-legend-label">running</span>
@@ -162,7 +214,7 @@
   </div>
 
   <script src="/deployer/morphdom.js"></script>
-  <script src="/deployer/mist.js" data-url="/deployer/ws/"></script>
+  <script src="/deployer/mist.js" data-url="/deployer/ws"></script>
 
 </body>
 </html>

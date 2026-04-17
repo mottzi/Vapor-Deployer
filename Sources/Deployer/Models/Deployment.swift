@@ -8,29 +8,32 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
     static let schema = "deployments"
 
     @ID(key: .id) var id: UUID?
-    @Enum(key: "mode") var mode: Mode
-    @Field(key: "product_name") var productName: String
-    @Enum(key: "status") var status: Status
-    @Field(key: "message") var message: String
-    @Field(key: "is_current") var isCurrent: Bool
-    @Field(key: "error_message") var errorMessage: String?
     @Timestamp(key: "started_at", on: .create) var startedAt: Date?
     @Timestamp(key: "finished_at", on: .none) var finishedAt: Date?
+    @Field(key: "product") var product: String
+    @Enum(key: "status") var status: Status
+    @Field(key: "is_live") var isLive: Bool
+    @Field(key: "branch") var branch: String
+    @Field(key: "commit_id") var commitID: String
+    @Field(key: "commit_message") var commitMessage: String
+    @Field(key: "error_message") var errorMessage: String?
 
     init() { }
 
     init(
-        productName: String,
+        product: String,
         status: Status,
-        message: String,
-        mode: Mode = .standard
+        commitMessage: String,
+        commitID: String,
+        branch: String
     ) {
-        self.productName = productName
+        self.product = product
         self.status = status
-        self.message = message
-        self.isCurrent = false
+        self.commitMessage = commitMessage
+        self.commitID = commitID
+        self.branch = branch
+        self.isLive = false
         self.errorMessage = nil
-        self.mode = mode
     }
     
 }
@@ -45,14 +48,15 @@ extension Deployment {
             
             try await database.schema(Deployment.schema)
                 .id()
-                .field("product_name", .string, .required)
-                .field("status", .string, .required)
-                .field("message", .string, .required)
-                .field("is_current", .bool, .required, .sql(.default(false)))
-                .field("error_message", .string)
                 .field("started_at", .datetime)
                 .field("finished_at", .datetime)
-                .field("mode", .string, .required, .sql(.default(Mode.standard.rawValue)))
+                .field("product", .string, .required)
+                .field("status", .string, .required)
+                .field("is_live", .bool, .required, .sql(.default(false)))
+                .field("branch", .string, .required)
+                .field("commit_id", .string, .required)
+                .field("commit_message", .string, .required)
+                .field("error_message", .string)
                 .create()
         }
 
@@ -65,13 +69,9 @@ extension Deployment {
 }
 
 extension Deployment {
-    
-    enum Mode: String, Codable {
-        case standard
-        case restartOnly
-    }
-    
-    enum Status: String, Codable, CaseIterable {
+
+    enum Status: String, Codable {
+        case pushed
         case running
         case canceled
         case failed
@@ -84,60 +84,59 @@ extension Deployment {
 
 extension Deployment {
     
-    var contextExtras: [String: any Encodable] {
-        [
-            "durationString": durationString,
-            "displayStatus": displayStatus,
-            "shortID": shortID,
-            "startedAtTime": formattedTime,
-            "startedAtDate": formattedDate,
-        ]
-    }
+    var computedProperties: [String: any Encodable] { [
+        "durationString": durationString,
+        "displayStatus": displayStatus,
+        "shortID": shortID,
+        "startedAtUnixMs": startedAtUnixMs,
+        "canBeDeployed": canBeDeployed,
+    ] }
 
     var durationString: String? {
         guard let finishedAt, let startedAt else { return nil }
         return String(format: "%.1fs", finishedAt.timeIntervalSince(startedAt))
     }
-
-    var shortID: String { String(id?.uuidString.prefix(8) ?? "") }
-
+    
     var displayStatus: Status {
-        guard status == .running,
-              let startedAt = startedAt,
-              Date.now.timeIntervalSince(startedAt) > 1800
-        else { return status }
-        
-        return .stale
+        if status == .running,
+           let startedAt,
+           Date.now.timeIntervalSince(startedAt) > 1800 {
+            .stale
+        } else {
+            status
+        }
     }
     
-    var formattedTime: String? {
-        guard let startedAt else { return nil }
-        return Deployment.timeFormatter.string(from: startedAt)
-    }
+    var shortID: String? { id.map { String($0.uuidString.prefix(8)) } }
     
-    var formattedDate: String? {
-        guard let startedAt else { return nil }
-        return Deployment.dateFormatter.string(from: startedAt)
+    var startedAtUnixMs: Int? { startedAt.map { Int($0.timeIntervalSince1970 * 1000) } }
+
+    var canBeDeployed: Bool {
+        switch displayStatus {
+            case .running: false
+            case .deployed: false
+            default: true
+        }
     }
-    
+
 }
 
 extension Deployment {
     
     func setCurrent(on database: Database) async throws {
         
-        self.isCurrent = true
+        self.isLive = true
         self.status = .deployed
         try await self.save(on: database)
 
         let oldCurrentDeployments = try await Deployment.query(on: database)
-            .filter(\.$isCurrent, .equal, true)
-            .filter(\.$productName, .equal, self.productName)
+            .filter(\.$isLive, .equal, true)
+            .filter(\.$product, .equal, self.product)
             .filter(\.$id, .notEqual, self.id!)
             .all()
 
         for deployment in oldCurrentDeployments {
-            deployment.isCurrent = false
+            deployment.isLive = false
             deployment.status = .success
             try await deployment.save(on: database)
         }
@@ -146,25 +145,9 @@ extension Deployment {
     static func getCurrent(named productName: String, on database: Database) async throws -> Deployment? {
         
         try await Deployment.query(on: database)
-            .filter(\.$isCurrent, .equal, true)
-            .filter(\.$productName, .equal, productName)
+            .filter(\.$isLive, .equal, true)
+            .filter(\.$product, .equal, productName)
             .first()
     }
-    
-}
-
-extension Deployment {
-    
-    static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss"
-        return f
-    }()
-    
-    static let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "dd.MM.yy"
-        return f
-    }()
     
 }

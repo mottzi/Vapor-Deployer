@@ -1,36 +1,42 @@
 <tbody
-  mist-component="RowComponent-#(component.deployment.productName)"
-  mist-id="#(component.deployment.id)"
+  mist-component="RowComponent-#(context.deployment.product)"
+  mist-id="#(context.deployment.id)"
+  data-mist-sort-value="#if(context.deployment.startedAtUnixMs):#(context.deployment.startedAtUnixMs)#endif"
   class="dp-tbody"
 >
 
   <!-- ── Main row ──────────────────────────────────────────── -->
   <tr class="dp-tr
-    #if(component.deployment.displayStatus == "running"):row-running
-    #elseif(component.deployment.displayStatus == "success"):row-success
-    #elseif(component.deployment.displayStatus == "deployed"):row-deployed
-    #elseif(component.deployment.displayStatus == "failed"):row-failed
-    #elseif(component.deployment.displayStatus == "canceled"):row-canceled
-    #elseif(component.deployment.displayStatus == "stale"):row-stale
+    #if(context.deployment.displayStatus == "pushed"):row-pushed
+    #elseif(context.deployment.displayStatus == "running"):row-running
+    #elseif(context.deployment.displayStatus == "success"):row-success
+    #elseif(context.deployment.displayStatus == "deployed"):row-deployed
+    #elseif(context.deployment.displayStatus == "failed"):row-failed
+    #elseif(context.deployment.displayStatus == "canceled"):row-canceled
+    #elseif(context.deployment.displayStatus == "stale"):row-stale
     #endif
   ">
 
     <!-- Status -->
-    <td class="dp-td">
-      #if(component.deployment.displayStatus == "running"):
+    <td class="dp-td dp-td-status">
+      #if(context.deployment.displayStatus == "pushed"):
+        <span class="dp-status dp-status--pushed">
+          <span class="dp-status-dot"></span>Pushed
+        </span>
+      #elseif(context.deployment.displayStatus == "running"):
         <span class="dp-status dp-status--running">
           <span class="dp-status-dot"></span>Running
         </span>
-      #elseif(component.deployment.displayStatus == "success"):
+      #elseif(context.deployment.displayStatus == "success"):
         <span class="dp-status dp-status--success">
           <span class="dp-status-dot"></span>Success
         </span>
-      #elseif(component.deployment.displayStatus == "deployed"):
+      #elseif(context.deployment.displayStatus == "deployed"):
         <span class="dp-status dp-status--deployed">
           <span class="dp-status-dot"></span>Deployed
         </span>
-      #elseif(component.deployment.displayStatus == "failed"):
-        #if(component.deployment.errorMessage):
+      #elseif(context.deployment.displayStatus == "failed"):
+        #if(context.deployment.errorMessage):
           <button
             class="dp-status dp-status--failed-btn"
             type="button"
@@ -48,44 +54,39 @@
             <span class="dp-status-dot"></span>Failed
           </span>
         #endif
-      #elseif(component.deployment.displayStatus == "canceled"):
+      #elseif(context.deployment.displayStatus == "canceled"):
         <span class="dp-status dp-status--canceled">
           <span class="dp-status-dot"></span>Canceled
         </span>
-      #elseif(component.deployment.displayStatus == "stale"):
+      #elseif(context.deployment.displayStatus == "stale"):
         <span class="dp-status dp-status--stale">
           <span class="dp-status-dot"></span>Stale
         </span>
       #else:
         <span class="dp-status dp-status--canceled">
-          <span class="dp-status-dot"></span>#(component.deployment.displayStatus)
+          <span class="dp-status-dot"></span>#(context.deployment.displayStatus)
         </span>
       #endif
     </td>
 
     <!-- Commit message -->
-    <td class="dp-td">
-      #if(component.deployment.displayStatus == "canceled"):
-        <span class="dp-msg dp-msg--muted">#(component.deployment.message)</span>
+    <td class="dp-td dp-td-commit">
+      #if(context.deployment.displayStatus == "canceled"):
+        <span class="dp-msg dp-msg--muted">#(context.deployment.commitMessage)</span>
       #else:
-        <span class="dp-msg">#(component.deployment.message)</span>
+        <span class="dp-msg">#(context.deployment.commitMessage)</span>
       #endif
     </td>
 
-    <!-- Mode -->
-    <td class="dp-td dp-td-sm-hide">
-      <span class="dp-mode">#(component.deployment.mode)</span>
-    </td>
-
     <!-- ID -->
-    <td class="dp-td dp-td-sm-hide">
+    <td class="dp-td dp-td-sm-hide dp-td-mobile-hide">
       <a
-        onclick="navigator.clipboard.writeText('#(component.deployment.id)'); return false;"
+        onclick="navigator.clipboard.writeText('#(context.deployment.id)'); return false;"
         href="#"
         class="dp-id"
-        title="#(component.deployment.id)"
+        title="#(context.deployment.id)"
       >
-        #(component.deployment.shortID)
+        #(context.deployment.shortID)
         <svg class="dp-id-copy" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -94,20 +95,33 @@
     </td>
 
     <!-- Started -->
-    <td class="dp-td dp-td-sm-hide">
-      <span class="dp-time">
-        #(component.deployment.startedAtTime)
-        <span class="dp-time-date">#(component.deployment.startedAtDate)</span>
-      </span>
+    <td class="dp-td dp-td-started">
+      #if(context.deployment.startedAtUnixMs):
+        <span
+          class="dp-time"
+          mist-behavior="local-datetime"
+          data-started-at-unix-ms="#(context.deployment.startedAtUnixMs)"
+        >
+          <span class="dp-time-value">&nbsp;</span>
+          <span class="dp-time-date">&nbsp;</span>
+        </span>
+      #else:
+        <span class="dp-time">
+          -
+          <span class="dp-time-date">-</span>
+        </span>
+      #endif
     </td>
 
     <!-- Duration -->
-    <td class="dp-td">
-      #if(component.deployment.durationString):
-        <span class="dp-duration">#(component.deployment.durationString)</span>
-      #elseif(component.deployment.displayStatus == "stale"):
+    <td class="dp-td dp-td-duration dp-td-mobile-hide">
+      #if(context.deployment.durationString):
+        <span class="dp-duration">#(context.deployment.durationString)</span>
+      #elseif(context.deployment.displayStatus == "pushed"):
         <span class="dp-duration-dash">—</span>
-      #elseif(component.deployment.displayStatus == "canceled"):
+      #elseif(context.deployment.displayStatus == "stale"):
+        <span class="dp-duration-dash">—</span>
+      #elseif(context.deployment.displayStatus == "canceled"):
         <span class="dp-duration-dash">—</span>
       #else:
         <span class="dp-duration">
@@ -115,35 +129,46 @@
           <span
             class="dp-duration-live"
             mist-behavior="timer"
-            data-start-timestamp="#(component.deployment.startedAt)"
+            data-started-at-unix-ms="#(context.deployment.startedAtUnixMs)"
           >0.0s</span>
         </span>
       #endif
     </td>
 
     <!-- Delete -->
-    <td class="dp-td">
-      <button mist-action="delete" class="dp-delete" title="Delete deployment" type="button">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-          <path d="M10 11v6"></path>
-          <path d="M14 11v6"></path>
-          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-        </svg>
-      </button>
+    <td class="dp-td dp-td-action">
+      <div class="dp-row-actions">
+        #if(context.deployment.canBeDeployed):
+          <button mist-action="deploy" class="dp-action-icon dp-deploy-icon" title="Deploy this commit" type="button" aria-label="Deploy this commit">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5v14l11-7z"></path>
+            </svg>
+          </button>
+        #else:
+          <span class="dp-action-slot" aria-hidden="true"></span>
+        #endif
+        <button mist-action="delete" class="dp-action-icon dp-delete" title="Delete deployment" type="button" aria-label="Delete deployment">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+          </svg>
+        </button>
+      </div>
     </td>
 
   </tr>
 
   <!-- ── Error detail row ───────────────────────────────────── -->
-  #if(component.deployment.errorMessage):
+  #if(context.deployment.errorMessage):
   <tr
     class="dp-error-row dp-error-tr #if(state.errorExpanded):dp-error-expanded#endif"
     style="#if(state.errorExpanded):display:table-row!important#else:display:none#endif"
   >
-    <td colspan="7" class="dp-error-cell">
-      <pre class="dp-error-pre">#(component.deployment.errorMessage)</pre>
+    <td colspan="6" class="dp-error-cell">
+      <pre class="dp-error-pre">#(context.deployment.errorMessage)</pre>
     </td>
   </tr>
   #endif
