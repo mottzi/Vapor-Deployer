@@ -102,21 +102,3 @@ struct SystemdServiceManager: DeployerServiceManager {
     private let prefix = "XDG_RUNTIME_DIR=/run/user/$(id -u)"
 
 }
-
-extension Deployer {
-    
-    var serviceManager: any DeployerServiceManager {
-        get {
-            if let manager = app.storage[DeployerServiceManagerKey.self] { return manager }
-            fatalError("Service manager not initialized.")
-        }
-        nonmutating set {
-            app.storage[DeployerServiceManagerKey.self] = newValue
-        }
-    }
-    
-    private struct DeployerServiceManagerKey: StorageKey {
-        typealias Value = any DeployerServiceManager
-    }
-    
-}
