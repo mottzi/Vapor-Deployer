@@ -8,8 +8,9 @@ extension Deployer {
     }
 
     func useServer() async throws {
-        
+
         let config = try Configuration.load()
+        try useVariables()
         app.deployer.serviceManager = config.serviceManager.makeManager()
         app.deployer.configureHTTP(config: config)
         try await app.deployer.configureDatabase(config: config)
@@ -58,7 +59,6 @@ extension Deployer {
             status: await serviceManager.status(product: config.target.name)
         )
 
-        try useVariables()
         useQueue(
             config: config,
             queueState: queueComponent.state,
@@ -94,7 +94,7 @@ extension Deployer {
         
         do {
             let existingDeploymentCount = try await Deployment.query(on: app.db)
-                .filter(\.$product, .equal, config.target.name)
+                .filter(\.$product == config.target.name)
                 .count()
             
             guard existingDeploymentCount == 0 else { return }

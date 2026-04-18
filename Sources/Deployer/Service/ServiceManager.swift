@@ -4,15 +4,15 @@ extension Deployer {
     
     var serviceManager: any ServiceManager {
         get {
-            if let manager = app.storage[DeployerServiceManagerKey.self] { return manager }
+            if let manager = app.storage[ServiceManagerKey.self] { return manager }
             fatalError("Service manager not initialized.")
         }
         nonmutating set {
-            app.storage[DeployerServiceManagerKey.self] = newValue
+            app.storage[ServiceManagerKey.self] = newValue
         }
     }
     
-    struct DeployerServiceManagerKey: StorageKey {
+    struct ServiceManagerKey: StorageKey {
         typealias Value = any ServiceManager
     }
     

@@ -13,15 +13,15 @@ extension Deployer {
     
     var queue: Queue {
         get {
-            if let queue = app.storage[DeployerQueueKey.self] { return queue }
+            if let queue = app.storage[QueueKey.self] { return queue }
             fatalError("Queue not initialized.")
         }
         nonmutating set {
-            app.storage[DeployerQueueKey.self] = newValue
+            app.storage[QueueKey.self] = newValue
         }
     }
     
-    struct DeployerQueueKey: StorageKey { typealias Value = Queue }
+    struct QueueKey: StorageKey { typealias Value = Queue }
     
 }
 
@@ -165,10 +165,10 @@ extension Queue {
         guard let currentTime = deployment.startedAt else { return nil }
 
         let candidate = try await Deployment.query(on: app.db)
-            .filter(\.$product, .equal, deployment.product)
-            .filter(\.$status, .equal, .canceled)
-            .filter(\.$startedAt, .greaterThan, currentTime)
-            .sort(\.$startedAt, .descending)   // newest wins
+            .filter(\.$product == deployment.product)
+            .filter(\.$status == .canceled)
+            .filter(\.$startedAt > currentTime)
+            .sort(\.$startedAt, .descending)
             .first()
 
         guard let candidate, try await !isSuperseded(candidate) else { return nil }
@@ -188,12 +188,12 @@ extension Queue {
         }
 
         let isSuperseded = try await Deployment.query(on: app.db)
-            .filter(\.$product, .equal, deployment.product)
-            .filter(\.$startedAt, .greaterThan, startedAt)
+            .filter(\.$product == deployment.product)
+            .filter(\.$startedAt > startedAt)
             .group(.or) {
                 $0
-                    .filter(\.$status, .equal, .success)
-                    .filter(\.$status, .equal, .deployed)
+                    .filter(\.$status == .success)
+                    .filter(\.$status == .deployed)
             }
             .first() != nil
 

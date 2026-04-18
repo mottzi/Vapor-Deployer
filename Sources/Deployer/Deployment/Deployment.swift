@@ -97,10 +97,12 @@ extension Deployment {
         return String(format: "%.1fs", finishedAt.timeIntervalSince(startedAt))
     }
     
+    static let staleThreshold: TimeInterval = 30 * 60
+
     var displayStatus: Status {
         if status == .running,
            let startedAt,
-           Date.now.timeIntervalSince(startedAt) > 1800 {
+           Date.now.timeIntervalSince(startedAt) > Self.staleThreshold {
             .stale
         } else {
             status
@@ -130,9 +132,9 @@ extension Deployment {
         try await self.save(on: database)
 
         let oldCurrentDeployments = try await Deployment.query(on: database)
-            .filter(\.$isLive, .equal, true)
-            .filter(\.$product, .equal, self.product)
-            .filter(\.$id, .notEqual, self.id!)
+            .filter(\.$isLive == true)
+            .filter(\.$product == self.product)
+            .filter(\.$id != self.id!)
             .all()
 
         for deployment in oldCurrentDeployments {
@@ -145,8 +147,8 @@ extension Deployment {
     static func getCurrent(named productName: String, on database: Database) async throws -> Deployment? {
         
         try await Deployment.query(on: database)
-            .filter(\.$isLive, .equal, true)
-            .filter(\.$product, .equal, productName)
+            .filter(\.$isLive == true)
+            .filter(\.$product == productName)
             .first()
     }
     

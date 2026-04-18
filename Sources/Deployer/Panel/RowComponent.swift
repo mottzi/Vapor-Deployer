@@ -83,16 +83,15 @@ extension RowComponent {
 
     }
 
-}
-
-func loadDeployment(id: UUID, product: String, app: Application) async -> Deployment? {
-    
-    do {
-        guard let deployment = try await Deployment.find(id, on: app.db) else { return nil }
-        guard deployment.product == product else { return nil }
-        return deployment
-    } catch {
-        app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(id)", error))")
-        return nil
+    private func loadDeployment(id: UUID, product: String, app: Application) async -> Deployment? {
+        do {
+            guard let deployment = try await Deployment.find(id, on: app.db) else { return nil }
+            guard deployment.product == product else { return nil }
+            return deployment
+        } catch {
+            app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(id)", error))")
+            return nil
+        }
     }
+
 }

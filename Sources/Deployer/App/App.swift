@@ -41,9 +41,3 @@ extension Application {
     }
     
 }
-
-extension Environment {
-    
-    
-    
-}
