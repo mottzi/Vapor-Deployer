@@ -845,10 +845,12 @@ write_deployer_json() {
   chmod 0644 "$INSTALL_DIR/deployer.json"
 }
 
-# Download the deployer binary from the latest GitHub release.
-# Prefers an arch-specific asset (deployer-linux-<arch>) then falls back to "deployer".
-_download_deployer_binary() {
-  local arch releases_json asset_name download_url tmp_bin
+# Download the deployer release archive from the latest GitHub release and extract
+# it into $INSTALL_DIR. The archive must contain the binary plus Public/ and
+# Resources/ at its root. Prefers deployer-linux-<arch>.tar.gz, falls back to
+# deployer.tar.gz.
+_download_deployer_release() {
+  local arch releases_json asset_name download_url tmp_archive
   arch="$(uname -m)"
 
   info "Fetching latest release metadata..."
@@ -857,25 +859,30 @@ _download_deployer_binary() {
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "https://api.github.com/repos/mottzi/Vapor-Deployer/releases/latest")"
 
-  asset_name="deployer-linux-${arch}"
+  asset_name="deployer-linux-${arch}.tar.gz"
   download_url="$(printf '%s' "$releases_json" \
     | jq -r --arg name "$asset_name" '.assets[] | select(.name == $name) | .browser_download_url' \
     | head -n1)"
 
   if [[ -z "$download_url" ]]; then
     download_url="$(printf '%s' "$releases_json" \
-      | jq -r '.assets[] | select(.name == "deployer") | .browser_download_url' \
+      | jq -r '.assets[] | select(.name == "deployer.tar.gz") | .browser_download_url' \
       | head -n1)"
   fi
 
   [[ -n "$download_url" ]] \
-    || die "No deployer binary found in the latest GitHub release. Choose 'Build deployer from source?' next time to compile on-box."
+    || die "No deployer release archive found in the latest GitHub release. Choose 'Build deployer from source?' to compile on-box."
 
   info "Downloading $download_url"
-  tmp_bin="$(mktemp)"
-  curl --silent --show-error --fail --location -o "$tmp_bin" "$download_url"
-  install -m 0755 -o "$SERVICE_USER" -g "$SERVICE_USER" "$tmp_bin" "$INSTALL_DIR/deployer"
-  rm -f "$tmp_bin"
+  tmp_archive="$(mktemp)"
+  curl --silent --show-error --fail --location -o "$tmp_archive" "$download_url"
+
+  info "Extracting release archive..."
+  tar -xzf "$tmp_archive" -C "$INSTALL_DIR"
+  rm -f "$tmp_archive"
+
+  chmod 0755 "$INSTALL_DIR/deployer"
+  chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 }
 
 # Remove stale managed proxy artifacts from a previous install metadata set.
@@ -1777,11 +1784,8 @@ for _pkg in "${APT_PACKAGES[@]}"; do
 done
 
 if (( ${#_missing_packages[@]} > 0 )); then
-  info "Refreshing apt package index..."
-  apt-get -qq update
-  ok "Apt package index refreshed"
-  info "Installing missing packages: ${_missing_packages[*]}"
-  apt-get -y -qq install "${_missing_packages[@]}"
+  apt-get -qq update >/dev/null
+  apt-get -y -qq install "${_missing_packages[@]}" >/dev/null
   ok "Base packages installed"
 else
   info "All required packages already installed"
@@ -2072,8 +2076,8 @@ if [[ "$BUILD_FROM_SOURCE" == "true" ]]; then
   install -m 0755 \"\$bin_dir/deployer\" '$INSTALL_DIR/deployer'
   "
 else
-  _download_deployer_binary
-  ok "Deployer binary installed at $INSTALL_DIR/deployer"
+  _download_deployer_release
+  ok "Deployer release extracted to $INSTALL_DIR"
 fi
 
 step "Building target app"
