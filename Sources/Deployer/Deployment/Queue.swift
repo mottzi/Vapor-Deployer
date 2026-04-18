@@ -65,7 +65,8 @@ actor Queue {
             await deploy(deployment: deployment, target: target)
             return
         }
-        
+
+        deployment.startedAt = .now
         try? await deployment.save(on: app.db)
         
     }

@@ -8,7 +8,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
     static let schema = "deployments"
 
     @ID(key: .id) var id: UUID?
-    @Timestamp(key: "started_at", on: .create) var startedAt: Date?
+    @Timestamp(key: "started_at", on: .none) var startedAt: Date?
     @Timestamp(key: "finished_at", on: .none) var finishedAt: Date?
     @Field(key: "product") var product: String
     @Enum(key: "status") var status: Status

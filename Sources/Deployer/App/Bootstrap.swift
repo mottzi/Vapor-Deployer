@@ -118,8 +118,6 @@ extension Deployer {
             )
             
             deployment.isLive = true
-            try await deployment.save(on: app.db)
-            
             deployment.startedAt = checkout.committedAt
             deployment.finishedAt = checkout.committedAt
             try await deployment.save(on: app.db)
