@@ -165,9 +165,9 @@ extension Queue {
         guard let currentTime = deployment.startedAt else { return nil }
 
         let candidate = try await Deployment.query(on: app.db)
-            .filter(\.$product == deployment.product)
-            .filter(\.$status == .canceled)
-            .filter(\.$startedAt > currentTime)
+            .filter(\.$product, .equal, deployment.product)
+            .filter(\.$status, .equal, .canceled)
+            .filter(\.$startedAt, .greaterThan, currentTime)
             .sort(\.$startedAt, .descending)
             .first()
 
@@ -188,12 +188,12 @@ extension Queue {
         }
 
         let isSuperseded = try await Deployment.query(on: app.db)
-            .filter(\.$product == deployment.product)
-            .filter(\.$startedAt > startedAt)
+            .filter(\.$product, .equal, deployment.product)
+            .filter(\.$startedAt, .greaterThan, startedAt)
             .group(.or) {
                 $0
-                    .filter(\.$status == .success)
-                    .filter(\.$status == .deployed)
+                    .filter(\.$status, .equal, .success)
+                    .filter(\.$status, .equal, .deployed)
             }
             .first() != nil
 

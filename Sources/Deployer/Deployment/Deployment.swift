@@ -132,9 +132,9 @@ extension Deployment {
         try await self.save(on: database)
 
         let oldCurrentDeployments = try await Deployment.query(on: database)
-            .filter(\.$isLive == true)
-            .filter(\.$product == self.product)
-            .filter(\.$id != self.id!)
+            .filter(\.$isLive, .equal, true)
+            .filter(\.$product, .equal, self.product)
+            .filter(\.$id, .notEqual, self.id!)
             .all()
 
         for deployment in oldCurrentDeployments {
@@ -147,8 +147,8 @@ extension Deployment {
     static func getCurrent(named productName: String, on database: Database) async throws -> Deployment? {
         
         try await Deployment.query(on: database)
-            .filter(\.$isLive == true)
-            .filter(\.$product == productName)
+            .filter(\.$isLive, .equal, true)
+            .filter(\.$product, .equal, productName)
             .first()
     }
     

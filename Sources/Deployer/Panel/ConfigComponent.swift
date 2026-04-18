@@ -25,7 +25,7 @@ struct ConfigComponent: ManualComponent {
             }
         }
     }
-    
+
     init(using config: Configuration) {
         self.name = "ConfigComponent-\(config.target.name)"
         self.state = LiveState(of: ConfigState(config: config, componentName: self.name))

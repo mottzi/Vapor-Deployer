@@ -94,7 +94,7 @@ extension Deployer {
         
         do {
             let existingDeploymentCount = try await Deployment.query(on: app.db)
-                .filter(\.$product == config.target.name)
+                .filter(\.$product, .equal, config.target.name)
                 .count()
             
             guard existingDeploymentCount == 0 else { return }
