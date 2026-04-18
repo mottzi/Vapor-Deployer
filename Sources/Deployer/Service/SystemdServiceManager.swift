@@ -18,7 +18,7 @@ struct SystemdServiceManager: ServiceManager {
     func status(product: String) async -> ServiceStatus {
         
         let output = await Shell.executeRaw("\(prefix) systemctl --user is-active \(product).service")
-        let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = output.trimmed
         
         return switch trimmed {
             case "active": .running

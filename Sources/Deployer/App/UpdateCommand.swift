@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Performs an in-place update of the deployed installation.
 struct UpdateCommand: AsyncCommand {
@@ -33,8 +32,8 @@ struct UpdateCommand: AsyncCommand {
         console.print("Building updated deployer binary.")
         do {
             try await Shell.execute("swift build -c \(paths.buildMode)", directory: paths.installDirectory.path)
-        } catch let error as ShellError {
-            let output = error.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch let error as Shell.Error {
+            let output = error.output.trimmed
             if !output.isEmpty { console.print(.init(stringLiteral: output)) }
             throw UpdateError.buildFailed(paths.buildMode)
         }
@@ -74,9 +73,9 @@ extension UpdateCommand {
         
         let command = "git status --porcelain --untracked-files=no"
         let status = await Shell.executeResult(command, directory: directory)
-        guard status.exitCode == 0 else { throw ShellError(command: command, output: status.output) }
+        guard status.exitCode == 0 else { throw Shell.Error(command: command, output: status.output) }
         
-        let trimmedStatus = status.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedStatus = status.output.trimmed
         guard trimmedStatus.isEmpty else { throw UpdateError.dirtyWorktree(trimmedStatus) }
     }
     
@@ -84,7 +83,7 @@ extension UpdateCommand {
     func currentCommitID(in directory: String) async throws -> String {
         
         let commitID = try await Shell.execute("git rev-parse HEAD", directory: directory)
-        let trimmedCommitID = commitID.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedCommitID = commitID.trimmed
         guard !trimmedCommitID.isEmpty else { throw UpdateError.emptyCommitID }
         
         return trimmedCommitID

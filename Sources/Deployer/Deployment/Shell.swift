@@ -9,7 +9,7 @@ struct Shell {
         
     @discardableResult static func execute(_ command: String, directory: String? = nil) async throws -> String {
         let result = await run(command, directory: directory)
-        guard result.exitCode == 0 else { throw ShellError(command: command, output: result.output) }
+        guard result.exitCode == 0 else { throw Shell.Error(command: command, output: result.output) }
         return result.output
     }
     
@@ -61,7 +61,7 @@ extension Shell {
             commitID.isEmpty == false,
             commitMessage.isEmpty == false
         else {
-            throw ShellError(command: "git checkout inspection", output: "Failed to parse current checkout metadata.")
+            throw Shell.Error(command: "git checkout inspection", output: "Failed to parse current checkout metadata.")
         }
         
         let branch = await getCurrentBranch(in: directory)
@@ -83,7 +83,7 @@ extension Shell {
         
         let remoteBranches = await executeRaw("git branch -r --contains HEAD --format='%(refname:short)'", directory: directory)
             .split(whereSeparator: \.isNewline)
-            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .map { String($0).trimmed }
             .filter {
                 $0.isEmpty == false &&
                 $0.contains("->") == false &&
@@ -105,37 +105,5 @@ struct GitCheckout: Sendable {
     let commitMessage: String
     let branch: String
     let committedAt: Date
-    
-}
-
-struct ShellError: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible {
-    
-    let command: String
-    let output: String
-    
-    var errorDescription: String? {
-        let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmedOutput.isEmpty == false else {
-            return "Command '\(command)' failed."
-        }
-
-        return "Command '\(command)' failed.\n\(trimmedOutput)"
-    }
-
-    var description: String {
-        errorDescription ?? "Shell command failed."
-    }
-
-    var debugDescription: String {
-        description
-    }
-    
-}
-
-private extension String {
-    
-    var trimmed: String {
-        trimmingCharacters(in: .whitespacesAndNewlines)
-    }
     
 }

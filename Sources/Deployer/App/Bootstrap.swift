@@ -1,6 +1,24 @@
 import Vapor
 import Fluent
-import Foundation
+
+extension Deployer {
+    
+    func useCommands() {
+        app.asyncCommands.use(UpdateCommand(), as: "update")
+    }
+
+    func useServer() async throws {
+        
+        let config = try Configuration.load()
+        app.deployer.serviceManager = config.serviceManager.makeManager()
+        app.deployer.configureHTTP(config: config)
+        try await app.deployer.configureDatabase(config: config)
+        app.deployer.configureViews()
+        app.deployer.configureMist(config: config)
+        try await app.deployer.configurePanel(config: config)
+    }
+    
+}
 
 extension Deployer {
 

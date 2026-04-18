@@ -41,7 +41,7 @@ struct Panel {
         row: RowComponent,
         configPopover: ConfigComponent
     ) {
-        let joinedPanelPath = config.panelRoute.pathComponents.map(\.description).joined(separator: "/")
+        let joinedPanelPath = config.panelRoute.displayPath
         self.panelPath = joinedPanelPath.isEmpty ? "/" : "/" + joinedPanelPath
         self.loginPath = panelPath == "/" ? "/login" : panelPath + "/login"
         self.authenticator = PanelAuthenticator(path: loginPath)

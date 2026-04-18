@@ -62,26 +62,6 @@ struct Webhook {
     }
 }
 
-extension StringProtocol
-{
-    var hexadecimalData: Data? {
-        
-        guard count % 2 == 0 else { return nil }
-
-        var data = Data(capacity: count / 2)
-        var index = startIndex
-
-        while index < endIndex {
-            let byteEnd = self.index(index, offsetBy: 2)
-            guard let byte = UInt8(self[index ..< byteEnd], radix: 16) else { return nil }
-            data.append(byte)
-            index = byteEnd
-        }
-        
-        return data
-    }
-}
-
 struct PushPayload: Codable {
     
     let after: String

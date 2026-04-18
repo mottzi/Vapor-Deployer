@@ -1,4 +1,3 @@
-import Foundation
 import Vapor
 
 /// Runtime configuration for the local deployer, decoded from the sibling JSON file.
@@ -163,7 +162,7 @@ extension TargetConfiguration {
 /// Trims surrounding whitespace and rejects empty configuration values.
 fileprivate func trimmedValue(_ value: String, field: String) throws -> String {
     
-    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmedValue = value.trimmed
     if !trimmedValue.isEmpty { return trimmedValue }
     
     throw Configuration.LoadError.invalidField(field, "must not be empty")

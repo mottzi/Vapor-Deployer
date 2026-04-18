@@ -46,7 +46,7 @@ extension Worker {
             let fileManager = FileManager.default
             try fileManager.createDirectory(atPath: deployDir, withIntermediateDirectories: true)
 
-            guard fileManager.fileExists(atPath: buildPath) else { throw MoveError.binaryNotFound(buildPath) }
+            guard fileManager.fileExists(atPath: buildPath) else { throw Error.binaryNotFound(buildPath) }
             if fileManager.fileExists(atPath: backupPath) { try fileManager.removeItem(atPath: backupPath) }
             if fileManager.fileExists(atPath: deployPath) { try fileManager.moveItem(atPath: deployPath, toPath: backupPath) }
 
@@ -60,52 +60,13 @@ extension Worker {
                         if fileManager.fileExists(atPath: deployPath) { try fileManager.removeItem(atPath: deployPath) }
                         try fileManager.moveItem(atPath: backupPath, toPath: deployPath)
                     } catch {
-                        throw MoveError.deploymentAndRollbackFailed(moveError.localizedDescription, error.localizedDescription)
+                        throw Error.deploymentAndRollbackFailed(moveError.localizedDescription, error.localizedDescription)
                     }
                 }
 
-                throw MoveError.deploymentFailed(moveError.localizedDescription)
+                throw Error.deploymentFailed(moveError.localizedDescription)
             }
         }.get()
-    }
-    
-}
-
-extension String {
-    
-    var shellQuoted: String { "'\(replacingOccurrences(of: "'", with: "'\"'\"'"))'" }
-    
-}
-
-extension Worker {
-    
-    enum MoveError: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible {
-        
-        case binaryNotFound(String)
-        case deploymentFailed(String)
-        case deploymentAndRollbackFailed(String, String)
-
-        var errorDescription: String? {
-            switch self {
-            case .binaryNotFound(let path):
-                "New binary not found at '\(path)'."
-                
-            case .deploymentFailed(let error):
-                "Deployment failed: \(error). Rollback successful."
-                
-            case .deploymentAndRollbackFailed(let error, let rollback):
-                "Deployment failed: \(error). Rollback failed: \(rollback)."
-            }
-        }
-
-        var description: String {
-            errorDescription ?? "Deployment move failed."
-        }
-
-        var debugDescription: String {
-            description
-        }
-        
     }
     
 }

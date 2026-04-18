@@ -90,16 +90,7 @@ extension ConfigState {
             self.label = label
             self.value = value
         }
-    }
-
-}
-
-private extension String {
-
-    var displayPath: String {
-        let segments = self.pathComponents.map(\.description)
-        guard !segments.isEmpty else { return "/" }
-        return "/" + segments.joined(separator: "/")
+        
     }
 
 }

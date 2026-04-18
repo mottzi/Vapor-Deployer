@@ -1,14 +1,12 @@
 import Vapor
 import Mist
 
-typealias StatusHandler = @Sendable (ServiceStatus) async -> Void
-
 extension Deployer {
     
     func useQueue(
         config: Configuration,
         queueState: LiveState<QueueState>,
-        onStatusChange: @escaping StatusHandler
+        onStatusChange: @escaping @Sendable (ServiceStatus) async -> Void
     ) {
         queue = Queue(app: app, config: config, queueState: queueState, onStatusChange: onStatusChange)
     }
@@ -34,13 +32,13 @@ actor Queue {
     let app: Application
     let config: Configuration
     let queueState: LiveState<QueueState>
-    let onStatusChange: StatusHandler
+    let onStatusChange: @Sendable (ServiceStatus) async -> Void
     
     init(
         app: Application,
         config: Configuration,
         queueState: LiveState<QueueState>,
-        onStatusChange: @escaping StatusHandler
+        onStatusChange: @escaping @Sendable (ServiceStatus) async -> Void
     ) {
         self.app = app
         self.config = config

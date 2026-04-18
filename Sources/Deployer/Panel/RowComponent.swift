@@ -1,6 +1,6 @@
 import Vapor
-import Mist
 import Fluent
+import Mist
 
 struct RowComponent: InstanceComponent {
     
