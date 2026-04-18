@@ -4,25 +4,18 @@ import Mist
 
 extension Deployer {
     
-    func usePanel(
-        config: Configuration,
-        row: RowComponent,
-        configPopover: ConfigComponent
-    ) {
+    func usePanel(config: Configuration, row: RowComponent, configPopover: ConfigComponent) {
 
-        let panel = Panel(
-            config: config,
-            row: row,
-            configPopover: configPopover
-        )
-        
+        let panel = Panel(config: config, row: row, configPopover: configPopover)
         let router = app.grouped(config.panelRoute.pathComponents).grouped(app.sessions.middleware)
-        router.get("login")     { try await panel.serveLogin(request: $0) }
-        router.post("login")    { try panel.handleLogin(request: $0) }
-        router.post("logout")   { panel.handleLogout(request: $0) }
+        
+        router.get("login")   { try await panel.serveLogin(request: $0) }
+        router.post("login")  { try panel.handleLogin(request: $0) }
+        router.post("logout") { panel.handleLogout(request: $0) }
         
         let authRouter = router.grouped(panel.authenticator)
-        authRouter.get()        { try await panel.servePanel(request: $0) }
+        
+        authRouter.get()      { try await panel.servePanel(request: $0) }
     }
     
 }
@@ -36,11 +29,8 @@ struct Panel {
     let loginPath: String
     let authenticator: PanelAuthenticator
     
-    init(
-        config: Configuration,
-        row: RowComponent,
-        configPopover: ConfigComponent
-    ) {
+    init(config: Configuration, row: RowComponent, configPopover: ConfigComponent) {
+        
         self.panelPath = config.panelRoute.displayPath
         self.loginPath = panelPath == "/" ? "/login" : panelPath + "/login"
         self.authenticator = PanelAuthenticator(path: loginPath)
@@ -59,6 +49,7 @@ extension Panel {
     }
 
     func handleLogin(request: Request) throws -> Response {
+        
         let userPassword   = try request.content.decode(LoginFormData.self).password
         let serverPassword = Deployer.Variables.PANEL_PASSWORD.value
         guard userPassword == serverPassword else { return request.redirect(to: loginPath + "?error=true") }
@@ -78,6 +69,7 @@ extension Panel {
     }
 
     func makePanelContext(request: Request) async throws -> PanelContext {
+        
         async let rows = row.makeContext(ofAll: request.db)
         async let isRunning = request.application.deployer.serviceManager.isRunning(product: config.target.name)
         async let queueIsDeploying = request.application.deployer.queue.isDeploying
