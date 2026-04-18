@@ -845,6 +845,39 @@ write_deployer_json() {
   chmod 0644 "$INSTALL_DIR/deployer.json"
 }
 
+# Download the deployer binary from the latest GitHub release.
+# Prefers an arch-specific asset (deployer-linux-<arch>) then falls back to "deployer".
+_download_deployer_binary() {
+  local arch releases_json asset_name download_url tmp_bin
+  arch="$(uname -m)"
+
+  info "Fetching latest release metadata..."
+  releases_json="$(curl --silent --show-error --fail \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    "https://api.github.com/repos/mottzi/Vapor-Deployer/releases/latest")"
+
+  asset_name="deployer-linux-${arch}"
+  download_url="$(printf '%s' "$releases_json" \
+    | jq -r --arg name "$asset_name" '.assets[] | select(.name == $name) | .browser_download_url' \
+    | head -n1)"
+
+  if [[ -z "$download_url" ]]; then
+    download_url="$(printf '%s' "$releases_json" \
+      | jq -r '.assets[] | select(.name == "deployer") | .browser_download_url' \
+      | head -n1)"
+  fi
+
+  [[ -n "$download_url" ]] \
+    || die "No deployer binary found in the latest GitHub release. Choose 'Build deployer from source?' next time to compile on-box."
+
+  info "Downloading $download_url"
+  tmp_bin="$(mktemp)"
+  curl --silent --show-error --fail --location -o "$tmp_bin" "$download_url"
+  install -m 0755 -o "$SERVICE_USER" -g "$SERVICE_USER" "$tmp_bin" "$INSTALL_DIR/deployer"
+  rm -f "$tmp_bin"
+}
+
 # Remove stale managed proxy artifacts from a previous install metadata set.
 cleanup_previous_managed_proxy_files() {
   if [[ -n "${PREVIOUS_NGINX_SITE_AVAILABLE:-}" && "$PREVIOUS_NGINX_SITE_AVAILABLE" != "$NGINX_SITE_AVAILABLE" ]]; then
@@ -1557,19 +1590,27 @@ preflight_local_state() {
     info "Reusing user '$SERVICE_USER' (home: $existing_home)"
 
     if [[ -d "$INSTALL_DIR/.git" ]]; then
-      local origin dirty
-      origin="$(as_user "git -C '$INSTALL_DIR' remote get-url origin" 2>/dev/null || true)"
-      if [[ -n "$origin" ]] && ! github_remote_matches "$origin" "$DEPLOYER_REPO_URL"; then
-        die "Existing deployer checkout at '$INSTALL_DIR' points at '$origin', not '$DEPLOYER_REPO_URL'."
+      if [[ "$BUILD_FROM_SOURCE" == "true" ]]; then
+        local origin dirty
+        origin="$(as_user "git -C '$INSTALL_DIR' remote get-url origin" 2>/dev/null || true)"
+        if [[ -n "$origin" ]] && ! github_remote_matches "$origin" "$DEPLOYER_REPO_URL"; then
+          die "Existing deployer checkout at '$INSTALL_DIR' points at '$origin', not '$DEPLOYER_REPO_URL'."
+        fi
+        dirty="$(as_user "git -C '$INSTALL_DIR' status --porcelain --untracked-files=no" 2>/dev/null || true)"
+        if [[ -n "$dirty" ]]; then
+          die "Existing deployer checkout at '$INSTALL_DIR' has uncommitted changes. Clean them before rerunning setup."
+        fi
+        info "Deployer checkout at '$INSTALL_DIR' is clean"
+      else
+        info "Found source checkout at '$INSTALL_DIR'; pre-built binary will be installed there"
       fi
-      dirty="$(as_user "git -C '$INSTALL_DIR' status --porcelain --untracked-files=no" 2>/dev/null || true)"
-      if [[ -n "$dirty" ]]; then
-        die "Existing deployer checkout at '$INSTALL_DIR' has uncommitted changes. Clean them before rerunning setup."
-      fi
-      info "Deployer checkout at '$INSTALL_DIR' is clean"
     elif [[ -d "$INSTALL_DIR" ]]; then
       if [[ -n "$(find "$INSTALL_DIR" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]]; then
-        die "'$INSTALL_DIR' exists but is not a deployer git checkout and is not empty."
+        if [[ "$BUILD_FROM_SOURCE" == "true" ]]; then
+          die "'$INSTALL_DIR' exists but is not a deployer git checkout and is not empty."
+        else
+          info "Reusing existing install directory '$INSTALL_DIR'"
+        fi
       fi
     fi
 
@@ -1640,6 +1681,14 @@ PANEL_ROUTE="$(normalize_panel_route "$PANEL_ROUTE")"
 section "Runtime"
 hint "Which process manager supervises the deployer and app: 'systemd' or 'supervisor'."
 prompt_service_manager SERVICE_MANAGER "Service manager" "systemd"
+
+section "Deployer binary"
+hint "Download a pre-built binary from the latest GitHub release (fast),"
+hint "or clone and compile the deployer on-box (takes significantly longer)."
+BUILD_FROM_SOURCE=false
+if confirm "Build deployer from source?" n; then
+  BUILD_FROM_SOURCE=true
+fi
 
 # Derive fixed runtime paths from the dedicated service user.
 SERVICE_HOME="/home/$SERVICE_USER"
@@ -1759,38 +1808,43 @@ fi
 
 step "Preparing deployer checkout"
 
-# Clone deployer on first install, or update it safely on rerun.
-if [[ -d "$INSTALL_DIR/.git" ]]; then
-  info "Reusing existing deployer checkout at $INSTALL_DIR"
+if [[ "$BUILD_FROM_SOURCE" == "true" ]]; then
+  # Clone deployer on first install, or update it safely on rerun.
+  if [[ -d "$INSTALL_DIR/.git" ]]; then
+    info "Reusing existing deployer checkout at $INSTALL_DIR"
 
-  CURRENT_DEPLOYER_ORIGIN="$(as_user "git -C '$INSTALL_DIR' remote get-url origin")"
-  github_remote_matches "$CURRENT_DEPLOYER_ORIGIN" "$DEPLOYER_REPO_URL" \
-    || die "Existing deployer checkout uses origin '$CURRENT_DEPLOYER_ORIGIN', not '$DEPLOYER_REPO_URL'."
+    CURRENT_DEPLOYER_ORIGIN="$(as_user "git -C '$INSTALL_DIR' remote get-url origin")"
+    github_remote_matches "$CURRENT_DEPLOYER_ORIGIN" "$DEPLOYER_REPO_URL" \
+      || die "Existing deployer checkout uses origin '$CURRENT_DEPLOYER_ORIGIN', not '$DEPLOYER_REPO_URL'."
 
-  DEPLOYER_STATUS="$(as_user "git -C '$INSTALL_DIR' status --porcelain --untracked-files=no")"
-  [[ -z "$DEPLOYER_STATUS" ]] || die "Existing deployer checkout has uncommitted changes at '$INSTALL_DIR'. Clean them before rerunning setup."
+    DEPLOYER_STATUS="$(as_user "git -C '$INSTALL_DIR' status --porcelain --untracked-files=no")"
+    [[ -z "$DEPLOYER_STATUS" ]] || die "Existing deployer checkout has uncommitted changes at '$INSTALL_DIR'. Clean them before rerunning setup."
 
-  as_user "
-  set -Eeuo pipefail
-  git -C '$INSTALL_DIR' fetch origin '$DEPLOYER_REPO_BRANCH' --prune
-  git -C '$INSTALL_DIR' checkout '$DEPLOYER_REPO_BRANCH'
-  git -C '$INSTALL_DIR' pull --ff-only origin '$DEPLOYER_REPO_BRANCH'
-  " 2>&1 | indent_stream
-else
-  if [[ -d "$INSTALL_DIR" ]]; then
-    if [[ -n "$(find "$INSTALL_DIR" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]]; then
-      die "Expected '$INSTALL_DIR' to be a deployer git checkout, but found a non-empty directory."
+    as_user "
+    set -Eeuo pipefail
+    git -C '$INSTALL_DIR' fetch origin '$DEPLOYER_REPO_BRANCH' --prune
+    git -C '$INSTALL_DIR' checkout '$DEPLOYER_REPO_BRANCH'
+    git -C '$INSTALL_DIR' pull --ff-only origin '$DEPLOYER_REPO_BRANCH'
+    " 2>&1 | indent_stream
+  else
+    if [[ -d "$INSTALL_DIR" ]]; then
+      if [[ -n "$(find "$INSTALL_DIR" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]]; then
+        die "Expected '$INSTALL_DIR' to be a deployer git checkout, but found a non-empty directory."
+      fi
+      rmdir "$INSTALL_DIR" || true
     fi
-    rmdir "$INSTALL_DIR" || true
-  fi
 
-  info "Cloning deployer into $INSTALL_DIR"
-  as_user "
-  set -Eeuo pipefail
-  git clone --branch '$DEPLOYER_REPO_BRANCH' '$DEPLOYER_REPO_URL' '$INSTALL_DIR'
-  " 2>&1 | indent_stream
+    info "Cloning deployer into $INSTALL_DIR"
+    as_user "
+    set -Eeuo pipefail
+    git clone --branch '$DEPLOYER_REPO_BRANCH' '$DEPLOYER_REPO_URL' '$INSTALL_DIR'
+    " 2>&1 | indent_stream
+  fi
+  ok "Deployer checkout ready"
+else
+  install -d -m 0755 -o "$SERVICE_USER" -g "$SERVICE_USER" "$INSTALL_DIR"
+  ok "Install directory ready at $INSTALL_DIR"
 fi
-ok "Deployer checkout ready"
 
 step "Preparing GitHub clone access"
 
@@ -2000,23 +2054,27 @@ grep -m1 "^Target:" <<<"$swift_install_output" | indent_stream || true
 
 step "Building deployer"
 
-# Build the deployer in debug mode and install the runtime binary at repo root.
-run_compact_as_user "
-set -Eeuo pipefail
-source '$SWIFTLY_HOME_DIR/env.sh'
-hash -r
+if [[ "$BUILD_FROM_SOURCE" == "true" ]]; then
+  run_compact_as_user "
+  set -Eeuo pipefail
+  source '$SWIFTLY_HOME_DIR/env.sh'
+  hash -r
 
-cd '$INSTALL_DIR'
-swift build -c '$DEPLOYER_BUILD_MODE'
-bin_dir=\$(swift build -c '$DEPLOYER_BUILD_MODE' --show-bin-path)
+  cd '$INSTALL_DIR'
+  swift build -c '$DEPLOYER_BUILD_MODE'
+  bin_dir=\$(swift build -c '$DEPLOYER_BUILD_MODE' --show-bin-path)
 
-[[ -x \"\$bin_dir/deployer\" ]] || {
-  echo 'Expected deployer binary was not produced.' >&2
-  exit 1
-}
+  [[ -x \"\$bin_dir/deployer\" ]] || {
+    echo 'Expected deployer binary was not produced.' >&2
+    exit 1
+  }
 
-install -m 0755 \"\$bin_dir/deployer\" '$INSTALL_DIR/deployer'
-"
+  install -m 0755 \"\$bin_dir/deployer\" '$INSTALL_DIR/deployer'
+  "
+else
+  _download_deployer_binary
+  ok "Deployer binary installed at $INSTALL_DIR/deployer"
+fi
 
 step "Building target app"
 
