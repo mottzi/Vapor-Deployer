@@ -32,71 +32,67 @@ struct RowComponent: InstanceComponent {
 }
 
 extension RowComponent {
-    
+
     struct DeployAction: Action {
-        
+
         let name: String = "deploy"
         let productName: String
-        
-        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
+        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
             guard let targetID else { return .failure("No ID found") }
-            let deployment: Deployment?
-            do { deployment = try await Deployment.find(targetID, on: app.db) }
-            catch { app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(targetID)", error))"); return .failure("Database error looking up deployment") }
-            guard let deployment else { return .failure("Deployment not found") }
-            guard deployment.product == productName else { return .failure("Deployment not found") }
+            guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
             guard deployment.canBeDeployed else { return .failure("Deployments already in progress cannot be started again") }
             let target = app.deployer.queue.config.target
-
             return switch await app.deployer.queue.deploy(deployment: deployment, target: target) {
             case .started: .success("Deployment started")
             case .queueBusy: .failure("A deployment is already running")
             case .failure(let message): .failure(message)
             }
         }
-        
+
     }
-    
+
     struct DeleteAction: Action {
-        
+
         let name: String = "delete"
         let productName: String
-        
-        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
-            let deployment: Deployment?
-            do { deployment = try await Deployment.find(targetID, on: app.db) }
-            catch { app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(targetID?.uuidString ?? "nil")", error))"); return .failure("Database error looking up deployment") }
-            guard let deployment else { return .failure("Deployment not found") }
-            guard deployment.product == productName else { return .failure("Deployment not found") }
+        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
+            guard let targetID else { return .failure("Deployment not found") }
+            guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
             do { try await deployment.delete(on: app.db) }
             catch { app.logger.error("\(MistError.databaseFetchFailed("Deployment delete id=\(deployment.id?.uuidString ?? "nil")", error))"); return .failure("Failed to delete deployment") }
             return .success()
         }
-        
+
     }
-    
+
     struct ToggleErrorAction: Action {
-        
+
         let name: String = "toggleError"
         let productName: String
-        
-        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
+        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
             guard let targetID else { return .failure("No ID found") }
-            let deployment: Deployment?
-            do { deployment = try await Deployment.find(targetID, on: app.db) }
-            catch { app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(targetID)", error))"); return .failure("Database error looking up deployment") }
-            guard let deployment else { return .failure("Deployment not found") }
-            guard deployment.product == productName else { return .failure("Deployment not found") }
+            guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
             guard deployment.errorMessage != nil else { return .failure("No error to display") }
-            
             let current = state["errorExpanded"]?.bool ?? false
             state["errorExpanded"] = .bool(!current)
             return .success()
         }
 
     }
+
+}
+
+func loadDeployment(id: UUID, product: String, app: Application) async -> Deployment? {
     
+    do {
+        guard let deployment = try await Deployment.find(id, on: app.db) else { return nil }
+        guard deployment.product == product else { return nil }
+        return deployment
+    } catch {
+        app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(id)", error))")
+        return nil
+    }
 }

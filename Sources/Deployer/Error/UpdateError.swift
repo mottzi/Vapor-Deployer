@@ -2,7 +2,7 @@ import Foundation
 
 extension UpdateCommand {
     
-    enum Error: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible {
+    enum Error: DescribedError {
         
         case invalidExecutablePath(String)
         case notGitRepository(String)
@@ -53,10 +53,6 @@ extension UpdateCommand {
             }
         }
 
-        var description: String { errorDescription ?? "Deployer update failed." }
-
-        var debugDescription: String { description }
-        
     }
     
 }

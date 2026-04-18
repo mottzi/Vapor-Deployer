@@ -21,7 +21,7 @@ struct UpdateCommand: AsyncCommand {
         let previousCommitID = try await currentCommitID(in: paths.installDirectory.path)
 
         console.print("Pulling latest changes.")
-        try await Shell.execute("git pull --ff-only", directory: paths.installDirectory.path)
+        try await Shell.runThrowing("git pull --ff-only", directory: paths.installDirectory.path)
 
         let currentCommitID = try await currentCommitID(in: paths.installDirectory.path)
         guard currentCommitID != previousCommitID else {
@@ -31,7 +31,7 @@ struct UpdateCommand: AsyncCommand {
 
         console.print("Building updated deployer binary.")
         do {
-            try await Shell.execute("swift build -c \(paths.buildMode)", directory: paths.installDirectory.path)
+            try await Shell.runThrowing("swift build -c \(paths.buildMode)", directory: paths.installDirectory.path)
         } catch let error as Shell.Error {
             let output = error.output.trimmed
             if !output.isEmpty { console.print(.init(stringLiteral: output)) }
@@ -72,7 +72,7 @@ extension UpdateCommand {
         guard gitDirectoryExists else { throw Error.notGitRepository(directory) }
         
         let command = "git status --porcelain --untracked-files=no"
-        let status = await Shell.executeResult(command, directory: directory)
+        let status = await Shell.run(command, directory: directory)
         guard status.exitCode == 0 else { throw Shell.Error(command: command, output: status.output) }
         
         let trimmedStatus = status.output.trimmed
@@ -82,7 +82,7 @@ extension UpdateCommand {
     /// Reads the current checkout commit so the command can skip the restart path when no new revision arrived.
     func currentCommitID(in directory: String) async throws -> String {
         
-        let commitID = try await Shell.execute("git rev-parse HEAD", directory: directory)
+        let commitID = try await Shell.runThrowing("git rev-parse HEAD", directory: directory)
         let trimmedCommitID = commitID.trimmed
         guard !trimmedCommitID.isEmpty else { throw Error.emptyCommitID }
         

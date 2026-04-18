@@ -12,7 +12,7 @@ extension Deployer {
         }
     }
     
-    private struct DeployerServiceManagerKey: StorageKey {
+    struct DeployerServiceManagerKey: StorageKey {
         typealias Value = any ServiceManager
     }
     

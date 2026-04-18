@@ -2,7 +2,7 @@ import Foundation
 
 extension Worker {
     
-    enum Error: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible {
+    enum Error: DescribedError {
         
         case binaryNotFound(String)
         case deploymentFailed(String)
@@ -21,14 +21,6 @@ extension Worker {
             }
         }
 
-        var description: String {
-            errorDescription ?? "Deployment move failed."
-        }
-
-        var debugDescription: String {
-            description
-        }
-        
     }
     
 }

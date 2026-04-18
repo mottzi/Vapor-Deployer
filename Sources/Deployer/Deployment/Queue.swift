@@ -21,7 +21,7 @@ extension Deployer {
         }
     }
     
-    private struct DeployerQueueKey: StorageKey { typealias Value = Queue }
+    struct DeployerQueueKey: StorageKey { typealias Value = Queue }
     
 }
 

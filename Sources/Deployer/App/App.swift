@@ -19,7 +19,8 @@ extension Application {
         let app = try await Application.make(env)
         app.deployer.useCommands()
 
-        if app.deployer.shouldServe() {
+        let command = env.arguments.dropFirst().first { !$0.hasPrefix("-") }
+        if command == nil || command == "serve" {
             do {
                 try await app.deployer.useServer()
             } catch {
@@ -38,5 +39,11 @@ extension Application {
         
         try await app.asyncShutdown()
     }
+    
+}
+
+extension Environment {
+    
+    
     
 }

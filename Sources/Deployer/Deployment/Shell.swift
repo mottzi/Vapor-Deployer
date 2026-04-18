@@ -7,21 +7,13 @@ struct Shell {
         let exitCode: Int32
     }
         
-    @discardableResult static func execute(_ command: String, directory: String? = nil) async throws -> String {
+    @discardableResult static func runThrowing(_ command: String, directory: String? = nil) async throws -> String {
         let result = await run(command, directory: directory)
         guard result.exitCode == 0 else { throw Shell.Error(command: command, output: result.output) }
         return result.output
     }
-    
-    @discardableResult static func executeRaw(_ command: String, directory: String? = nil) async -> String {
-        await run(command, directory: directory).output
-    }
-    
-    static func executeResult(_ command: String, directory: String? = nil) async -> Result {
-        await run(command, directory: directory)
-    }
-    
-    private static func run(_ command: String, directory: String? = nil) async -> Result {
+
+    static func run(_ command: String, directory: String? = nil) async -> Result {
         
         await Task.detached {
             
@@ -52,9 +44,9 @@ extension Shell {
     
     static func getCurrentCheckout(in directory: String) async throws -> GitCheckout {
         
-        let commitID = try await execute("git rev-parse HEAD", directory: directory).trimmed
-        let commitMessage = try await execute("git log -1 --pretty=%s HEAD", directory: directory).trimmed
-        let committedAtRaw = try await execute("git show -s --format=%ct HEAD", directory: directory).trimmed
+        let commitID = try await runThrowing("git rev-parse HEAD", directory: directory).trimmed
+        let commitMessage = try await runThrowing("git log -1 --pretty=%s HEAD", directory: directory).trimmed
+        let committedAtRaw = try await runThrowing("git show -s --format=%ct HEAD", directory: directory).trimmed
         
         guard
             let committedAtSeconds = TimeInterval(committedAtRaw),
@@ -74,14 +66,14 @@ extension Shell {
         )
     }
     
-    private static func getCurrentBranch(in directory: String) async -> String {
+    static func getCurrentBranch(in directory: String) async -> String {
         
-        let symbolicBranch = await executeRaw("git symbolic-ref -q --short HEAD", directory: directory).trimmed
+        let symbolicBranch = await run("git symbolic-ref -q --short HEAD", directory: directory).output.trimmed
         if symbolicBranch.isEmpty == false {
             return "refs/heads/\(symbolicBranch)"
         }
         
-        let remoteBranches = await executeRaw("git branch -r --contains HEAD --format='%(refname:short)'", directory: directory)
+        let remoteBranches = await run("git branch -r --contains HEAD --format='%(refname:short)'", directory: directory).output
             .split(whereSeparator: \.isNewline)
             .map { String($0).trimmed }
             .filter {

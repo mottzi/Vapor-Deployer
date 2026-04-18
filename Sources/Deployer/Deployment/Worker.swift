@@ -12,12 +12,12 @@ struct Worker: Sendable {
 extension Worker {
     
     func checkout() async throws {
-        try await Shell.execute("git fetch origin \(deployment.branch.shellQuoted)", directory: target.directory)
-        try await Shell.execute("git checkout --detach \(deployment.commitID.shellQuoted)", directory: target.directory)
+        try await Shell.runThrowing("git fetch origin \(deployment.branch.shellQuoted)", directory: target.directory)
+        try await Shell.runThrowing("git checkout --detach \(deployment.commitID.shellQuoted)", directory: target.directory)
     }
 
     func build() async throws {
-        try await Shell.execute("swift build -c \(target.buildMode)", directory: target.directory)
+        try await Shell.runThrowing("swift build -c \(target.buildMode)", directory: target.directory)
     }
     
     func restart() async throws {

@@ -81,14 +81,6 @@ extension Deployer {
         }
     }
 
-    func shouldServe() -> Bool {
-        let command = app.environment.arguments
-            .dropFirst()
-            .first { $0.hasPrefix("-") == false }
-        
-        return command == nil || command == "serve"
-    }
-    
     func createDatabaseDirectory(for dbFile: String) throws {
         
         let dbDirectoryURL = URL(fileURLWithPath: dbFile).deletingLastPathComponent().standardizedFileURL

@@ -2,7 +2,7 @@ import Foundation
 
 extension Shell {
     
-    struct Error: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible {
+    struct Error: DescribedError {
         
         let command: String
         let output: String
@@ -13,14 +13,6 @@ extension Shell {
             return "Command '\(command)' failed.\n\(trimmedOutput)"
         }
 
-        var description: String {
-            errorDescription ?? "Shell command failed."
-        }
-
-        var debugDescription: String {
-            description
-        }
-        
     }
     
 }
