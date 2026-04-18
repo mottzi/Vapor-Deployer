@@ -35,7 +35,7 @@ struct UpdateCommand: AsyncCommand {
         } catch let error as Shell.Error {
             let output = error.output.trimmed
             if !output.isEmpty { console.print(.init(stringLiteral: output)) }
-            throw UpdateError.buildFailed(paths.buildMode)
+            throw Error.buildFailed(paths.buildMode)
         }
         
         try stageCandidateBinary(using: paths)
@@ -51,7 +51,7 @@ struct UpdateCommand: AsyncCommand {
             try await manager.start(product: paths.serviceName)
 
             let finalStatus = await waitForStableStatus(of: paths.serviceName, manager: manager)
-            guard finalStatus.isRunning else { throw UpdateError.restartVerificationFailed(finalStatus.label) }
+            guard finalStatus.isRunning else { throw Error.restartVerificationFailed(finalStatus.label) }
 
             console.print("Deployer update completed successfully.")
         } catch {
@@ -69,14 +69,14 @@ extension UpdateCommand {
         
         let gitDirectory = URL(fileURLWithPath: directory, isDirectory: true).appendingPathComponent(".git")
         let gitDirectoryExists = FileManager.default.fileExists(atPath: gitDirectory.path)
-        guard gitDirectoryExists else { throw UpdateError.notGitRepository(directory) }
+        guard gitDirectoryExists else { throw Error.notGitRepository(directory) }
         
         let command = "git status --porcelain --untracked-files=no"
         let status = await Shell.executeResult(command, directory: directory)
         guard status.exitCode == 0 else { throw Shell.Error(command: command, output: status.output) }
         
         let trimmedStatus = status.output.trimmed
-        guard trimmedStatus.isEmpty else { throw UpdateError.dirtyWorktree(trimmedStatus) }
+        guard trimmedStatus.isEmpty else { throw Error.dirtyWorktree(trimmedStatus) }
     }
     
     /// Reads the current checkout commit so the command can skip the restart path when no new revision arrived.
@@ -84,7 +84,7 @@ extension UpdateCommand {
         
         let commitID = try await Shell.execute("git rev-parse HEAD", directory: directory)
         let trimmedCommitID = commitID.trimmed
-        guard !trimmedCommitID.isEmpty else { throw UpdateError.emptyCommitID }
+        guard !trimmedCommitID.isEmpty else { throw Error.emptyCommitID }
         
         return trimmedCommitID
     }
@@ -95,7 +95,7 @@ extension UpdateCommand {
         let fileManager = FileManager.default
         
         let fileExists = fileManager.fileExists(atPath: paths.buildOutputURL.path)
-        guard fileExists else { throw UpdateError.binaryNotFound(paths.buildOutputURL.path) }
+        guard fileExists else { throw Error.binaryNotFound(paths.buildOutputURL.path) }
         
         try removeIfPresent(paths.stagedBinaryURL, fileManager: fileManager)
         try fileManager.copyItem(at: paths.buildOutputURL, to: paths.stagedBinaryURL)
@@ -110,10 +110,10 @@ extension UpdateCommand {
         try removeIfPresent(paths.backupBinaryURL, fileManager: fileManager)
         
         let liveBinaryExists = fileManager.fileExists(atPath: paths.executableURL.path)
-        guard liveBinaryExists else { throw UpdateError.binaryNotFound(paths.executableURL.path) }
+        guard liveBinaryExists else { throw Error.binaryNotFound(paths.executableURL.path) }
         
         let stagedBinaryExists = fileManager.fileExists(atPath: paths.stagedBinaryURL.path)
-        guard stagedBinaryExists else { throw UpdateError.binaryNotFound(paths.stagedBinaryURL.path) }
+        guard stagedBinaryExists else { throw Error.binaryNotFound(paths.stagedBinaryURL.path) }
         
         try fileManager.moveItem(at: paths.executableURL, to: paths.backupBinaryURL)
         
@@ -121,12 +121,12 @@ extension UpdateCommand {
             try fileManager.moveItem(at: paths.stagedBinaryURL, to: paths.executableURL)
         } catch {
             try? restoreBackup(using: paths, fileManager: fileManager)
-            throw UpdateError.binarySwapFailed(error.localizedDescription)
+            throw Error.binarySwapFailed(error.localizedDescription)
         }
     }
     
     /// Restores the last known-good binary and requires the service manager to recover before declaring rollback success.
-    func rollback(using paths: Paths, manager: any ServiceManager, originalError: Error) async throws {
+    func rollback(using paths: Paths, manager: any ServiceManager, originalError: Swift.Error) async throws {
         
         let fileManager = FileManager.default
         
@@ -138,12 +138,12 @@ extension UpdateCommand {
             try await manager.start(product: paths.serviceName)
             
             let rollbackStatus = await waitForStableStatus(of: paths.serviceName, manager: manager)
-            guard rollbackStatus.isRunning else { throw UpdateError.rollbackVerificationFailed(rollbackStatus.label) }
+            guard rollbackStatus.isRunning else { throw Error.rollbackVerificationFailed(rollbackStatus.label) }
         } catch {
-            throw UpdateError.rollbackFailed(originalError.localizedDescription, error.localizedDescription)
+            throw Error.rollbackFailed(originalError.localizedDescription, error.localizedDescription)
         }
         
-        throw UpdateError.rollbackSucceeded(originalError.localizedDescription)
+        throw Error.rollbackSucceeded(originalError.localizedDescription)
     }
     
     /// Waits through transient service states so the command judges the final service state instead of a race.
@@ -164,7 +164,7 @@ extension UpdateCommand {
     func restoreBackup(using paths: Paths, fileManager: FileManager) throws {
         
         let backupBinaryExists = fileManager.fileExists(atPath: paths.backupBinaryURL.path)
-        guard backupBinaryExists else { throw UpdateError.binaryNotFound(paths.backupBinaryURL.path) }
+        guard backupBinaryExists else { throw Error.binaryNotFound(paths.backupBinaryURL.path) }
         
         try removeIfPresent(paths.executableURL, fileManager: fileManager)
         try fileManager.moveItem(at: paths.backupBinaryURL, to: paths.executableURL)
@@ -203,7 +203,7 @@ extension UpdateCommand {
             let installDirectory = resolvedExecutableURL.deletingLastPathComponent()
             let executableName = resolvedExecutableURL.lastPathComponent
             
-            guard !executableName.isEmpty else { throw UpdateError.invalidExecutablePath(resolvedExecutableURL.path) }
+            guard !executableName.isEmpty else { throw Error.invalidExecutablePath(resolvedExecutableURL.path) }
             
             return Paths(
                 executableURL: resolvedExecutableURL,
@@ -218,67 +218,6 @@ extension UpdateCommand {
                 buildMode: buildMode
             )
         }
-        
-    }
-    
-}
-
-extension UpdateCommand {
-    
-    enum UpdateError: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible {
-        
-        case invalidExecutablePath(String)
-        case notGitRepository(String)
-        case dirtyWorktree(String)
-        case emptyCommitID
-        case buildFailed(String)
-        case binaryNotFound(String)
-        case binarySwapFailed(String)
-        case restartVerificationFailed(String)
-        case rollbackVerificationFailed(String)
-        case rollbackSucceeded(String)
-        case rollbackFailed(String, String)
-        
-        var errorDescription: String? {
-            switch self {
-            case .invalidExecutablePath(let path):
-                "Unable to determine deployer executable name from '\(path)'."
-                
-            case .notGitRepository(let path):
-                "Deployer install directory is not a git repository: '\(path)'."
-                
-            case .dirtyWorktree(let status):
-                "Deployer checkout has local changes:\n\(status)"
-                
-            case .emptyCommitID:
-                "Failed to determine the current deployer checkout commit."
-
-            case .buildFailed(let mode):
-                "Failed to build the deployer in \(mode) mode."
-                
-            case .binaryNotFound(let path):
-                "Expected deployer binary not found at '\(path)'."
-                
-            case .binarySwapFailed(let error):
-                "Failed to swap in the updated deployer binary: \(error)"
-                
-            case .restartVerificationFailed(let status):
-                "The service manager did not report the deployer as running after update. Final status: \(status)."
-                
-            case .rollbackVerificationFailed(let status):
-                "Rollback restart did not recover the deployer. Final status: \(status)."
-                
-            case .rollbackSucceeded(let error):
-                "Update failed, but rollback restored the previous deployer binary. Original error: \(error)"
-                
-            case .rollbackFailed(let original, let rollback):
-                "Update failed and rollback also failed.\nOriginal error: \(original)\nRollback error: \(rollback)"
-            }
-        }
-
-        var description: String { errorDescription ?? "Deployer update failed." }
-
-        var debugDescription: String { description }
         
     }
     
