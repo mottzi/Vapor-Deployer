@@ -850,7 +850,7 @@ write_deployer_json() {
 # Resources/ at its root. Prefers deployer-linux-<arch>.tar.gz, falls back to
 # deployer.tar.gz.
 _download_deployer_release() {
-  local arch releases_json asset_name download_url tmp_archive
+  local arch releases_json tag_name asset_name download_url tmp_archive
   arch="$(uname -m)"
 
   info "Fetching latest release metadata..."
@@ -858,6 +858,8 @@ _download_deployer_release() {
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "https://api.github.com/repos/mottzi/Vapor-Deployer/releases/latest")"
+
+  tag_name="$(printf '%s' "$releases_json" | jq -r '.tag_name')"
 
   asset_name="deployer-linux-${arch}.tar.gz"
   download_url="$(printf '%s' "$releases_json" \
@@ -882,6 +884,7 @@ _download_deployer_release() {
   rm -f "$tmp_archive"
 
   chmod 0755 "$INSTALL_DIR/deployer"
+  [[ -n "$tag_name" ]] && printf '%s' "$tag_name" > "$INSTALL_DIR/.version"
   chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 }
 
