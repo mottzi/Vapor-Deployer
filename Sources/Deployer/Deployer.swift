@@ -13,12 +13,12 @@ extension Application {
     let app: Application
         
     func useCommands() {
-        app.asyncCommands.use(DeployerUpdateCommand(), as: "update")
+        app.asyncCommands.use(UpdateCommand(), as: "update")
     }
 
     func useServer() async throws {
         
-        let config = try DeployerConfiguration.load()
+        let config = try Configuration.load()
         app.deployer.serviceManager = config.serviceManager.makeManager()
         app.deployer.configureHTTP(config: config)
         try await app.deployer.configureDatabase(config: config)

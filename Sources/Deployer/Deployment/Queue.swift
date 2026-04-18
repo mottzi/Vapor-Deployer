@@ -1,19 +1,19 @@
 import Vapor
 import Mist
 
-typealias StatusHandler = @Sendable (DeployerServiceStatus) async -> Void
+typealias StatusHandler = @Sendable (ServiceStatus) async -> Void
 
 extension Deployer {
     
     func useQueue(
-        config: DeployerConfiguration,
+        config: Configuration,
         queueState: LiveState<QueueState>,
         onStatusChange: @escaping StatusHandler
     ) {
-        queue = DeployerQueue(app: app, config: config, queueState: queueState, onStatusChange: onStatusChange)
+        queue = Queue(app: app, config: config, queueState: queueState, onStatusChange: onStatusChange)
     }
     
-    var queue: DeployerQueue {
+    var queue: Queue {
         get {
             if let queue = app.storage[DeployerQueueKey.self] { return queue }
             fatalError("Queue not initialized.")
@@ -23,22 +23,22 @@ extension Deployer {
         }
     }
     
-    private struct DeployerQueueKey: StorageKey { typealias Value = DeployerQueue }
+    private struct DeployerQueueKey: StorageKey { typealias Value = Queue }
     
 }
 
-actor DeployerQueue {
+actor Queue {
         
     var isDeploying: Bool = false
     
     let app: Application
-    let config: DeployerConfiguration
+    let config: Configuration
     let queueState: LiveState<QueueState>
     let onStatusChange: StatusHandler
     
     init(
         app: Application,
-        config: DeployerConfiguration,
+        config: Configuration,
         queueState: LiveState<QueueState>,
         onStatusChange: @escaping StatusHandler
     ) {
@@ -100,7 +100,7 @@ actor DeployerQueue {
     
 }
 
-extension DeployerQueue {
+extension Queue {
     
     enum StartResult: Sendable {
         case started
@@ -119,7 +119,7 @@ extension DeployerQueue {
         var currentTarget = initialTarget
         
         while true {
-            let worker = DeployerWorker(
+            let worker = Worker(
                 deployment: currentDeployment,
                 target: currentTarget,
                 app: app,

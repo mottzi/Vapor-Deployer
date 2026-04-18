@@ -2,7 +2,7 @@ import Foundation
 import Vapor
 
 /// Runtime configuration for the local deployer, decoded from the sibling JSON file.
-struct DeployerConfiguration: Codable, Sendable {
+struct Configuration: Codable, Sendable {
     
     let port: Int
     let dbFile: String
@@ -44,7 +44,7 @@ enum ServiceManagerKind: String, Codable, Sendable {
     /// Is easier to use than systemd but requires dependency.
     case supervisor
     
-    func makeManager() -> any DeployerServiceManager {
+    func makeManager() -> any ServiceManager {
         switch self {
         case .systemd: SystemdServiceManager()
         case .supervisor: SupervisorServiceManager()
@@ -53,10 +53,10 @@ enum ServiceManagerKind: String, Codable, Sendable {
     
 }
 
-extension DeployerConfiguration {
+extension Configuration {
 
     /// Loads config from `<executable-name>.json` beside the resolved executable path.
-    static func load() throws -> DeployerConfiguration {
+    static func load() throws -> Configuration {
         
         let executableURL = try getExecutableURL()
         let resolvedExecutableURL = executableURL.standardizedFileURL.resolvingSymlinksInPath()
@@ -67,8 +67,8 @@ extension DeployerConfiguration {
         catch let error as CocoaError where error.code == .fileReadNoSuchFile { throw LoadError.configNotFound(configURL.path) }
         catch { throw LoadError.configUnreadable(configURL.path, error) }
 
-        let configuration: DeployerConfiguration
-        do { configuration = try JSONDecoder().decode(DeployerConfiguration.self, from: configData) }
+        let configuration: Configuration
+        do { configuration = try JSONDecoder().decode(Configuration.self, from: configData) }
         catch { throw LoadError.invalidJSON(configURL.path, error) }
 
         let executableDirectoryURL = resolvedExecutableURL.deletingLastPathComponent()
@@ -126,14 +126,14 @@ extension DeployerConfiguration {
 
 }
 
-extension DeployerConfiguration {
+extension Configuration {
 
     /// Validates and normalizes decoded config values using the executable directory as the base path.
-    func resolved(relativeTo baseDirectoryURL: URL) throws -> DeployerConfiguration {
+    func resolved(relativeTo baseDirectoryURL: URL) throws -> Configuration {
         
         guard port > 0 else { throw LoadError.invalidField("port", "must be greater than 0") }
 
-        return try DeployerConfiguration(
+        return try Configuration(
             port: port,
             dbFile: trimmedFileSystemPath(dbFile, field: "dbFile", relativeTo: baseDirectoryURL),
             socketPath: trimmedValue(socketPath, field: "socketPath"),
@@ -166,7 +166,7 @@ fileprivate func trimmedValue(_ value: String, field: String) throws -> String {
     let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
     if !trimmedValue.isEmpty { return trimmedValue }
     
-    throw DeployerConfiguration.LoadError.invalidField(field, "must not be empty")
+    throw Configuration.LoadError.invalidField(field, "must not be empty")
 }
 
 /// Trims and resolves a configured file-system path relative to the executable directory when needed.
@@ -181,7 +181,7 @@ fileprivate func trimmedFileSystemPath(_ value: String, field: String, relativeT
     }
 }
 
-extension DeployerConfiguration  {
+extension Configuration  {
     
     enum LoadError: LocalizedError {
         

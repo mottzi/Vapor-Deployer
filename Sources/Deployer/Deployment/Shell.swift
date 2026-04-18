@@ -1,6 +1,6 @@
 import Foundation
 
-struct DeployerShell {
+struct Shell {
     
     struct Result: Sendable {
         let output: String
@@ -48,7 +48,7 @@ struct DeployerShell {
     
 }
 
-extension DeployerShell {
+extension Shell {
     
     static func getCurrentCheckout(in directory: String) async throws -> GitCheckout {
         

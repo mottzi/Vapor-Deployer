@@ -5,7 +5,7 @@ extension Deployer {
     func useVariables() throws {
         for variable in Variables.allCases {
             guard Environment.get(variable.rawValue) == nil else { continue }
-            throw DeployerConfiguration.LoadError.invalidField(
+            throw Configuration.LoadError.invalidField(
                 "environment.\(variable.rawValue)",
                 "environment variable not found"
             )

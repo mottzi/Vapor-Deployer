@@ -2,15 +2,15 @@ import Vapor
 
 extension Deployer {
     
-    func useWebhook(config: DeployerConfiguration) {
-        DeployerWebhook.register(using: config.target, on: app) { event, target async in
+    func useWebhook(config: Configuration) {
+        Webhook.register(using: config.target, on: app) { event, target async in
             await app.deployer.queue.recordPush(event: event, target: target)
         }
     }
     
 }
 
-struct DeployerWebhook {
+struct Webhook {
     
     static func register(
         using config: TargetConfiguration,

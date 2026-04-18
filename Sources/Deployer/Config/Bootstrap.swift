@@ -4,12 +4,12 @@ import Foundation
 
 extension Deployer {
 
-    func configureHTTP(config: DeployerConfiguration) {
+    func configureHTTP(config: Configuration) {
         app.http.server.configuration.port = config.port
         app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
     }
 
-    func configureDatabase(config: DeployerConfiguration) async throws {
+    func configureDatabase(config: Configuration) async throws {
         try createDatabaseDirectory(for: config.dbFile)
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
         app.sessions.use(.fluent)
@@ -22,7 +22,7 @@ extension Deployer {
         app.views.use(.leaf)
     }
 
-    func configureMist(config: DeployerConfiguration) {
+    func configureMist(config: Configuration) {
         app.mist.socket.path = config.socketPath.pathComponents
         app.mist.socket.middleware = app.sessions.middleware
         app.mist.socket.shouldUpgrade = { request in
@@ -31,7 +31,7 @@ extension Deployer {
         }
     }
 
-    func configurePanel(config: DeployerConfiguration) async throws {
+    func configurePanel(config: Configuration) async throws {
         let rowComponent = RowComponent(productName: config.target.name)
         let configComponent = ConfigComponent(using: config)
         let queueComponent = QueueComponent()
@@ -80,7 +80,7 @@ extension Deployer {
         try FileManager.default.createDirectory(at: dbDirectoryURL, withIntermediateDirectories: true)
     }
     
-    func seedFirstDeployment(config: DeployerConfiguration) async {
+    func seedFirstDeployment(config: Configuration) async {
         
         do {
             let existingDeploymentCount = try await Deployment.query(on: app.db)
@@ -89,7 +89,7 @@ extension Deployer {
             
             guard existingDeploymentCount == 0 else { return }
             
-            let checkout = try await DeployerShell.getCurrentCheckout(in: config.target.directory)
+            let checkout = try await Shell.getCurrentCheckout(in: config.target.directory)
             
             let deployment = Deployment(
                 product: config.target.name,

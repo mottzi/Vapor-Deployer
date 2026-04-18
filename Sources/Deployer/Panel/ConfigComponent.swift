@@ -26,7 +26,7 @@ struct ConfigComponent: ManualComponent {
         }
     }
     
-    init(using config: DeployerConfiguration) {
+    init(using config: Configuration) {
         self.name = "ConfigComponent-\(config.target.name)"
         self.state = LiveState(of: ConfigState(config: config, componentName: self.name))
     }
@@ -39,7 +39,7 @@ struct ConfigState: ComponentData {
     let groups: [Group]
 
     init(
-        config: DeployerConfiguration,
+        config: Configuration,
         componentName: String
     ) {
         self.componentName = componentName

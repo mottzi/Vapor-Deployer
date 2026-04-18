@@ -1,23 +1,23 @@
 import Vapor
 
-struct DeployerWorker: Sendable {
+struct Worker: Sendable {
     
     let deployment: Deployment
     let target: TargetConfiguration
     let app: Application
-    let onStatusChange: @Sendable (DeployerServiceStatus) async -> Void
+    let onStatusChange: @Sendable (ServiceStatus) async -> Void
     
 }
 
-extension DeployerWorker {
+extension Worker {
     
     func checkout() async throws {
-        try await DeployerShell.execute("git fetch origin \(deployment.branch.shellQuoted)", directory: target.directory)
-        try await DeployerShell.execute("git checkout --detach \(deployment.commitID.shellQuoted)", directory: target.directory)
+        try await Shell.execute("git fetch origin \(deployment.branch.shellQuoted)", directory: target.directory)
+        try await Shell.execute("git checkout --detach \(deployment.commitID.shellQuoted)", directory: target.directory)
     }
 
     func build() async throws {
-        try await DeployerShell.execute("swift build -c \(target.buildMode)", directory: target.directory)
+        try await Shell.execute("swift build -c \(target.buildMode)", directory: target.directory)
     }
     
     func restart() async throws {
@@ -77,7 +77,7 @@ extension String {
     
 }
 
-extension DeployerWorker {
+extension Worker {
     
     enum MoveError: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible {
         

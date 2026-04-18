@@ -5,12 +5,12 @@ import Mist
 extension Deployer {
     
     func usePanel(
-        config: DeployerConfiguration,
+        config: Configuration,
         row: RowComponent,
         configPopover: ConfigComponent
     ) {
 
-        let panel = DeployerPanel(
+        let panel = Panel(
             config: config,
             row: row,
             configPopover: configPopover
@@ -27,9 +27,9 @@ extension Deployer {
     
 }
 
-struct DeployerPanel {
+struct Panel {
     
-    let config: DeployerConfiguration
+    let config: Configuration
     let row: RowComponent
     let configPopover: ConfigComponent
     let panelPath: String
@@ -37,7 +37,7 @@ struct DeployerPanel {
     let authenticator: PanelAuthenticator
     
     init(
-        config: DeployerConfiguration,
+        config: Configuration,
         row: RowComponent,
         configPopover: ConfigComponent
     ) {
@@ -52,7 +52,7 @@ struct DeployerPanel {
     
 }
 
-extension DeployerPanel {
+extension Panel {
     
     func serveLogin(request: Request) async throws -> View {
         let hasError = request.query[String.self, at: "error"] != nil
@@ -103,7 +103,7 @@ extension DeployerPanel {
     
 }
 
-extension DeployerPanel {
+extension Panel {
     
     struct PanelContext: Encodable {
         let tables: [TableContext]

@@ -27,7 +27,7 @@ struct StatusComponent: LiveComponent {
     
     init(
         product: String,
-        status: DeployerServiceStatus
+        status: ServiceStatus
     ) {
         self.product = product
         self.name = "StatusComponent-\(product)"
@@ -46,7 +46,7 @@ struct StatusState: ComponentData {
     let isRunning: Bool
     let isTransitioning: Bool
 
-    init(_ status: DeployerServiceStatus) {
+    init(_ status: ServiceStatus) {
         self.status = status.label
         self.isRunning = status.isRunning
         self.isTransitioning = status.isTransitioning

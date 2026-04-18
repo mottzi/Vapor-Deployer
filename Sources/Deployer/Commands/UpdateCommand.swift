@@ -2,7 +2,7 @@ import Vapor
 import Foundation
 
 /// Performs an in-place update of the deployed installation.
-struct DeployerUpdateCommand: AsyncCommand {
+struct UpdateCommand: AsyncCommand {
 
     struct Signature: CommandSignature {}
 
@@ -14,7 +14,7 @@ struct DeployerUpdateCommand: AsyncCommand {
         let console = context.console
 
         let paths = try Paths.resolve()
-        let config = try DeployerConfiguration.load()
+        let config = try Configuration.load()
         let manager = config.serviceManager.makeManager()
 
         console.print("Preparing deployer update in '\(paths.installDirectory.path)'.")
@@ -22,7 +22,7 @@ struct DeployerUpdateCommand: AsyncCommand {
         let previousCommitID = try await currentCommitID(in: paths.installDirectory.path)
 
         console.print("Pulling latest changes.")
-        try await DeployerShell.execute("git pull --ff-only", directory: paths.installDirectory.path)
+        try await Shell.execute("git pull --ff-only", directory: paths.installDirectory.path)
 
         let currentCommitID = try await currentCommitID(in: paths.installDirectory.path)
         guard currentCommitID != previousCommitID else {
@@ -32,7 +32,7 @@ struct DeployerUpdateCommand: AsyncCommand {
 
         console.print("Building updated deployer binary.")
         do {
-            try await DeployerShell.execute("swift build -c \(paths.buildMode)", directory: paths.installDirectory.path)
+            try await Shell.execute("swift build -c \(paths.buildMode)", directory: paths.installDirectory.path)
         } catch let error as ShellError {
             let output = error.output.trimmingCharacters(in: .whitespacesAndNewlines)
             if !output.isEmpty { console.print(.init(stringLiteral: output)) }
@@ -63,7 +63,7 @@ struct DeployerUpdateCommand: AsyncCommand {
     
 }
 
-extension DeployerUpdateCommand {
+extension UpdateCommand {
     
     /// Rejects dirty server checkouts so the update command never discards uncommitted operational changes.
     func ensureCleanWorktree(at directory: String) async throws {
@@ -73,7 +73,7 @@ extension DeployerUpdateCommand {
         guard gitDirectoryExists else { throw UpdateError.notGitRepository(directory) }
         
         let command = "git status --porcelain --untracked-files=no"
-        let status = await DeployerShell.executeResult(command, directory: directory)
+        let status = await Shell.executeResult(command, directory: directory)
         guard status.exitCode == 0 else { throw ShellError(command: command, output: status.output) }
         
         let trimmedStatus = status.output.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -83,7 +83,7 @@ extension DeployerUpdateCommand {
     /// Reads the current checkout commit so the command can skip the restart path when no new revision arrived.
     func currentCommitID(in directory: String) async throws -> String {
         
-        let commitID = try await DeployerShell.execute("git rev-parse HEAD", directory: directory)
+        let commitID = try await Shell.execute("git rev-parse HEAD", directory: directory)
         let trimmedCommitID = commitID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedCommitID.isEmpty else { throw UpdateError.emptyCommitID }
         
@@ -127,7 +127,7 @@ extension DeployerUpdateCommand {
     }
     
     /// Restores the last known-good binary and requires the service manager to recover before declaring rollback success.
-    func rollback(using paths: Paths, manager: any DeployerServiceManager, originalError: Error) async throws {
+    func rollback(using paths: Paths, manager: any ServiceManager, originalError: Error) async throws {
         
         let fileManager = FileManager.default
         
@@ -148,7 +148,7 @@ extension DeployerUpdateCommand {
     }
     
     /// Waits through transient service states so the command judges the final service state instead of a race.
-    func waitForStableStatus(of serviceName: String, manager: any DeployerServiceManager) async -> DeployerServiceStatus {
+    func waitForStableStatus(of serviceName: String, manager: any ServiceManager) async -> ServiceStatus {
         
         for _ in 0..<10 {
             let status = await manager.status(product: serviceName)
@@ -179,7 +179,7 @@ extension DeployerUpdateCommand {
     
 }
 
-extension DeployerUpdateCommand {
+extension UpdateCommand {
     
     /// Captures install-local paths so the command always targets the launched deployer installation.
     struct Paths: Sendable {
@@ -199,7 +199,7 @@ extension DeployerUpdateCommand {
             serviceName: String = "deployer"
         ) throws -> Paths {
             
-            let executableURL = try executableURL ?? DeployerConfiguration.getExecutableURL()
+            let executableURL = try executableURL ?? Configuration.getExecutableURL()
             let resolvedExecutableURL = executableURL.standardizedFileURL.resolvingSymlinksInPath()
             let installDirectory = resolvedExecutableURL.deletingLastPathComponent()
             let executableName = resolvedExecutableURL.lastPathComponent
@@ -224,7 +224,7 @@ extension DeployerUpdateCommand {
     
 }
 
-extension DeployerUpdateCommand {
+extension UpdateCommand {
     
     enum UpdateError: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible {
         
