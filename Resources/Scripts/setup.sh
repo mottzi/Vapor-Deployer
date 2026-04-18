@@ -878,7 +878,7 @@ _download_deployer_release() {
   curl --silent --show-error --fail --location -o "$tmp_archive" "$download_url"
 
   info "Extracting release archive..."
-  tar -xzf "$tmp_archive" -C "$INSTALL_DIR"
+  tar -xzf "$tmp_archive" -C "$INSTALL_DIR" --warning=no-unknown-keyword
   rm -f "$tmp_archive"
 
   chmod 0755 "$INSTALL_DIR/deployer"
@@ -1287,7 +1287,8 @@ start_services() {
       loginctl enable-linger "$SERVICE_USER"
       systemctl start "user@${uid}.service" >/dev/null 2>&1 || true
       as_user_systemctl "daemon-reload"
-      as_user_systemctl "enable --now deployer.service ${PRODUCT_NAME}.service"
+      as_user_systemctl "enable deployer.service ${PRODUCT_NAME}.service"
+      as_user_systemctl "restart deployer.service ${PRODUCT_NAME}.service"
       ;;
     supervisor)
       systemctl enable --now supervisor
