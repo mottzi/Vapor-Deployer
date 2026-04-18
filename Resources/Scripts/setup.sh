@@ -1731,7 +1731,7 @@ step "Installing base packages"
 # version-pinned Swift deps (libgcc-X-dev, libstdc++-X-dev) resolve correctly
 # without hardcoding a release-specific number (e.g. 12 on 22.04, 13 on 24.04).
 _gcc_major="$(apt-cache show gcc 2>/dev/null \
-  | awk '/^Version:/ { split($2, a, "."); print a[1]; exit }')"
+  | awk '/^Version:/ { v=$2; sub(/^[0-9]+:/, "", v); split(v, a, "."); print a[1]; exit }')"
 _gcc_major="${_gcc_major:-13}"   # fall back to 13 (Ubuntu 24.04) if detection fails
 
 APT_PACKAGES=(
