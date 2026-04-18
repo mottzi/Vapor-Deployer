@@ -663,7 +663,7 @@ as_user_systemctl() {
   local command="$1"
   local uid
   uid="$(id -u "$SERVICE_USER")"
-  as_user "XDG_RUNTIME_DIR=/run/user/$uid systemctl --user $command"
+  as_user "XDG_RUNTIME_DIR=/run/user/$uid DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus systemctl --user $command"
 }
 
 # Return the current runtime status for a managed service.
@@ -878,7 +878,7 @@ _download_deployer_release() {
   curl --silent --show-error --fail --location -o "$tmp_archive" "$download_url"
 
   info "Extracting release archive..."
-  tar -xzf "$tmp_archive" -C "$INSTALL_DIR" --warning=no-unknown-keyword
+  tar -xzf "$tmp_archive" -C "$INSTALL_DIR" --warning=no-unknown-keyword 2>/dev/null
   rm -f "$tmp_archive"
 
   chmod 0755 "$INSTALL_DIR/deployer"
