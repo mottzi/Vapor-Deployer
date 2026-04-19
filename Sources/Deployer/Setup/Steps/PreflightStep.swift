@@ -9,7 +9,7 @@ struct PreflightStep: SetupStep {
         let paths = try context.requirePaths()
 
         if await userExists(context.serviceUser) {
-            let home = try await Shell.runThrowing(["getent", "passwd", context.serviceUser]).split(separator: ":").dropFirst(5).first.map(String.init) ?? ""
+            let home = try await homeDirectory(for: context.serviceUser)
             guard home == paths.serviceHome else {
                 throw SetupCommand.Error.invalidValue("serviceUser", "user exists with home '\(home)', not '\(paths.serviceHome)'")
             }
@@ -51,6 +51,13 @@ struct PreflightStep: SetupStep {
 
     private func userExists(_ user: String) async -> Bool {
         await Shell.run(["id", "-u", user]).exitCode == 0
+    }
+
+    private func homeDirectory(for user: String) async throws -> String {
+        let passwd = try await Shell.runThrowing(["getent", "passwd", user]).trimmed
+        let fields = passwd.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
+        guard fields.count >= 6 else { return "" }
+        return fields[5]
     }
 
     private func isDirectoryEmpty(_ path: String) throws -> Bool {
