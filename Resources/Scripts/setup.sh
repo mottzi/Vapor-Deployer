@@ -53,8 +53,8 @@ tar -xzf "${ASSET}"
 info "Starting deployer setup"
 attach_tty_stdin
 if [[ "${EUID}" -eq 0 ]]; then
-  exec ./deployer setup
+  DEPLOYER_RELEASE_TAG="${VERSION}" exec ./deployer setup
 else
   need sudo
-  exec sudo ./deployer setup
+  exec sudo env DEPLOYER_RELEASE_TAG="${VERSION}" ./deployer setup
 fi

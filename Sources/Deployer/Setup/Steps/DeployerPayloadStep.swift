@@ -46,12 +46,17 @@ struct DeployerPayloadStep: SetupStep {
         let sourceDirectory = executableURL.deletingLastPathComponent()
         let publicDirectory = sourceDirectory.appendingPathComponent("Public", isDirectory: true)
         let resourcesDirectory = sourceDirectory.appendingPathComponent("Resources", isDirectory: true)
+        let localReleaseTag = DeployerReleaseAssets.localReleaseTag(in: sourceDirectory)
+        context.releaseVersion = localReleaseTag
 
         if FileManager.default.fileExists(atPath: publicDirectory.path),
            FileManager.default.fileExists(atPath: resourcesDirectory.path) {
             if sourceDirectory.standardizedFileURL.path == URL(fileURLWithPath: paths.installDirectory, isDirectory: true).standardizedFileURL.path {
                 try await Shell.runThrowing(["chmod", "0755", paths.deployerBinary])
                 try await Shell.runThrowing(["chown", "-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
+                if let localReleaseTag {
+                    try await writeReleaseVersion(localReleaseTag, context: context)
+                }
                 console.print("Current deployer payload is already in the install directory.")
                 return
             }
@@ -63,7 +68,25 @@ struct DeployerPayloadStep: SetupStep {
                 versionFile: sourceDirectory.appendingPathComponent(".version").path,
                 context: context
             )
+            if let localReleaseTag {
+                try await writeReleaseVersion(localReleaseTag, context: context)
+            }
             console.print("Installed deployer payload from current release directory.")
+        } else if let localReleaseTag {
+            let staging = try await Shell.runThrowing(["mktemp", "-d"]).trimmed
+            defer { try? FileManager.default.removeItem(atPath: staging) }
+
+            console.print("Downloading deployer web assets for \(localReleaseTag).")
+            let assets = try await DeployerReleaseAssets.downloadSourceAssets(tag: localReleaseTag, into: staging)
+            try await installPayload(
+                binary: executableURL.path,
+                publicDirectory: assets.publicDirectory,
+                resourcesDirectory: assets.resourcesDirectory,
+                versionFile: nil,
+                context: context
+            )
+            try await writeReleaseVersion(localReleaseTag, context: context)
+            console.print("Installed deployer binary with repository assets for \(localReleaseTag).")
         } else {
             try await downloadAndInstallLatestRelease(context: context, console: console)
         }
@@ -82,17 +105,17 @@ struct DeployerPayloadStep: SetupStep {
         console.print("Downloading \(downloadURL).")
         try await Shell.runThrowing(["curl", "--silent", "--show-error", "--fail", "--location", "-o", archive, downloadURL])
         try await Shell.runThrowing(["tar", "-xzf", archive, "-C", staging, "--warning=no-unknown-keyword"])
+        let assets = try await DeployerReleaseAssets.ensureAssets(in: staging, tag: tagName)
 
         try await installPayload(
             binary: "\(staging)/deployer",
-            publicDirectory: "\(staging)/Public",
-            resourcesDirectory: "\(staging)/Resources",
+            publicDirectory: assets.publicDirectory,
+            resourcesDirectory: assets.resourcesDirectory,
             versionFile: nil,
             context: context
         )
 
-        let paths = try context.requirePaths()
-        try await SetupFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
+        try await writeReleaseVersion(tagName, context: context)
         console.print("Deployer release \(tagName) installed.")
     }
 
@@ -129,6 +152,11 @@ struct DeployerPayloadStep: SetupStep {
         }
 
         try await Shell.runThrowing(["chown", "-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
+    }
+
+    private func writeReleaseVersion(_ tagName: String, context: SetupContext) async throws {
+        let paths = try context.requirePaths()
+        try await SetupFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
     }
 
     private func fetchLatestRelease() async throws -> (tagName: String, downloadURL: String) {

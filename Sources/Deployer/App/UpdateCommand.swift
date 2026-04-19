@@ -47,6 +47,7 @@ struct UpdateCommand: AsyncCommand {
         console.print("Extracting release archive.")
         try await Shell.runThrowing("tar -xzf '\(tmpArchive)' -C '\(stagingDir)' --warning=no-unknown-keyword 2>/dev/null")
 
+        let releaseAssets = try await DeployerReleaseAssets.ensureAssets(in: stagingDir, tag: tagName)
         try stageCandidateBinary(from: stagingDir, using: paths)
 
         console.print("Stopping service '\(paths.serviceName)'.")
@@ -55,7 +56,7 @@ struct UpdateCommand: AsyncCommand {
 
         do {
             try activateCandidateBinary(using: paths)
-            try copyReleaseAssets(from: stagingDir, using: paths)
+            try copyReleaseAssets(releaseAssets, using: paths)
 
             console.print("Starting service '\(paths.serviceName)'.")
             try await manager.start(product: paths.serviceName)
@@ -159,17 +160,18 @@ extension UpdateCommand {
         }
     }
 
-    /// Replaces Public/ and Resources/ wholesale from the staging area.
-    func copyReleaseAssets(from stagingDir: String, using paths: Paths) throws {
-        let stagingURL = URL(fileURLWithPath: stagingDir, isDirectory: true)
+    /// Replaces Public/ and Resources/ wholesale from the release payload or matching source archive.
+    func copyReleaseAssets(_ assets: DeployerReleaseAssetDirectories, using paths: Paths) throws {
         let fileManager = FileManager.default
 
-        for directory in ["Public", "Resources"] {
-            let source = stagingURL.appendingPathComponent(directory, isDirectory: true)
-            guard fileManager.fileExists(atPath: source.path) else { continue }
-            let dest = paths.installDirectory.appendingPathComponent(directory, isDirectory: true)
-            try removeIfPresent(dest, fileManager: fileManager)
-            try fileManager.copyItem(at: source, to: dest)
+        for (name, sourcePath) in [
+            ("Public", assets.publicDirectory),
+            ("Resources", assets.resourcesDirectory)
+        ] {
+            let source = URL(fileURLWithPath: sourcePath, isDirectory: true)
+            let destination = paths.installDirectory.appendingPathComponent(name, isDirectory: true)
+            try removeIfPresent(destination, fileManager: fileManager)
+            try fileManager.copyItem(at: source, to: destination)
         }
     }
 
