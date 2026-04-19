@@ -49,6 +49,7 @@ struct UpdateCommand: AsyncCommand {
 
         let releaseAssets = try await DeployerReleaseAssets.ensureAssets(in: stagingDir, tag: tagName)
         try stageCandidateBinary(from: stagingDir, using: paths)
+        let assetBackup = try backupInstalledAssets(using: paths, in: stagingDir)
 
         console.print("Stopping service '\(paths.serviceName)'.")
         let wasRunning = await manager.isRunning(product: paths.serviceName)
@@ -68,7 +69,7 @@ struct UpdateCommand: AsyncCommand {
             console.print("Deployer update to \(tagName) completed successfully.")
         } catch {
             console.print("Update failed after service stop. Attempting rollback.")
-            try await rollback(using: paths, manager: manager, originalError: error)
+            try await rollback(using: paths, assetBackup: assetBackup, manager: manager, originalError: error)
         }
     }
 
@@ -160,30 +161,89 @@ extension UpdateCommand {
         }
     }
 
+    /// Copies the current assets into the update staging area so rollback can restore them.
+    func backupInstalledAssets(using paths: Paths, in stagingDir: String) throws -> ReleaseAssetBackup {
+        let fileManager = FileManager.default
+        let backupRoot = URL(fileURLWithPath: stagingDir, isDirectory: true)
+            .appendingPathComponent("deployer-assets-backup-\(UUID().uuidString)", isDirectory: true)
+        try fileManager.createDirectory(at: backupRoot, withIntermediateDirectories: true)
+
+        var backedUpDirectoryNames = Set<String>()
+        for name in ReleaseAssetBackup.directoryNames {
+            let source = paths.installDirectory.appendingPathComponent(name, isDirectory: true)
+            guard fileManager.fileExists(atPath: source.path) else { continue }
+
+            let destination = backupRoot.appendingPathComponent(name, isDirectory: true)
+            try fileManager.copyItem(at: source, to: destination)
+            backedUpDirectoryNames.insert(name)
+        }
+
+        return ReleaseAssetBackup(root: backupRoot, backedUpDirectoryNames: backedUpDirectoryNames)
+    }
+
     /// Replaces Public/ and Resources/ wholesale from the release payload or matching source archive.
+    ///
+    /// New directories are fully copied to hidden candidates before live assets are removed. If the
+    /// final swap fails, rollback restores the old directories from `ReleaseAssetBackup`.
     func copyReleaseAssets(_ assets: DeployerReleaseAssetDirectories, using paths: Paths) throws {
         let fileManager = FileManager.default
+        let candidateRoot = paths.installDirectory
+            .appendingPathComponent(".deployer-assets-new-\(UUID().uuidString)", isDirectory: true)
+        defer { try? removeIfPresent(candidateRoot, fileManager: fileManager) }
+
+        try fileManager.createDirectory(at: candidateRoot, withIntermediateDirectories: true)
 
         for (name, sourcePath) in [
             ("Public", assets.publicDirectory),
             ("Resources", assets.resourcesDirectory)
         ] {
             let source = URL(fileURLWithPath: sourcePath, isDirectory: true)
+            let candidate = candidateRoot.appendingPathComponent(name, isDirectory: true)
+            try fileManager.copyItem(at: source, to: candidate)
+        }
+
+        for name in ReleaseAssetBackup.directoryNames {
+            let candidate = candidateRoot.appendingPathComponent(name, isDirectory: true)
             let destination = paths.installDirectory.appendingPathComponent(name, isDirectory: true)
             try removeIfPresent(destination, fileManager: fileManager)
+            try fileManager.moveItem(at: candidate, to: destination)
+        }
+    }
+
+    /// Restores asset directories to the exact pre-update state captured by `backupInstalledAssets`.
+    func restoreReleaseAssets(from backup: ReleaseAssetBackup, using paths: Paths, fileManager: FileManager) throws {
+        for name in ReleaseAssetBackup.directoryNames {
+            let destination = paths.installDirectory.appendingPathComponent(name, isDirectory: true)
+            try removeIfPresent(destination, fileManager: fileManager)
+
+            guard let source = backup.directory(named: name) else { continue }
             try fileManager.copyItem(at: source, to: destination)
         }
     }
 
     /// Restores the last known-good binary and requires the service manager to recover before declaring rollback success.
-    func rollback(using paths: Paths, manager: any ServiceManager, originalError: Swift.Error) async throws {
+    func rollback(using paths: Paths, assetBackup: ReleaseAssetBackup, manager: any ServiceManager, originalError: Swift.Error) async throws {
         let fileManager = FileManager.default
 
         do {
             let isRunning = await manager.isRunning(product: paths.serviceName)
             if isRunning { try await manager.stop(product: paths.serviceName) }
 
-            try restoreBackup(using: paths, fileManager: fileManager)
+            var restoreError: Swift.Error?
+            do {
+                try restoreBackup(using: paths, fileManager: fileManager)
+            } catch {
+                restoreError = error
+            }
+
+            do {
+                try restoreReleaseAssets(from: assetBackup, using: paths, fileManager: fileManager)
+            } catch {
+                restoreError = restoreError ?? error
+            }
+
+            if let restoreError { throw restoreError }
+
             try await manager.start(product: paths.serviceName)
 
             let rollbackStatus = await waitForStableStatus(of: paths.serviceName, manager: manager)
@@ -221,6 +281,20 @@ extension UpdateCommand {
     func removeIfPresent(_ url: URL, fileManager: FileManager) throws {
         guard fileManager.fileExists(atPath: url.path) else { return }
         try fileManager.removeItem(at: url)
+    }
+
+}
+
+struct ReleaseAssetBackup: Sendable {
+
+    static let directoryNames = ["Public", "Resources"]
+
+    let root: URL
+    let backedUpDirectoryNames: Set<String>
+
+    func directory(named name: String) -> URL? {
+        guard backedUpDirectoryNames.contains(name) else { return nil }
+        return root.appendingPathComponent(name, isDirectory: true)
     }
 
 }
