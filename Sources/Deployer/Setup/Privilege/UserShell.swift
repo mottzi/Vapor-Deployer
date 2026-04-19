@@ -19,6 +19,23 @@ enum UserShell {
         return try await Shell.runThrowing(command, directory: directory)
     }
 
+    @discardableResult static func runAsStreamingTail(
+        user: String,
+        _ arguments: [String],
+        directory: String? = nil,
+        environment: [String: String]? = nil
+    ) async throws -> String {
+
+        let envArguments = (environment ?? [:])
+            .sorted { $0.key < $1.key }
+            .map { "\($0.key)=\($0.value)" }
+        let command = envArguments.isEmpty
+            ? ["runuser", "-u", user, "--"] + arguments
+            : ["runuser", "-u", user, "--", "env"] + envArguments + arguments
+
+        return try await Shell.runStreamingTailThrowing(command, directory: directory)
+    }
+
     @discardableResult static func runAsServiceUser(
         _ context: SetupContext,
         _ arguments: [String],
@@ -33,6 +50,22 @@ enum UserShell {
         ]
         let mergedEnvironment = baseEnvironment.merging(environment ?? [:]) { _, new in new }
         return try await runAs(user: context.serviceUser, arguments, directory: directory, environment: mergedEnvironment)
+    }
+
+    @discardableResult static func runAsServiceUserStreamingTail(
+        _ context: SetupContext,
+        _ arguments: [String],
+        directory: String? = nil,
+        environment: [String: String]? = nil
+    ) async throws -> String {
+
+        let paths = try? context.requirePaths()
+        let baseEnvironment = [
+            "HOME": paths?.serviceHome ?? "/home/\(context.serviceUser)",
+            "USER": context.serviceUser
+        ]
+        let mergedEnvironment = baseEnvironment.merging(environment ?? [:]) { _, new in new }
+        return try await runAsStreamingTail(user: context.serviceUser, arguments, directory: directory, environment: mergedEnvironment)
     }
 
     static func systemdUserEnvironment(uid: Int) -> [String: String] {

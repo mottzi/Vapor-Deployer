@@ -11,7 +11,8 @@ struct BuildStep: SetupStep {
         let swift = "\(paths.swiftlyBinDirectory)/swift"
 
         if context.buildFromSource {
-            try await UserShell.runAsServiceUser(context, [swift, "build", "-c", context.deployerBuildMode], directory: paths.installDirectory, environment: env)
+            console.print("Building deployer in \(context.deployerBuildMode) mode...")
+            try await UserShell.runAsServiceUserStreamingTail(context, [swift, "build", "-c", context.deployerBuildMode], directory: paths.installDirectory, environment: env)
             let binDir = try await UserShell.runAsServiceUser(
                 context,
                 [swift, "build", "-c", context.deployerBuildMode, "--show-bin-path"],
@@ -25,7 +26,8 @@ struct BuildStep: SetupStep {
             try await UserShell.runAsServiceUser(context, ["install", "-m", "0755", binary, paths.deployerBinary], environment: env)
         }
 
-        try await UserShell.runAsServiceUser(context, [swift, "build", "-c", context.appBuildMode], directory: paths.appDirectory, environment: env)
+        console.print("Building target app in \(context.appBuildMode) mode...")
+        try await UserShell.runAsServiceUserStreamingTail(context, [swift, "build", "-c", context.appBuildMode], directory: paths.appDirectory, environment: env)
         let appBinDir = try await UserShell.runAsServiceUser(
             context,
             [swift, "build", "-c", context.appBuildMode, "--show-bin-path"],

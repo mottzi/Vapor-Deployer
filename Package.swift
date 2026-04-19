@@ -29,6 +29,12 @@ let package = Package(
                 .enableExperimentalFeature("StrictConcurrency")
             ]
         ),
+        .testTarget(
+            name: "DeployerTests",
+            dependencies: [
+                .target(name: "deployer"),
+            ]
+        ),
     ],
     swiftLanguageModes: [
         .v6

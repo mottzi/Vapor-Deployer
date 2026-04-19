@@ -33,6 +33,8 @@ struct SetupCommand: AsyncCommand {
             SuccessSummaryStep()
         ]
 
+        SetupCards.banner(console: context.console)
+
         for (index, step) in steps.enumerated() {
             step.printHeader(index: index + 1, total: steps.count, console: context.console)
             try await step.run(context: setupContext, console: context.console)

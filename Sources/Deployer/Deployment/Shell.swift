@@ -1,4 +1,11 @@
 import Foundation
+#if canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
+#else
+import Darwin
+#endif
 
 struct Shell {
     
@@ -68,7 +75,219 @@ struct Shell {
         return Result(output: output, exitCode: process.terminationStatus)
     }
 
+    static func runStreamingTail(
+        _ arguments: [String],
+        directory: String? = nil,
+        environment: [String: String]? = nil,
+        tailLineCount: Int = 6,
+        redrawInterval: TimeInterval = 0.2,
+        forceTTY: Bool? = nil
+    ) async -> Result {
+
+        guard let executable = arguments.first else {
+            return Result(output: "No command was provided.", exitCode: -1)
+        }
+
+        let process = Process()
+        let executablePath = executable.contains("/") ? executable : "/usr/bin/env"
+        process.executableURL = URL(fileURLWithPath: executablePath)
+        process.arguments = executable.contains("/") ? Array(arguments.dropFirst()) : arguments
+        if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory) }
+        if let environment {
+            process.environment = ProcessInfo.processInfo.environment.merging(environment) { _, new in new }
+        }
+
+        let output = Pipe()
+        process.standardOutput = output
+        process.standardError = output
+
+        let renderer = StreamingTailRenderer(
+            tailLineCount: tailLineCount,
+            redrawInterval: redrawInterval,
+            terminalWidth: terminalWidth()
+        )
+        let shouldRender = forceTTY ?? isStandardOutputTTY()
+        let reader = output.fileHandleForReading
+        reader.readabilityHandler = { handle in
+            let data = handle.availableData
+            guard !data.isEmpty else { return }
+            renderer.append(data, render: shouldRender)
+        }
+
+        do {
+            try process.run()
+        } catch {
+            reader.readabilityHandler = nil
+            return Result(output: error.localizedDescription, exitCode: -1)
+        }
+
+        process.waitUntilExit()
+        reader.readabilityHandler = nil
+
+        let remaining = reader.readDataToEndOfFile()
+        if !remaining.isEmpty {
+            renderer.append(remaining, render: shouldRender)
+        }
+
+        renderer.finish(render: shouldRender)
+        return Result(output: renderer.output, exitCode: process.terminationStatus)
+    }
+
+    @discardableResult static func runStreamingTailThrowing(
+        _ arguments: [String],
+        directory: String? = nil,
+        environment: [String: String]? = nil,
+        tailLineCount: Int = 6,
+        redrawInterval: TimeInterval = 0.2,
+        forceTTY: Bool? = nil
+    ) async throws -> String {
+
+        let result = await runStreamingTail(
+            arguments,
+            directory: directory,
+            environment: environment,
+            tailLineCount: tailLineCount,
+            redrawInterval: redrawInterval,
+            forceTTY: forceTTY
+        )
+        guard result.exitCode == 0 else { throw Shell.Error(command: arguments.joined(separator: " "), output: result.output) }
+        return result.output
+    }
+
     
+}
+
+private final class StreamingTailRenderer: @unchecked Sendable {
+
+    private let lock = NSLock()
+    private let tailLineCount: Int
+    private let redrawInterval: TimeInterval
+    private let maxLineLength: Int
+
+    private var captured = Data()
+    private var pendingLine = ""
+    private var tail: [String] = []
+    private var renderedLineCount = 0
+    private var lastRender = Date.distantPast
+
+    init(tailLineCount: Int, redrawInterval: TimeInterval, terminalWidth: Int) {
+        self.tailLineCount = max(tailLineCount, 1)
+        self.redrawInterval = redrawInterval
+        self.maxLineLength = max(20, terminalWidth - 6)
+    }
+
+    var output: String {
+        lock.lock()
+        defer { lock.unlock() }
+        return String(data: captured, encoding: .utf8) ?? ""
+    }
+
+    func append(_ data: Data, render: Bool) {
+        lock.lock()
+        captured.append(data)
+        appendTailLines(from: data)
+        if render {
+            renderTailIfNeeded(force: false)
+        }
+        lock.unlock()
+    }
+
+    func finish(render: Bool) {
+        lock.lock()
+        if !pendingLine.isEmpty {
+            appendTailLine(pendingLine)
+            pendingLine = ""
+        }
+        if render {
+            renderTailIfNeeded(force: true)
+            clearRenderedTail()
+        }
+        lock.unlock()
+    }
+
+    private func appendTailLines(from data: Data) {
+        let text = String(decoding: data, as: UTF8.self)
+        let combined = pendingLine + text
+        let pieces = combined.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+
+        if combined.hasSuffix("\n") {
+            pendingLine = ""
+            pieces.dropLast().forEach(appendTailLine)
+        } else {
+            pendingLine = pieces.last ?? ""
+            pieces.dropLast().forEach(appendTailLine)
+        }
+    }
+
+    private func appendTailLine(_ line: String) {
+        var normalized = line
+        if normalized.hasSuffix("\r") {
+            normalized.removeLast()
+        }
+        tail.append(normalized)
+        if tail.count > tailLineCount {
+            tail.removeFirst(tail.count - tailLineCount)
+        }
+    }
+
+    private func renderTailIfNeeded(force: Bool) {
+        let now = Date()
+        guard force || now.timeIntervalSince(lastRender) >= redrawInterval else { return }
+
+        clearRenderedTail()
+        for line in tail {
+            print("    \(truncate(line))")
+        }
+        fflush(stdout)
+        renderedLineCount = tail.count
+        lastRender = now
+    }
+
+    private func clearRenderedTail() {
+        guard renderedLineCount > 0 else { return }
+        print("\u{1B}[\(renderedLineCount)A\u{1B}[0J", terminator: "")
+        fflush(stdout)
+        renderedLineCount = 0
+    }
+
+    private func truncate(_ line: String) -> String {
+        guard line.count > maxLineLength else { return line }
+        return String(line.prefix(maxLineLength))
+    }
+
+}
+
+private func isStandardOutputTTY() -> Bool {
+    isatty(STDOUT_FILENO) == 1
+}
+
+private func terminalWidth() -> Int {
+    let raw = ProcessInfo.processInfo.environment["COLUMNS"].flatMap(Int.init)
+        ?? tputColumns()
+        ?? 80
+    return min(max(raw, 40), 100)
+}
+
+private func tputColumns() -> Int? {
+    let process = Process()
+    let output = Pipe()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+    process.arguments = ["tput", "cols"]
+    process.standardOutput = output
+    process.standardError = Pipe()
+
+    do {
+        try process.run()
+    } catch {
+        return nil
+    }
+
+    process.waitUntilExit()
+    guard process.terminationStatus == 0 else { return nil }
+
+    let data = output.fileHandleForReading.readDataToEndOfFile()
+    let value = String(data: data, encoding: .utf8)?.trimmed
+    return value.flatMap(Int.init)
 }
 
 extension Shell {

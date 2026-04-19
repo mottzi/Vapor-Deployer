@@ -11,8 +11,7 @@ protocol SetupStep: Sendable {
 extension SetupStep {
 
     func printHeader(index: Int, total: Int, console: any Console) {
-        console.output("")
-        console.output("[\(index)/\(total)] \(title)".consoleText(color: .cyan, isBold: true))
+        SetupCards.titledRule("[\(index)/\(total)] \(title)", console: console)
     }
 
 }

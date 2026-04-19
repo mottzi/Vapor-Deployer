@@ -65,8 +65,12 @@ struct WriteRuntimeConfigStep: SetupStep {
     }
 
     private func removeSupervisorFiles(context: SetupContext) async throws {
+        _ = await Shell.run(["supervisorctl", "stop", "deployer"])
+        _ = await Shell.run(["supervisorctl", "stop", context.productName])
         try? SetupFileSystem.removeIfPresent("/etc/supervisor/conf.d/deployer.conf")
         try? SetupFileSystem.removeIfPresent("/etc/supervisor/conf.d/\(context.productName).conf")
+        _ = await Shell.run(["supervisorctl", "reread"])
+        _ = await Shell.run(["supervisorctl", "update"])
     }
 
 }

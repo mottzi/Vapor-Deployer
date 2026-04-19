@@ -9,6 +9,7 @@ struct CollectInputStep: SetupStep {
     let title = "Collecting setup values"
 
     func run(context: SetupContext, console: any Console) async throws {
+        SetupCards.section("Runtime identity", console: console)
         context.serviceUser = SetupPrompts.askValidated(
             "Dedicated service user",
             default: "vapor",
@@ -16,6 +17,7 @@ struct CollectInputStep: SetupStep {
             console: console
         ) { $0 != "root" && SetupValidators.isSafeName($0) }
 
+        SetupCards.section("Target repository", console: console)
         while true {
             let repoURL = SetupPrompts.askRequired("Private app repo SSH URL", console: console)
             if let parsed = SetupValidators.parseGitHubSSHURL(repoURL) {
@@ -35,6 +37,7 @@ struct CollectInputStep: SetupStep {
             validate: SetupValidators.isSafeName
         )
 
+        SetupCards.section("Ports and routing", console: console)
         context.deployerPort = Int(SetupPrompts.askValidated(
             "Deployer port",
             default: "8081",
@@ -63,6 +66,7 @@ struct CollectInputStep: SetupStep {
             break
         }
 
+        SetupCards.section("Service manager", console: console)
         while true {
             let value = SetupPrompts.askRequired("Service manager", default: "systemd", console: console)
             guard let kind = ServiceManagerKind(rawValue: value) else {
@@ -76,9 +80,11 @@ struct CollectInputStep: SetupStep {
         context.buildFromSource = SetupPrompts.confirm("Build deployer from source?", defaultYes: false, console: console)
         context.paths = SetupPaths.derive(serviceUser: context.serviceUser, appName: context.appName, panelRoute: context.panelRoute)
 
+        SetupCards.section("Panel authentication", console: console)
         context.panelPassword = SetupPrompts.askSecretConfirmed("Panel password", console: console)
         context.webhookSecret = try generateHexSecret()
 
+        SetupCards.section("Public endpoint", console: console)
         let publicURL = SetupPrompts.askValidated(
             "Public base URL",
             warning: "Public base URL must look like https://example.com (HTTPS + domain only, no path, no port).",
@@ -99,6 +105,7 @@ struct CollectInputStep: SetupStep {
             validate: SetupValidators.isValidEmail
         )
 
+        SetupCards.section("GitHub webhook access", console: console)
         SetupCards.card(
             title: "How to create the GitHub token",
             kvs: [
