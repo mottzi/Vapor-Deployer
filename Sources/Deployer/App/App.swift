@@ -19,8 +19,7 @@ extension Application {
         let app = try await Application.make(env)
         app.deployer.useCommands()
 
-        let command = env.arguments.dropFirst().first { !$0.hasPrefix("-") }
-        if command == nil || command == "serve" {
+        if shouldConfigureServer(for: env.arguments) {
             do {
                 try await app.deployer.useServer()
             } catch {

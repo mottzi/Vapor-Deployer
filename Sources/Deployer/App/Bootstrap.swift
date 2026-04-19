@@ -2,6 +2,15 @@ import Vapor
 import Fluent
 
 extension Deployer {
+
+    static func shouldConfigureServer(for arguments: [String]) -> Bool {
+
+        let commandArguments = arguments.dropFirst()
+        guard !commandArguments.contains(where: { $0 == "--help" || $0 == "-h" }) else { return false }
+
+        let command = commandArguments.first { !$0.hasPrefix("-") }
+        return command == nil || command == "serve"
+    }
     
     func useCommands() {
         app.asyncCommands.use(UpdateCommand(), as: "update")
