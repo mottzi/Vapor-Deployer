@@ -15,4 +15,19 @@ enum TemplateEscaping {
         "'\(value.replacingOccurrences(of: "'", with: "'\"'\"'"))'"
     }
 
+    static func shellCommand(_ arguments: [String]) -> String {
+        arguments.map(shellDisplayLiteral).joined(separator: " ")
+    }
+
+    private static func shellDisplayLiteral(_ value: String) -> String {
+        guard !value.isEmpty else { return shellLiteral(value) }
+
+        let safeCharacters = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_@%+=:,./-")
+        if value.unicodeScalars.allSatisfy({ safeCharacters.contains($0) }) {
+            return value
+        }
+
+        return shellLiteral(value)
+    }
+
 }

@@ -44,7 +44,7 @@ struct SuccessSummaryStep: SetupStep {
     }
 
     private func migrationCommand(context: SetupContext, paths: SetupPaths) -> String {
-        let certbot = [
+        let certbot = TemplateEscaping.shellCommand([
             "sudo", "certbot", "certonly",
             "--webroot",
             "--agree-tos",
@@ -55,7 +55,7 @@ struct SuccessSummaryStep: SetupStep {
             "-w", paths.acmeWebroot,
             "-d", context.primaryDomain,
             "-d", context.aliasDomain
-        ].map(TemplateEscaping.shellLiteral).joined(separator: " ")
+        ])
 
         return "\(certbot) && sudo nginx -t && sudo systemctl reload nginx"
     }
