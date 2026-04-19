@@ -2,9 +2,8 @@
 
 set -Eeuo pipefail
 
-VERSION="${DEPLOYER_VERSION:-0.12.0}"
 REPOSITORY="${DEPLOYER_REPOSITORY:-mottzi/Vapor-Deployer}"
-WORKDIR="${DEPLOYER_BOOTSTRAP_DIR:-/tmp/deployer-${VERSION}}"
+VERSION="${DEPLOYER_VERSION:-latest}"
 
 info() { printf '==> %s\n' "$*"; }
 die() {
@@ -19,7 +18,7 @@ need() {
 attach_tty_stdin() {
   [[ -t 0 ]] && return
   [[ -r /dev/tty ]] || die "Interactive setup requires a terminal. Download the script first, then run it from a shell."
-  exec </dev/tty
+  { exec </dev/tty; } 2>/dev/null || die "Interactive setup could not attach to /dev/tty. Download the script first, then run it from a shell."
 }
 
 asset_arch() {
@@ -30,10 +29,25 @@ asset_arch() {
   esac
 }
 
+resolve_version() {
+  [[ "$VERSION" == "latest" ]] || return
+
+  local latest_url location tag
+  latest_url="https://github.com/${REPOSITORY}/releases/latest"
+  info "Resolving latest release from ${latest_url}"
+  location="$(curl -fsSLI -o /dev/null -w '%{url_effective}' "${latest_url}")"
+  tag="${location##*/}"
+  [[ -n "$tag" && "$tag" != "latest" ]] || die "Could not resolve latest release for ${REPOSITORY}."
+  VERSION="${tag}"
+}
+
 need curl
 need tar
 
-ARCH="$(asset_arch)"
+resolve_version
+
+WORKDIR="${DEPLOYER_BOOTSTRAP_DIR:-/tmp/deployer-${VERSION}}"
+ARCH="${DEPLOYER_ARCH:-$(asset_arch)}"
 ASSET="deployer-linux-${ARCH}.tar.gz"
 URL="https://github.com/${REPOSITORY}/releases/download/${VERSION}/${ASSET}"
 
@@ -50,7 +64,7 @@ tar -xzf "${ASSET}"
 
 [[ -x ./deployer ]] || chmod +x ./deployer
 
-info "Starting deployer setup"
+info "Starting deployer setup (${VERSION})"
 attach_tty_stdin
 if [[ "${EUID}" -eq 0 ]]; then
   DEPLOYER_RELEASE_TAG="${VERSION}" exec ./deployer setup
