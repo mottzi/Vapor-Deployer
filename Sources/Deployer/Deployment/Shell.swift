@@ -13,28 +13,59 @@ struct Shell {
         return result.output
     }
 
+    @discardableResult static func runThrowing(
+        _ arguments: [String],
+        directory: String? = nil,
+        environment: [String: String]? = nil
+    ) async throws -> String {
+
+        let result = await run(arguments, directory: directory, environment: environment)
+        guard result.exitCode == 0 else { throw Shell.Error(command: arguments.joined(separator: " "), output: result.output) }
+        return result.output
+    }
+
     static func run(_ command: String, directory: String? = nil) async -> Result {
-        
-        await Task.detached {
-            
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = ["bash", "-c", command]
-            if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory) }
-            
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = pipe
-            
-            guard (try? process.run()) != nil else { return Result(output: "", exitCode: -1) }
-            process.waitUntilExit()
-            
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            pipe.fileHandleForReading.closeFile()
-            
-            let output = String(data: data, encoding: .utf8) ?? ""
-            return Result(output: output, exitCode: process.terminationStatus)
-        }.value
+        await run(["bash", "-c", command], directory: directory)
+    }
+
+    static func run(
+        _ arguments: [String],
+        directory: String? = nil,
+        environment: [String: String]? = nil
+    ) async -> Result {
+
+        guard let executable = arguments.first else {
+            return Result(output: "No command was provided.", exitCode: -1)
+        }
+
+        let process = Process()
+        let executablePath = executable.contains("/") ? executable : "/usr/bin/env"
+        process.executableURL = URL(fileURLWithPath: executablePath)
+        process.arguments = executable.contains("/") ? Array(arguments.dropFirst()) : arguments
+        if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory) }
+        if let environment {
+            process.environment = ProcessInfo.processInfo.environment.merging(environment) { _, new in new }
+        }
+
+        let stdout = Pipe()
+        let stderr = Pipe()
+        process.standardOutput = stdout
+        process.standardError = stderr
+
+        do {
+            try process.run()
+        } catch {
+            return Result(output: error.localizedDescription, exitCode: -1)
+        }
+
+        async let stdoutData = stdout.fileHandleForReading.readToEnd()
+        async let stderrData = stderr.fileHandleForReading.readToEnd()
+
+        process.waitUntilExit()
+
+        let outputData = ((try? await stdoutData) ?? Data()) + ((try? await stderrData) ?? Data())
+        let output = String(data: outputData, encoding: .utf8) ?? ""
+        return Result(output: output, exitCode: process.terminationStatus)
     }
 
     

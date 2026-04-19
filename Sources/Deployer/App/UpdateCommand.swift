@@ -1,5 +1,8 @@
 import Vapor
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// Performs an in-place update of the deployed installation by downloading the latest GitHub release.
 struct UpdateCommand: AsyncCommand {

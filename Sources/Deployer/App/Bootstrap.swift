@@ -5,6 +5,7 @@ extension Deployer {
     
     func useCommands() {
         app.asyncCommands.use(UpdateCommand(), as: "update")
+        app.asyncCommands.use(SetupCommand(), as: "setup")
     }
 
     func useServer() async throws {
