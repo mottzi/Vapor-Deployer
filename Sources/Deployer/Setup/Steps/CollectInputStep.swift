@@ -115,9 +115,7 @@ struct CollectInputStep: SetupStep {
             ],
             console: console
         )
-        context.githubToken = SetupPrompts.askSecret("GitHub token", console: console)
-
-        try await verifyGitHubAccess(context)
+        try await collectAndVerifyGitHubToken(context, console: console)
 
         SetupCards.card(title: "Planned configuration", kvs: try plannedConfiguration(context), console: console)
     }
@@ -135,6 +133,18 @@ struct CollectInputStep: SetupStep {
         let result = await Shell.run(["getent", "ahosts", host])
         guard result.exitCode == 0 else {
             throw SetupCommand.Error.invalidValue(label, "'\(host)' does not resolve in DNS. Point it to this server before continuing.")
+        }
+    }
+
+    private func collectAndVerifyGitHubToken(_ context: SetupContext, console: any Console) async throws {
+        while true {
+            context.githubToken = SetupPrompts.askSecret("GitHub token", console: console)
+            do {
+                try await verifyGitHubAccess(context)
+                return
+            } catch {
+                console.warning(error.localizedDescription)
+            }
         }
     }
 
