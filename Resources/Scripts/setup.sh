@@ -15,12 +15,6 @@ need() {
   command -v "$1" >/dev/null 2>&1 || die "Missing required command '$1'. Install it first, then rerun this script."
 }
 
-attach_tty_stdin() {
-  [[ -t 0 ]] && return
-  [[ -r /dev/tty ]] || die "Interactive setup requires a terminal. Download the script first, then run it from a shell."
-  { exec </dev/tty; } 2>/dev/null || die "Interactive setup could not attach to /dev/tty. Download the script first, then run it from a shell."
-}
-
 asset_arch() {
   case "$(uname -m)" in
     x86_64|amd64) printf 'x86_64' ;;
@@ -39,6 +33,25 @@ resolve_version() {
   tag="${location##*/}"
   [[ -n "$tag" && "$tag" != "latest" ]] || die "Could not resolve latest release for ${REPOSITORY}."
   VERSION="${tag}"
+}
+
+run_setup() {
+  local -a command
+  if [[ "${EUID}" -eq 0 ]]; then
+    command=(env "DEPLOYER_RELEASE_TAG=${VERSION}" ./deployer setup)
+  else
+    need sudo
+    command=(sudo env "DEPLOYER_RELEASE_TAG=${VERSION}" ./deployer setup)
+  fi
+
+  if [[ -t 0 ]]; then
+    exec "${command[@]}"
+  fi
+
+  [[ -r /dev/tty ]] || die "Interactive setup requires a terminal. Download the script first, then run it from a shell."
+  if ! { exec "${command[@]}" </dev/tty; } 2>/dev/null; then
+    die "Interactive setup could not attach to /dev/tty. Download the script first, then run it from a shell."
+  fi
 }
 
 need curl
@@ -65,10 +78,4 @@ tar -xzf "${ASSET}"
 [[ -x ./deployer ]] || chmod +x ./deployer
 
 info "Starting deployer setup (${VERSION})"
-attach_tty_stdin
-if [[ "${EUID}" -eq 0 ]]; then
-  DEPLOYER_RELEASE_TAG="${VERSION}" exec ./deployer setup
-else
-  need sudo
-  exec sudo env DEPLOYER_RELEASE_TAG="${VERSION}" ./deployer setup
-fi
+run_setup
