@@ -29,13 +29,13 @@ struct WriteRuntimeConfigStep: SetupStep {
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
         try await SetupFileSystem.installDirectory(unitDirectory, owner: context.serviceUser, group: context.serviceUser)
         try await SetupFileSystem.writeFile(
-            try SystemdUnitsTemplate.deployerUnit(context: context),
+            try SystemdTemplate.deployerUnit(context: context),
             to: "\(unitDirectory)/deployer.service",
             owner: context.serviceUser,
             group: context.serviceUser
         )
         try await SetupFileSystem.writeFile(
-            try SystemdUnitsTemplate.appUnit(context: context),
+            try SystemdTemplate.appUnit(context: context),
             to: "\(unitDirectory)/\(context.productName).service",
             owner: context.serviceUser,
             group: context.serviceUser
@@ -44,11 +44,11 @@ struct WriteRuntimeConfigStep: SetupStep {
 
     private func writeSupervisorFiles(context: SetupContext) async throws {
         try await SetupFileSystem.writeFile(
-            try SupervisorConfigTemplate.deployerProgram(context: context),
+            try SupervisorTemplate.deployerProgram(context: context),
             to: "/etc/supervisor/conf.d/deployer.conf"
         )
         try await SetupFileSystem.writeFile(
-            try SupervisorConfigTemplate.appProgram(context: context),
+            try SupervisorTemplate.appProgram(context: context),
             to: "/etc/supervisor/conf.d/\(context.productName).conf"
         )
     }

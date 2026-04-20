@@ -1,9 +1,13 @@
 import Foundation
 
-enum SystemdUnitsTemplate {
+/// Generates systemd user-unit files for deployer and managed app services from setup-derived runtime paths.
+enum SystemdTemplate {
 
+    /// Emits the deployer unit with explicit runtime environment and append-only log targets for user-scoped service management.
     static func deployerUnit(context: SetupContext) throws -> String {
+        
         let paths = try context.requirePaths()
+        
         return """
         [Unit]
         Description=Deployer
@@ -29,8 +33,11 @@ enum SystemdUnitsTemplate {
         """
     }
 
+    /// Emits the managed app unit bound to the deployed binary and configured application port under the same service user.
     static func appUnit(context: SetupContext) throws -> String {
+        
         let paths = try context.requirePaths()
+        
         return """
         [Unit]
         Description=\(context.productName)

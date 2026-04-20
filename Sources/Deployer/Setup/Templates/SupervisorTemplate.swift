@@ -1,9 +1,13 @@
 import Foundation
 
-enum SupervisorConfigTemplate {
+/// Generates Supervisor program definitions for the deployer and managed app services with setup-owned runtime paths.
+enum SupervisorTemplate {
 
+    /// Emits the deployer program stanza including credentials required by webhook and panel-auth flows.
     static func deployerProgram(context: SetupContext) throws -> String {
+        
         let paths = try context.requirePaths()
+        
         return """
         [program:deployer]
         directory=\(paths.installDirectory)
@@ -16,8 +20,11 @@ enum SupervisorConfigTemplate {
         """
     }
 
+    /// Emits the managed app program stanza that launches the deployed binary on the configured app port.
     static func appProgram(context: SetupContext) throws -> String {
+        
         let paths = try context.requirePaths()
+        
         return """
         [program:\(context.productName)]
         directory=\(paths.appDirectory)

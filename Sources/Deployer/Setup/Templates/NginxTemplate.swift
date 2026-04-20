@@ -34,7 +34,7 @@ enum NginxTemplate {
     static func tls(context: SetupContext) throws -> String {
         
         let paths = try context.requirePaths()
-        let bootstrapConfig = try
+        let bootstrapConfig = try bootstrap(context: context)
         
         return """
         \(bootstrapConfig)
