@@ -7,15 +7,6 @@ struct SetupCommand: AsyncCommand {
 
     var help: String { "Installs and provisions the deployer on this host." }
     
-    let steps: [any SetupStep] = [
-        InputStep(), PreflightStep(), PackagesStep(),
-        ServiceUserStep(), DeployerPayloadStep(), SSHStep(),
-        AppCheckoutStep(), ResolveProductStep(), SwiftStep(),
-        BuildStep(), WriteRuntimeConfigStep(), StartServicesStep(),
-        HealthStep(), NginxStep(), TLSStep(),
-        DeployerctlStep(), WebhookStep(), SummaryStep()
-    ]
-
     func run(using context: CommandContext, signature: Signature) async throws {
                 
         try requireRoot()
@@ -23,11 +14,34 @@ struct SetupCommand: AsyncCommand {
         
         let setupContext = SetupContext()
         
+        let stepTypes: [any SetupStep.Type] = [
+            InputStep.self,
+            PreflightStep.self,
+            PackagesStep.self,
+            ServiceUserStep.self,
+            DeployerPayloadStep.self,
+            SSHStep.self,
+            AppCheckoutStep.self,
+            ResolveProductStep.self,
+            SwiftStep.self,
+            BuildStep.self,
+            WriteRuntimeConfigStep.self,
+            StartServicesStep.self,
+            HealthStep.self,
+            NginxStep.self,
+            TLSStep.self,
+            DeployerctlStep.self,
+            WebhookStep.self,
+            SummaryStep.self
+        ]
+
+        let steps = stepTypes.map { $0.init(context: setupContext, console: context.console) }
+        
         context.console.banner()
 
         for (index, step) in steps.enumerated() {
-            step.printHeader(index: index + 1, total: steps.count, console: context.console)
-            try await step.run(context: setupContext, console: context.console)
+            step.printHeader(index: index + 1, total: steps.count)
+            try await step.run()
         }
     }
     

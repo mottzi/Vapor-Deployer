@@ -5,11 +5,14 @@ import FoundationNetworking
 
 struct WebhookStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Creating GitHub webhook"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         
-        let hooks = try await requestJSON(context: context, method: "GET", url: hooksURL(context), body: nil)
+        let hooks = try await requestJSON(method: "GET", url: hooksURL(), body: nil)
         let existingID = (hooks as? [[String: Any]])?
             .first { hook in
                 guard let config = hook["config"] as? [String: Any] else { return false }
@@ -30,20 +33,20 @@ struct WebhookStep: SetupStep {
         let data = try JSONSerialization.data(withJSONObject: payload)
 
         if let existingID {
-            try await requestJSON(context: context, method: "PATCH", url: "\(hooksURL(context))/\(existingID)", body: data)
+            try await requestJSON(method: "PATCH", url: "\(hooksURL())/\(existingID)", body: data)
             console.print("Updated existing GitHub webhook.")
         } else {
-            try await requestJSON(context: context, method: "POST", url: hooksURL(context), body: data)
+            try await requestJSON(method: "POST", url: hooksURL(), body: data)
             console.print("Created GitHub webhook.")
         }
     }
 
-    private func hooksURL(_ context: SetupContext) -> String {
+    private func hooksURL() -> String {
         "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks"
     }
 
     @discardableResult
-    private func requestJSON(context: SetupContext, method: String, url rawURL: String, body: Data?) async throws -> Any {
+    private func requestJSON(method: String, url rawURL: String, body: Data?) async throws -> Any {
         guard let url = URL(string: rawURL) else { throw SetupCommand.Error.githubAPI("invalid URL '\(rawURL)'") }
 
         var request = URLRequest(url: url)

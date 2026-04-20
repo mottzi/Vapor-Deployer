@@ -3,11 +3,14 @@ import Foundation
 
 struct NginxStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Configuring Nginx for ACME challenge"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         let paths = try context.requirePaths()
-        try await cleanupPreviousManagedProxyFiles(context: context)
+        try await cleanupPreviousManagedProxyFiles()
         try await SetupFileSystem.installDirectory(paths.acmeWebroot, owner: "root", group: "root")
         try await SetupFileSystem.writeFile(try NginxTemplate.bootstrap(context: context), to: paths.nginxSiteAvailable)
         try await Shell.runThrowing(["install", "-d", "-m", "0755", "-o", "root", "-g", "root", "/etc/nginx/sites-available", "/etc/nginx/sites-enabled"])
@@ -18,7 +21,7 @@ struct NginxStep: SetupStep {
         console.print("Nginx bootstrap config is active.")
     }
 
-    private func cleanupPreviousManagedProxyFiles(context: SetupContext) async throws {
+    private func cleanupPreviousManagedProxyFiles() async throws {
         let paths = try context.requirePaths()
         let previousAvailable = await readDeployerctlValue("NGINX_SITE_AVAILABLE", configPath: paths.deployerctlConfig)
         let previousEnabled = await readDeployerctlValue("NGINX_SITE_ENABLED", configPath: paths.deployerctlConfig)

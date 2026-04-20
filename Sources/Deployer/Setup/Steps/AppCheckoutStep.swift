@@ -3,9 +3,12 @@ import Foundation
 
 struct AppCheckoutStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Preparing target app checkout"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         let paths = try context.requirePaths()
         let sshCommand = "ssh -i \(paths.deployKeyPath) -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
 

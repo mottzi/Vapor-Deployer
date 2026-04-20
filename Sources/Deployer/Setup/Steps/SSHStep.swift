@@ -3,9 +3,12 @@ import Foundation
 
 struct SSHStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Preparing GitHub clone access"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         let paths = try context.requirePaths()
 
         try await SetupFileSystem.installDirectory("\(paths.serviceHome)/.ssh", mode: "0700", owner: context.serviceUser, group: context.serviceUser)
@@ -26,7 +29,7 @@ struct SSHStep: SetupStep {
             console.print("Reusing deploy key at \(paths.deployKeyPath).")
         }
 
-        if try await verifyRepoAccess(context) {
+        if try await verifyRepoAccess() {
             console.print("GitHub clone access verified.")
             return
         }
@@ -47,14 +50,14 @@ struct SSHStep: SetupStep {
             throw SetupCommand.Error.invalidValue("deployKey", "GitHub deploy key setup was not confirmed")
         }
 
-        guard try await verifyRepoAccess(context) else {
+        guard try await verifyRepoAccess() else {
             throw SetupCommand.Error.invalidValue("deployKey", "GitHub access check failed. Verify the deploy key and repository permissions.")
         }
 
         console.print("GitHub clone access verified.")
     }
 
-    private func verifyRepoAccess(_ context: SetupContext) async throws -> Bool {
+    private func verifyRepoAccess() async throws -> Bool {
         let paths = try context.requirePaths()
         let sshCommand = "ssh -i \(paths.deployKeyPath) -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
         do {

@@ -2,9 +2,12 @@ import Vapor
 
 struct WriteRuntimeConfigStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Writing runtime configuration"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         
         let paths = try context.requirePaths()
         guard let json = try DeployerTemplate.encodeJSON(from: context)
@@ -13,18 +16,18 @@ struct WriteRuntimeConfigStep: SetupStep {
 
         switch context.serviceManagerKind {
         case .systemd:
-            try await removeSupervisorFiles(context: context)
-            try await writeSystemdUnits(context: context)
+            try await removeSupervisorFiles()
+            try await writeSystemdUnits()
             console.print("Wrote systemd user units.")
             
         case .supervisor:
-            try await removeSystemdFiles(context: context)
-            try await writeSupervisorFiles(context: context)
+            try await removeSystemdFiles()
+            try await writeSupervisorFiles()
             console.print("Wrote Supervisor program files.")
         }
     }
 
-    private func writeSystemdUnits(context: SetupContext) async throws {
+    private func writeSystemdUnits() async throws {
         
         let paths = try context.requirePaths()
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
@@ -45,7 +48,7 @@ struct WriteRuntimeConfigStep: SetupStep {
         )
     }
 
-    private func writeSupervisorFiles(context: SetupContext) async throws {
+    private func writeSupervisorFiles() async throws {
         
         try await SetupFileSystem.writeFile(
             try SupervisorTemplate.deployerProgram(context: context),
@@ -58,7 +61,7 @@ struct WriteRuntimeConfigStep: SetupStep {
         )
     }
 
-    private func removeSystemdFiles(context: SetupContext) async throws {
+    private func removeSystemdFiles() async throws {
         
         let paths = try context.requirePaths()
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
@@ -68,7 +71,7 @@ struct WriteRuntimeConfigStep: SetupStep {
         _ = try? await SetupUserShell.runUserSystemctl(context, ["daemon-reload"])
     }
 
-    private func removeSupervisorFiles(context: SetupContext) async throws {
+    private func removeSupervisorFiles() async throws {
         
         _ = await Shell.run(["supervisorctl", "stop", "deployer"])
         _ = await Shell.run(["supervisorctl", "stop", context.productName])

@@ -3,9 +3,12 @@ import Foundation
 
 struct SwiftStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Installing Swift via Swiftly"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         let paths = try context.requirePaths()
         let swiftBinary = "\(paths.swiftlyBinDirectory)/swift"
         let userEnvironment = ["HOME": paths.serviceHome, "USER": context.serviceUser]

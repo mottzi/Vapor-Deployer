@@ -3,9 +3,12 @@ import Foundation
 
 struct PreflightStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Preflight checks"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         let paths = try context.requirePaths()
 
         if await userExists(context.serviceUser) {

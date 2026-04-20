@@ -3,9 +3,12 @@ import Foundation
 
 struct DeployerctlStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Installing operator control wrapper"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         
         let paths = try context.requirePaths()
         

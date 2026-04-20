@@ -5,14 +5,17 @@ import FoundationNetworking
 
 struct DeployerPayloadStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Preparing deployer payload"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         
         if context.buildFromSource {
-            try await prepareSourceCheckout(context: context, console: console)
+            try await prepareSourceCheckout()
         } else {
-            try await prepareBinaryPayload(context: context, console: console)
+            try await prepareBinaryPayload()
         }
     }
 
@@ -20,7 +23,7 @@ struct DeployerPayloadStep: SetupStep {
 
 extension DeployerPayloadStep {
     
-    private func prepareSourceCheckout(context: SetupContext, console: any Console) async throws {
+    private func prepareSourceCheckout() async throws {
         
         let paths = try context.requirePaths()
         
@@ -43,7 +46,7 @@ extension DeployerPayloadStep {
         }
     }
     
-    private func prepareBinaryPayload(context: SetupContext, console: any Console) async throws {
+    private func prepareBinaryPayload() async throws {
         let paths = try context.requirePaths()
         try await SetupFileSystem.installDirectory(paths.installDirectory, owner: context.serviceUser, group: context.serviceUser)
         
@@ -60,7 +63,7 @@ extension DeployerPayloadStep {
                 try await Shell.runThrowing(["chmod", "0755", paths.deployerBinary])
                 try await Shell.runThrowing(["chown", "-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
                 if let localReleaseTag {
-                    try await writeReleaseVersion(localReleaseTag, context: context)
+                    try await writeReleaseVersion(localReleaseTag)
                 }
                 console.print("Current deployer payload is already in the install directory.")
                 return
@@ -70,11 +73,10 @@ extension DeployerPayloadStep {
                 binary: executableURL.path,
                 publicDirectory: publicDirectory.path,
                 resourcesDirectory: resourcesDirectory.path,
-                versionFile: sourceDirectory.appendingPathComponent(".version").path,
-                context: context
+                versionFile: sourceDirectory.appendingPathComponent(".version").path
             )
             if let localReleaseTag {
-                try await writeReleaseVersion(localReleaseTag, context: context)
+                try await writeReleaseVersion(localReleaseTag)
             }
             console.print("Installed deployer payload from current release directory.")
         } else if let localReleaseTag {
@@ -87,13 +89,12 @@ extension DeployerPayloadStep {
                 binary: executableURL.path,
                 publicDirectory: assets.publicDirectory,
                 resourcesDirectory: assets.resourcesDirectory,
-                versionFile: nil,
-                context: context
+                versionFile: nil
             )
-            try await writeReleaseVersion(localReleaseTag, context: context)
+            try await writeReleaseVersion(localReleaseTag)
             console.print("Installed deployer binary with repository assets for \(localReleaseTag).")
         } else {
-            try await downloadAndInstallLatestRelease(context: context, console: console)
+            try await downloadAndInstallLatestRelease()
         }
     }
     
@@ -101,7 +102,7 @@ extension DeployerPayloadStep {
 
 extension DeployerPayloadStep {
 
-    private func downloadAndInstallLatestRelease(context: SetupContext, console: any Console) async throws {
+    private func downloadAndInstallLatestRelease() async throws {
         let (tagName, downloadURL) = try await fetchLatestRelease()
         context.releaseVersion = tagName
 
@@ -120,11 +121,10 @@ extension DeployerPayloadStep {
             binary: "\(staging)/deployer",
             publicDirectory: assets.publicDirectory,
             resourcesDirectory: assets.resourcesDirectory,
-            versionFile: nil,
-            context: context
+            versionFile: nil
         )
 
-        try await writeReleaseVersion(tagName, context: context)
+        try await writeReleaseVersion(tagName)
         console.print("Deployer release \(tagName) installed.")
     }
 
@@ -132,8 +132,7 @@ extension DeployerPayloadStep {
         binary: String,
         publicDirectory: String,
         resourcesDirectory: String,
-        versionFile: String?,
-        context: SetupContext
+        versionFile: String?
     ) async throws {
 
         let paths = try context.requirePaths()
@@ -163,7 +162,7 @@ extension DeployerPayloadStep {
         try await Shell.runThrowing(["chown", "-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
     }
 
-    private func writeReleaseVersion(_ tagName: String, context: SetupContext) async throws {
+    private func writeReleaseVersion(_ tagName: String) async throws {
         let paths = try context.requirePaths()
         try await SetupFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
     }

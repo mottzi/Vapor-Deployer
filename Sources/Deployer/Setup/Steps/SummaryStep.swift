@@ -3,9 +3,12 @@ import Foundation
 
 struct SummaryStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Setup complete"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         let paths = try context.requirePaths()
         console.card(
             title: "Setup complete",
@@ -35,13 +38,13 @@ struct SummaryStep: SetupStep {
                     "sudo deployer setup",
                     "The setup command detects staging lineages and forces a production certificate replacement.",
                     "Manual equivalent:",
-                    migrationCommand(context: context, paths: paths)
+                    migrationCommand(paths: paths)
                 ]
             )
         }
     }
 
-    private func migrationCommand(context: SetupContext, paths: SetupPaths) -> String {
+    private func migrationCommand(paths: SetupPaths) -> String {
         let certbot = TemplateEscaping.shellCommand([
             "sudo", "certbot", "certonly",
             "--webroot",

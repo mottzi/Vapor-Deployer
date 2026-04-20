@@ -3,9 +3,12 @@ import Foundation
 
 struct ResolveProductStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Resolving executable product"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         let paths = try context.requirePaths()
         let manifestPath = "\(paths.appDirectory)/Package.swift"
         let products = inferExecutableProducts(from: manifestPath)

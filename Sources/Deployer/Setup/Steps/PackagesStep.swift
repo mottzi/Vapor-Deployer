@@ -3,9 +3,12 @@ import Foundation
 
 struct PackagesStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Installing base packages"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         let gccMajor = await detectGCCMajor()
         var packages = [
             "binutils",

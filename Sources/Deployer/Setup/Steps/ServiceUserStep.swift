@@ -3,9 +3,12 @@ import Foundation
 
 struct ServiceUserStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Preparing service user"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         let paths = try context.requirePaths()
 
         if await Shell.run(["id", "-u", context.serviceUser]).exitCode == 0 {

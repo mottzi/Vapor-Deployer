@@ -3,13 +3,16 @@ import Foundation
 
 struct TLSStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Activating HTTPS reverse proxy"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         
-        try await resolveExistingCertName(context: context, console: console)
-        try await issueTLSCertificateWithStagingFallback(context: context, console: console)
-        try await resolveCertNameAfterIssue(context: context, console: console)
+        try await resolveExistingCertName()
+        try await issueTLSCertificateWithStagingFallback()
+        try await resolveCertNameAfterIssue()
         context.usingStagingCertificates = await lineageIsStaging(context.certName)
 
         let paths = try context.requirePaths()
@@ -23,11 +26,10 @@ struct TLSStep: SetupStep {
         console.print("HTTPS reverse proxy is active for \(context.primaryDomain).")
     }
 
-    private func issueTLSCertificateWithStagingFallback(context: SetupContext, console: any Console) async throws {
+    private func issueTLSCertificateWithStagingFallback() async throws {
         
         do {
             try await issueTLSCertificate(
-                context: context,
                 staging: false,
                 forceRenewal: context.currentCertLineageIsStaging
             )
@@ -42,12 +44,12 @@ struct TLSStep: SetupStep {
             guard continueWithStaging else { throw error }
 
             context.usingStagingCertificates = true
-            try await issueTLSCertificate(context: context, staging: true, forceRenewal: context.certLineageFound)
+            try await issueTLSCertificate(staging: true, forceRenewal: context.certLineageFound)
             console.warning("Using Let's Encrypt staging certificates. Browsers will not trust this certificate.")
         }
     }
 
-    private func issueTLSCertificate(context: SetupContext, staging: Bool, forceRenewal: Bool) async throws {
+    private func issueTLSCertificate(staging: Bool, forceRenewal: Bool) async throws {
         let paths = try context.requirePaths()
         let emailArguments = context.tlsContactEmail.isEmpty
             ? ["--register-unsafely-without-email"]
@@ -70,9 +72,9 @@ struct TLSStep: SetupStep {
         ])
     }
 
-    private func resolveExistingCertName(context: SetupContext, console: any Console) async throws {
+    private func resolveExistingCertName() async throws {
         for name in certificateLineages() {
-            if await lineageCoversDomains(name, context: context) {
+            if await lineageCoversDomains(name) {
                 context.certName = name
                 context.certLineageFound = true
                 context.currentCertLineageIsStaging = await lineageIsStaging(name)
@@ -86,8 +88,8 @@ struct TLSStep: SetupStep {
         }
     }
 
-    private func resolveCertNameAfterIssue(context: SetupContext, console: any Console) async throws {
-        if await lineageFilesOK(context.certName), await lineageCoversDomains(context.certName, context: context) {
+    private func resolveCertNameAfterIssue() async throws {
+        if await lineageFilesOK(context.certName), await lineageCoversDomains(context.certName) {
             return
         }
 
@@ -97,7 +99,7 @@ struct TLSStep: SetupStep {
             .sorted()
 
         for candidate in candidates.reversed() {
-            guard await lineageFilesOK(candidate), await lineageCoversDomains(candidate, context: context) else { continue }
+            guard await lineageFilesOK(candidate), await lineageCoversDomains(candidate) else { continue }
             context.certName = candidate
             console.warning("Using certificate lineage '\(candidate)' due to a pre-existing lineage conflict.")
             return
@@ -120,7 +122,7 @@ struct TLSStep: SetupStep {
             && FileManager.default.fileExists(atPath: "/etc/letsencrypt/live/\(name)/privkey.pem")
     }
 
-    private func lineageCoversDomains(_ name: String, context: SetupContext) async -> Bool {
+    private func lineageCoversDomains(_ name: String) async -> Bool {
         let cert = "/etc/letsencrypt/live/\(name)/fullchain.pem"
         let output = await Shell.run(["openssl", "x509", "-noout", "-text", "-in", cert]).output
         return output.contains("DNS:\(context.primaryDomain)") && output.contains("DNS:\(context.aliasDomain)")

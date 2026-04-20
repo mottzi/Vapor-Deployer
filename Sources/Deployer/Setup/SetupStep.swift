@@ -1,19 +1,25 @@
 import Vapor
 
 /// One phase in the setup pipeline that validates assumptions, mutates shared state, and provisions the host before the next phase.
-protocol SetupStep: Sendable {
+protocol SetupStep {
 
     var title: String { get }
+    
+    var context: SetupContext { get }
+    
+    var console: any Console { get }
 
-    func run(context: SetupContext, console: any Console) async throws
+    init(context: SetupContext, console: any Console)
+
+    func run() async throws
 
 }
 
 extension SetupStep {
 
     /// Prints a consistent progress header so interactive setup output stays scannable across steps.
-    func printHeader(index: Int, total: Int, console: any Console) {
-        console.titledRule("[\(index)/\(total)] \(title)")
+    func printHeader(index: Int, total: Int) {
+        self.console.titledRule("[\(index)/\(total)] \(title)")
     }
 
 }

@@ -3,19 +3,22 @@ import Foundation
 
 struct StartServicesStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Starting services"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         switch context.serviceManagerKind {
         case .systemd:
-            try await startSystemdServices(context: context)
+            try await startSystemdServices()
         case .supervisor:
-            try await startSupervisorServices(context: context)
+            try await startSupervisorServices()
         }
         console.print("Services enabled and started.")
     }
 
-    private func startSystemdServices(context: SetupContext) async throws {
+    private func startSystemdServices() async throws {
         let uid = try await context.requireServiceUserUID()
         try await Shell.runThrowing(["loginctl", "enable-linger", context.serviceUser])
         _ = await Shell.run(["systemctl", "start", "user@\(uid).service"])
@@ -25,7 +28,7 @@ struct StartServicesStep: SetupStep {
         try await SetupUserShell.runUserSystemctl(context, ["restart", "deployer.service", "\(context.productName).service"])
     }
 
-    private func startSupervisorServices(context: SetupContext) async throws {
+    private func startSupervisorServices() async throws {
         try await Shell.runThrowing(["systemctl", "enable", "--now", "supervisor"])
         try await Shell.runThrowing(["supervisorctl", "reread"])
         try await Shell.runThrowing(["supervisorctl", "update"])

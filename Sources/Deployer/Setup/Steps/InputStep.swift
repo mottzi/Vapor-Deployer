@@ -5,26 +5,29 @@ import FoundationNetworking
 
 struct InputStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Collecting setup values"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         
-        collectRuntimeIdentity(context: context, console: console)
-        collectTargetRepository(context: context, console: console)
-        collectPortsAndRouting(context: context, console: console)
-        collectServiceManager(context: context, console: console)
-        try collectPanelAuthentication(context: context, console: console)
-        try await collectPublicEndpoint(context: context, console: console)
-        try await collectGitHubWebhookAccess(context: context, console: console)
+        collectRuntimeIdentity()
+        collectTargetRepository()
+        collectPortsAndRouting()
+        collectServiceManager()
+        try collectPanelAuthentication()
+        try await collectPublicEndpoint()
+        try await collectGitHubWebhookAccess()
 
-        console.card(title: "Planned configuration", kvs: try plannedConfiguration(context))
+        console.card(title: "Planned configuration", kvs: try plannedConfiguration())
     }
 
 }
 
 extension InputStep {
 
-    private func collectRuntimeIdentity(context: SetupContext, console: any Console) {
+    private func collectRuntimeIdentity() {
         console.section("Runtime identity")
         context.serviceUser = console.askValidated(
             "Dedicated service user",
@@ -34,7 +37,7 @@ extension InputStep {
         )
     }
 
-    private func collectTargetRepository(context: SetupContext, console: any Console) {
+    private func collectTargetRepository() {
         console.section("Target repository")
         while true {
             let repoURL = console.askRequired("Private app repo SSH URL")
@@ -55,7 +58,7 @@ extension InputStep {
         )
     }
 
-    private func collectPortsAndRouting(context: SetupContext, console: any Console) {
+    private func collectPortsAndRouting() {
         console.section("Ports and routing")
         context.deployerPort = Int(console.askValidated(
             "Deployer port",
@@ -84,7 +87,7 @@ extension InputStep {
         }
     }
 
-    private func collectServiceManager(context: SetupContext, console: any Console) {
+    private func collectServiceManager() {
         console.section("Service manager")
         while true {
             let value = console.askRequired("Service manager", default: "systemd")
@@ -100,13 +103,13 @@ extension InputStep {
         context.paths = SetupPaths.derive(serviceUser: context.serviceUser, appName: context.appName, panelRoute: context.panelRoute)
     }
 
-    private func collectPanelAuthentication(context: SetupContext, console: any Console) throws {
+    private func collectPanelAuthentication() throws {
         console.section("Panel authentication")
         context.panelPassword = console.askSecretConfirmed("Panel password")
         context.webhookSecret = try generateHexSecret()
     }
 
-    private func collectPublicEndpoint(context: SetupContext, console: any Console) async throws {
+    private func collectPublicEndpoint() async throws {
         console.section("Public endpoint")
         let publicURL = console.askValidated(
             "Public base URL",
@@ -128,7 +131,7 @@ extension InputStep {
         )
     }
 
-    private func collectGitHubWebhookAccess(context: SetupContext, console: any Console) async throws {
+    private func collectGitHubWebhookAccess() async throws {
         console.section("GitHub webhook access")
         console.card(
             title: "How to create the GitHub token",
@@ -138,7 +141,7 @@ extension InputStep {
                 ("Select", "admin:repo_hook")
             ]
         )
-        try await collectAndVerifyGitHubToken(context, console: console)
+        try await collectAndVerifyGitHubToken()
     }
 
 }
@@ -161,11 +164,11 @@ extension InputStep {
         }
     }
 
-    private func collectAndVerifyGitHubToken(_ context: SetupContext, console: any Console) async throws {
+    private func collectAndVerifyGitHubToken() async throws {
         while true {
             context.githubToken = console.askSecret("GitHub token")
             do {
-                try await verifyGitHubAccess(context)
+                try await verifyGitHubAccess()
                 return
             } catch {
                 console.warning(error.localizedDescription)
@@ -173,7 +176,7 @@ extension InputStep {
         }
     }
 
-    private func verifyGitHubAccess(_ context: SetupContext) async throws {
+    private func verifyGitHubAccess() async throws {
         guard let url = URL(string: "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks?per_page=1")
         else { throw SetupCommand.Error.githubAPI("invalid hooks URL") }
 
@@ -189,7 +192,7 @@ extension InputStep {
         }
     }
 
-    private func plannedConfiguration(_ context: SetupContext) throws -> [(String, String)] {
+    private func plannedConfiguration() throws -> [(String, String)] {
         let paths = try context.requirePaths()
         return [
             ("Install directory", paths.installDirectory),

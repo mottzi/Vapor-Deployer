@@ -3,14 +3,17 @@ import Foundation
 
 struct HealthStep: SetupStep {
 
+    let context: SetupContext
+    let console: any Console
+
     let title = "Running health checks"
 
-    func run(context: SetupContext, console: any Console) async throws {
+    func run() async throws {
         
-        try await waitForService("deployer", context: context)
+        try await waitForService("deployer")
         console.print("Deployer service is running.")
 
-        try await waitForService(context.productName, context: context)
+        try await waitForService(context.productName)
         console.print("App service is running.")
 
         try await waitForTCP(port: context.deployerPort)
@@ -24,16 +27,16 @@ struct HealthStep: SetupStep {
         else { throw SetupCommand.Error.invalidValue("app binary", "missing deployed app binary") }
     }
 
-    private func waitForService(_ service: String, context: SetupContext) async throws {
+    private func waitForService(_ service: String) async throws {
         for _ in 0..<30 {
-            if await isServiceRunning(service, context: context) { return }
+            if await isServiceRunning(service) { return }
             try await Task.sleep(for: .seconds(1))
         }
 
         throw SetupCommand.Error.serviceTimeout(service)
     }
 
-    private func isServiceRunning(_ service: String, context: SetupContext) async -> Bool {
+    private func isServiceRunning(_ service: String) async -> Bool {
         switch context.serviceManagerKind {
         case .systemd:
             let output = try? await SetupUserShell.runUserSystemctl(context, ["is-active", "\(service).service"])
