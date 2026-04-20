@@ -23,7 +23,7 @@ struct SetupCommand: AsyncCommand {
         
         let setupContext = SetupContext()
         
-        SetupCards.banner(console: context.console)
+        SetupCard.banner(console: context.console)
 
         for (index, step) in steps.enumerated() {
             step.printHeader(index: index + 1, total: steps.count, console: context.console)

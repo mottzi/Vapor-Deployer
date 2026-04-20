@@ -4,55 +4,55 @@ import XCTest
 final class SetupValidatorsTests: XCTestCase {
 
     func testSafeNameMatchesInstallerConstraints() {
-        XCTAssertTrue(SetupValidators.isSafeName("mottzi"))
-        XCTAssertTrue(SetupValidators.isSafeName("my-app_1.2"))
-        XCTAssertFalse(SetupValidators.isSafeName(""))
-        XCTAssertFalse(SetupValidators.isSafeName("my app"))
-        XCTAssertFalse(SetupValidators.isSafeName("my/app"))
+        XCTAssertTrue(SetupValidator.isSafeName("mottzi"))
+        XCTAssertTrue(SetupValidator.isSafeName("my-app_1.2"))
+        XCTAssertFalse(SetupValidator.isSafeName(""))
+        XCTAssertFalse(SetupValidator.isSafeName("my app"))
+        XCTAssertFalse(SetupValidator.isSafeName("my/app"))
     }
 
     func testPortValidationRejectsOutOfRangeValues() {
-        XCTAssertTrue(SetupValidators.isValidPort("1"))
-        XCTAssertTrue(SetupValidators.isValidPort("8080"))
-        XCTAssertTrue(SetupValidators.isValidPort("65535"))
-        XCTAssertFalse(SetupValidators.isValidPort("0"))
-        XCTAssertFalse(SetupValidators.isValidPort("65536"))
-        XCTAssertFalse(SetupValidators.isValidPort("abc"))
+        XCTAssertTrue(SetupValidator.isValidPort("1"))
+        XCTAssertTrue(SetupValidator.isValidPort("8080"))
+        XCTAssertTrue(SetupValidator.isValidPort("65535"))
+        XCTAssertFalse(SetupValidator.isValidPort("0"))
+        XCTAssertFalse(SetupValidator.isValidPort("65536"))
+        XCTAssertFalse(SetupValidator.isValidPort("abc"))
     }
 
     func testEmailValidationCoversInstallerShape() {
-        XCTAssertTrue(SetupValidators.isValidEmail("admin@example.com"))
-        XCTAssertTrue(SetupValidators.isValidEmail("first.last+deploy@example.co.uk"))
-        XCTAssertFalse(SetupValidators.isValidEmail("admin"))
-        XCTAssertFalse(SetupValidators.isValidEmail("admin@example"))
-        XCTAssertFalse(SetupValidators.isValidEmail("@example.com"))
+        XCTAssertTrue(SetupValidator.isValidEmail("admin@example.com"))
+        XCTAssertTrue(SetupValidator.isValidEmail("first.last+deploy@example.co.uk"))
+        XCTAssertFalse(SetupValidator.isValidEmail("admin"))
+        XCTAssertFalse(SetupValidator.isValidEmail("admin@example"))
+        XCTAssertFalse(SetupValidator.isValidEmail("@example.com"))
     }
 
     func testPublicBaseURLRequiresHTTPSDomainWithoutPathOrPort() {
-        XCTAssertTrue(SetupValidators.isValidPublicBaseURL("https://example.com"))
-        XCTAssertTrue(SetupValidators.isValidPublicBaseURL("https://www.example.com/"))
-        XCTAssertFalse(SetupValidators.isValidPublicBaseURL("http://example.com"))
-        XCTAssertFalse(SetupValidators.isValidPublicBaseURL("https://example.com:8443"))
-        XCTAssertFalse(SetupValidators.isValidPublicBaseURL("https://example.com/path"))
-        XCTAssertFalse(SetupValidators.isValidPublicBaseURL("https://localhost"))
+        XCTAssertTrue(SetupValidator.isValidPublicBaseURL("https://example.com"))
+        XCTAssertTrue(SetupValidator.isValidPublicBaseURL("https://www.example.com/"))
+        XCTAssertFalse(SetupValidator.isValidPublicBaseURL("http://example.com"))
+        XCTAssertFalse(SetupValidator.isValidPublicBaseURL("https://example.com:8443"))
+        XCTAssertFalse(SetupValidator.isValidPublicBaseURL("https://example.com/path"))
+        XCTAssertFalse(SetupValidator.isValidPublicBaseURL("https://localhost"))
     }
 
     func testGitHubSSHURLParsingNormalizesRepositorySuffix() throws {
-        let parsed = try XCTUnwrap(SetupValidators.parseGitHubSSHURL("git@github.com:mottzi/Vapor-Deployer.git"))
+        let parsed = try XCTUnwrap(SetupValidator.parseGitHubSSHURL("git@github.com:mottzi/Vapor-Deployer.git"))
         XCTAssertEqual(parsed.owner, "mottzi")
         XCTAssertEqual(parsed.repo, "Vapor-Deployer")
-        XCTAssertNil(SetupValidators.parseGitHubSSHURL("https://github.com/mottzi/Vapor-Deployer.git"))
+        XCTAssertNil(SetupValidator.parseGitHubSSHURL("https://github.com/mottzi/Vapor-Deployer.git"))
     }
 
     func testPanelRouteNormalization() {
-        XCTAssertEqual(SetupValidators.normalizePanelRoute("deployer"), "/deployer")
-        XCTAssertEqual(SetupValidators.normalizePanelRoute("/deployer/"), "/deployer")
-        XCTAssertEqual(SetupValidators.normalizePanelRoute("/"), "/")
+        XCTAssertEqual(SetupValidator.normalizePanelRoute("deployer"), "/deployer")
+        XCTAssertEqual(SetupValidator.normalizePanelRoute("/deployer/"), "/deployer")
+        XCTAssertEqual(SetupValidator.normalizePanelRoute("/"), "/")
     }
 
     func testAliasDomainDerivationTogglesWWW() {
-        XCTAssertEqual(SetupValidators.deriveAliasDomain(from: "example.com"), "www.example.com")
-        XCTAssertEqual(SetupValidators.deriveAliasDomain(from: "www.example.com"), "example.com")
+        XCTAssertEqual(SetupValidator.deriveAliasDomain(from: "example.com"), "www.example.com")
+        XCTAssertEqual(SetupValidator.deriveAliasDomain(from: "www.example.com"), "example.com")
     }
 
 }

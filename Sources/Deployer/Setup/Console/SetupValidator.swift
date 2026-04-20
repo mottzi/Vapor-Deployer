@@ -1,6 +1,7 @@
 import Foundation
 
-enum SetupValidators {
+/// Validation and normalization rules for interactive setup input so downstream provisioning can assume canonical, host-safe values.
+enum SetupValidator {
 
     static func isSafeName(_ value: String) -> Bool {
         value.range(of: #"^[A-Za-z0-9._-]+$"#, options: .regularExpression) != nil
@@ -16,10 +17,7 @@ enum SetupValidators {
     }
 
     static func isValidPublicBaseURL(_ value: String) -> Bool {
-        normalizeBaseURL(value).range(
-            of: #"^https://([A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+)$"#,
-            options: .regularExpression
-        ) != nil
+        normalizeBaseURL(value).range(of: #"^https://([A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+)$"#, options: .regularExpression) != nil
     }
 
     static func normalizeBaseURL(_ value: String) -> String {
@@ -34,17 +32,15 @@ enum SetupValidators {
     }
 
     static func parseGitHubSSHURL(_ value: String) -> (owner: String, repo: String)? {
+        
         let pattern = #"^git@github\.com:([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)(\.git)?$"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        
         let range = NSRange(value.startIndex..<value.endIndex, in: value)
         guard let match = regex.firstMatch(in: value, range: range), match.numberOfRanges >= 3 else { return nil }
-        guard
-            let ownerRange = Range(match.range(at: 1), in: value),
-            let repoRange = Range(match.range(at: 2), in: value)
-        else {
-            return nil
-        }
-
+        guard let ownerRange = Range(match.range(at: 1), in: value) else { return nil }
+        guard let repoRange = Range(match.range(at: 2), in: value) else { return nil }
+        
         return (String(value[ownerRange]), String(value[repoRange]).trimmingSuffix(".git"))
     }
 
@@ -56,15 +52,6 @@ enum SetupValidators {
         primaryDomain.hasPrefix("www.")
             ? String(primaryDomain.dropFirst("www.".count))
             : "www.\(primaryDomain)"
-    }
-
-}
-
-private extension String {
-
-    func trimmingSuffix(_ suffix: String) -> String {
-        guard hasSuffix(suffix) else { return self }
-        return String(dropLast(suffix.count))
     }
 
 }

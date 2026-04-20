@@ -6,6 +6,11 @@ extension String {
         trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
+    func trimmingSuffix(_ suffix: String) -> String {
+        guard hasSuffix(suffix) else { return self }
+        return String(dropLast(suffix.count))
+    }
+    
     var displayPath: String {
         let segments = self.pathComponents.map(\.description)
         guard !segments.isEmpty else { return "/" }

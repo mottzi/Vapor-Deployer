@@ -1,8 +1,10 @@
 import Vapor
 
-enum SetupPrompts {
+/// Prompting helpers that enforce required, validated, and confirmed user input before setup proceeds.
+enum SetupPrompt {
 
     static func askRequired(_ label: String, default defaultValue: String? = nil, console: any Console) -> String {
+        
         while true {
             let value = prompt(label, default: defaultValue, console: console).trimmed
             let resolved = value.isEmpty ? (defaultValue ?? "") : value
@@ -29,9 +31,7 @@ enum SetupPrompts {
         while true {
             let first = askSecretValue(label, console: console)
             let second = promptSecret("Confirm \(label)", console: console)
-            if first == second {
-                return first
-            }
+            if first == second { return first }
             console.warning("Values did not match. Please try again.")
         }
     }

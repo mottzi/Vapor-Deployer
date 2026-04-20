@@ -1,8 +1,10 @@
 import Vapor
 import Foundation
 
-enum SetupCards {
+/// Console rendering helpers for setup UX so each step presents progress and key configuration in a consistent visual format.
+enum SetupCard {
 
+    /// Clamps detected terminal width to a readable range so card formatting remains stable across TTY environments.
     private static let terminalWidth: Int = {
         let raw = ProcessInfo.processInfo.environment["COLUMNS"].flatMap(Int.init)
             ?? tputColumns()
@@ -10,7 +12,9 @@ enum SetupCards {
         return min(max(raw, 40), 100)
     }()
 
+    /// Falls back to querying terminal column width when `COLUMNS` is unavailable, returning nil on non-interactive contexts.
     private static func tputColumns() -> Int? {
+        
         let process = Process()
         let output = Pipe()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
@@ -37,13 +41,16 @@ enum SetupCards {
     }
 
     private static func titledRuleText(_ title: String, character: Character = "━") -> String {
+        
         let prefix = "\(character)\(character)\(character) "
         let used = prefix.count + title.count + 1
         let fill = max(terminalWidth - used, 0)
+        
         return "\(prefix)\(title) \(String(repeating: String(character), count: fill))"
     }
 
     static func banner(console: any Console) {
+        
         console.output("")
         console.output(rule().consoleText(color: .cyan))
         console.output("  Vapor Deployer · Setup".consoleText(color: .cyan, isBold: true))
@@ -65,6 +72,7 @@ enum SetupCards {
     }
 
     static func card(title: String, kvs: [(String, String)], console: any Console) {
+        
         console.output("")
         console.output(titledRuleText(title).consoleText(isBold: true))
         console.output("")

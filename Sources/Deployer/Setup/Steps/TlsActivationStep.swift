@@ -30,7 +30,7 @@ struct TlsActivationStep: SetupStep {
             )
         } catch {
             console.warning("Production Let's Encrypt certificate issuance failed: \(error.localizedDescription)")
-            let continueWithStaging = SetupPrompts.confirm(
+            let continueWithStaging = SetupPrompt.confirm(
                 "Use Let's Encrypt staging/test certificates and continue setup?",
                 defaultYes: true,
                 console: console

@@ -7,7 +7,7 @@ struct SuccessSummaryStep: SetupStep {
 
     func run(context: SetupContext, console: any Console) async throws {
         let paths = try context.requirePaths()
-        SetupCards.card(
+        SetupCard.card(
             title: "Setup complete",
             kvs: [
                 ("Deployer panel", "\(context.publicBaseURL)\(context.panelRoute)"),
@@ -27,7 +27,7 @@ struct SuccessSummaryStep: SetupStep {
         )
 
         if context.usingStagingCertificates {
-            SetupCards.lines(
+            SetupCard.lines(
                 title: "TLS warning - staging certificate in use",
                 lines: [
                     "The active certificate was issued by Let's Encrypt staging/test infrastructure.",

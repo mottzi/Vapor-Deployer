@@ -32,7 +32,7 @@ struct SshKeyStep: SetupStep {
         }
 
         let publicKey = (try? String(contentsOfFile: "\(paths.deployKeyPath).pub", encoding: .utf8).trimmed) ?? ""
-        SetupCards.lines(
+        SetupCard.lines(
             title: "Action required - Add deploy key to GitHub",
             lines: [
                 "Open: https://github.com/\(context.githubOwner)/\(context.githubRepo)/settings/keys",
@@ -44,7 +44,7 @@ struct SshKeyStep: SetupStep {
             console: console
         )
 
-        guard SetupPrompts.confirm("Continue after adding the deploy key on GitHub?", defaultYes: true, console: console) else {
+        guard SetupPrompt.confirm("Continue after adding the deploy key on GitHub?", defaultYes: true, console: console) else {
             throw SetupCommand.Error.invalidValue("deployKey", "GitHub deploy key setup was not confirmed")
         }
 

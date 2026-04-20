@@ -9,18 +9,18 @@ struct CollectInputStep: SetupStep {
     let title = "Collecting setup values"
 
     func run(context: SetupContext, console: any Console) async throws {
-        SetupCards.section("Runtime identity", console: console)
-        context.serviceUser = SetupPrompts.askValidated(
+        SetupCard.section("Runtime identity", console: console)
+        context.serviceUser = SetupPrompt.askValidated(
             "Dedicated service user",
             default: "vapor",
             warning: "Choose a non-root user containing only letters, numbers, dots, dashes, and underscores.",
             console: console
-        ) { $0 != "root" && SetupValidators.isSafeName($0) }
+        ) { $0 != "root" && SetupValidator.isSafeName($0) }
 
-        SetupCards.section("Target repository", console: console)
+        SetupCard.section("Target repository", console: console)
         while true {
-            let repoURL = SetupPrompts.askRequired("Private app repo SSH URL", console: console)
-            if let parsed = SetupValidators.parseGitHubSSHURL(repoURL) {
+            let repoURL = SetupPrompt.askRequired("Private app repo SSH URL", console: console)
+            if let parsed = SetupValidator.parseGitHubSSHURL(repoURL) {
                 context.appRepositoryURL = repoURL
                 context.githubOwner = parsed.owner
                 context.githubRepo = parsed.repo
@@ -29,34 +29,34 @@ struct CollectInputStep: SetupStep {
             console.warning("Use a GitHub SSH URL like git@github.com:owner/repo.git")
         }
 
-        context.appName = SetupPrompts.askValidated(
+        context.appName = SetupPrompt.askValidated(
             "Target app name",
             default: context.githubRepo,
             warning: "App name may contain only letters, numbers, dots, dashes, and underscores.",
             console: console,
-            validate: SetupValidators.isSafeName
+            validate: SetupValidator.isSafeName
         )
 
-        SetupCards.section("Ports and routing", console: console)
-        context.deployerPort = Int(SetupPrompts.askValidated(
+        SetupCard.section("Ports and routing", console: console)
+        context.deployerPort = Int(SetupPrompt.askValidated(
             "Deployer port",
             default: "8081",
             warning: "Deployer port must be a number between 1 and 65535.",
             console: console,
-            validate: SetupValidators.isValidPort
+            validate: SetupValidator.isValidPort
         )) ?? 8081
 
-        context.appPort = Int(SetupPrompts.askValidated(
+        context.appPort = Int(SetupPrompt.askValidated(
             "Target app port",
             default: "8080",
             warning: "Target app port must be a number between 1 and 65535.",
             console: console,
-            validate: SetupValidators.isValidPort
+            validate: SetupValidator.isValidPort
         )) ?? 8080
 
         while true {
-            let panelRoute = SetupValidators.normalizePanelRoute(
-                SetupPrompts.askRequired("Panel route", default: "/deployer", console: console)
+            let panelRoute = SetupValidator.normalizePanelRoute(
+                SetupPrompt.askRequired("Panel route", default: "/deployer", console: console)
             )
             guard panelRoute != "/" else {
                 console.warning("Panel route '/' is not supported with managed Nginx setup. Use a prefixed route like /deployer.")
@@ -66,9 +66,9 @@ struct CollectInputStep: SetupStep {
             break
         }
 
-        SetupCards.section("Service manager", console: console)
+        SetupCard.section("Service manager", console: console)
         while true {
-            let value = SetupPrompts.askRequired("Service manager", default: "systemd", console: console)
+            let value = SetupPrompt.askRequired("Service manager", default: "systemd", console: console)
             guard let kind = ServiceManagerKind(rawValue: value) else {
                 console.warning("Service manager must be 'systemd' or 'supervisor'.")
                 continue
@@ -77,36 +77,36 @@ struct CollectInputStep: SetupStep {
             break
         }
 
-        context.buildFromSource = SetupPrompts.confirm("Build deployer from source?", defaultYes: false, console: console)
+        context.buildFromSource = SetupPrompt.confirm("Build deployer from source?", defaultYes: false, console: console)
         context.paths = SetupPaths.derive(serviceUser: context.serviceUser, appName: context.appName, panelRoute: context.panelRoute)
 
-        SetupCards.section("Panel authentication", console: console)
-        context.panelPassword = SetupPrompts.askSecretConfirmed("Panel password", console: console)
+        SetupCard.section("Panel authentication", console: console)
+        context.panelPassword = SetupPrompt.askSecretConfirmed("Panel password", console: console)
         context.webhookSecret = try generateHexSecret()
 
-        SetupCards.section("Public endpoint", console: console)
-        let publicURL = SetupPrompts.askValidated(
+        SetupCard.section("Public endpoint", console: console)
+        let publicURL = SetupPrompt.askValidated(
             "Public base URL",
             warning: "Public base URL must look like https://example.com (HTTPS + domain only, no path, no port).",
             console: console
-        ) { SetupValidators.isValidPublicBaseURL($0) }
-        context.publicBaseURL = SetupValidators.normalizeBaseURL(publicURL)
-        context.primaryDomain = SetupValidators.extractHost(fromPublicBaseURL: publicURL)
-        context.aliasDomain = SetupValidators.deriveAliasDomain(from: context.primaryDomain)
+        ) { SetupValidator.isValidPublicBaseURL($0) }
+        context.publicBaseURL = SetupValidator.normalizeBaseURL(publicURL)
+        context.primaryDomain = SetupValidator.extractHost(fromPublicBaseURL: publicURL)
+        context.aliasDomain = SetupValidator.deriveAliasDomain(from: context.primaryDomain)
         context.certName = context.primaryDomain
 
         try await requireResolvableHostname(context.primaryDomain, label: "Canonical domain")
         try await requireResolvableHostname(context.aliasDomain, label: "Alias domain")
 
-        context.tlsContactEmail = SetupPrompts.askValidated(
+        context.tlsContactEmail = SetupPrompt.askValidated(
             "TLS contact email",
             warning: "TLS contact email must be a valid email address.",
             console: console,
-            validate: SetupValidators.isValidEmail
+            validate: SetupValidator.isValidEmail
         )
 
-        SetupCards.section("GitHub webhook access", console: console)
-        SetupCards.card(
+        SetupCard.section("GitHub webhook access", console: console)
+        SetupCard.card(
             title: "How to create the GitHub token",
             kvs: [
                 ("Browser", "https://github.com/settings/tokens"),
@@ -117,7 +117,7 @@ struct CollectInputStep: SetupStep {
         )
         try await collectAndVerifyGitHubToken(context, console: console)
 
-        SetupCards.card(title: "Planned configuration", kvs: try plannedConfiguration(context), console: console)
+        SetupCard.card(title: "Planned configuration", kvs: try plannedConfiguration(context), console: console)
     }
 
     private func generateHexSecret() throws -> String {
@@ -138,7 +138,7 @@ struct CollectInputStep: SetupStep {
 
     private func collectAndVerifyGitHubToken(_ context: SetupContext, console: any Console) async throws {
         while true {
-            context.githubToken = SetupPrompts.askSecret("GitHub token", console: console)
+            context.githubToken = SetupPrompt.askSecret("GitHub token", console: console)
             do {
                 try await verifyGitHubAccess(context)
                 return
