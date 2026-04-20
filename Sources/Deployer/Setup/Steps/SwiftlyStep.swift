@@ -11,19 +11,19 @@ struct SwiftlyStep: SetupStep {
         let userEnvironment = ["HOME": paths.serviceHome, "USER": context.serviceUser]
 
         if !FileManager.default.isExecutableFile(atPath: swiftBinary) {
-            let workdir = try await UserShell.runAsServiceUser(context, ["mktemp", "-d"], environment: userEnvironment).trimmed
+            let workdir = try await SetupUserShell.runAsServiceUser(context, ["mktemp", "-d"], environment: userEnvironment).trimmed
             defer { try? FileManager.default.removeItem(atPath: workdir) }
 
-            let arch = try await UserShell.runAsServiceUser(context, ["uname", "-m"], environment: userEnvironment).trimmed
+            let arch = try await SetupUserShell.runAsServiceUser(context, ["uname", "-m"], environment: userEnvironment).trimmed
             let archive = "swiftly-\(arch).tar.gz"
-            try await UserShell.runAsServiceUser(
+            try await SetupUserShell.runAsServiceUser(
                 context,
                 ["curl", "-fL", "-o", archive, "https://download.swift.org/swiftly/linux/\(archive)"],
                 directory: workdir,
                 environment: userEnvironment
             )
-            try await UserShell.runAsServiceUser(context, ["tar", "zxf", archive], directory: workdir, environment: userEnvironment)
-            try await UserShell.runAsServiceUser(
+            try await SetupUserShell.runAsServiceUser(context, ["tar", "zxf", archive], directory: workdir, environment: userEnvironment)
+            try await SetupUserShell.runAsServiceUser(
                 context,
                 ["./swiftly", "init", "--quiet-shell-followup", "--assume-yes"],
                 directory: workdir,
@@ -31,7 +31,7 @@ struct SwiftlyStep: SetupStep {
             )
         }
 
-        let version = try await UserShell.runAsServiceUser(context, [swiftBinary, "--version"], environment: userEnvironment)
+        let version = try await SetupUserShell.runAsServiceUser(context, [swiftBinary, "--version"], environment: userEnvironment)
         console.print(version.trimmed)
     }
 

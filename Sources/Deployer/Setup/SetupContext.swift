@@ -1,6 +1,7 @@
 import Foundation
 
-final class SetupContext: @unchecked Sendable {
+/// Shared mutable state for one setup run, holding user input, discovered host facts, and derived values for later steps.
+final class SetupContext {
 
     let deployerRepositoryURL = "https://github.com/mottzi/Vapor-Deployer.git"
     let deployerRepositoryBranch = "main"
@@ -38,25 +39,31 @@ final class SetupContext: @unchecked Sendable {
     var githubToken = ""
     var releaseVersion: String?
 
-    var webhookURL: String {
-        publicBaseURL + (paths?.webhookPath ?? "")
-    }
+    var webhookURL: String { publicBaseURL + (paths?.webhookPath ?? "") }
 
+}
+
+extension SetupContext {
+    
+    /// Enforces that path layout has been derived before provisioning steps try to consume it.
     func requirePaths() throws -> SetupPaths {
         guard let paths else { throw SetupCommand.Error.missingValue("paths") }
         return paths
     }
 
+    /// Resolves and memoizes the service user's UID so user-scoped systemd calls can build runtime and DBus paths reliably.
     func requireServiceUserUID() async throws -> Int {
+        
         if let serviceUserUID { return serviceUserUID }
 
-        let raw = try await Shell.runThrowing(["id", "-u", serviceUser]).trimmed
-        guard let uid = Int(raw) else {
-            throw SetupCommand.Error.invalidValue("serviceUserUID", "could not parse uid '\(raw)'")
+        let stringUID = try await Shell.runThrowing(["id", "-u", serviceUser]).trimmed
+        
+        guard let intUID = Int(stringUID) else {
+            throw SetupCommand.Error.invalidValue("serviceUserUID", "could not parse uid '\(stringUID)'")
         }
 
-        serviceUserUID = uid
-        return uid
+        serviceUserUID = intUID
+        return intUID
     }
-
+    
 }

@@ -1,6 +1,7 @@
 import Foundation
 
-struct SetupPaths: Sendable {
+/// Canonical install and runtime paths derived from setup inputs so steps and templates share one filesystem and routing contract.
+struct SetupPaths {
 
     let serviceHome: String
     let installDirectory: String
@@ -29,7 +30,9 @@ struct SetupPaths: Sendable {
     var appDeployDirectory: String { "\(appDirectory)/deploy" }
     var appBinary: String { "\(appDeployDirectory)" }
 
+    /// Derives all managed paths from `serviceUser`, `appName`, and `panelRoute` so reruns stay deterministic across execution contexts.
     static func derive(serviceUser: String, appName: String, panelRoute: String) -> SetupPaths {
+        
         let serviceHome = "/home/\(serviceUser)"
         let installDirectory = "\(serviceHome)/deployer"
         let appsRootDirectory = "\(serviceHome)/apps"

@@ -58,10 +58,10 @@ struct WriteRuntimeConfigStep: SetupStep {
     private func removeSystemdFiles(context: SetupContext) async throws {
         let paths = try context.requirePaths()
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
-        _ = try? await UserShell.runUserSystemctl(context, ["disable", "--now", "deployer.service", "\(context.productName).service"])
+        _ = try? await SetupUserShell.runUserSystemctl(context, ["disable", "--now", "deployer.service", "\(context.productName).service"])
         try? SetupFileSystem.removeIfPresent("\(unitDirectory)/deployer.service")
         try? SetupFileSystem.removeIfPresent("\(unitDirectory)/\(context.productName).service")
-        _ = try? await UserShell.runUserSystemctl(context, ["daemon-reload"])
+        _ = try? await SetupUserShell.runUserSystemctl(context, ["daemon-reload"])
     }
 
     private func removeSupervisorFiles(context: SetupContext) async throws {

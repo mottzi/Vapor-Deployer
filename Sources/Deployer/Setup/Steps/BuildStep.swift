@@ -12,8 +12,8 @@ struct BuildStep: SetupStep {
 
         if context.buildFromSource {
             console.print("Building deployer in \(context.deployerBuildMode) mode...")
-            try await UserShell.runAsServiceUserStreamingTail(context, [swift, "build", "-c", context.deployerBuildMode], directory: paths.installDirectory, environment: env)
-            let binDir = try await UserShell.runAsServiceUser(
+            try await SetupUserShell.runAsServiceUserStreamingTail(context, [swift, "build", "-c", context.deployerBuildMode], directory: paths.installDirectory, environment: env)
+            let binDir = try await SetupUserShell.runAsServiceUser(
                 context,
                 [swift, "build", "-c", context.deployerBuildMode, "--show-bin-path"],
                 directory: paths.installDirectory,
@@ -23,12 +23,12 @@ struct BuildStep: SetupStep {
             guard FileManager.default.isExecutableFile(atPath: binary) else {
                 throw SetupCommand.Error.invalidValue("deployer binary", "expected binary was not produced at '\(binary)'")
             }
-            try await UserShell.runAsServiceUser(context, ["install", "-m", "0755", binary, paths.deployerBinary], environment: env)
+            try await SetupUserShell.runAsServiceUser(context, ["install", "-m", "0755", binary, paths.deployerBinary], environment: env)
         }
 
         console.print("Building target app in \(context.appBuildMode) mode...")
-        try await UserShell.runAsServiceUserStreamingTail(context, [swift, "build", "-c", context.appBuildMode], directory: paths.appDirectory, environment: env)
-        let appBinDir = try await UserShell.runAsServiceUser(
+        try await SetupUserShell.runAsServiceUserStreamingTail(context, [swift, "build", "-c", context.appBuildMode], directory: paths.appDirectory, environment: env)
+        let appBinDir = try await SetupUserShell.runAsServiceUser(
             context,
             [swift, "build", "-c", context.appBuildMode, "--show-bin-path"],
             directory: paths.appDirectory,
@@ -39,8 +39,8 @@ struct BuildStep: SetupStep {
             throw SetupCommand.Error.invalidValue("app binary", "expected binary was not produced at '\(appBinary)'")
         }
 
-        try await UserShell.runAsServiceUser(context, ["install", "-d", "-m", "0755", paths.appDeployDirectory], environment: env)
-        try await UserShell.runAsServiceUser(
+        try await SetupUserShell.runAsServiceUser(context, ["install", "-d", "-m", "0755", paths.appDeployDirectory], environment: env)
+        try await SetupUserShell.runAsServiceUser(
             context,
             ["install", "-m", "0755", appBinary, "\(paths.appDeployDirectory)/\(context.productName)"],
             environment: env

@@ -9,12 +9,12 @@ struct SshKeyStep: SetupStep {
         let paths = try context.requirePaths()
 
         try await SetupFileSystem.installDirectory("\(paths.serviceHome)/.ssh", mode: "0700", owner: context.serviceUser, group: context.serviceUser)
-        try await UserShell.runAsServiceUser(context, ["touch", "\(paths.serviceHome)/.ssh/known_hosts"])
-        try await UserShell.runAsServiceUser(context, ["chmod", "600", "\(paths.serviceHome)/.ssh/known_hosts"])
-        _ = try? await UserShell.runAsServiceUser(context, ["bash", "-c", "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"])
+        try await SetupUserShell.runAsServiceUser(context, ["touch", "\(paths.serviceHome)/.ssh/known_hosts"])
+        try await SetupUserShell.runAsServiceUser(context, ["chmod", "600", "\(paths.serviceHome)/.ssh/known_hosts"])
+        _ = try? await SetupUserShell.runAsServiceUser(context, ["bash", "-c", "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"])
 
         if !FileManager.default.fileExists(atPath: paths.deployKeyPath) {
-            try await UserShell.runAsServiceUser(context, [
+            try await SetupUserShell.runAsServiceUser(context, [
                 "ssh-keygen",
                 "-t", "ed25519",
                 "-N", "",
@@ -59,7 +59,7 @@ struct SshKeyStep: SetupStep {
         let paths = try context.requirePaths()
         let sshCommand = "ssh -i \(paths.deployKeyPath) -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
         do {
-            _ = try await UserShell.runAsServiceUser(
+            _ = try await SetupUserShell.runAsServiceUser(
                 context,
                 ["git", "ls-remote", context.appRepositoryURL, context.appBranch],
                 environment: ["GIT_SSH_COMMAND": sshCommand]

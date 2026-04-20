@@ -19,10 +19,10 @@ struct StartServicesStep: SetupStep {
         let uid = try await context.requireServiceUserUID()
         try await Shell.runThrowing(["loginctl", "enable-linger", context.serviceUser])
         _ = await Shell.run(["systemctl", "start", "user@\(uid).service"])
-        try await UserShell.waitForUserBus(uid: uid)
-        try await UserShell.runUserSystemctl(context, ["daemon-reload"])
-        try await UserShell.runUserSystemctl(context, ["enable", "deployer.service", "\(context.productName).service"])
-        try await UserShell.runUserSystemctl(context, ["restart", "deployer.service", "\(context.productName).service"])
+        try await SetupUserShell.waitForUserBus(uid: uid)
+        try await SetupUserShell.runUserSystemctl(context, ["daemon-reload"])
+        try await SetupUserShell.runUserSystemctl(context, ["enable", "deployer.service", "\(context.productName).service"])
+        try await SetupUserShell.runUserSystemctl(context, ["restart", "deployer.service", "\(context.productName).service"])
     }
 
     private func startSupervisorServices(context: SetupContext) async throws {

@@ -1,5 +1,6 @@
 import Vapor
 
+/// Orchestrates host provisioning by running setup steps in a fixed order against one shared context.
 struct SetupCommand: AsyncCommand {
 
     struct Signature: CommandSignature {}
@@ -30,6 +31,7 @@ struct SetupCommand: AsyncCommand {
         }
     }
     
+    /// Guards distro-specific provisioning (`apt`, `systemd`, Certbot paths) that assumes Ubuntu naming and layout.
     private func requireUbuntu() throws {
         
         let releaseFileText = (try? String(contentsOfFile: "/etc/os-release", encoding: .utf8)) ?? ""
@@ -42,6 +44,7 @@ struct SetupCommand: AsyncCommand {
         guard os == "ubuntu" else { throw Error.unsupportedOperatingSystem(os) }
     }
     
+    /// Ensures privileged filesystem and service-management operations cannot fail midway under an unprivileged user.
     private func requireRoot() throws {
         guard geteuid() == 0 else { throw SetupCommand.Error.notRoot }
     }

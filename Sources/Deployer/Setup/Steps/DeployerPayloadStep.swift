@@ -20,15 +20,15 @@ struct DeployerPayloadStep: SetupStep {
         let paths = try context.requirePaths()
 
         if FileManager.default.fileExists(atPath: "\(paths.installDirectory)/.git") {
-            try await UserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "fetch", "origin", context.deployerRepositoryBranch, "--prune"])
-            try await UserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "checkout", context.deployerRepositoryBranch])
-            try await UserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "pull", "--ff-only", "origin", context.deployerRepositoryBranch])
+            try await SetupUserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "fetch", "origin", context.deployerRepositoryBranch, "--prune"])
+            try await SetupUserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "checkout", context.deployerRepositoryBranch])
+            try await SetupUserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "pull", "--ff-only", "origin", context.deployerRepositoryBranch])
             console.print("Deployer checkout updated.")
         } else {
             if FileManager.default.fileExists(atPath: paths.installDirectory) {
                 try? FileManager.default.removeItem(atPath: paths.installDirectory)
             }
-            try await UserShell.runAsServiceUser(context, [
+            try await SetupUserShell.runAsServiceUser(context, [
                 "git", "clone",
                 "--branch", context.deployerRepositoryBranch,
                 context.deployerRepositoryURL,

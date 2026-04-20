@@ -36,7 +36,7 @@ struct HealthCheckStep: SetupStep {
     private func isServiceRunning(_ service: String, context: SetupContext) async -> Bool {
         switch context.serviceManagerKind {
         case .systemd:
-            let output = try? await UserShell.runUserSystemctl(context, ["is-active", "\(service).service"])
+            let output = try? await SetupUserShell.runUserSystemctl(context, ["is-active", "\(service).service"])
             return output?.trimmed == "active"
         case .supervisor:
             let status = await Shell.run(["supervisorctl", "status", service]).output
