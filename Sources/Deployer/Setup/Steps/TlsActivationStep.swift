@@ -12,9 +12,9 @@ struct TlsActivationStep: SetupStep {
         context.usingStagingCertificates = await lineageIsStaging(context.certName)
 
         let paths = try context.requirePaths()
-        try await SetupFileSystem.writeFile(try NginxConfigTemplate.tls(context: context), to: paths.nginxSiteAvailable)
+        try await SetupFileSystem.writeFile(try NginxTemplate.tls(context: context), to: paths.nginxSiteAvailable)
         try await SetupFileSystem.installDirectory("/etc/letsencrypt/renewal-hooks/deploy", owner: "root", group: "root")
-        try await SetupFileSystem.writeFile(NginxConfigTemplate.renewHookScript(), to: paths.certbotRenewHook, mode: "0755")
+        try await SetupFileSystem.writeFile(NginxTemplate.renewHookScript(), to: paths.certbotRenewHook, mode: "0755")
         try await Shell.runThrowing(["ln", "-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])
         try await Shell.runThrowing(["nginx", "-t"])
         try await Shell.runThrowing(["systemctl", "reload", "nginx"])

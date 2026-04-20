@@ -13,7 +13,6 @@ enum SupervisorConfigTemplate {
         autorestart=true
         redirect_stderr=true
         stdout_logfile=\(paths.deployerLog)
-
         """
     }
 
@@ -28,7 +27,6 @@ enum SupervisorConfigTemplate {
         autorestart=true
         redirect_stderr=true
         stdout_logfile=\(paths.appDeployDirectory)/\(context.productName).log
-
         """
     }
 

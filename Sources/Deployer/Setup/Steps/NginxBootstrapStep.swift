@@ -9,7 +9,7 @@ struct NginxBootstrapStep: SetupStep {
         let paths = try context.requirePaths()
         try await cleanupPreviousManagedProxyFiles(context: context)
         try await SetupFileSystem.installDirectory(paths.acmeWebroot, owner: "root", group: "root")
-        try await SetupFileSystem.writeFile(try NginxConfigTemplate.bootstrap(context: context), to: paths.nginxSiteAvailable)
+        try await SetupFileSystem.writeFile(try NginxTemplate.bootstrap(context: context), to: paths.nginxSiteAvailable)
         try await Shell.runThrowing(["install", "-d", "-m", "0755", "-o", "root", "-g", "root", "/etc/nginx/sites-available", "/etc/nginx/sites-enabled"])
         try await Shell.runThrowing(["ln", "-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])
         try await Shell.runThrowing(["systemctl", "enable", "--now", "nginx"])

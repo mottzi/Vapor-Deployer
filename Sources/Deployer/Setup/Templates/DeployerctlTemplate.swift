@@ -29,7 +29,6 @@ enum DeployerctlTemplate {
         CERTBOT_RENEW_HOOK=\(q(paths.certbotRenewHook))
         WEBHOOK_PATH=\(q(paths.webhookPath))
         GITHUB_WEBHOOK_SETTINGS_URL=\(q("https://github.com/\(context.githubOwner)/\(context.githubRepo)/settings/hooks"))
-
         """
     }
 
@@ -204,7 +203,6 @@ enum DeployerctlTemplate {
             ;;
           *) die "unknown SERVICE_MANAGER in $CONFIG_FILE: $SERVICE_MANAGER" ;;
         esac
-
         """
     }
 

@@ -26,7 +26,6 @@ enum SystemdUnitsTemplate {
 
         [Install]
         WantedBy=default.target
-
         """
     }
 
@@ -52,7 +51,6 @@ enum SystemdUnitsTemplate {
 
         [Install]
         WantedBy=default.target
-
         """
     }
 
