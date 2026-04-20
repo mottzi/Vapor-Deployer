@@ -1,20 +1,13 @@
 import Foundation
 
-extension Configuration {
-
-    func encodeJSON() throws -> Data {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        return try encoder.encode(self)
-    }
-
-}
-
-enum DeployerJSONTemplate {
-
-    static func configuration(from context: SetupContext) throws -> Configuration {
+/// Builds the generated runtime `deployer.json` payload from validated setup state and derived install paths.
+enum DeployerTemplate {
+    
+    /// Encodes a canonical deployer configuration snapshot that binds panel routing, webhook path, and managed target metadata.
+    static func encodeJSON(from context: SetupContext) throws -> String? {
+        
         let paths = try context.requirePaths()
-        return Configuration(
+        let config = Configuration(
             port: context.deployerPort,
             dbFile: "deployer.db",
             socketPath: paths.deployerSocketPath,
@@ -28,6 +21,12 @@ enum DeployerJSONTemplate {
             ),
             serviceManager: context.serviceManagerKind
         )
+        
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(config)
+        
+        return String(data: data, encoding: .utf8)
     }
 
 }

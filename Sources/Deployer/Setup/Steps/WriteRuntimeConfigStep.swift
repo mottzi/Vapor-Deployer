@@ -7,11 +7,8 @@ struct WriteRuntimeConfigStep: SetupStep {
 
     func run(context: SetupContext, console: any Console) async throws {
         let paths = try context.requirePaths()
-        let config = try DeployerJSONTemplate.configuration(from: context)
-        let data = try config.encodeJSON()
-        guard let json = String(data: data, encoding: .utf8) else {
-            throw SetupCommand.Error.invalidValue("deployer.json", "failed to encode UTF-8 JSON")
-        }
+        guard let json = try DeployerTemplate.encodeJSON(from: context)
+        else { throw SetupCommand.Error.invalidValue("deployer.json", "failed to encode UTF-8 JSON") }
         try await SetupFileSystem.writeFile(json, to: paths.deployerConfig, owner: context.serviceUser, group: context.serviceUser)
 
         switch context.serviceManagerKind {
@@ -19,6 +16,7 @@ struct WriteRuntimeConfigStep: SetupStep {
             try await removeSupervisorFiles(context: context)
             try await writeSystemdUnits(context: context)
             console.print("Wrote systemd user units.")
+            
         case .supervisor:
             try await removeSystemdFiles(context: context)
             try await writeSupervisorFiles(context: context)
