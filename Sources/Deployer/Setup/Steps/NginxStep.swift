@@ -1,7 +1,7 @@
 import Vapor
 import Foundation
 
-struct NginxBootstrapStep: SetupStep {
+struct NginxStep: SetupStep {
 
     let title = "Configuring Nginx for ACME challenge"
 

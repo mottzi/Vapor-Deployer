@@ -1,11 +1,11 @@
 import Vapor
-import Foundation
 
 struct WriteRuntimeConfigStep: SetupStep {
 
     let title = "Writing runtime configuration"
 
     func run(context: SetupContext, console: any Console) async throws {
+        
         let paths = try context.requirePaths()
         guard let json = try DeployerTemplate.encodeJSON(from: context)
         else { throw SetupCommand.Error.invalidValue("deployer.json", "failed to encode UTF-8 JSON") }
@@ -25,15 +25,18 @@ struct WriteRuntimeConfigStep: SetupStep {
     }
 
     private func writeSystemdUnits(context: SetupContext) async throws {
+        
         let paths = try context.requirePaths()
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
         try await SetupFileSystem.installDirectory(unitDirectory, owner: context.serviceUser, group: context.serviceUser)
+        
         try await SetupFileSystem.writeFile(
             try SystemdTemplate.deployerUnit(context: context),
             to: "\(unitDirectory)/deployer.service",
             owner: context.serviceUser,
             group: context.serviceUser
         )
+        
         try await SetupFileSystem.writeFile(
             try SystemdTemplate.appUnit(context: context),
             to: "\(unitDirectory)/\(context.productName).service",
@@ -43,10 +46,12 @@ struct WriteRuntimeConfigStep: SetupStep {
     }
 
     private func writeSupervisorFiles(context: SetupContext) async throws {
+        
         try await SetupFileSystem.writeFile(
             try SupervisorTemplate.deployerProgram(context: context),
             to: "/etc/supervisor/conf.d/deployer.conf"
         )
+        
         try await SetupFileSystem.writeFile(
             try SupervisorTemplate.appProgram(context: context),
             to: "/etc/supervisor/conf.d/\(context.productName).conf"
@@ -54,6 +59,7 @@ struct WriteRuntimeConfigStep: SetupStep {
     }
 
     private func removeSystemdFiles(context: SetupContext) async throws {
+        
         let paths = try context.requirePaths()
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
         _ = try? await SetupUserShell.runUserSystemctl(context, ["disable", "--now", "deployer.service", "\(context.productName).service"])
@@ -63,6 +69,7 @@ struct WriteRuntimeConfigStep: SetupStep {
     }
 
     private func removeSupervisorFiles(context: SetupContext) async throws {
+        
         _ = await Shell.run(["supervisorctl", "stop", "deployer"])
         _ = await Shell.run(["supervisorctl", "stop", context.productName])
         try? SetupFileSystem.removeIfPresent("/etc/supervisor/conf.d/deployer.conf")

@@ -1,14 +1,14 @@
 import Vapor
-import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
 
-struct GithubWebhookStep: SetupStep {
+struct WebhookStep: SetupStep {
 
     let title = "Creating GitHub webhook"
 
     func run(context: SetupContext, console: any Console) async throws {
+        
         let hooks = try await requestJSON(context: context, method: "GET", url: hooksURL(context), body: nil)
         let existingID = (hooks as? [[String: Any]])?
             .first { hook in

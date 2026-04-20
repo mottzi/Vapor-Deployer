@@ -1,25 +1,43 @@
 import Vapor
-import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
 
-struct CollectInputStep: SetupStep {
+struct InputStep: SetupStep {
 
     let title = "Collecting setup values"
 
     func run(context: SetupContext, console: any Console) async throws {
-        SetupCard.section("Runtime identity", console: console)
-        context.serviceUser = SetupPrompt.askValidated(
+        
+        collectRuntimeIdentity(context: context, console: console)
+        collectTargetRepository(context: context, console: console)
+        collectPortsAndRouting(context: context, console: console)
+        collectServiceManager(context: context, console: console)
+        try collectPanelAuthentication(context: context, console: console)
+        try await collectPublicEndpoint(context: context, console: console)
+        try await collectGitHubWebhookAccess(context: context, console: console)
+
+        console.card(title: "Planned configuration", kvs: try plannedConfiguration(context))
+    }
+
+}
+
+extension InputStep {
+
+    private func collectRuntimeIdentity(context: SetupContext, console: any Console) {
+        console.section("Runtime identity")
+        context.serviceUser = console.askValidated(
             "Dedicated service user",
             default: "vapor",
             warning: "Choose a non-root user containing only letters, numbers, dots, dashes, and underscores.",
-            console: console
-        ) { $0 != "root" && SetupValidator.isSafeName($0) }
+            validate: SetupValidator.isNonRootSafeName
+        )
+    }
 
-        SetupCard.section("Target repository", console: console)
+    private func collectTargetRepository(context: SetupContext, console: any Console) {
+        console.section("Target repository")
         while true {
-            let repoURL = SetupPrompt.askRequired("Private app repo SSH URL", console: console)
+            let repoURL = console.askRequired("Private app repo SSH URL")
             if let parsed = SetupValidator.parseGitHubSSHURL(repoURL) {
                 context.appRepositoryURL = repoURL
                 context.githubOwner = parsed.owner
@@ -29,34 +47,33 @@ struct CollectInputStep: SetupStep {
             console.warning("Use a GitHub SSH URL like git@github.com:owner/repo.git")
         }
 
-        context.appName = SetupPrompt.askValidated(
+        context.appName = console.askValidated(
             "Target app name",
             default: context.githubRepo,
             warning: "App name may contain only letters, numbers, dots, dashes, and underscores.",
-            console: console,
             validate: SetupValidator.isSafeName
         )
+    }
 
-        SetupCard.section("Ports and routing", console: console)
-        context.deployerPort = Int(SetupPrompt.askValidated(
+    private func collectPortsAndRouting(context: SetupContext, console: any Console) {
+        console.section("Ports and routing")
+        context.deployerPort = Int(console.askValidated(
             "Deployer port",
             default: "8081",
             warning: "Deployer port must be a number between 1 and 65535.",
-            console: console,
             validate: SetupValidator.isValidPort
         )) ?? 8081
 
-        context.appPort = Int(SetupPrompt.askValidated(
+        context.appPort = Int(console.askValidated(
             "Target app port",
             default: "8080",
             warning: "Target app port must be a number between 1 and 65535.",
-            console: console,
             validate: SetupValidator.isValidPort
         )) ?? 8080
 
         while true {
             let panelRoute = SetupValidator.normalizePanelRoute(
-                SetupPrompt.askRequired("Panel route", default: "/deployer", console: console)
+                console.askRequired("Panel route", default: "/deployer")
             )
             guard panelRoute != "/" else {
                 console.warning("Panel route '/' is not supported with managed Nginx setup. Use a prefixed route like /deployer.")
@@ -65,10 +82,12 @@ struct CollectInputStep: SetupStep {
             context.panelRoute = panelRoute
             break
         }
+    }
 
-        SetupCard.section("Service manager", console: console)
+    private func collectServiceManager(context: SetupContext, console: any Console) {
+        console.section("Service manager")
         while true {
-            let value = SetupPrompt.askRequired("Service manager", default: "systemd", console: console)
+            let value = console.askRequired("Service manager", default: "systemd")
             guard let kind = ServiceManagerKind(rawValue: value) else {
                 console.warning("Service manager must be 'systemd' or 'supervisor'.")
                 continue
@@ -77,19 +96,23 @@ struct CollectInputStep: SetupStep {
             break
         }
 
-        context.buildFromSource = SetupPrompt.confirm("Build deployer from source?", defaultYes: false, console: console)
+        context.buildFromSource = console.confirm("Build deployer from source?", defaultYes: false)
         context.paths = SetupPaths.derive(serviceUser: context.serviceUser, appName: context.appName, panelRoute: context.panelRoute)
+    }
 
-        SetupCard.section("Panel authentication", console: console)
-        context.panelPassword = SetupPrompt.askSecretConfirmed("Panel password", console: console)
+    private func collectPanelAuthentication(context: SetupContext, console: any Console) throws {
+        console.section("Panel authentication")
+        context.panelPassword = console.askSecretConfirmed("Panel password")
         context.webhookSecret = try generateHexSecret()
+    }
 
-        SetupCard.section("Public endpoint", console: console)
-        let publicURL = SetupPrompt.askValidated(
+    private func collectPublicEndpoint(context: SetupContext, console: any Console) async throws {
+        console.section("Public endpoint")
+        let publicURL = console.askValidated(
             "Public base URL",
             warning: "Public base URL must look like https://example.com (HTTPS + domain only, no path, no port).",
-            console: console
-        ) { SetupValidator.isValidPublicBaseURL($0) }
+            validate: SetupValidator.isValidPublicBaseURL
+        )
         context.publicBaseURL = SetupValidator.normalizeBaseURL(publicURL)
         context.primaryDomain = SetupValidator.extractHost(fromPublicBaseURL: publicURL)
         context.aliasDomain = SetupValidator.deriveAliasDomain(from: context.primaryDomain)
@@ -98,28 +121,30 @@ struct CollectInputStep: SetupStep {
         try await requireResolvableHostname(context.primaryDomain, label: "Canonical domain")
         try await requireResolvableHostname(context.aliasDomain, label: "Alias domain")
 
-        context.tlsContactEmail = SetupPrompt.askValidated(
+        context.tlsContactEmail = console.askValidated(
             "TLS contact email",
             warning: "TLS contact email must be a valid email address.",
-            console: console,
             validate: SetupValidator.isValidEmail
         )
+    }
 
-        SetupCard.section("GitHub webhook access", console: console)
-        SetupCard.card(
+    private func collectGitHubWebhookAccess(context: SetupContext, console: any Console) async throws {
+        console.section("GitHub webhook access")
+        console.card(
             title: "How to create the GitHub token",
             kvs: [
                 ("Browser", "https://github.com/settings/tokens"),
                 ("Click", "Generate new token > Generate new token (classic)"),
                 ("Select", "admin:repo_hook")
-            ],
-            console: console
+            ]
         )
         try await collectAndVerifyGitHubToken(context, console: console)
-
-        SetupCard.card(title: "Planned configuration", kvs: try plannedConfiguration(context), console: console)
     }
 
+}
+
+extension InputStep {
+    
     private func generateHexSecret() throws -> String {
         guard let handle = FileHandle(forReadingAtPath: "/dev/urandom") else {
             throw SetupCommand.Error.fileOperationFailed("/dev/urandom", CocoaError(.fileReadNoSuchFile))
@@ -138,7 +163,7 @@ struct CollectInputStep: SetupStep {
 
     private func collectAndVerifyGitHubToken(_ context: SetupContext, console: any Console) async throws {
         while true {
-            context.githubToken = SetupPrompt.askSecret("GitHub token", console: console)
+            context.githubToken = console.askSecret("GitHub token")
             do {
                 try await verifyGitHubAccess(context)
                 return
@@ -149,9 +174,8 @@ struct CollectInputStep: SetupStep {
     }
 
     private func verifyGitHubAccess(_ context: SetupContext) async throws {
-        guard let url = URL(string: "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks?per_page=1") else {
-            throw SetupCommand.Error.githubAPI("invalid hooks URL")
-        }
+        guard let url = URL(string: "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks?per_page=1")
+        else { throw SetupCommand.Error.githubAPI("invalid hooks URL") }
 
         var request = URLRequest(url: url)
         request.setValue("Bearer \(context.githubToken)", forHTTPHeaderField: "Authorization")
@@ -190,5 +214,5 @@ struct CollectInputStep: SetupStep {
             ("Webhook URL", context.webhookURL)
         ]
     }
-
+    
 }

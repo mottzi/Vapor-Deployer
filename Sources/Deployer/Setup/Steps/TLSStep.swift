@@ -1,11 +1,12 @@
 import Vapor
 import Foundation
 
-struct TlsActivationStep: SetupStep {
+struct TLSStep: SetupStep {
 
     let title = "Activating HTTPS reverse proxy"
 
     func run(context: SetupContext, console: any Console) async throws {
+        
         try await resolveExistingCertName(context: context, console: console)
         try await issueTLSCertificateWithStagingFallback(context: context, console: console)
         try await resolveCertNameAfterIssue(context: context, console: console)
@@ -18,10 +19,12 @@ struct TlsActivationStep: SetupStep {
         try await Shell.runThrowing(["ln", "-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])
         try await Shell.runThrowing(["nginx", "-t"])
         try await Shell.runThrowing(["systemctl", "reload", "nginx"])
+        
         console.print("HTTPS reverse proxy is active for \(context.primaryDomain).")
     }
 
     private func issueTLSCertificateWithStagingFallback(context: SetupContext, console: any Console) async throws {
+        
         do {
             try await issueTLSCertificate(
                 context: context,
@@ -30,10 +33,10 @@ struct TlsActivationStep: SetupStep {
             )
         } catch {
             console.warning("Production Let's Encrypt certificate issuance failed: \(error.localizedDescription)")
-            let continueWithStaging = SetupPrompt.confirm(
+            
+            let continueWithStaging = console.confirm(
                 "Use Let's Encrypt staging/test certificates and continue setup?",
-                defaultYes: true,
-                console: console
+                defaultYes: true
             )
 
             guard continueWithStaging else { throw error }

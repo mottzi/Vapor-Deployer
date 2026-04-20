@@ -1,13 +1,13 @@
 import Vapor
 import Foundation
 
-struct SuccessSummaryStep: SetupStep {
+struct SummaryStep: SetupStep {
 
     let title = "Setup complete"
 
     func run(context: SetupContext, console: any Console) async throws {
         let paths = try context.requirePaths()
-        SetupCard.card(
+        console.card(
             title: "Setup complete",
             kvs: [
                 ("Deployer panel", "\(context.publicBaseURL)\(context.panelRoute)"),
@@ -22,12 +22,11 @@ struct SuccessSummaryStep: SetupStep {
                 ("Service manager", context.serviceManagerKind.rawValue),
                 ("Check services", "sudo deployerctl status"),
                 ("Follow logs", "sudo deployerctl logs [deployer|app|all]")
-            ],
-            console: console
+            ]
         )
 
         if context.usingStagingCertificates {
-            SetupCard.lines(
+            console.lines(
                 title: "TLS warning - staging certificate in use",
                 lines: [
                     "The active certificate was issued by Let's Encrypt staging/test infrastructure.",
@@ -37,8 +36,7 @@ struct SuccessSummaryStep: SetupStep {
                     "The setup command detects staging lineages and forces a production certificate replacement.",
                     "Manual equivalent:",
                     migrationCommand(context: context, paths: paths)
-                ],
-                console: console
+                ]
             )
         }
     }

@@ -1,7 +1,7 @@
 import Vapor
 import Foundation
 
-struct SwiftlyStep: SetupStep {
+struct SwiftStep: SetupStep {
 
     let title = "Installing Swift via Swiftly"
 

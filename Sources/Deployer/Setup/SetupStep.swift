@@ -13,7 +13,7 @@ extension SetupStep {
 
     /// Prints a consistent progress header so interactive setup output stays scannable across steps.
     func printHeader(index: Int, total: Int, console: any Console) {
-        SetupCard.titledRule("[\(index)/\(total)] \(title)", console: console)
+        console.titledRule("[\(index)/\(total)] \(title)")
     }
 
 }

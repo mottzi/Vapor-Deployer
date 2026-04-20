@@ -1,7 +1,7 @@
 import Vapor
 import Foundation
 
-struct DeployerctlInstallStep: SetupStep {
+struct DeployerctlStep: SetupStep {
 
     let title = "Installing operator control wrapper"
 

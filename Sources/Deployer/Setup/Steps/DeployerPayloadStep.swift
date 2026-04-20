@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
@@ -9,6 +8,7 @@ struct DeployerPayloadStep: SetupStep {
     let title = "Preparing deployer payload"
 
     func run(context: SetupContext, console: any Console) async throws {
+        
         if context.buildFromSource {
             try await prepareSourceCheckout(context: context, console: console)
         } else {
@@ -16,9 +16,14 @@ struct DeployerPayloadStep: SetupStep {
         }
     }
 
-    private func prepareSourceCheckout(context: SetupContext, console: any Console) async throws {
-        let paths = try context.requirePaths()
+}
 
+extension DeployerPayloadStep {
+    
+    private func prepareSourceCheckout(context: SetupContext, console: any Console) async throws {
+        
+        let paths = try context.requirePaths()
+        
         if FileManager.default.fileExists(atPath: "\(paths.installDirectory)/.git") {
             try await SetupUserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "fetch", "origin", context.deployerRepositoryBranch, "--prune"])
             try await SetupUserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "checkout", context.deployerRepositoryBranch])
@@ -37,18 +42,18 @@ struct DeployerPayloadStep: SetupStep {
             console.print("Deployer checkout ready.")
         }
     }
-
+    
     private func prepareBinaryPayload(context: SetupContext, console: any Console) async throws {
         let paths = try context.requirePaths()
         try await SetupFileSystem.installDirectory(paths.installDirectory, owner: context.serviceUser, group: context.serviceUser)
-
+        
         let executableURL = try Configuration.getExecutableURL()
         let sourceDirectory = executableURL.deletingLastPathComponent()
         let publicDirectory = sourceDirectory.appendingPathComponent("Public", isDirectory: true)
         let resourcesDirectory = sourceDirectory.appendingPathComponent("Resources", isDirectory: true)
         let localReleaseTag = DeployerReleaseAssets.localReleaseTag(in: sourceDirectory)
         context.releaseVersion = localReleaseTag
-
+        
         if FileManager.default.fileExists(atPath: publicDirectory.path),
            FileManager.default.fileExists(atPath: resourcesDirectory.path) {
             if sourceDirectory.standardizedFileURL.path == URL(fileURLWithPath: paths.installDirectory, isDirectory: true).standardizedFileURL.path {
@@ -60,7 +65,7 @@ struct DeployerPayloadStep: SetupStep {
                 console.print("Current deployer payload is already in the install directory.")
                 return
             }
-
+            
             try await installPayload(
                 binary: executableURL.path,
                 publicDirectory: publicDirectory.path,
@@ -75,7 +80,7 @@ struct DeployerPayloadStep: SetupStep {
         } else if let localReleaseTag {
             let staging = try await Shell.runThrowing(["mktemp", "-d"]).trimmed
             defer { try? FileManager.default.removeItem(atPath: staging) }
-
+            
             console.print("Downloading deployer web assets for \(localReleaseTag).")
             let assets = try await DeployerReleaseAssets.downloadSourceAssets(tag: localReleaseTag, into: staging)
             try await installPayload(
@@ -91,6 +96,10 @@ struct DeployerPayloadStep: SetupStep {
             try await downloadAndInstallLatestRelease(context: context, console: console)
         }
     }
+    
+}
+
+extension DeployerPayloadStep {
 
     private func downloadAndInstallLatestRelease(context: SetupContext, console: any Console) async throws {
         let (tagName, downloadURL) = try await fetchLatestRelease()
@@ -190,5 +199,5 @@ struct DeployerPayloadStep: SetupStep {
 
         return (tagName, downloadURL)
     }
-
+    
 }

@@ -6,6 +6,10 @@ enum SetupValidator {
     static func isSafeName(_ value: String) -> Bool {
         value.range(of: #"^[A-Za-z0-9._-]+$"#, options: .regularExpression) != nil
     }
+    
+    static func isNonRootSafeName(_ value: String) -> Bool {
+        value != "root" && isSafeName(value)
+    }
 
     static func isValidPort(_ value: String) -> Bool {
         guard let port = Int(value) else { return false }

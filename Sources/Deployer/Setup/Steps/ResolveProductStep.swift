@@ -14,10 +14,9 @@ struct ResolveProductStep: SetupStep {
         switch products.count {
         case 0:
             console.warning("Could not infer an executable product from Package.swift.")
-            context.productName = SetupPrompt.askValidated(
+            context.productName = console.askValidated(
                 "Executable product name",
                 warning: "Executable product name may contain only letters, numbers, dots, dashes, and underscores.",
-                console: console,
                 validate: SetupValidator.isSafeName
             )
         case 1:

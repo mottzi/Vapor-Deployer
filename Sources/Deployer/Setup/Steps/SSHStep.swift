@@ -1,7 +1,7 @@
 import Vapor
 import Foundation
 
-struct SshKeyStep: SetupStep {
+struct SSHStep: SetupStep {
 
     let title = "Preparing GitHub clone access"
 
@@ -32,7 +32,7 @@ struct SshKeyStep: SetupStep {
         }
 
         let publicKey = (try? String(contentsOfFile: "\(paths.deployKeyPath).pub", encoding: .utf8).trimmed) ?? ""
-        SetupCard.lines(
+        console.lines(
             title: "Action required - Add deploy key to GitHub",
             lines: [
                 "Open: https://github.com/\(context.githubOwner)/\(context.githubRepo)/settings/keys",
@@ -40,11 +40,10 @@ struct SshKeyStep: SetupStep {
                 "Access: leave write access disabled (read-only key)",
                 "Public key:",
                 publicKey
-            ],
-            console: console
+            ]
         )
 
-        guard SetupPrompt.confirm("Continue after adding the deploy key on GitHub?", defaultYes: true, console: console) else {
+        guard console.confirm("Continue after adding the deploy key on GitHub?", defaultYes: true) else {
             throw SetupCommand.Error.invalidValue("deployKey", "GitHub deploy key setup was not confirmed")
         }
 

@@ -8,12 +8,12 @@ struct SetupCommand: AsyncCommand {
     var help: String { "Installs and provisions the deployer on this host." }
     
     let steps: [any SetupStep] = [
-        CollectInputStep(), PreflightStep(), PackagesStep(),
-        ServiceUserStep(), DeployerPayloadStep(), SshKeyStep(),
-        AppCheckoutStep(), ResolveProductStep(), SwiftlyStep(),
+        InputStep(), PreflightStep(), PackagesStep(),
+        ServiceUserStep(), DeployerPayloadStep(), SSHStep(),
+        AppCheckoutStep(), ResolveProductStep(), SwiftStep(),
         BuildStep(), WriteRuntimeConfigStep(), StartServicesStep(),
-        HealthCheckStep(), NginxBootstrapStep(), TlsActivationStep(),
-        DeployerctlInstallStep(), GithubWebhookStep(), SuccessSummaryStep()
+        HealthStep(), NginxStep(), TLSStep(),
+        DeployerctlStep(), WebhookStep(), SummaryStep()
     ]
 
     func run(using context: CommandContext, signature: Signature) async throws {
@@ -23,7 +23,7 @@ struct SetupCommand: AsyncCommand {
         
         let setupContext = SetupContext()
         
-        SetupCard.banner(console: context.console)
+        context.console.banner()
 
         for (index, step) in steps.enumerated() {
             step.printHeader(index: index + 1, total: steps.count, console: context.console)

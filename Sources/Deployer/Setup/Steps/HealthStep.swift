@@ -1,11 +1,12 @@
 import Vapor
 import Foundation
 
-struct HealthCheckStep: SetupStep {
+struct HealthStep: SetupStep {
 
     let title = "Running health checks"
 
     func run(context: SetupContext, console: any Console) async throws {
+        
         try await waitForService("deployer", context: context)
         console.print("Deployer service is running.")
 
@@ -19,9 +20,8 @@ struct HealthCheckStep: SetupStep {
         console.print("App listening on 127.0.0.1:\(context.appPort).")
 
         let paths = try context.requirePaths()
-        guard FileManager.default.isExecutableFile(atPath: "\(paths.appDeployDirectory)/\(context.productName)") else {
-            throw SetupCommand.Error.invalidValue("app binary", "missing deployed app binary")
-        }
+        guard FileManager.default.isExecutableFile(atPath: "\(paths.appDeployDirectory)/\(context.productName)")
+        else { throw SetupCommand.Error.invalidValue("app binary", "missing deployed app binary") }
     }
 
     private func waitForService(_ service: String, context: SetupContext) async throws {

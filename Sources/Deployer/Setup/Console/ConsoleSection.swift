@@ -2,15 +2,15 @@ import Vapor
 import Foundation
 
 /// Console rendering helpers for setup UX so each step presents progress and key configuration in a consistent visual format.
-enum SetupCard {
+extension Console {
 
     /// Clamps detected terminal width to a readable range so card formatting remains stable across TTY environments.
-    private static let terminalWidth: Int = {
+    private static var terminalWidth: Int {
         let raw = ProcessInfo.processInfo.environment["COLUMNS"].flatMap(Int.init)
             ?? tputColumns()
             ?? 80
         return min(max(raw, 40), 100)
-    }()
+    }
 
     /// Falls back to querying terminal column width when `COLUMNS` is unavailable, returning nil on non-interactive contexts.
     private static func tputColumns() -> Int? {
@@ -49,51 +49,49 @@ enum SetupCard {
         return "\(prefix)\(title) \(String(repeating: String(character), count: fill))"
     }
 
-    static func banner(console: any Console) {
-        
-        console.output("")
-        console.output(rule().consoleText(color: .cyan))
-        console.output("  Vapor Deployer · Setup".consoleText(color: .cyan, isBold: true))
-        console.output(rule().consoleText(color: .cyan))
-        console.output("")
-        console.output("  Installs the deployer + target app, configures services.".consoleText())
-        console.output("  Provisions Nginx + TLS and wires the GitHub webhook.".consoleText())
-        console.output("")
+    func banner() {
+        self.output("")
+        self.output(Self.rule().consoleText(color: .cyan))
+        self.output("  Vapor Deployer · Setup".consoleText(color: .cyan, isBold: true))
+        self.output(Self.rule().consoleText(color: .cyan))
+        self.output("")
+        self.output("  Installs the deployer + target app, configures services.".consoleText())
+        self.output("  Provisions Nginx + TLS and wires the GitHub webhook.".consoleText())
+        self.output("")
     }
 
-    static func titledRule(_ title: String, console: any Console) {
-        console.output("")
-        console.output(titledRuleText(title).consoleText(color: .cyan, isBold: true))
+    func titledRule(_ title: String) {
+        self.output("")
+        self.output(Self.titledRuleText(title).consoleText(color: .cyan, isBold: true))
     }
 
-    static func section(_ title: String, console: any Console) {
-        console.output("")
-        console.output("  \(title)".consoleText(isBold: true))
+    func section(_ title: String) {
+        self.output("")
+        self.output("  \(title)".consoleText(isBold: true))
     }
 
-    static func card(title: String, kvs: [(String, String)], console: any Console) {
-        
-        console.output("")
-        console.output(titledRuleText(title).consoleText(isBold: true))
-        console.output("")
+    func card(title: String, kvs: [(String, String)]) {
+        self.output("")
+        self.output(Self.titledRuleText(title).consoleText(isBold: true))
+        self.output("")
         for (key, value) in kvs {
-            console.output("  \(key.padding(toLength: 22, withPad: " ", startingAt: 0)) \(value)".consoleText())
+            self.output("  \(key.padding(toLength: 22, withPad: " ", startingAt: 0)) \(value)".consoleText())
         }
-        console.output("")
-        console.output(rule().consoleText())
-        console.output("")
+        self.output("")
+        self.output(Self.rule().consoleText())
+        self.output("")
     }
 
-    static func lines(title: String, lines: [String], console: any Console) {
-        console.output("")
-        console.output(titledRuleText(title).consoleText(isBold: true))
-        console.output("")
+    func lines(title: String, lines: [String]) {
+        self.output("")
+        self.output(Self.titledRuleText(title).consoleText(isBold: true))
+        self.output("")
         for line in lines {
-            console.output("  \(line)".consoleText())
+            self.output("  \(line)".consoleText())
         }
-        console.output("")
-        console.output(rule().consoleText())
-        console.output("")
+        self.output("")
+        self.output(Self.rule().consoleText())
+        self.output("")
     }
 
 }
