@@ -14,22 +14,16 @@ extension Console {
     }
 
     func askSecret(_ label: String) -> String {
-        askSecretValue(label)
-    }
-
-    private func askSecretValue(_ label: String) -> String {
         while true {
             let value = setupPromptSecret(label).trimmed
-            if !value.isEmpty {
-                return value
-            }
+            if !value.isEmpty { return value }
             self.warning("\(label) is required. Please try again.")
         }
     }
 
     func askSecretConfirmed(_ label: String) -> String {
         while true {
-            let first = askSecretValue(label)
+            let first = askSecret(label)
             let second = setupPromptSecret("Confirm \(label)")
             if first == second { return first }
             self.warning("Values did not match. Please try again.")
