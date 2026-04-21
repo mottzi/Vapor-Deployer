@@ -9,8 +9,6 @@ struct ServiceUserStep: SetupStep {
     let title = "Preparing service user"
 
     func run() async throws {
-        let paths = try context.requirePaths()
-
         if await Shell.run("id", ["-u", context.serviceUser]).exitCode == 0 {
             console.print("Reusing existing user '\(context.serviceUser)'.")
         } else {

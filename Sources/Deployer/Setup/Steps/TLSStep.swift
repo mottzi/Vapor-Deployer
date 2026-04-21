@@ -15,7 +15,6 @@ struct TLSStep: SetupStep {
         try await resolveCertNameAfterIssue()
         context.usingStagingCertificates = await lineageIsStaging(context.certName)
 
-        let paths = try context.requirePaths()
         try await SetupFileSystem.writeFile(try NginxTemplate.tls(context: context), to: paths.nginxSiteAvailable)
         try await SetupFileSystem.installDirectory("/etc/letsencrypt/renewal-hooks/deploy", owner: "root", group: "root")
         try await SetupFileSystem.writeFile(NginxTemplate.renewHookScript(), to: paths.certbotRenewHook, mode: "0755")
@@ -50,7 +49,6 @@ struct TLSStep: SetupStep {
     }
 
     private func issueTLSCertificate(staging: Bool, forceRenewal: Bool) async throws {
-        let paths = try context.requirePaths()
         let emailArguments = context.tlsContactEmail.isEmpty
             ? ["--register-unsafely-without-email"]
             : ["--email", context.tlsContactEmail]

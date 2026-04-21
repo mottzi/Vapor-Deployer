@@ -24,9 +24,6 @@ struct DeployerPayloadStep: SetupStep {
 extension DeployerPayloadStep {
     
     private func prepareSourceCheckout() async throws {
-        
-        let paths = try context.requirePaths()
-        
         if FileManager.default.fileExists(atPath: "\(paths.installDirectory)/.git") {
             try await shell.runAsServiceUser("git", ["-C", paths.installDirectory, "fetch", "origin", context.deployerRepositoryBranch, "--prune"])
             try await shell.runAsServiceUser("git", ["-C", paths.installDirectory, "checkout", context.deployerRepositoryBranch])
@@ -46,7 +43,6 @@ extension DeployerPayloadStep {
     }
     
     private func prepareBinaryPayload() async throws {
-        let paths = try context.requirePaths()
         try await SetupFileSystem.installDirectory(paths.installDirectory, owner: context.serviceUser, group: context.serviceUser)
         
         let executableURL = try Configuration.getExecutableURL()
@@ -133,8 +129,6 @@ extension DeployerPayloadStep {
         resourcesDirectory: String,
         versionFile: String?
     ) async throws {
-
-        let paths = try context.requirePaths()
         guard FileManager.default.fileExists(atPath: binary) else {
             throw SetupCommand.Error.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
         }
@@ -162,7 +156,6 @@ extension DeployerPayloadStep {
     }
 
     private func writeReleaseVersion(_ tagName: String) async throws {
-        let paths = try context.requirePaths()
         try await SetupFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
     }
 

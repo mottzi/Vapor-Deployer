@@ -20,7 +20,7 @@ struct InputStep: SetupStep {
         try await collectPublicEndpoint()
         try await collectGitHubWebhookAccess()
 
-        console.card(title: "Planned configuration", kvs: try plannedConfiguration())
+        console.card(title: "Planned configuration", kvs: plannedConfiguration())
     }
 
 }
@@ -192,9 +192,8 @@ extension InputStep {
         }
     }
 
-    private func plannedConfiguration() throws -> [(String, String)] {
-        let paths = try context.requirePaths()
-        return [
+    private func plannedConfiguration() -> [(String, String)] {
+        [
             ("Install directory", paths.installDirectory),
             ("Deployer repo", context.deployerRepositoryURL),
             ("Deployer branch", context.deployerRepositoryBranch),

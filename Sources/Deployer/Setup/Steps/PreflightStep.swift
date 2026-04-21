@@ -9,8 +9,6 @@ struct PreflightStep: SetupStep {
     let title = "Preflight checks"
 
     func run() async throws {
-        let paths = try context.requirePaths()
-
         if await userExists(context.serviceUser) {
             let home = try await homeDirectory(for: context.serviceUser)
             guard home == paths.serviceHome else {

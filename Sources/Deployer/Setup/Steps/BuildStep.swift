@@ -9,7 +9,6 @@ struct BuildStep: SetupStep {
     let title = "Building deployer and target app"
 
     func run() async throws {
-        let paths = try context.requirePaths()
         let env = ["HOME": paths.serviceHome, "USER": context.serviceUser, "PATH": paths.swiftPath]
         let swift = "\(paths.swiftlyBinDirectory)/swift"
 

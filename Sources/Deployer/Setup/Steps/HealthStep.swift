@@ -22,7 +22,6 @@ struct HealthStep: SetupStep {
         try await waitForTCP(port: context.appPort)
         console.print("App listening on 127.0.0.1:\(context.appPort).")
 
-        let paths = try context.requirePaths()
         guard FileManager.default.isExecutableFile(atPath: "\(paths.appDeployDirectory)/\(context.productName)")
         else { throw SetupCommand.Error.invalidValue("app binary", "missing deployed app binary") }
     }

@@ -9,7 +9,6 @@ struct SummaryStep: SetupStep {
     let title = "Setup complete"
 
     func run() async throws {
-        let paths = try context.requirePaths()
         console.card(
             title: "Setup complete",
             kvs: [

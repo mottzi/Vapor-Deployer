@@ -8,8 +8,6 @@ struct WriteRuntimeConfigStep: SetupStep {
     let title = "Writing runtime configuration"
 
     func run() async throws {
-        
-        let paths = try context.requirePaths()
         guard let json = try DeployerTemplate.encodeJSON(from: context)
         else { throw SetupCommand.Error.invalidValue("deployer.json", "failed to encode UTF-8 JSON") }
         try await SetupFileSystem.writeFile(json, to: paths.deployerConfig, owner: context.serviceUser, group: context.serviceUser)
@@ -28,8 +26,6 @@ struct WriteRuntimeConfigStep: SetupStep {
     }
 
     private func writeSystemdUnits() async throws {
-        
-        let paths = try context.requirePaths()
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
         try await SetupFileSystem.installDirectory(unitDirectory, owner: context.serviceUser, group: context.serviceUser)
         
@@ -62,8 +58,6 @@ struct WriteRuntimeConfigStep: SetupStep {
     }
 
     private func removeSystemdFiles() async throws {
-        
-        let paths = try context.requirePaths()
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
         _ = try? await shell.runUserSystemctl("disable", ["--now", "deployer.service", "\(context.productName).service"])
         try? SetupFileSystem.removeIfPresent("\(unitDirectory)/deployer.service")

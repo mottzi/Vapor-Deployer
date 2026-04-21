@@ -9,7 +9,6 @@ struct AppCheckoutStep: SetupStep {
     let title = "Preparing target app checkout"
 
     func run() async throws {
-        let paths = try context.requirePaths()
         let sshCommand = "ssh -i \(paths.deployKeyPath) -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
 
         if FileManager.default.fileExists(atPath: "\(paths.appDirectory)/.git") {
