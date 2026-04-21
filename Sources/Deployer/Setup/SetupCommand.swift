@@ -18,8 +18,8 @@ struct SetupCommand: AsyncCommand {
             InputStep.self,
             PreflightStep.self,
             PackagesStep.self,
-            ServiceUserStep.self, //
-            DeployerPayloadStep.self,
+            ServiceUserStep.self,
+            DeployerPayloadStep.self, //
             SSHStep.self,
             AppCheckoutStep.self,
             ResolveProductStep.self,

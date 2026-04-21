@@ -1,5 +1,6 @@
 import Vapor
 
+/// Determines the source or pre-built executable payload and stages it into the final installation directory.
 struct DeployerPayloadStep: SetupStep {
 
     let context: SetupContext
@@ -10,9 +11,9 @@ struct DeployerPayloadStep: SetupStep {
     func run() async throws {
         
         if context.buildFromSource {
-            try await prepareSourceCheckout()
+            try await installFromSource()
         } else {
-            try await prepareBinaryPayload()
+            try await installFromBinary()
         }
     }
 
@@ -20,7 +21,8 @@ struct DeployerPayloadStep: SetupStep {
 
 extension DeployerPayloadStep {
     
-    private func prepareSourceCheckout() async throws {
+    /// Updates an existing repository clone or creates a fresh one to build the deployer from source.
+    private func installFromSource() async throws {
         
         if FileManager.default.fileExists(atPath: "\(paths.installDirectory)/.git") {
             try await shell.git("fetch", ["origin", context.deployerRepositoryBranch, "--prune"], in: paths.installDirectory)
@@ -43,20 +45,21 @@ extension DeployerPayloadStep {
         }
     }
     
-    private func prepareBinaryPayload() async throws {
+    /// Acquires and installs a pre-built executable alongside its required web assets.
+    private func installFromBinary() async throws {
         
         try await SetupFileSystem.installDirectory(paths.installDirectory, owner: context.serviceUser, group: context.serviceUser)
         
-        let executableURL = try Configuration.getExecutableURL()
-        let sourceDirectory = executableURL.deletingLastPathComponent()
-        let publicDirectory = sourceDirectory.appendingPathComponent("Public", isDirectory: true)
-        let resourcesDirectory = sourceDirectory.appendingPathComponent("Resources", isDirectory: true)
-        let localReleaseTag = DeployerReleaseAssets.localReleaseTag(in: sourceDirectory)
+        let currentExecutableURL = try Configuration.getExecutableURL()
+        let executableDirectory = currentExecutableURL.deletingLastPathComponent()
+        let publicDirectory = executableDirectory.appendingPathComponent("Public", isDirectory: true)
+        let resourcesDirectory = executableDirectory.appendingPathComponent("Resources", isDirectory: true)
+        let localReleaseTag = DeployerReleaseAssets.localReleaseTag(in: executableDirectory)
         context.releaseVersion = localReleaseTag
         
         if FileManager.default.fileExists(atPath: publicDirectory.path),
            FileManager.default.fileExists(atPath: resourcesDirectory.path) {
-            if sourceDirectory.path.isSamePath(as: paths.installDirectory) {
+            if executableDirectory.path.isSamePath(as: paths.installDirectory) {
                 try await Shell.runThrowing("chmod", ["0755", paths.deployerBinary])
                 try await Shell.runThrowing("chown", ["-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
                 if let localReleaseTag { try await writeReleaseVersion(localReleaseTag) }
@@ -65,21 +68,21 @@ extension DeployerPayloadStep {
             }
             
             try await installPayload(
-                binary: executableURL.path,
+                binary: currentExecutableURL.path,
                 publicDirectory: publicDirectory.path,
                 resourcesDirectory: resourcesDirectory.path,
-                versionFile: sourceDirectory.appendingPathComponent(".version").path
+                versionFile: executableDirectory.appendingPathComponent(".version").path
             )
             if let localReleaseTag { try await writeReleaseVersion(localReleaseTag) }
             console.print("Installed deployer payload from current release directory.")
         } else if let localReleaseTag {
-            let staging = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
-            defer { try? FileManager.default.removeItem(atPath: staging) }
+            let stagingPath = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
+            defer { try? FileManager.default.removeItem(atPath: stagingPath) }
             
             console.print("Downloading deployer web assets for \(localReleaseTag).")
-            let assets = try await DeployerReleaseAssets.downloadSourceAssets(tag: localReleaseTag, into: staging)
+            let assets = try await DeployerReleaseAssets.downloadSourceAssets(tag: localReleaseTag, into: stagingPath)
             try await installPayload(
-                binary: executableURL.path,
+                binary: currentExecutableURL.path,
                 publicDirectory: assets.publicDirectory,
                 resourcesDirectory: assets.resourcesDirectory,
                 versionFile: nil
@@ -87,7 +90,7 @@ extension DeployerPayloadStep {
             try await writeReleaseVersion(localReleaseTag)
             console.print("Installed deployer binary with repository assets for \(localReleaseTag).")
         } else {
-            try await downloadAndInstallLatestRelease()
+            try await installLatestRelease()
         }
     }
     
@@ -95,24 +98,25 @@ extension DeployerPayloadStep {
 
 extension DeployerPayloadStep {
 
-    private func downloadAndInstallLatestRelease() async throws {
+    /// Fetches the most recent published release archive from GitHub and stages its contents.
+    private func installLatestRelease() async throws {
         
-        let (tagName, downloadURL) = try await fetchLatestRelease()
+        let (tagName, downloadURL) = try await fetchLatestReleaseMetadata()
         context.releaseVersion = tagName
 
-        let archive = try await Shell.runThrowing("mktemp", []).trimmed
-        defer { try? FileManager.default.removeItem(atPath: archive) }
+        let archivePath = try await Shell.runThrowing("mktemp", []).trimmed
+        defer { try? FileManager.default.removeItem(atPath: archivePath) }
 
-        let staging = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
-        defer { try? FileManager.default.removeItem(atPath: staging) }
+        let stagingPath = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
+        defer { try? FileManager.default.removeItem(atPath: stagingPath) }
 
         console.print("Downloading \(downloadURL).")
-        try await Shell.runThrowing("curl", ["--silent", "--show-error", "--fail", "--location", "-o", archive, downloadURL])
-        try await Shell.runThrowing("tar", ["-xzf", archive, "-C", staging, "--warning=no-unknown-keyword"])
-        let assets = try await DeployerReleaseAssets.ensureAssets(in: staging, tag: tagName)
+        try await Shell.runThrowing("curl", ["--silent", "--show-error", "--fail", "--location", "-o", archivePath, downloadURL])
+        try await Shell.runThrowing("tar", ["-xzf", archivePath, "-C", stagingPath, "--warning=no-unknown-keyword"])
+        let assets = try await DeployerReleaseAssets.ensureAssets(in: stagingPath, tag: tagName)
 
         try await installPayload(
-            binary: "\(staging)/deployer",
+            binary: "\(stagingPath)/deployer",
             publicDirectory: assets.publicDirectory,
             resourcesDirectory: assets.resourcesDirectory,
             versionFile: nil
@@ -122,12 +126,14 @@ extension DeployerPayloadStep {
         console.print("Deployer release \(tagName) installed.")
     }
 
+    /// Copies the executable binary, public directory, and resources into their final destinations.
     private func installPayload(
         binary: String,
         publicDirectory: String,
         resourcesDirectory: String,
         versionFile: String?
     ) async throws {
+        
         guard FileManager.default.fileExists(atPath: binary) else {
             throw SetupCommand.Error.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
         }
@@ -152,14 +158,19 @@ extension DeployerPayloadStep {
             try SetupFileSystem.copyReplacing(source: versionFile, destination: "\(paths.installDirectory)/.version")
         }
 
-        try await Shell.runThrowing("chown", ["-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
+        try await Shell.runThrowing("chown", [
+            "-R", "\(context.serviceUser):\(context.serviceUser)",
+            paths.installDirectory
+        ])
     }
 
+    /// Records the active release tag into a local tracking file to avoid redundant downloads.
     private func writeReleaseVersion(_ tagName: String) async throws {
         try await SetupFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
     }
 
-    private func fetchLatestRelease() async throws -> (tagName: String, downloadURL: String) {
+    /// Queries the GitHub API to determine the appropriate asset download URL for the host machine.
+    private func fetchLatestReleaseMetadata() async throws -> (tagName: String, downloadURL: String) {
         
         guard let apiURL = URL(string: "https://api.github.com/repos/mottzi/Vapor-Deployer/releases/latest") else {
             throw SetupCommand.Error.releaseAssetNotFound("invalid API URL")
@@ -173,16 +184,15 @@ extension DeployerPayloadStep {
             throw SetupCommand.Error.releaseAssetNotFound("malformed release response")
         }
 
-        let arch = try await Shell.runThrowing("uname", ["-m"]).trimmed
-        let preferredAsset = "deployer-linux-\(arch).tar.gz"
-        let downloadURL = assets
-            .first(where: { ($0["name"] as? String) == preferredAsset })
-            .flatMap { $0["browser_download_url"] as? String }
-            ?? assets
-            .first(where: { ($0["name"] as? String) == "deployer.tar.gz" })
-            .flatMap { $0["browser_download_url"] as? String }
+        let systemArchitecture = try await Shell.runThrowing("uname", ["-m"]).trimmed
+        let preferredAssetFilename = "deployer-linux-\(systemArchitecture).tar.gz"
+        let targetAssetNames = [preferredAssetFilename, "deployer.tar.gz"]
+        let downloadURL = targetAssetNames.lazy
+            .compactMap { name in assets.first(where: { ($0["name"] as? String) == name }) }
+            .compactMap { $0["browser_download_url"] as? String }
+            .first
 
-        guard let downloadURL else { throw SetupCommand.Error.releaseAssetNotFound(preferredAsset) }
+        guard let downloadURL else { throw SetupCommand.Error.releaseAssetNotFound(preferredAssetFilename) }
 
         return (tagName, downloadURL)
     }
@@ -193,8 +203,9 @@ private extension String {
 
     /// Compares two filesystem paths after `.standardizedFileURL` normalization so `/a/./b` and `/a/b` match.
     func isSamePath(as other: String) -> Bool {
-        URL(fileURLWithPath: self).standardizedFileURL.path
-            == URL(fileURLWithPath: other).standardizedFileURL.path
+        let selfURL = URL(fileURLWithPath: self).standardizedFileURL.path
+        let otherURL = URL(fileURLWithPath: other).standardizedFileURL.path
+        return selfURL == otherURL
     }
 
 }
