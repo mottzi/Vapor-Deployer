@@ -1,8 +1,6 @@
 import Foundation
 
-/// Shell facade used by setup steps. Instance methods run commands against the
-/// configured service account using the bound `SetupContext`, while `static`
-/// members expose the lower-level primitives that don't depend on context.
+// Shell facade for setup steps; instance methods use SetupContext, static members provide lower-level commands.
 struct SetupShell {
     
     let context: SetupContext
@@ -10,45 +8,47 @@ struct SetupShell {
     /// Runs as the configured service user while enforcing `HOME` and `USER` so tool behavior matches non-root runtime expectations.
     @discardableResult
     func runAsServiceUser(
-        _ arguments: [String],
+        _ command: String,
+        _ arguments: [String] = [],
         directory: String? = nil,
         environment: [String: String]? = nil
     ) async throws -> String {
         
-        let mergedEnvironment = serviceUserEnvironment(merging: environment)
-        return try await SetupShell.runAs(
+        try await SetupShell.runAs(
             user: context.serviceUser,
+            command,
             arguments,
             directory: directory,
-            environment: mergedEnvironment
+            environment: serviceUserEnvironment(merging: environment)
         )
     }
     
     /// Streaming variant of `runAsServiceUser` for long tasks where live progress is needed without sacrificing service-user environment defaults.
     @discardableResult
     func runAsServiceUserStreamingTail(
-        _ arguments: [String],
+        _ command: String,
+        _ arguments: [String] = [],
         directory: String? = nil,
         environment: [String: String]? = nil
     ) async throws -> String {
         
-        let mergedEnvironment = serviceUserEnvironment(merging: environment)
-        return try await SetupShell.runAsStreamingTail(
+        try await SetupShell.runAsStreamingTail(
             user: context.serviceUser,
+            command,
             arguments,
             directory: directory,
-            environment: mergedEnvironment
+            environment: serviceUserEnvironment(merging: environment)
         )
     }
     
     /// Runs `systemctl --user` against the setup service account by resolving UID-bound DBus runtime paths from collected setup state.
     @discardableResult
-    func runUserSystemctl(_ arguments: [String]) async throws -> String {
+    func runUserSystemctl(_ command: String, _ arguments: [String] = []) async throws -> String {
         
-        let uid = try await context.requireServiceUserUID()
-        return try await runAsServiceUser(
-            ["systemctl", "--user"] + arguments,
-            environment: SetupShell.systemdUserEnvironment(uid: uid)
+        try await runAsServiceUser(
+            "systemctl --user \(command)",
+            arguments,
+            environment: SetupShell.systemdUserEnvironment(uid: try await context.requireServiceUserUID())
         )
     }
     
@@ -69,13 +69,16 @@ extension SetupShell {
     @discardableResult
     static func runAs(
         user: String,
-        _ arguments: [String],
+        _ command: String,
+        _ arguments: [String] = [],
         directory: String? = nil,
         environment: [String: String]? = nil
     ) async throws -> String {
 
+        let runuser = runuserCommand(user: user, command: command, arguments: arguments, environment: environment)
         return try await Shell.runThrowing(
-            runuserCommand(user: user, arguments: arguments, environment: environment),
+            runuser.command,
+            runuser.arguments,
             directory: directory
         )
     }
@@ -84,13 +87,16 @@ extension SetupShell {
     @discardableResult
     static func runAsStreamingTail(
         user: String,
-        _ arguments: [String],
+        _ command: String,
+        _ arguments: [String] = [],
         directory: String? = nil,
         environment: [String: String]? = nil
     ) async throws -> String {
 
+        let runuser = runuserCommand(user: user, command: command, arguments: arguments, environment: environment)
         return try await Shell.runStreamingTailThrowing(
-            runuserCommand(user: user, arguments: arguments, environment: environment),
+            runuser.command,
+            runuser.arguments,
             directory: directory
         )
     }
@@ -119,17 +125,20 @@ extension SetupShell {
 
     private static func runuserCommand(
         user: String,
+        command: String,
         arguments: [String],
         environment: [String: String]?
-    ) -> [String] {
+    ) -> (command: String, arguments: [String]) {
 
         let envArguments = (environment ?? [:])
             .sorted { $0.key < $1.key }
             .map { "\($0.key)=\($0.value)" }
 
-        return envArguments.isEmpty
-            ? ["runuser", "-u", user, "--"] + arguments
-            : ["runuser", "-u", user, "--", "env"] + envArguments + arguments
+        let userArgv = Shell.tokenize(command) + arguments
+        let runuserArgs = envArguments.isEmpty
+            ? ["-u", user, "--"] + userArgv
+            : ["-u", user, "--", "env"] + envArguments + userArgv
+        return ("runuser", runuserArgs)
     }
 
 }

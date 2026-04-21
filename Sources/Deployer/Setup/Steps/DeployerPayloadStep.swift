@@ -28,16 +28,15 @@ extension DeployerPayloadStep {
         let paths = try context.requirePaths()
         
         if FileManager.default.fileExists(atPath: "\(paths.installDirectory)/.git") {
-            try await shell.runAsServiceUser(["git", "-C", paths.installDirectory, "fetch", "origin", context.deployerRepositoryBranch, "--prune"])
-            try await shell.runAsServiceUser(["git", "-C", paths.installDirectory, "checkout", context.deployerRepositoryBranch])
-            try await shell.runAsServiceUser(["git", "-C", paths.installDirectory, "pull", "--ff-only", "origin", context.deployerRepositoryBranch])
+            try await shell.runAsServiceUser("git", ["-C", paths.installDirectory, "fetch", "origin", context.deployerRepositoryBranch, "--prune"])
+            try await shell.runAsServiceUser("git", ["-C", paths.installDirectory, "checkout", context.deployerRepositoryBranch])
+            try await shell.runAsServiceUser("git", ["-C", paths.installDirectory, "pull", "--ff-only", "origin", context.deployerRepositoryBranch])
             console.print("Deployer checkout updated.")
         } else {
             if FileManager.default.fileExists(atPath: paths.installDirectory) {
                 try? FileManager.default.removeItem(atPath: paths.installDirectory)
             }
-            try await shell.runAsServiceUser([
-                "git", "clone",
+            try await shell.runAsServiceUser("git clone", [
                 "--branch", context.deployerRepositoryBranch,
                 context.deployerRepositoryURL,
                 paths.installDirectory
@@ -60,8 +59,8 @@ extension DeployerPayloadStep {
         if FileManager.default.fileExists(atPath: publicDirectory.path),
            FileManager.default.fileExists(atPath: resourcesDirectory.path) {
             if sourceDirectory.standardizedFileURL.path == URL(fileURLWithPath: paths.installDirectory, isDirectory: true).standardizedFileURL.path {
-                try await Shell.runThrowing(["chmod", "0755", paths.deployerBinary])
-                try await Shell.runThrowing(["chown", "-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
+                try await Shell.runThrowing("chmod", ["0755", paths.deployerBinary])
+                try await Shell.runThrowing("chown", ["-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
                 if let localReleaseTag {
                     try await writeReleaseVersion(localReleaseTag)
                 }
@@ -80,7 +79,7 @@ extension DeployerPayloadStep {
             }
             console.print("Installed deployer payload from current release directory.")
         } else if let localReleaseTag {
-            let staging = try await Shell.runThrowing(["mktemp", "-d"]).trimmed
+            let staging = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
             defer { try? FileManager.default.removeItem(atPath: staging) }
             
             console.print("Downloading deployer web assets for \(localReleaseTag).")
@@ -106,15 +105,15 @@ extension DeployerPayloadStep {
         let (tagName, downloadURL) = try await fetchLatestRelease()
         context.releaseVersion = tagName
 
-        let archive = try await Shell.runThrowing(["mktemp"]).trimmed
+        let archive = try await Shell.runThrowing("mktemp", []).trimmed
         defer { try? FileManager.default.removeItem(atPath: archive) }
 
-        let staging = try await Shell.runThrowing(["mktemp", "-d"]).trimmed
+        let staging = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
         defer { try? FileManager.default.removeItem(atPath: staging) }
 
         console.print("Downloading \(downloadURL).")
-        try await Shell.runThrowing(["curl", "--silent", "--show-error", "--fail", "--location", "-o", archive, downloadURL])
-        try await Shell.runThrowing(["tar", "-xzf", archive, "-C", staging, "--warning=no-unknown-keyword"])
+        try await Shell.runThrowing("curl", ["--silent", "--show-error", "--fail", "--location", "-o", archive, downloadURL])
+        try await Shell.runThrowing("tar", ["-xzf", archive, "-C", staging, "--warning=no-unknown-keyword"])
         let assets = try await DeployerReleaseAssets.ensureAssets(in: staging, tag: tagName)
 
         try await installPayload(
@@ -141,7 +140,7 @@ extension DeployerPayloadStep {
         }
 
         if URL(fileURLWithPath: binary).standardizedFileURL.path != URL(fileURLWithPath: paths.deployerBinary).standardizedFileURL.path {
-            try await Shell.runThrowing(["install", "-m", "0755", "-o", context.serviceUser, "-g", context.serviceUser, binary, paths.deployerBinary])
+            try await Shell.runThrowing("install", ["-m", "0755", "-o", context.serviceUser, "-g", context.serviceUser, binary, paths.deployerBinary])
         }
 
         if FileManager.default.fileExists(atPath: publicDirectory),
@@ -159,7 +158,7 @@ extension DeployerPayloadStep {
             try SetupFileSystem.copyReplacing(source: versionFile, destination: "\(paths.installDirectory)/.version")
         }
 
-        try await Shell.runThrowing(["chown", "-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
+        try await Shell.runThrowing("chown", ["-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
     }
 
     private func writeReleaseVersion(_ tagName: String) async throws {
@@ -183,7 +182,7 @@ extension DeployerPayloadStep {
             throw SetupCommand.Error.releaseAssetNotFound("malformed release response")
         }
 
-        let arch = try await Shell.runThrowing(["uname", "-m"]).trimmed
+        let arch = try await Shell.runThrowing("uname", ["-m"]).trimmed
         let preferredAsset = "deployer-linux-\(arch).tar.gz"
         let downloadURL = assets
             .first(where: { ($0["name"] as? String) == preferredAsset })

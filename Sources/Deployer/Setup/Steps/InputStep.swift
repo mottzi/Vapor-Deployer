@@ -158,7 +158,7 @@ extension InputStep {
     }
 
     private func requireResolvableHostname(_ host: String, label: String) async throws {
-        let result = await Shell.run(["getent", "ahosts", host])
+        let result = await Shell.run("getent", ["ahosts", host])
         guard result.exitCode == 0 else {
             throw SetupCommand.Error.invalidValue(label, "'\(host)' does not resolve in DNS. Point it to this server before continuing.")
         }

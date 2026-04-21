@@ -58,8 +58,8 @@ enum DeployerReleaseAssets {
         defer { try? FileManager.default.removeItem(atPath: archive) }
         try FileManager.default.createDirectory(atPath: sourceDirectory, withIntermediateDirectories: true)
 
-        try await Shell.runThrowing(["curl", "--silent", "--show-error", "--fail", "--location", "-o", archive, archiveURL])
-        try await Shell.runThrowing(["tar", "-xzf", archive, "-C", sourceDirectory, "--warning=no-unknown-keyword"])
+        try await Shell.runThrowing("curl", ["--silent", "--show-error", "--fail", "--location", "-o", archive, archiveURL])
+        try await Shell.runThrowing("tar", ["-xzf", archive, "-C", sourceDirectory, "--warning=no-unknown-keyword"])
 
         guard let assets = findAssets(in: sourceDirectory) else {
             throw Error.assetsNotFound(tag)

@@ -11,11 +11,10 @@ struct ServiceUserStep: SetupStep {
     func run() async throws {
         let paths = try context.requirePaths()
 
-        if await Shell.run(["id", "-u", context.serviceUser]).exitCode == 0 {
+        if await Shell.run("id", ["-u", context.serviceUser]).exitCode == 0 {
             console.print("Reusing existing user '\(context.serviceUser)'.")
         } else {
-            try await Shell.runThrowing([
-                "useradd",
+            try await Shell.runThrowing("useradd", [
                 "--system",
                 "--create-home",
                 "--home-dir", paths.serviceHome,
@@ -31,7 +30,7 @@ struct ServiceUserStep: SetupStep {
         try await SetupFileSystem.installDirectory(paths.appsRootDirectory, owner: context.serviceUser, group: context.serviceUser)
 
         if FileManager.default.fileExists(atPath: paths.installDirectory) {
-            try await Shell.runThrowing(["chown", "-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
+            try await Shell.runThrowing("chown", ["-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
         }
     }
 

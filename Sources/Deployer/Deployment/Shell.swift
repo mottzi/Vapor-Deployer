@@ -21,34 +21,38 @@ struct Shell {
     }
 
     @discardableResult static func runThrowing(
+        _ command: String,
         _ arguments: [String],
         directory: String? = nil,
         environment: [String: String]? = nil
     ) async throws -> String {
 
-        let result = await run(arguments, directory: directory, environment: environment)
-        guard result.exitCode == 0 else { throw Shell.Error(command: arguments.joined(separator: " "), output: result.output) }
+        let result = await run(command, arguments, directory: directory, environment: environment)
+        let fullCommand = (Shell.tokenize(command) + arguments).joined(separator: " ")
+        guard result.exitCode == 0 else { throw Shell.Error(command: fullCommand, output: result.output) }
         return result.output
     }
 
     static func run(_ command: String, directory: String? = nil) async -> Result {
-        await run(["bash", "-c", command], directory: directory)
+        await run("bash", ["-c", command], directory: directory)
     }
 
     static func run(
+        _ command: String,
         _ arguments: [String],
         directory: String? = nil,
         environment: [String: String]? = nil
     ) async -> Result {
 
-        guard let executable = arguments.first else {
+        let argv = Shell.tokenize(command) + arguments
+        guard let executable = argv.first else {
             return Result(output: "No command was provided.", exitCode: -1)
         }
 
         let process = Process()
         let executablePath = executable.contains("/") ? executable : "/usr/bin/env"
         process.executableURL = URL(fileURLWithPath: executablePath)
-        process.arguments = executable.contains("/") ? Array(arguments.dropFirst()) : arguments
+        process.arguments = executable.contains("/") ? Array(argv.dropFirst()) : argv
         if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory) }
         if let environment {
             process.environment = ProcessInfo.processInfo.environment.merging(environment) { _, new in new }
@@ -76,6 +80,7 @@ struct Shell {
     }
 
     static func runStreamingTail(
+        _ command: String,
         _ arguments: [String],
         directory: String? = nil,
         environment: [String: String]? = nil,
@@ -84,14 +89,15 @@ struct Shell {
         forceTTY: Bool? = nil
     ) async -> Result {
 
-        guard let executable = arguments.first else {
+        let argv = Shell.tokenize(command) + arguments
+        guard let executable = argv.first else {
             return Result(output: "No command was provided.", exitCode: -1)
         }
 
         let process = Process()
         let executablePath = executable.contains("/") ? executable : "/usr/bin/env"
         process.executableURL = URL(fileURLWithPath: executablePath)
-        process.arguments = executable.contains("/") ? Array(arguments.dropFirst()) : arguments
+        process.arguments = executable.contains("/") ? Array(argv.dropFirst()) : argv
         if let directory { process.currentDirectoryURL = URL(fileURLWithPath: directory) }
         if let environment {
             process.environment = ProcessInfo.processInfo.environment.merging(environment) { _, new in new }
@@ -134,6 +140,7 @@ struct Shell {
     }
 
     @discardableResult static func runStreamingTailThrowing(
+        _ command: String,
         _ arguments: [String],
         directory: String? = nil,
         environment: [String: String]? = nil,
@@ -143,6 +150,7 @@ struct Shell {
     ) async throws -> String {
 
         let result = await runStreamingTail(
+            command,
             arguments,
             directory: directory,
             environment: environment,
@@ -150,11 +158,16 @@ struct Shell {
             redrawInterval: redrawInterval,
             forceTTY: forceTTY
         )
-        guard result.exitCode == 0 else { throw Shell.Error(command: arguments.joined(separator: " "), output: result.output) }
+        let fullCommand = (Shell.tokenize(command) + arguments).joined(separator: " ")
+        guard result.exitCode == 0 else { throw Shell.Error(command: fullCommand, output: result.output) }
         return result.output
     }
 
-    
+    /// Splits a command string on whitespace so callers can pass a logical command like "git clone" separately from per-call arguments.
+    static func tokenize(_ command: String) -> [String] {
+        command.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+    }
+
 }
 
 private final class StreamingTailRenderer: @unchecked Sendable {

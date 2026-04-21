@@ -47,8 +47,8 @@ extension SetupContext {
     
     /// Enforces that path layout has been derived before provisioning steps try to consume it.
     func requirePaths() throws -> SetupPaths {
-        guard let paths else { throw SetupCommand.Error.missingValue("paths") }
-        return paths
+        if let paths { return paths }
+        throw SetupCommand.Error.missingValue("paths")
     }
 
     /// Resolves and memoizes the service user's UID so user-scoped systemd calls can build runtime and DBus paths reliably.
@@ -56,7 +56,7 @@ extension SetupContext {
         
         if let serviceUserUID { return serviceUserUID }
 
-        let stringUID = try await Shell.runThrowing(["id", "-u", serviceUser]).trimmed
+        let stringUID = try await Shell.runThrowing("id", ["-u", serviceUser]).trimmed
         
         guard let intUID = Int(stringUID) else {
             throw SetupCommand.Error.invalidValue("serviceUserUID", "could not parse uid '\(stringUID)'")

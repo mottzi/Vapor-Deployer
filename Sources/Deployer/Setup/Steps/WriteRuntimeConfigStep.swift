@@ -65,20 +65,20 @@ struct WriteRuntimeConfigStep: SetupStep {
         
         let paths = try context.requirePaths()
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
-        _ = try? await shell.runUserSystemctl(["disable", "--now", "deployer.service", "\(context.productName).service"])
+        _ = try? await shell.runUserSystemctl("disable", ["--now", "deployer.service", "\(context.productName).service"])
         try? SetupFileSystem.removeIfPresent("\(unitDirectory)/deployer.service")
         try? SetupFileSystem.removeIfPresent("\(unitDirectory)/\(context.productName).service")
-        _ = try? await shell.runUserSystemctl(["daemon-reload"])
+        _ = try? await shell.runUserSystemctl("daemon-reload")
     }
 
     private func removeSupervisorFiles() async throws {
         
-        _ = await Shell.run(["supervisorctl", "stop", "deployer"])
-        _ = await Shell.run(["supervisorctl", "stop", context.productName])
+        _ = await Shell.run("supervisorctl", ["stop", "deployer"])
+        _ = await Shell.run("supervisorctl", ["stop", context.productName])
         try? SetupFileSystem.removeIfPresent("/etc/supervisor/conf.d/deployer.conf")
         try? SetupFileSystem.removeIfPresent("/etc/supervisor/conf.d/\(context.productName).conf")
-        _ = await Shell.run(["supervisorctl", "reread"])
-        _ = await Shell.run(["supervisorctl", "update"])
+        _ = await Shell.run("supervisorctl", ["reread"])
+        _ = await Shell.run("supervisorctl", ["update"])
     }
 
 }

@@ -15,7 +15,7 @@ enum SetupFileSystem {
         try contents.write(to: temporaryURL, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: temporaryURL) }
 
-        try await Shell.runThrowing(["install", "-m", mode, "-o", owner, "-g", group, temporaryURL.path, path])
+        try await Shell.runThrowing("install", ["-m", mode, "-o", owner, "-g", group, temporaryURL.path, path])
     }
 
     /// Creates or normalizes a directory with explicit ownership so reruns converge without manual `mkdir/chown` sequencing.
@@ -25,7 +25,7 @@ enum SetupFileSystem {
         owner: String,
         group: String
     ) async throws {
-        try await Shell.runThrowing(["install", "-d", "-m", mode, "-o", owner, "-g", group, path])
+        try await Shell.runThrowing("install", ["-d", "-m", mode, "-o", owner, "-g", group, path])
     }
 
     /// Deletes a managed path only when present to keep cleanup idempotent across reruns.

@@ -19,9 +19,9 @@ struct TLSStep: SetupStep {
         try await SetupFileSystem.writeFile(try NginxTemplate.tls(context: context), to: paths.nginxSiteAvailable)
         try await SetupFileSystem.installDirectory("/etc/letsencrypt/renewal-hooks/deploy", owner: "root", group: "root")
         try await SetupFileSystem.writeFile(NginxTemplate.renewHookScript(), to: paths.certbotRenewHook, mode: "0755")
-        try await Shell.runThrowing(["ln", "-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])
-        try await Shell.runThrowing(["nginx", "-t"])
-        try await Shell.runThrowing(["systemctl", "reload", "nginx"])
+        try await Shell.runThrowing("ln", ["-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])
+        try await Shell.runThrowing("nginx", ["-t"])
+        try await Shell.runThrowing("systemctl", ["reload", "nginx"])
         
         console.print("HTTPS reverse proxy is active for \(context.primaryDomain).")
     }
@@ -57,8 +57,8 @@ struct TLSStep: SetupStep {
         let serverArguments = staging ? ["--staging"] : []
         let renewalArguments = forceRenewal ? ["--force-renewal"] : ["--keep-until-expiring"]
 
-        try await Shell.runThrowing([
-            "certbot", "certonly",
+        try await Shell.runThrowing("certbot", [
+            "certonly",
             "--webroot",
             "--agree-tos",
             "--non-interactive"
@@ -124,13 +124,13 @@ struct TLSStep: SetupStep {
 
     private func lineageCoversDomains(_ name: String) async -> Bool {
         let cert = "/etc/letsencrypt/live/\(name)/fullchain.pem"
-        let output = await Shell.run(["openssl", "x509", "-noout", "-text", "-in", cert]).output
+        let output = await Shell.run("openssl", ["x509", "-noout", "-text", "-in", cert]).output
         return output.contains("DNS:\(context.primaryDomain)") && output.contains("DNS:\(context.aliasDomain)")
     }
 
     private func lineageIsStaging(_ name: String) async -> Bool {
         let cert = "/etc/letsencrypt/live/\(name)/fullchain.pem"
-        let issuer = await Shell.run(["openssl", "x509", "-noout", "-issuer", "-in", cert]).output
+        let issuer = await Shell.run("openssl", ["x509", "-noout", "-issuer", "-in", cert]).output
         return issuer.localizedCaseInsensitiveContains("staging")
             || issuer.localizedCaseInsensitiveContains("fake le")
             || issuer.localizedCaseInsensitiveContains("pretend")
