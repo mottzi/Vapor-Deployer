@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 struct PreflightStep: SetupStep {
 

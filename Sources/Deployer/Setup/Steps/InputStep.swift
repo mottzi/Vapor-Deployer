@@ -1,6 +1,6 @@
 import Vapor
 
-///
+/// Gathers all necessary environment, domain, and credential details from the user required to bootstrap the deployment.
 struct InputStep: SetupStep {
 
     let context: SetupContext
@@ -198,7 +198,7 @@ extension InputStep {
 
 extension InputStep {
     
-    ///
+    /// Generates a cryptographically secure 64-character payload used to sign and verify incoming GitHub webhooks.
     private func generateHexSecret() throws -> String {
         
         guard let handle = FileHandle(forReadingAtPath: "/dev/urandom") else {
@@ -211,7 +211,7 @@ extension InputStep {
         return data.map { String(format: "%02x", $0) }.joined()
     }
 
-    ///
+    /// Verifies that a domain actively points to this machine before attempting to provision TLS certificates.
     private func requireResolvableDomain(_ domain: String, label: String) async throws {
         
         let isResolvable = await Shell.run("getent", ["ahosts", domain]).exitCode == 0
@@ -223,7 +223,7 @@ extension InputStep {
         }
     }
 
-    ///
+    /// Asserts that the provided personal access token has sufficient permissions to manage webhooks for the target repository.
     private func verifyGitHubAccess() async throws {
         
         let urlString = "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks?per_page=1"

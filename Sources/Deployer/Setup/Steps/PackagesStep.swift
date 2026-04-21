@@ -1,6 +1,6 @@
 import Vapor
-import Foundation
 
+/// Installs required dependencies for Swift compilation of the target Vapor application and provision its server environment.
 struct PackagesStep: SetupStep {
 
     let context: SetupContext
@@ -10,7 +10,7 @@ struct PackagesStep: SetupStep {
 
     func run() async throws {
         
-        let gccMajor = await detectGCCMajor()
+        let gccMajor = await getGCCVersion()
         
         var packages = [
             "binutils",
@@ -45,6 +45,7 @@ struct PackagesStep: SetupStep {
         }
 
         var missing: [String] = []
+        
         for package in packages {
             if await Shell.run("dpkg", ["-s", package]).exitCode != 0 {
                 missing.append(package)
@@ -62,15 +63,19 @@ struct PackagesStep: SetupStep {
         console.print("Base packages installed.")
     }
 
-    private func detectGCCMajor() async -> String {
+    /// Determines the major version of the C compiler.
+    private func getGCCVersion() async -> String {
         
-        let output = await Shell.run("apt-cache", ["show", "gcc"]).output
+        let aptOutput = await Shell.run("apt-cache", ["policy", "gcc"]).output
         
-        for line in output.split(whereSeparator: \.isNewline) {
-            guard line.hasPrefix("Version:") else { continue }
-            let version = String(line.dropFirst("Version:".count)).trimmed
-            let normalized = version.split(separator: ":").last.map(String.init) ?? version
-            return normalized.split(separator: ".").first.map(String.init) ?? "13"
+        for line in aptOutput.split(whereSeparator: \.isNewline) {
+            let trimmedLine = String(line).trimmed
+            guard trimmedLine.hasPrefix("Candidate:") else { continue }
+            
+            let fullVersion = trimmedLine.dropFirst("Candidate:".count).trimmingCharacters(in: .whitespaces)
+            let baseVersion = fullVersion.split(separator: ":").last.map(String.init) ?? fullVersion
+            
+            return baseVersion.split(separator: ".").first.map(String.init) ?? "13"
         }
 
         return "13"
