@@ -14,13 +14,19 @@ struct Shell {
         let exitCode: Int32
     }
         
-    @discardableResult static func runThrowing(_ command: String, directory: String? = nil) async throws -> String {
+    @discardableResult
+    static func runThrowing(
+        _ command: String,
+        directory: String? = nil
+    ) async throws -> String {
+        
         let result = await run(command, directory: directory)
         guard result.exitCode == 0 else { throw Shell.Error(command: command, output: result.output) }
         return result.output
     }
 
-    @discardableResult static func runThrowing(
+    @discardableResult
+    static func runThrowing(
         _ command: String,
         _ arguments: [String],
         directory: String? = nil,
@@ -139,7 +145,8 @@ struct Shell {
         return Result(output: renderer.output, exitCode: process.terminationStatus)
     }
 
-    @discardableResult static func runStreamingTailThrowing(
+    @discardableResult
+    static func runStreamingTailThrowing(
         _ command: String,
         _ arguments: [String],
         directory: String? = nil,

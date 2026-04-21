@@ -52,6 +52,7 @@ extension SetupContext {
     }
 
     /// Resolves and memoizes the service user's UID so user-scoped systemd calls can build runtime and DBus paths reliably.
+    @discardableResult
     func requireServiceUserUID() async throws -> Int {
         
         if let serviceUserUID { return serviceUserUID }
