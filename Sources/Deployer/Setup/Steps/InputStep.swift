@@ -1,5 +1,6 @@
 import Vapor
 
+///
 struct InputStep: SetupStep {
 
     let context: SetupContext
@@ -9,13 +10,14 @@ struct InputStep: SetupStep {
 
     func run() async throws {
         
-        collectRuntimeIdentity()
+        collectServiceUser()
         collectTargetRepository()
-        collectPortsAndRouting()
+        collectPorts()
+        collectPanelRoute()
         collectServiceManager()
-        try collectPanelAuthentication()
-        try await collectPublicEndpoint()
-        try await collectGitHubWebhookAccess()
+        try collectPanelAuth()
+        try await collectDomain()
+        try await collectGitHubToken()
 
         console.card(title: "Planned configuration", kvs: plannedConfiguration())
     }
@@ -24,7 +26,7 @@ struct InputStep: SetupStep {
 
 extension InputStep {
 
-    private func collectRuntimeIdentity() {
+    private func collectServiceUser() {
         
         console.section("Runtime identity")
         
@@ -59,7 +61,7 @@ extension InputStep {
         )
     }
 
-    private func collectPortsAndRouting() {
+    private func collectPorts() {
         
         console.section("Ports and routing")
         
@@ -76,7 +78,10 @@ extension InputStep {
             warning: "Target app port must be a number between 1 and 65535.",
             validate: SetupValidator.isValidPort
         )) ?? 8080
-
+    }
+    
+    private func collectPanelRoute() {
+        
         while true {
             var panelRoute = console.askRequired("Panel route", default: "/deployer")
             panelRoute = SetupValidator.normalizePanelRoute(panelRoute)
@@ -109,13 +114,13 @@ extension InputStep {
         context.paths = SetupPaths.derive(serviceUser: context.serviceUser, appName: context.appName, panelRoute: context.panelRoute)
     }
 
-    private func collectPanelAuthentication() throws {
+    private func collectPanelAuth() throws {
         console.section("Panel authentication")
         context.panelPassword = console.askSecretConfirmed("Panel password")
         context.webhookSecret = try generateHexSecret()
     }
 
-    private func collectPublicEndpoint() async throws {
+    private func collectDomain() async throws {
         
         console.section("Public endpoint")
         
@@ -130,8 +135,8 @@ extension InputStep {
         context.aliasDomain = SetupValidator.deriveAliasDomain(from: context.primaryDomain)
         context.certName = context.primaryDomain
 
-        try await requireResolvableHostname(context.primaryDomain, label: "Canonical domain")
-        try await requireResolvableHostname(context.aliasDomain, label: "Alias domain")
+        try await requireResolvableDomain(context.primaryDomain, label: "Canonical domain")
+        try await requireResolvableDomain(context.aliasDomain, label: "Alias domain")
 
         context.tlsContactEmail = console.askValidated(
             "TLS contact email",
@@ -140,7 +145,7 @@ extension InputStep {
         )
     }
 
-    private func collectGitHubWebhookAccess() async throws {
+    private func collectGitHubToken() async throws {
         
         console.section("GitHub webhook access")
         
@@ -153,33 +158,6 @@ extension InputStep {
             ]
         )
         
-        try await collectAndVerifyGitHubToken()
-    }
-
-}
-
-extension InputStep {
-    
-    private func generateHexSecret() throws -> String {
-        
-        guard let handle = FileHandle(forReadingAtPath: "/dev/urandom") else {
-            throw SetupCommand.Error.fileOperationFailed("/dev/urandom", CocoaError(.fileReadNoSuchFile))
-        }
-        
-        let data = handle.readData(ofLength: 32)
-        try? handle.close()
-        
-        return data.map { String(format: "%02x", $0) }.joined()
-    }
-
-    private func requireResolvableHostname(_ host: String, label: String) async throws {
-        if await Shell.run("getent", ["ahosts", host]).exitCode != 0 {
-            throw SetupCommand.Error.invalidValue(label, "'\(host)' does not resolve in DNS. Point it to this server before continuing.")
-        }
-    }
-
-    private func collectAndVerifyGitHubToken() async throws {
-        
         while true {
             context.githubToken = console.askSecret("GitHub token")
             do {
@@ -190,18 +168,7 @@ extension InputStep {
             }
         }
     }
-
-    private func verifyGitHubAccess() async throws {
-        
-        guard let url = URL(string: "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks?per_page=1")
-        else { throw SetupCommand.Error.githubAPI("invalid hooks URL") }
-
-        let (_, status) = try await GitHubAPI.request(url: url, token: context.githubToken)
-        guard (200..<300).contains(status) else {
-            throw SetupCommand.Error.githubAPI("token check failed for \(context.githubOwner)/\(context.githubRepo) (HTTP \(status))")
-        }
-    }
-
+    
     private func plannedConfiguration() -> [(String, String)] {
         [
             ("Install directory", paths.installDirectory),
@@ -225,6 +192,49 @@ extension InputStep {
             ("ACME webroot", paths.acmeWebroot),
             ("Webhook URL", context.webhookURL)
         ]
+    }
+
+}
+
+extension InputStep {
+    
+    ///
+    private func generateHexSecret() throws -> String {
+        
+        guard let handle = FileHandle(forReadingAtPath: "/dev/urandom") else {
+            throw SetupCommand.Error.fileOperationFailed("/dev/urandom", CocoaError(.fileReadNoSuchFile))
+        }
+        
+        let data = handle.readData(ofLength: 32)
+        try? handle.close()
+        
+        return data.map { String(format: "%02x", $0) }.joined()
+    }
+
+    ///
+    private func requireResolvableDomain(_ domain: String, label: String) async throws {
+        
+        let isResolvable = await Shell.run("getent", ["ahosts", domain]).exitCode == 0
+        if !isResolvable {
+            throw SetupCommand.Error.invalidValue(
+                label,
+                "'\(domain)' does not resolve in DNS. Point it to this server before continuing."
+            )
+        }
+    }
+
+    ///
+    private func verifyGitHubAccess() async throws {
+        
+        let urlString = "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks?per_page=1"
+        guard let url = URL(string: urlString) else {
+            throw SetupCommand.Error.githubAPI("invalid hooks URL")
+        }
+
+        let (_, status) = try await GitHubAPI.request(url: url, token: context.githubToken)
+        guard (200..<300).contains(status) else {
+            throw SetupCommand.Error.githubAPI("token check failed for \(context.githubOwner)/\(context.githubRepo) (HTTP \(status))")
+        }
     }
     
 }
