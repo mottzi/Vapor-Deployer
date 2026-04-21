@@ -14,27 +14,25 @@ struct SwiftStep: SetupStep {
         let userEnvironment = ["HOME": paths.serviceHome, "USER": context.serviceUser]
 
         if !FileManager.default.isExecutableFile(atPath: swiftBinary) {
-            let workdir = try await SetupUserShell.runAsServiceUser(context, ["mktemp", "-d"], environment: userEnvironment).trimmed
+            let workdir = try await shell.runAsServiceUser(["mktemp", "-d"], environment: userEnvironment).trimmed
             defer { try? FileManager.default.removeItem(atPath: workdir) }
 
-            let arch = try await SetupUserShell.runAsServiceUser(context, ["uname", "-m"], environment: userEnvironment).trimmed
+            let arch = try await shell.runAsServiceUser(["uname", "-m"], environment: userEnvironment).trimmed
             let archive = "swiftly-\(arch).tar.gz"
-            try await SetupUserShell.runAsServiceUser(
-                context,
+            try await shell.runAsServiceUser(
                 ["curl", "-fL", "-o", archive, "https://download.swift.org/swiftly/linux/\(archive)"],
                 directory: workdir,
                 environment: userEnvironment
             )
-            try await SetupUserShell.runAsServiceUser(context, ["tar", "zxf", archive], directory: workdir, environment: userEnvironment)
-            try await SetupUserShell.runAsServiceUser(
-                context,
+            try await shell.runAsServiceUser(["tar", "zxf", archive], directory: workdir, environment: userEnvironment)
+            try await shell.runAsServiceUser(
                 ["./swiftly", "init", "--quiet-shell-followup", "--assume-yes"],
                 directory: workdir,
                 environment: userEnvironment
             )
         }
 
-        let version = try await SetupUserShell.runAsServiceUser(context, [swiftBinary, "--version"], environment: userEnvironment)
+        let version = try await shell.runAsServiceUser([swiftBinary, "--version"], environment: userEnvironment)
         console.print(version.trimmed)
     }
 

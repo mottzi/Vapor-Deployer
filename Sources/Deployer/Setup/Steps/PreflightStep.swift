@@ -20,11 +20,11 @@ struct PreflightStep: SetupStep {
 
             if FileManager.default.fileExists(atPath: "\(paths.installDirectory)/.git") {
                 if context.buildFromSource {
-                    let origin = try await SetupUserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "remote", "get-url", "origin"]).trimmed
+                    let origin = try await shell.runAsServiceUser(["git", "-C", paths.installDirectory, "remote", "get-url", "origin"]).trimmed
                     guard githubRemoteMatches(origin, context.deployerRepositoryURL) else {
                         throw SetupCommand.Error.invalidValue("deployer checkout", "existing origin '\(origin)' does not match '\(context.deployerRepositoryURL)'")
                     }
-                    let dirty = try await SetupUserShell.runAsServiceUser(context, ["git", "-C", paths.installDirectory, "status", "--porcelain", "--untracked-files=no"]).trimmed
+                    let dirty = try await shell.runAsServiceUser(["git", "-C", paths.installDirectory, "status", "--porcelain", "--untracked-files=no"]).trimmed
                     guard dirty.isEmpty else {
                         throw SetupCommand.Error.invalidValue("deployer checkout", "existing checkout has uncommitted changes")
                     }
@@ -36,11 +36,11 @@ struct PreflightStep: SetupStep {
             }
 
             if FileManager.default.fileExists(atPath: "\(paths.appDirectory)/.git") {
-                let origin = try await SetupUserShell.runAsServiceUser(context, ["git", "-C", paths.appDirectory, "remote", "get-url", "origin"]).trimmed
+                let origin = try await shell.runAsServiceUser(["git", "-C", paths.appDirectory, "remote", "get-url", "origin"]).trimmed
                 guard githubRemoteMatches(origin, context.appRepositoryURL) else {
                     throw SetupCommand.Error.invalidValue("app checkout", "existing origin '\(origin)' does not match '\(context.appRepositoryURL)'")
                 }
-                let dirty = try await SetupUserShell.runAsServiceUser(context, ["git", "-C", paths.appDirectory, "status", "--porcelain", "--untracked-files=no"]).trimmed
+                let dirty = try await shell.runAsServiceUser(["git", "-C", paths.appDirectory, "status", "--porcelain", "--untracked-files=no"]).trimmed
                 guard dirty.isEmpty else {
                     throw SetupCommand.Error.invalidValue("app checkout", "existing checkout has uncommitted changes")
                 }
