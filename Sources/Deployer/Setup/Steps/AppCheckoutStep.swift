@@ -12,20 +12,20 @@ struct AppCheckoutStep: SetupStep {
         let sshCommand = "ssh -i \(paths.deployKeyPath) -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
 
         if FileManager.default.fileExists(atPath: "\(paths.appDirectory)/.git") {
-            try await shell.runAsServiceUser("git", ["-C", paths.appDirectory, "config", "core.sshCommand", sshCommand])
-            try await shell.runAsServiceUser("git", ["-C", paths.appDirectory, "fetch", "origin", context.appBranch, "--prune"])
-            try await shell.runAsServiceUser("git", ["-C", paths.appDirectory, "checkout", context.appBranch])
-            try await shell.runAsServiceUser("git", ["-C", paths.appDirectory, "pull", "--ff-only", "origin", context.appBranch])
+            try await shell.git("config", ["core.sshCommand", sshCommand], in: paths.appDirectory)
+            try await shell.git("fetch", ["origin", context.appBranch, "--prune"], in: paths.appDirectory)
+            try await shell.git("checkout", [context.appBranch], in: paths.appDirectory)
+            try await shell.git("pull", ["--ff-only", "origin", context.appBranch], in: paths.appDirectory)
             console.print("App checkout updated.")
         } else {
             try await SetupFileSystem.installDirectory(paths.appsRootDirectory, owner: context.serviceUser, group: context.serviceUser)
-            try await shell.runAsServiceUser(
-                "git clone",
+            try await shell.git(
+                "clone",
                 [context.appRepositoryURL, paths.appDirectory],
                 environment: ["GIT_SSH_COMMAND": sshCommand]
             )
-            try await shell.runAsServiceUser("git", ["-C", paths.appDirectory, "config", "core.sshCommand", sshCommand])
-            try await shell.runAsServiceUser("git", ["-C", paths.appDirectory, "checkout", context.appBranch])
+            try await shell.git("config", ["core.sshCommand", sshCommand], in: paths.appDirectory)
+            try await shell.git("checkout", [context.appBranch], in: paths.appDirectory)
             console.print("App checkout ready.")
         }
     }

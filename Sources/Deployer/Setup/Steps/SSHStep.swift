@@ -57,9 +57,9 @@ struct SSHStep: SetupStep {
     private func verifyRepoAccess() async throws -> Bool {
         let sshCommand = "ssh -i \(paths.deployKeyPath) -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
         do {
-            _ = try await shell.runAsServiceUser(
-                "git",
-                ["ls-remote", context.appRepositoryURL, context.appBranch],
+            _ = try await shell.git(
+                "ls-remote",
+                [context.appRepositoryURL, context.appBranch],
                 environment: ["GIT_SSH_COMMAND": sshCommand]
             )
             return true

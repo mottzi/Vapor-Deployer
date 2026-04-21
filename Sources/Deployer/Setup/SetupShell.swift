@@ -52,6 +52,19 @@ struct SetupShell {
         )
     }
     
+    /// Runs a `git` subcommand as the service user, optionally scoped to a working copy via `-C`.
+    @discardableResult
+    func git(
+        _ subcommand: String,
+        _ arguments: [String] = [],
+        in directory: String? = nil,
+        environment: [String: String]? = nil
+    ) async throws -> String {
+
+        let scope = directory.map { ["-C", $0] } ?? []
+        return try await runAsServiceUser("git", scope + [subcommand] + arguments, environment: environment)
+    }
+
     private func serviceUserEnvironment(merging overrides: [String: String]?) -> [String: String] {
         let paths = try? context.requirePaths()
         let base = [

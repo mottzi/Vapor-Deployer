@@ -9,7 +9,9 @@ struct PackagesStep: SetupStep {
     let title = "Installing base packages"
 
     func run() async throws {
+        
         let gccMajor = await detectGCCMajor()
+        
         var packages = [
             "binutils",
             "gnupg2",
@@ -56,11 +58,14 @@ struct PackagesStep: SetupStep {
 
         try await Shell.runThrowing("apt-get", ["-qq", "update"])
         try await Shell.runThrowing("apt-get", ["-y", "-qq", "install"] + missing)
+        
         console.print("Base packages installed.")
     }
 
     private func detectGCCMajor() async -> String {
+        
         let output = await Shell.run("apt-cache", ["show", "gcc"]).output
+        
         for line in output.split(whereSeparator: \.isNewline) {
             guard line.hasPrefix("Version:") else { continue }
             let version = String(line.dropFirst("Version:".count)).trimmed

@@ -24,25 +24,30 @@ struct DeployerPayloadStep: SetupStep {
 extension DeployerPayloadStep {
     
     private func prepareSourceCheckout() async throws {
+        
         if FileManager.default.fileExists(atPath: "\(paths.installDirectory)/.git") {
-            try await shell.runAsServiceUser("git", ["-C", paths.installDirectory, "fetch", "origin", context.deployerRepositoryBranch, "--prune"])
-            try await shell.runAsServiceUser("git", ["-C", paths.installDirectory, "checkout", context.deployerRepositoryBranch])
-            try await shell.runAsServiceUser("git", ["-C", paths.installDirectory, "pull", "--ff-only", "origin", context.deployerRepositoryBranch])
+            try await shell.git("fetch", ["origin", context.deployerRepositoryBranch, "--prune"], in: paths.installDirectory)
+            try await shell.git("checkout", [context.deployerRepositoryBranch], in: paths.installDirectory)
+            try await shell.git("pull", ["--ff-only", "origin", context.deployerRepositoryBranch], in: paths.installDirectory)
+            
             console.print("Deployer checkout updated.")
         } else {
             if FileManager.default.fileExists(atPath: paths.installDirectory) {
                 try? FileManager.default.removeItem(atPath: paths.installDirectory)
             }
-            try await shell.runAsServiceUser("git clone", [
+            
+            try await shell.git("clone", [
                 "--branch", context.deployerRepositoryBranch,
                 context.deployerRepositoryURL,
                 paths.installDirectory
             ])
+            
             console.print("Deployer checkout ready.")
         }
     }
     
     private func prepareBinaryPayload() async throws {
+        
         try await SetupFileSystem.installDirectory(paths.installDirectory, owner: context.serviceUser, group: context.serviceUser)
         
         let executableURL = try Configuration.getExecutableURL()
@@ -57,9 +62,7 @@ extension DeployerPayloadStep {
             if sourceDirectory.standardizedFileURL.path == URL(fileURLWithPath: paths.installDirectory, isDirectory: true).standardizedFileURL.path {
                 try await Shell.runThrowing("chmod", ["0755", paths.deployerBinary])
                 try await Shell.runThrowing("chown", ["-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
-                if let localReleaseTag {
-                    try await writeReleaseVersion(localReleaseTag)
-                }
+                if let localReleaseTag { try await writeReleaseVersion(localReleaseTag) }
                 console.print("Current deployer payload is already in the install directory.")
                 return
             }
@@ -70,9 +73,7 @@ extension DeployerPayloadStep {
                 resourcesDirectory: resourcesDirectory.path,
                 versionFile: sourceDirectory.appendingPathComponent(".version").path
             )
-            if let localReleaseTag {
-                try await writeReleaseVersion(localReleaseTag)
-            }
+            if let localReleaseTag { try await writeReleaseVersion(localReleaseTag) }
             console.print("Installed deployer payload from current release directory.")
         } else if let localReleaseTag {
             let staging = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
@@ -98,6 +99,7 @@ extension DeployerPayloadStep {
 extension DeployerPayloadStep {
 
     private func downloadAndInstallLatestRelease() async throws {
+        
         let (tagName, downloadURL) = try await fetchLatestRelease()
         context.releaseVersion = tagName
 
@@ -141,6 +143,7 @@ extension DeployerPayloadStep {
            URL(fileURLWithPath: publicDirectory).standardizedFileURL.path != URL(fileURLWithPath: "\(paths.installDirectory)/Public").standardizedFileURL.path {
             try SetupFileSystem.copyReplacing(source: publicDirectory, destination: "\(paths.installDirectory)/Public")
         }
+        
         if FileManager.default.fileExists(atPath: resourcesDirectory),
            URL(fileURLWithPath: resourcesDirectory).standardizedFileURL.path != URL(fileURLWithPath: "\(paths.installDirectory)/Resources").standardizedFileURL.path {
             try SetupFileSystem.copyReplacing(source: resourcesDirectory, destination: "\(paths.installDirectory)/Resources")
@@ -160,6 +163,7 @@ extension DeployerPayloadStep {
     }
 
     private func fetchLatestRelease() async throws -> (tagName: String, downloadURL: String) {
+        
         guard let apiURL = URL(string: "https://api.github.com/repos/mottzi/Vapor-Deployer/releases/latest") else {
             throw SetupCommand.Error.releaseAssetNotFound("invalid API URL")
         }
@@ -171,7 +175,8 @@ extension DeployerPayloadStep {
         let (data, _) = try await URLSession.shared.data(for: request)
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let tagName = json["tag_name"] as? String,
-              let assets = json["assets"] as? [[String: Any]] else {
+              let assets = json["assets"] as? [[String: Any]]
+        else {
             throw SetupCommand.Error.releaseAssetNotFound("malformed release response")
         }
 
@@ -184,9 +189,7 @@ extension DeployerPayloadStep {
             .first(where: { ($0["name"] as? String) == "deployer.tar.gz" })
             .flatMap { $0["browser_download_url"] as? String }
 
-        guard let downloadURL else {
-            throw SetupCommand.Error.releaseAssetNotFound(preferredAsset)
-        }
+        guard let downloadURL else { throw SetupCommand.Error.releaseAssetNotFound(preferredAsset) }
 
         return (tagName, downloadURL)
     }

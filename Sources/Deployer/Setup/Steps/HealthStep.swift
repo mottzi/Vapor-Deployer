@@ -27,6 +27,7 @@ struct HealthStep: SetupStep {
     }
 
     private func waitForService(_ service: String) async throws {
+        
         for _ in 0..<30 {
             if await isServiceRunning(service) { return }
             try await Task.sleep(for: .seconds(1))

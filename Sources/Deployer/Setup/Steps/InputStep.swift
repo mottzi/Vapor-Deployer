@@ -28,7 +28,9 @@ struct InputStep: SetupStep {
 extension InputStep {
 
     private func collectRuntimeIdentity() {
+        
         console.section("Runtime identity")
+        
         context.serviceUser = console.askValidated(
             "Dedicated service user",
             default: "vapor",
@@ -38,7 +40,9 @@ extension InputStep {
     }
 
     private func collectTargetRepository() {
+        
         console.section("Target repository")
+        
         while true {
             let repoURL = console.askRequired("Private app repo SSH URL")
             if let parsed = SetupValidator.parseGitHubSSHURL(repoURL) {
@@ -59,7 +63,9 @@ extension InputStep {
     }
 
     private func collectPortsAndRouting() {
+        
         console.section("Ports and routing")
+        
         context.deployerPort = Int(console.askValidated(
             "Deployer port",
             default: "8081",
@@ -75,20 +81,23 @@ extension InputStep {
         )) ?? 8080
 
         while true {
-            let panelRoute = SetupValidator.normalizePanelRoute(
-                console.askRequired("Panel route", default: "/deployer")
-            )
+            var panelRoute = console.askRequired("Panel route", default: "/deployer")
+            panelRoute = SetupValidator.normalizePanelRoute(panelRoute)
+                
             guard panelRoute != "/" else {
                 console.warning("Panel route '/' is not supported with managed Nginx setup. Use a prefixed route like /deployer.")
                 continue
             }
+            
             context.panelRoute = panelRoute
             break
         }
     }
 
     private func collectServiceManager() {
+        
         console.section("Service manager")
+        
         while true {
             let value = console.askRequired("Service manager", default: "systemd")
             guard let kind = ServiceManagerKind(rawValue: value) else {
@@ -110,12 +119,15 @@ extension InputStep {
     }
 
     private func collectPublicEndpoint() async throws {
+        
         console.section("Public endpoint")
+        
         let publicURL = console.askValidated(
             "Public base URL",
             warning: "Public base URL must look like https://example.com (HTTPS + domain only, no path, no port).",
             validate: SetupValidator.isValidPublicBaseURL
         )
+        
         context.publicBaseURL = SetupValidator.normalizeBaseURL(publicURL)
         context.primaryDomain = SetupValidator.extractHost(fromPublicBaseURL: publicURL)
         context.aliasDomain = SetupValidator.deriveAliasDomain(from: context.primaryDomain)
@@ -132,7 +144,9 @@ extension InputStep {
     }
 
     private func collectGitHubWebhookAccess() async throws {
+        
         console.section("GitHub webhook access")
+        
         console.card(
             title: "How to create the GitHub token",
             kvs: [
@@ -141,6 +155,7 @@ extension InputStep {
                 ("Select", "admin:repo_hook")
             ]
         )
+        
         try await collectAndVerifyGitHubToken()
     }
 
@@ -149,22 +164,25 @@ extension InputStep {
 extension InputStep {
     
     private func generateHexSecret() throws -> String {
+        
         guard let handle = FileHandle(forReadingAtPath: "/dev/urandom") else {
             throw SetupCommand.Error.fileOperationFailed("/dev/urandom", CocoaError(.fileReadNoSuchFile))
         }
+        
         let data = handle.readData(ofLength: 32)
         try? handle.close()
+        
         return data.map { String(format: "%02x", $0) }.joined()
     }
 
     private func requireResolvableHostname(_ host: String, label: String) async throws {
-        let result = await Shell.run("getent", ["ahosts", host])
-        guard result.exitCode == 0 else {
+        if await Shell.run("getent", ["ahosts", host]).exitCode != 0 {
             throw SetupCommand.Error.invalidValue(label, "'\(host)' does not resolve in DNS. Point it to this server before continuing.")
         }
     }
 
     private func collectAndVerifyGitHubToken() async throws {
+        
         while true {
             context.githubToken = console.askSecret("GitHub token")
             do {
@@ -177,6 +195,7 @@ extension InputStep {
     }
 
     private func verifyGitHubAccess() async throws {
+        
         guard let url = URL(string: "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks?per_page=1")
         else { throw SetupCommand.Error.githubAPI("invalid hooks URL") }
 
