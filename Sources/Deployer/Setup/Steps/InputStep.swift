@@ -1,7 +1,4 @@
 import Vapor
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 struct InputStep: SetupStep {
 
@@ -199,13 +196,7 @@ extension InputStep {
         guard let url = URL(string: "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks?per_page=1")
         else { throw SetupCommand.Error.githubAPI("invalid hooks URL") }
 
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(context.githubToken)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
-
-        let (_, response) = try await URLSession.shared.data(for: request)
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let (_, status) = try await GitHubAPI.request(url: url, token: context.githubToken)
         guard (200..<300).contains(status) else {
             throw SetupCommand.Error.githubAPI("token check failed for \(context.githubOwner)/\(context.githubRepo) (HTTP \(status))")
         }

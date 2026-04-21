@@ -1,7 +1,4 @@
 import Vapor
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 struct DeployerPayloadStep: SetupStep {
 
@@ -59,7 +56,7 @@ extension DeployerPayloadStep {
         
         if FileManager.default.fileExists(atPath: publicDirectory.path),
            FileManager.default.fileExists(atPath: resourcesDirectory.path) {
-            if sourceDirectory.standardizedFileURL.path == URL(fileURLWithPath: paths.installDirectory, isDirectory: true).standardizedFileURL.path {
+            if sourceDirectory.path.isSamePath(as: paths.installDirectory) {
                 try await Shell.runThrowing("chmod", ["0755", paths.deployerBinary])
                 try await Shell.runThrowing("chown", ["-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
                 if let localReleaseTag { try await writeReleaseVersion(localReleaseTag) }
@@ -135,23 +132,23 @@ extension DeployerPayloadStep {
             throw SetupCommand.Error.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
         }
 
-        if URL(fileURLWithPath: binary).standardizedFileURL.path != URL(fileURLWithPath: paths.deployerBinary).standardizedFileURL.path {
+        if !binary.isSamePath(as: paths.deployerBinary) {
             try await Shell.runThrowing("install", ["-m", "0755", "-o", context.serviceUser, "-g", context.serviceUser, binary, paths.deployerBinary])
         }
 
         if FileManager.default.fileExists(atPath: publicDirectory),
-           URL(fileURLWithPath: publicDirectory).standardizedFileURL.path != URL(fileURLWithPath: "\(paths.installDirectory)/Public").standardizedFileURL.path {
+           !publicDirectory.isSamePath(as: "\(paths.installDirectory)/Public") {
             try SetupFileSystem.copyReplacing(source: publicDirectory, destination: "\(paths.installDirectory)/Public")
         }
         
         if FileManager.default.fileExists(atPath: resourcesDirectory),
-           URL(fileURLWithPath: resourcesDirectory).standardizedFileURL.path != URL(fileURLWithPath: "\(paths.installDirectory)/Resources").standardizedFileURL.path {
+           !resourcesDirectory.isSamePath(as: "\(paths.installDirectory)/Resources") {
             try SetupFileSystem.copyReplacing(source: resourcesDirectory, destination: "\(paths.installDirectory)/Resources")
         }
 
         if let versionFile,
            FileManager.default.fileExists(atPath: versionFile),
-           URL(fileURLWithPath: versionFile).standardizedFileURL.path != URL(fileURLWithPath: "\(paths.installDirectory)/.version").standardizedFileURL.path {
+           !versionFile.isSamePath(as: "\(paths.installDirectory)/.version") {
             try SetupFileSystem.copyReplacing(source: versionFile, destination: "\(paths.installDirectory)/.version")
         }
 
@@ -168,11 +165,7 @@ extension DeployerPayloadStep {
             throw SetupCommand.Error.releaseAssetNotFound("invalid API URL")
         }
 
-        var request = URLRequest(url: apiURL)
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
-
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await GitHubAPI.request(url: apiURL)
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let tagName = json["tag_name"] as? String,
               let assets = json["assets"] as? [[String: Any]]
@@ -194,4 +187,14 @@ extension DeployerPayloadStep {
         return (tagName, downloadURL)
     }
     
+}
+
+private extension String {
+
+    /// Compares two filesystem paths after `.standardizedFileURL` normalization so `/a/./b` and `/a/b` match.
+    func isSamePath(as other: String) -> Bool {
+        URL(fileURLWithPath: self).standardizedFileURL.path
+            == URL(fileURLWithPath: other).standardizedFileURL.path
+    }
+
 }
