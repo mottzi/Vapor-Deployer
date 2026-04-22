@@ -34,7 +34,7 @@ extension InputStep {
             "Dedicated service user",
             default: "vapor",
             warning: "Choose a non-root user containing only letters, numbers, dots, dashes, and underscores.",
-            validate: SetupValidator.isNonRootSafeName
+            validate: InputValidator.isNonRootSafeName
         )
     }
 
@@ -44,7 +44,7 @@ extension InputStep {
         
         while true {
             let repoURL = console.askRequired("Private app repo SSH URL")
-            if let parsed = SetupValidator.parseGitHubSSHURL(repoURL) {
+            if let parsed = InputValidator.parseGitHubSSHURL(repoURL) {
                 context.appRepositoryURL = repoURL
                 context.githubOwner = parsed.owner
                 context.githubRepo = parsed.repo
@@ -57,7 +57,7 @@ extension InputStep {
             "Target app name",
             default: context.githubRepo,
             warning: "App name may contain only letters, numbers, dots, dashes, and underscores.",
-            validate: SetupValidator.isSafeName
+            validate: InputValidator.isSafeName
         )
     }
 
@@ -69,14 +69,14 @@ extension InputStep {
             "Deployer port",
             default: "8081",
             warning: "Deployer port must be a number between 1 and 65535.",
-            validate: SetupValidator.isValidPort
+            validate: InputValidator.isValidPort
         )) ?? 8081
 
         context.appPort = Int(console.askValidated(
             "Target app port",
             default: "8080",
             warning: "Target app port must be a number between 1 and 65535.",
-            validate: SetupValidator.isValidPort
+            validate: InputValidator.isValidPort
         )) ?? 8080
     }
     
@@ -84,7 +84,7 @@ extension InputStep {
         
         while true {
             var panelRoute = console.askRequired("Panel route", default: "/deployer")
-            panelRoute = SetupValidator.normalizePanelRoute(panelRoute)
+            panelRoute = InputValidator.normalizePanelRoute(panelRoute)
                 
             guard panelRoute != "/" else {
                 console.warning("Panel route '/' is not supported with managed Nginx setup. Use a prefixed route like /deployer.")
@@ -111,7 +111,7 @@ extension InputStep {
         }
 
         context.buildFromSource = console.confirm("Build deployer from source?", defaultYes: false)
-        context.paths = SetupPaths.derive(serviceUser: context.serviceUser, appName: context.appName, panelRoute: context.panelRoute)
+        context.paths = SystemPaths.derive(serviceUser: context.serviceUser, appName: context.appName, panelRoute: context.panelRoute)
     }
 
     private func collectPanelAuth() throws {
@@ -127,12 +127,12 @@ extension InputStep {
         let publicURL = console.askValidated(
             "Public base URL",
             warning: "Public base URL must look like https://example.com (HTTPS + domain only, no path, no port).",
-            validate: SetupValidator.isValidPublicBaseURL
+            validate: InputValidator.isValidPublicBaseURL
         )
         
-        context.publicBaseURL = SetupValidator.normalizeBaseURL(publicURL)
-        context.primaryDomain = SetupValidator.extractHost(fromPublicBaseURL: publicURL)
-        context.aliasDomain = SetupValidator.deriveAliasDomain(from: context.primaryDomain)
+        context.publicBaseURL = InputValidator.normalizeBaseURL(publicURL)
+        context.primaryDomain = InputValidator.extractHost(fromPublicBaseURL: publicURL)
+        context.aliasDomain = InputValidator.deriveAliasDomain(from: context.primaryDomain)
         context.certName = context.primaryDomain
 
         try await requireResolvableDomain(context.primaryDomain, label: "Canonical domain")
@@ -141,7 +141,7 @@ extension InputStep {
         context.tlsContactEmail = console.askValidated(
             "TLS contact email",
             warning: "TLS contact email must be a valid email address.",
-            validate: SetupValidator.isValidEmail
+            validate: InputValidator.isValidEmail
         )
     }
 
@@ -216,7 +216,7 @@ extension InputStep {
         
         let isResolvable = await Shell.run("getent", ["ahosts", domain]).exitCode == 0
         if !isResolvable {
-            throw SetupCommand.Error.invalidValue(
+            throw SystemError.invalidValue(
                 label,
                 "'\(domain)' does not resolve in DNS. Point it to this server before continuing."
             )

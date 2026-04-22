@@ -67,6 +67,8 @@ enum DeployerctlTemplate {
           disable       Disable services at boot
           logs          Follow on-disk service log file(s) (Ctrl-C to exit)
           journal       Show recent systemd journal entries (systemd only)
+          setup         Rerun deployer setup (interactive)
+          remove        Tear down the entire deployer installation (interactive)
 
         Targets:
           deployer      Just the deployer service
@@ -85,6 +87,17 @@ enum DeployerctlTemplate {
         esac
 
         [[ $EUID -eq 0 ]] || die "must be run as root (try: sudo $PROG $*)"
+
+        # lifecycle actions are handled before config sourcing so they work in degraded states
+        if [[ "${1:-}" == "setup" || "${1:-}" == "remove" ]]; then
+          if [[ -r "$CONFIG_FILE" ]]; then
+            . "$CONFIG_FILE"
+            exec "${INSTALL_DIR:-/home/vapor/deployer}/deployer" "$1"
+          else
+            exec /home/vapor/deployer/deployer "$1"
+          fi
+        fi
+
         [[ -r "$CONFIG_FILE" ]] || die "config not found: $CONFIG_FILE (reinstall with deployer setup)"
 
         # shellcheck disable=SC1090

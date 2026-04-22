@@ -1,7 +1,7 @@
 import Vapor
 import Foundation
 
-/// Console rendering helpers for setup UX so each step presents progress and key configuration in a consistent visual format.
+/// Console rendering helpers so each step presents progress and key configuration in a consistent visual format.
 extension Console {
 
     /// Clamps detected terminal width to a readable range so card formatting remains stable across TTY environments.
@@ -94,4 +94,26 @@ extension Console {
         self.output("")
     }
 
+    func removeBanner() {
+        self.output("")
+        self.output(Self.rule().consoleText(color: .red))
+        self.output("  Vapor Deployer · Remove".consoleText(color: .red, isBold: true))
+        self.output(Self.rule().consoleText(color: .red))
+        self.output("")
+        self.output("  Stops services, removes managed proxy files, and deletes".consoleText())
+        self.output("  the service user created by setup. This is destructive.".consoleText())
+        self.output("")
+    }
+
+    func removeTitledRule(_ title: String) {
+        self.output("")
+        self.output(Self.titledRuleText(title).consoleText(color: .red, isBold: true))
+    }
+
+    func successTitledRule(_ title: String) {
+        self.output("")
+        self.output(Self.titledRuleText(title).consoleText(color: .green, isBold: true))
+    }
+
 }
+

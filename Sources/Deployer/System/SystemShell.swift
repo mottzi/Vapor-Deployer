@@ -1,9 +1,9 @@
 import Foundation
 
-// Shell facade for setup steps; instance methods use SetupContext, static members provide lower-level commands.
-struct SetupShell {
+// Shell facade for setup and remove steps; instance methods use SystemContext, static members provide lower-level commands.
+struct SystemShell {
     
-    let context: SetupContext
+    let context: any SystemContext
         
     /// Runs as the configured service user while enforcing `HOME` and `USER` so tool behavior matches non-root runtime expectations.
     @discardableResult
@@ -14,7 +14,7 @@ struct SetupShell {
         environment: [String: String]? = nil
     ) async throws -> String {
         
-        try await SetupShell.runAs(
+        try await SystemShell.runAs(
             user: context.serviceUser,
             command,
             arguments,
@@ -32,7 +32,7 @@ struct SetupShell {
         environment: [String: String]? = nil
     ) async throws -> String {
         
-        try await SetupShell.runAsStreamingTail(
+        try await SystemShell.runAsStreamingTail(
             user: context.serviceUser,
             command,
             arguments,
@@ -48,7 +48,7 @@ struct SetupShell {
         try await runAsServiceUser(
             "systemctl --user \(command)",
             arguments,
-            environment: SetupShell.systemdUserEnvironment(uid: try await context.requireServiceUserUID())
+            environment: SystemShell.systemdUserEnvironment(uid: try await context.requireServiceUserUID())
         )
     }
     
@@ -76,7 +76,7 @@ struct SetupShell {
     
 }
 
-extension SetupShell {
+extension SystemShell {
 
     /// Executes a command via `runuser` so privileged setup can perform filesystem and git operations as the target service identity.
     @discardableResult
@@ -133,7 +133,7 @@ extension SetupShell {
             try await Task.sleep(for: .milliseconds(100))
         }
 
-        throw SetupCommand.Error.serviceTimeout("user@\(uid).service bus")
+        throw SystemError.serviceTimeout("user@\(uid).service bus")
     }
 
     private static func runuserCommand(

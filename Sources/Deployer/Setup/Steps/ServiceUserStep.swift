@@ -42,13 +42,13 @@ extension ServiceUserStep {
     /// Creates the service user's home and apps root directories with appropriate ownership.
     func prepareDirectories() async throws {
         
-        try await SetupFileSystem.installDirectory(
+        try await SystemFileSystem.installDirectory(
             paths.serviceHome,
             owner: context.serviceUser,
             group: context.serviceUser
         )
         
-        try await SetupFileSystem.installDirectory(
+        try await SystemFileSystem.installDirectory(
             paths.appsRootDirectory,
             owner: context.serviceUser,
             group: context.serviceUser

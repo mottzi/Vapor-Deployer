@@ -36,7 +36,7 @@ extension HealthStep {
             try await Task.sleep(for: .seconds(1))
         }
 
-        throw SetupCommand.Error.serviceTimeout(service)
+        throw SystemError.serviceTimeout(service)
     }
 
     private func waitForTCP(port: Int) async throws {
@@ -47,13 +47,13 @@ extension HealthStep {
             try await Task.sleep(for: .seconds(1))
         }
 
-        throw SetupCommand.Error.serviceTimeout("127.0.0.1:\(port)")
+        throw SystemError.serviceTimeout("127.0.0.1:\(port)")
     }
 
     private func verifyAppBinary() throws {
 
         if !FileManager.default.isExecutableFile(atPath: "\(paths.appDeployDirectory)/\(context.productName)") {
-            throw SetupCommand.Error.invalidValue("app binary", "missing deployed app binary")
+            throw SystemError.invalidValue("app binary", "missing deployed app binary")
         }
     }
 

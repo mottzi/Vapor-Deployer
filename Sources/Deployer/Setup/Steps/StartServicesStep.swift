@@ -27,7 +27,7 @@ extension StartServicesStep {
         let uid = try await context.requireServiceUserUID()
         try await Shell.runThrowing("loginctl", ["enable-linger", context.serviceUser])
         await Shell.run("systemctl", ["start", "user@\(uid).service"])
-        try await SetupShell.waitForUserBus(uid: uid)
+        try await SystemShell.waitForUserBus(uid: uid)
         try await shell.runUserSystemctl("daemon-reload")
         try await shell.runUserSystemctl("enable", ["deployer.service", "\(context.productName).service"])
         try await shell.runUserSystemctl("restart", ["deployer.service", "\(context.productName).service"])

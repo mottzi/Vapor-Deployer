@@ -41,7 +41,7 @@ extension BuildStep {
         
         let binary = "\(binDir)/deployer"
         guard FileManager.default.isExecutableFile(atPath: binary) else {
-            throw SetupCommand.Error.invalidValue("deployer binary", "expected binary was not produced at '\(binary)'")
+            throw SystemError.invalidValue("deployer binary", "expected binary was not produced at '\(binary)'")
         }
         
         try await shell.runAsServiceUser(
@@ -71,7 +71,7 @@ extension BuildStep {
         
         let appBinary = "\(appBinDir)/\(context.productName)"
         guard FileManager.default.isExecutableFile(atPath: appBinary) else {
-            throw SetupCommand.Error.invalidValue("app binary", "expected binary was not produced at '\(appBinary)'")
+            throw SystemError.invalidValue("app binary", "expected binary was not produced at '\(appBinary)'")
         }
 
         try await shell.runAsServiceUser(

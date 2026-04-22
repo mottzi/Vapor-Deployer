@@ -48,7 +48,7 @@ extension StageDeployerStep {
     /// Acquires and installs a pre-built executable alongside its required web assets.
     private func installFromBinary() async throws {
         
-        try await SetupFileSystem.installDirectory(paths.installDirectory, owner: context.serviceUser, group: context.serviceUser)
+        try await SystemFileSystem.installDirectory(paths.installDirectory, owner: context.serviceUser, group: context.serviceUser)
         
         let currentExecutableURL = try Configuration.getExecutableURL()
         let executableDirectory = currentExecutableURL.deletingLastPathComponent()
@@ -135,7 +135,7 @@ extension StageDeployerStep {
     ) async throws {
         
         guard FileManager.default.fileExists(atPath: binary) else {
-            throw SetupCommand.Error.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
+            throw SystemError.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
         }
 
         if !binary.isSamePath(as: paths.deployerBinary) {
@@ -144,18 +144,18 @@ extension StageDeployerStep {
 
         if FileManager.default.fileExists(atPath: publicDirectory),
            !publicDirectory.isSamePath(as: "\(paths.installDirectory)/Public") {
-            try SetupFileSystem.copyReplacing(source: publicDirectory, destination: "\(paths.installDirectory)/Public")
+            try SystemFileSystem.copyReplacing(source: publicDirectory, destination: "\(paths.installDirectory)/Public")
         }
         
         if FileManager.default.fileExists(atPath: resourcesDirectory),
            !resourcesDirectory.isSamePath(as: "\(paths.installDirectory)/Resources") {
-            try SetupFileSystem.copyReplacing(source: resourcesDirectory, destination: "\(paths.installDirectory)/Resources")
+            try SystemFileSystem.copyReplacing(source: resourcesDirectory, destination: "\(paths.installDirectory)/Resources")
         }
 
         if let versionFile,
            FileManager.default.fileExists(atPath: versionFile),
            !versionFile.isSamePath(as: "\(paths.installDirectory)/.version") {
-            try SetupFileSystem.copyReplacing(source: versionFile, destination: "\(paths.installDirectory)/.version")
+            try SystemFileSystem.copyReplacing(source: versionFile, destination: "\(paths.installDirectory)/.version")
         }
 
         try await Shell.runThrowing("chown", [
@@ -166,7 +166,7 @@ extension StageDeployerStep {
 
     /// Records the active release tag into a local tracking file to avoid redundant downloads.
     private func writeReleaseVersion(_ tagName: String) async throws {
-        try await SetupFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
+        try await SystemFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
     }
 
     /// Queries the GitHub API to determine the appropriate asset download URL for the host machine.

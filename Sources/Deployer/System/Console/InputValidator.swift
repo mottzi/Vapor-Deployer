@@ -1,7 +1,7 @@
 import Foundation
 
-/// Validation and normalization rules for interactive setup input so downstream provisioning can assume canonical, host-safe values.
-enum SetupValidator {
+/// Validation and normalization rules for interactive input so downstream provisioning can assume canonical, host-safe values.
+enum InputValidator {
 
     static func isSafeName(_ value: String) -> Bool {
         value.range(of: #"^[A-Za-z0-9._-]+$"#, options: .regularExpression) != nil

@@ -1,6 +1,6 @@
 import Foundation
 
-enum SetupFileSystem {
+enum SystemFileSystem {
 
     /// Writes via a temp file and installs with explicit mode/ownership to avoid partial writes and wrong permissions.
     static func writeFile(

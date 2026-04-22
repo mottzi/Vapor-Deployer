@@ -33,7 +33,7 @@ extension PreflightStep {
         let home = try await homeDirectory(for: context.serviceUser)
         
         guard home == paths.serviceHome else {
-            throw SetupCommand.Error.invalidValue("serviceUser", "user exists with home '\(home)', not '\(paths.serviceHome)'")
+            throw SystemError.invalidValue("serviceUser", "user exists with home '\(home)', not '\(paths.serviceHome)'")
         }
         
         console.print("Reusing user '\(context.serviceUser)' (home: \(home))")
@@ -53,7 +53,7 @@ extension PreflightStep {
             }
         } else if FileManager.default.fileExists(atPath: paths.installDirectory), context.buildFromSource {
             if try !isDirectoryEmpty(paths.installDirectory) {
-                throw SetupCommand.Error.invalidValue(
+                throw SystemError.invalidValue(
                     "installDirectory",
                     "'\(paths.installDirectory)' exists but is not an empty deployer checkout"
                 )
@@ -84,12 +84,12 @@ extension PreflightStep {
         
         let origin = try await shell.git("remote", ["get-url", "origin"], in: path).trimmed
         if !githubRemoteMatches(origin, expectedRemote) {
-            throw SetupCommand.Error.invalidValue("\(componentName) checkout", "existing origin '\(origin)' does not match '\(expectedRemote)'")
+            throw SystemError.invalidValue("\(componentName) checkout", "existing origin '\(origin)' does not match '\(expectedRemote)'")
         }
         
         let dirty = try await shell.git("status", ["--porcelain", "--untracked-files=no"], in: path).trimmed
         if !dirty.isEmpty {
-            throw SetupCommand.Error.invalidValue("\(componentName) checkout", "existing checkout has uncommitted changes")
+            throw SystemError.invalidValue("\(componentName) checkout", "existing checkout has uncommitted changes")
         }
     }
     
@@ -99,7 +99,7 @@ extension PreflightStep {
         let fields = passwd.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
         if fields.count >= 6 { return fields[5] }
         
-        throw SetupCommand.Error.invalidValue("serviceUser", "getent passwd for '\(user)' returned malformed output")
+        throw SystemError.invalidValue("serviceUser", "getent passwd for '\(user)' returned malformed output")
     }
 
     private func isDirectoryEmpty(_ path: String) throws -> Bool {

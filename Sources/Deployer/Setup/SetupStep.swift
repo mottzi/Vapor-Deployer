@@ -22,11 +22,11 @@ protocol SetupStep {
 
 extension SetupStep {
 
-    /// Convenience accessor for a `SetupShell` bound to this step's context, used for service-user shell commands.
-    var shell: SetupShell { SetupShell(context: context) }
+    /// Convenience accessor for a `SystemShell` bound to this step's context, used for service-user shell commands.
+    var shell: SystemShell { SystemShell(context: context) }
 
     /// Non-optional view of the derived path layout, trusting `InputStep` to have populated it first in the pipeline.
-    var paths: SetupPaths {
+    var paths: SystemPaths {
         guard let paths = context.paths else {
             preconditionFailure("SetupStep.paths accessed before InputStep populated SetupContext.paths — check step ordering in SetupCommand.run")
         }

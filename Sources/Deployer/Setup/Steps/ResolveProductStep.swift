@@ -55,7 +55,7 @@ extension ResolveProductStep {
             return console.askValidated(
                 "Executable product name",
                 warning: "Executable product name may contain only letters, numbers, dots, dashes, and underscores.",
-                validate: SetupValidator.isSafeName
+                validate: InputValidator.isSafeName
             )
         case 1:
             console.print("Using executable product '\(products[0])' inferred from Package.swift.")

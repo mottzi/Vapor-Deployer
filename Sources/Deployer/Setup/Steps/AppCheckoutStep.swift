@@ -29,7 +29,7 @@ extension AppCheckoutStep {
 
     private func cloneRepository() async throws {
 
-        try await SetupFileSystem.installDirectory(
+        try await SystemFileSystem.installDirectory(
             paths.appsRootDirectory,
             owner: context.serviceUser,
             group: context.serviceUser

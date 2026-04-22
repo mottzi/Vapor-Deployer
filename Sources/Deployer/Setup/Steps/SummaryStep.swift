@@ -62,7 +62,7 @@ extension SummaryStep {
 
 extension SummaryStep {
 
-    private func migrationCommand(paths: SetupPaths) -> String {
+    private func migrationCommand(paths: SystemPaths) -> String {
 
         let certbot = TemplateEscaping.shellCommand([
             "sudo", "certbot", "certonly",

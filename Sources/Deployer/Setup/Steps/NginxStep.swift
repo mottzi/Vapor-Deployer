@@ -25,22 +25,22 @@ extension NginxStep {
 
         if let previousAvailable, previousAvailable != paths.nginxSiteAvailable {
             if let previousEnabled, previousEnabled.hasPrefix("/etc/nginx/sites-enabled/") {
-                try? SetupFileSystem.removeIfPresent(previousEnabled)
+                try? SystemFileSystem.removeIfPresent(previousEnabled)
             }
             if previousAvailable.hasPrefix("/etc/nginx/sites-available/") {
-                try? SetupFileSystem.removeIfPresent(previousAvailable)
+                try? SystemFileSystem.removeIfPresent(previousAvailable)
             }
         }
 
         if let previousHook, previousHook != paths.certbotRenewHook, previousHook.hasPrefix("/etc/letsencrypt/renewal-hooks/deploy/") {
-            try? SetupFileSystem.removeIfPresent(previousHook)
+            try? SystemFileSystem.removeIfPresent(previousHook)
         }
     }
 
     private func bootstrapNginx() async throws {
 
-        try await SetupFileSystem.installDirectory(paths.acmeWebroot, owner: "root", group: "root")
-        try await SetupFileSystem.writeFile(try NginxTemplate.bootstrap(context: context), to: paths.nginxSiteAvailable)
+        try await SystemFileSystem.installDirectory(paths.acmeWebroot, owner: "root", group: "root")
+        try await SystemFileSystem.writeFile(try NginxTemplate.bootstrap(context: context), to: paths.nginxSiteAvailable)
         
         try await Shell.runThrowing("install", ["-d", "-m", "0755", "-o", "root", "-g", "root", "/etc/nginx/sites-available", "/etc/nginx/sites-enabled"])
         try await Shell.runThrowing("ln", ["-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])

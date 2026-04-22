@@ -20,7 +20,7 @@ extension SSHStep {
     /// Bootstraps the service user's ~/.ssh directory and seeds GitHub's host key into known_hosts.
     private func prepareSSHDirectory() async throws {
 
-        try await SetupFileSystem.installDirectory(
+        try await SystemFileSystem.installDirectory(
             "\(paths.serviceHome)/.ssh",
             mode: "0700",
             owner: context.serviceUser,
@@ -70,14 +70,14 @@ extension SSHStep {
         )
 
         if !console.confirm("Continue after adding the deploy key on GitHub?", defaultYes: true) {
-            throw SetupCommand.Error.invalidValue(
+            throw SystemError.invalidValue(
                 "deployKey",
                 "GitHub deploy key setup was not confirmed"
             )
         }
 
         if try await !canReachRepository() {
-            throw SetupCommand.Error.invalidValue(
+            throw SystemError.invalidValue(
                 "deployKey",
                 "GitHub access check failed. Verify the deploy key and repository permissions."
             )
