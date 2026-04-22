@@ -101,7 +101,7 @@ extension StageDeployerStep {
     /// Fetches the most recent published release archive from GitHub and stages its contents.
     private func installLatestRelease() async throws {
         
-        let (tagName, downloadURL) = try await fetchLatestReleaseMetadata()
+        let (tagName, downloadURL) = try await DeployerReleaseAssets.fetchLatestReleaseMetadata()
         context.releaseVersion = tagName
 
         let archivePath = try await Shell.runThrowing("mktemp", []).trimmed
@@ -169,32 +169,6 @@ extension StageDeployerStep {
         try await SystemFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
     }
 
-    /// Queries the GitHub API to determine the appropriate asset download URL for the host machine.
-    private func fetchLatestReleaseMetadata() async throws -> (tagName: String, downloadURL: String) {
-        
-        guard let apiURL = URL(string: "https://api.github.com/repos/mottzi/Vapor-Deployer/releases/latest") else {
-            throw SetupCommand.Error.releaseAssetNotFound("invalid API URL")
-        }
-
-        let (data, _) = try await GitHubAPI.request(url: apiURL)
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let tagName = json["tag_name"] as? String,
-              let assets = json["assets"] as? [[String: Any]]
-        else {
-            throw SetupCommand.Error.releaseAssetNotFound("malformed release response")
-        }
-
-        let systemArchitecture = try await Shell.runThrowing("uname", ["-m"]).trimmed
-        let preferredAssetFilename = "deployer-linux-\(systemArchitecture).tar.gz"
-        let targetAssetNames = [preferredAssetFilename, "deployer.tar.gz"]
-        let downloadURL = targetAssetNames.lazy
-            .compactMap { name in assets.first(where: { ($0["name"] as? String) == name }) }
-            .compactMap { $0["browser_download_url"] as? String }
-            .first
-
-        guard let downloadURL else { throw SetupCommand.Error.releaseAssetNotFound(preferredAssetFilename) }
-
-        return (tagName, downloadURL)
     }
     
 }
