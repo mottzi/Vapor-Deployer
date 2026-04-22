@@ -36,11 +36,11 @@ extension Console {
         return value.flatMap(Int.init)
     }
 
-    private static func rule(character: Character = "━") -> String {
+    static func rule(character: Character = "━") -> String {
         String(repeating: String(character), count: terminalWidth)
     }
 
-    private static func titledRuleText(_ title: String, character: Character = "━") -> String {
+    static func titledRuleText(_ title: String, character: Character = "━") -> String {
         
         let prefix = "\(character)\(character)\(character) "
         let used = prefix.count + title.count + 1

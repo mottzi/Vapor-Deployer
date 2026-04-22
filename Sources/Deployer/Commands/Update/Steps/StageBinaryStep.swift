@@ -11,7 +11,7 @@ struct StageBinaryStep: UpdateStep {
 
     func run() async throws {
 
-        guard let tagName = context.releaseVersion,
+        guard context.releaseVersion != nil,
               context.releaseVersion != context.currentVersion,
               let stagingDir = context.stagingDir else {
             return // Up to date

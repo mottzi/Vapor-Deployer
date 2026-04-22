@@ -168,8 +168,6 @@ extension StageDeployerStep {
     private func writeReleaseVersion(_ tagName: String) async throws {
         try await SystemFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
     }
-
-    }
     
 }
 
