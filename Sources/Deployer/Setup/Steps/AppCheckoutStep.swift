@@ -1,6 +1,6 @@
 import Vapor
-import Foundation
 
+/// Clones or updates the target application's Git repository using the service user's deploy key.
 struct AppCheckoutStep: SetupStep {
 
     let context: SetupContext
@@ -9,25 +9,49 @@ struct AppCheckoutStep: SetupStep {
     let title = "Preparing target app checkout"
 
     func run() async throws {
-        let sshCommand = "ssh -i \(paths.deployKeyPath) -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
-
-        if FileManager.default.fileExists(atPath: "\(paths.appDirectory)/.git") {
-            try await shell.git("config", ["core.sshCommand", sshCommand], in: paths.appDirectory)
-            try await shell.git("fetch", ["origin", context.appBranch, "--prune"], in: paths.appDirectory)
-            try await shell.git("checkout", [context.appBranch], in: paths.appDirectory)
-            try await shell.git("pull", ["--ff-only", "origin", context.appBranch], in: paths.appDirectory)
-            console.print("App checkout updated.")
-        } else {
-            try await SetupFileSystem.installDirectory(paths.appsRootDirectory, owner: context.serviceUser, group: context.serviceUser)
-            try await shell.git(
-                "clone",
-                [context.appRepositoryURL, paths.appDirectory],
-                environment: ["GIT_SSH_COMMAND": sshCommand]
-            )
-            try await shell.git("config", ["core.sshCommand", sshCommand], in: paths.appDirectory)
-            try await shell.git("checkout", [context.appBranch], in: paths.appDirectory)
-            console.print("App checkout ready.")
-        }
+        FileManager.default.fileExists(atPath: "\(paths.appDirectory)/.git")
+            ? try await updateRepository()
+            : try await cloneRepository()
     }
 
+}
+
+extension AppCheckoutStep {
+
+    private func updateRepository() async throws {
+
+        try await shell.git("config", ["core.sshCommand", sshCommand], in: paths.appDirectory)
+        try await shell.git("fetch", ["origin", context.appBranch, "--prune"], in: paths.appDirectory)
+        try await shell.git("checkout", [context.appBranch], in: paths.appDirectory)
+        try await shell.git("pull", ["--ff-only", "origin", context.appBranch], in: paths.appDirectory)
+        console.print("App checkout updated.")
+    }
+
+    private func cloneRepository() async throws {
+
+        try await SetupFileSystem.installDirectory(
+            paths.appsRootDirectory,
+            owner: context.serviceUser,
+            group: context.serviceUser
+        )
+
+        try await shell.git(
+            "clone",
+            [context.appRepositoryURL, paths.appDirectory],
+            environment: ["GIT_SSH_COMMAND": sshCommand]
+        )
+
+        try await shell.git("config", ["core.sshCommand", sshCommand], in: paths.appDirectory)
+        try await shell.git("checkout", [context.appBranch], in: paths.appDirectory)
+        console.print("App checkout ready.")
+    }
+
+}
+
+extension AppCheckoutStep {
+    
+    private var sshCommand: String {
+        "ssh -i \(paths.deployKeyPath) -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+    }
+    
 }
