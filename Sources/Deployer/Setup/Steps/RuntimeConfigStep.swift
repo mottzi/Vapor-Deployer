@@ -1,6 +1,7 @@
 import Vapor
 
-struct WriteRuntimeConfigStep: SetupStep {
+/// Generates and persists the deployer's configuration JSON and the appropriate process manager files (systemd or Supervisor).
+struct RuntimeConfigStep: SetupStep {
 
     let context: SetupContext
     let console: any Console
@@ -8,9 +9,30 @@ struct WriteRuntimeConfigStep: SetupStep {
     let title = "Writing runtime configuration"
 
     func run() async throws {
-        guard let json = try DeployerTemplate.encodeJSON(from: context)
-        else { throw SetupCommand.Error.invalidValue("deployer.json", "failed to encode UTF-8 JSON") }
-        try await SetupFileSystem.writeFile(json, to: paths.deployerConfig, owner: context.serviceUser, group: context.serviceUser)
+
+        try await writeDeployerConfig()
+        try await setupServiceManager()
+    }
+
+}
+
+extension RuntimeConfigStep {
+
+    private func writeDeployerConfig() async throws {
+
+        guard let json = try DeployerTemplate.encodeJSON(from: context) else {
+            throw SetupCommand.Error.invalidValue("deployer.json", "failed to encode UTF-8 JSON")
+        }
+        
+        try await SetupFileSystem.writeFile(
+            json, 
+            to: paths.deployerConfig, 
+            owner: context.serviceUser, 
+            group: context.serviceUser
+        )
+    }
+
+    private func setupServiceManager() async throws {
 
         switch context.serviceManagerKind {
         case .systemd:
@@ -25,7 +47,12 @@ struct WriteRuntimeConfigStep: SetupStep {
         }
     }
 
+}
+
+extension RuntimeConfigStep {
+
     private func writeSystemdUnits() async throws {
+
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
         try await SetupFileSystem.installDirectory(unitDirectory, owner: context.serviceUser, group: context.serviceUser)
         
@@ -58,10 +85,13 @@ struct WriteRuntimeConfigStep: SetupStep {
     }
 
     private func removeSystemdFiles() async throws {
+
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
         _ = try? await shell.runUserSystemctl("disable", ["--now", "deployer.service", "\(context.productName).service"])
+        
         try? SetupFileSystem.removeIfPresent("\(unitDirectory)/deployer.service")
         try? SetupFileSystem.removeIfPresent("\(unitDirectory)/\(context.productName).service")
+        
         _ = try? await shell.runUserSystemctl("daemon-reload")
     }
 
@@ -69,8 +99,10 @@ struct WriteRuntimeConfigStep: SetupStep {
         
         _ = await Shell.run("supervisorctl", ["stop", "deployer"])
         _ = await Shell.run("supervisorctl", ["stop", context.productName])
+        
         try? SetupFileSystem.removeIfPresent("/etc/supervisor/conf.d/deployer.conf")
         try? SetupFileSystem.removeIfPresent("/etc/supervisor/conf.d/\(context.productName).conf")
+        
         _ = await Shell.run("supervisorctl", ["reread"])
         _ = await Shell.run("supervisorctl", ["update"])
     }

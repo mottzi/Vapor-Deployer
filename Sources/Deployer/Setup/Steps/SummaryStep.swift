@@ -1,6 +1,6 @@
 import Vapor
-import Foundation
 
+/// Prints the final summary card and operational guidance after a successful setup pipeline execution.
 struct SummaryStep: SetupStep {
 
     let context: SetupContext
@@ -9,6 +9,20 @@ struct SummaryStep: SetupStep {
     let title = "Setup complete"
 
     func run() async throws {
+
+        printSummaryCard()
+        
+        if context.usingStagingCertificates {
+            printStagingWarning()
+        }
+    }
+
+}
+
+extension SummaryStep {
+
+    private func printSummaryCard() {
+        
         console.card(
             title: "Setup complete",
             kvs: [
@@ -26,24 +40,30 @@ struct SummaryStep: SetupStep {
                 ("Follow logs", "sudo deployerctl logs [deployer|app|all]")
             ]
         )
-
-        if context.usingStagingCertificates {
-            console.lines(
-                title: "TLS warning - staging certificate in use",
-                lines: [
-                    "The active certificate was issued by Let's Encrypt staging/test infrastructure.",
-                    "Browsers will show it as untrusted. This is useful for setup testing and rate-limit recovery only.",
-                    "After the production issuance limit resets or the underlying issue is fixed, rerun:",
-                    "sudo deployer setup",
-                    "The setup command detects staging lineages and forces a production certificate replacement.",
-                    "Manual equivalent:",
-                    migrationCommand(paths: paths)
-                ]
-            )
-        }
     }
 
+    private func printStagingWarning() {
+
+        console.lines(
+            title: "TLS warning - staging certificate in use",
+            lines: [
+                "The active certificate was issued by Let's Encrypt staging/test infrastructure.",
+                "Browsers will show it as untrusted. This is useful for setup testing and rate-limit recovery only.",
+                "After the production issuance limit resets or the underlying issue is fixed, rerun:",
+                "sudo deployer setup",
+                "The setup command detects staging lineages and forces a production certificate replacement.",
+                "Manual equivalent:",
+                migrationCommand(paths: paths)
+            ]
+        )
+    }
+
+}
+
+extension SummaryStep {
+
     private func migrationCommand(paths: SetupPaths) -> String {
+
         let certbot = TemplateEscaping.shellCommand([
             "sudo", "certbot", "certonly",
             "--webroot",

@@ -1,7 +1,7 @@
 import Vapor
 
 /// Determines the source or pre-built executable payload and stages it into the final installation directory.
-struct DeployerPayloadStep: SetupStep {
+struct StageDeployerStep: SetupStep {
 
     let context: SetupContext
     let console: any Console
@@ -19,7 +19,7 @@ struct DeployerPayloadStep: SetupStep {
 
 }
 
-extension DeployerPayloadStep {
+extension StageDeployerStep {
     
     /// Updates an existing repository clone or creates a fresh one to build the deployer from source.
     private func installFromSource() async throws {
@@ -96,7 +96,7 @@ extension DeployerPayloadStep {
     
 }
 
-extension DeployerPayloadStep {
+extension StageDeployerStep {
 
     /// Fetches the most recent published release archive from GitHub and stages its contents.
     private func installLatestRelease() async throws {

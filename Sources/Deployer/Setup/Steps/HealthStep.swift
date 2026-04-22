@@ -1,6 +1,6 @@
 import Vapor
-import Foundation
 
+/// Verifies that both the deployer and the target app services have successfully started and are accepting local connections.
 struct HealthStep: SetupStep {
 
     let context: SetupContext
@@ -22,12 +22,15 @@ struct HealthStep: SetupStep {
         try await waitForTCP(port: context.appPort)
         console.print("App listening on 127.0.0.1:\(context.appPort).")
 
-        guard FileManager.default.isExecutableFile(atPath: "\(paths.appDeployDirectory)/\(context.productName)")
-        else { throw SetupCommand.Error.invalidValue("app binary", "missing deployed app binary") }
+        try verifyAppBinary()
     }
 
+}
+
+extension HealthStep {
+
     private func waitForService(_ service: String) async throws {
-        
+
         for _ in 0..<30 {
             if await isServiceRunning(service) { return }
             try await Task.sleep(for: .seconds(1))
@@ -36,7 +39,30 @@ struct HealthStep: SetupStep {
         throw SetupCommand.Error.serviceTimeout(service)
     }
 
+    private func waitForTCP(port: Int) async throws {
+
+        for _ in 0..<30 {
+            let result = await Shell.run("exec 3<>/dev/tcp/127.0.0.1/\(port)")
+            if result.exitCode == 0 { return }
+            try await Task.sleep(for: .seconds(1))
+        }
+
+        throw SetupCommand.Error.serviceTimeout("127.0.0.1:\(port)")
+    }
+
+    private func verifyAppBinary() throws {
+
+        if !FileManager.default.isExecutableFile(atPath: "\(paths.appDeployDirectory)/\(context.productName)") {
+            throw SetupCommand.Error.invalidValue("app binary", "missing deployed app binary")
+        }
+    }
+
+}
+
+extension HealthStep {
+
     private func isServiceRunning(_ service: String) async -> Bool {
+
         switch context.serviceManagerKind {
         case .systemd:
             let output = try? await shell.runUserSystemctl("is-active", ["\(service).service"])
@@ -45,16 +71,6 @@ struct HealthStep: SetupStep {
             let status = await Shell.run("supervisorctl", ["status", service]).output
             return status.split(whereSeparator: { $0.isWhitespace }).dropFirst().first == "RUNNING"
         }
-    }
-
-    private func waitForTCP(port: Int) async throws {
-        for _ in 0..<30 {
-            let result = await Shell.run("exec 3<>/dev/tcp/127.0.0.1/\(port)")
-            if result.exitCode == 0 { return }
-            try await Task.sleep(for: .seconds(1))
-        }
-
-        throw SetupCommand.Error.serviceTimeout("127.0.0.1:\(port)")
     }
 
 }

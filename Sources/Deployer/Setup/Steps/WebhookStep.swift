@@ -1,6 +1,6 @@
 import Vapor
-import Foundation
 
+/// Provisions or updates a GitHub webhook to trigger deployments when code is pushed.
 struct WebhookStep: SetupStep {
 
     let context: SetupContext
@@ -9,13 +9,55 @@ struct WebhookStep: SetupStep {
     let title = "Creating GitHub webhook"
 
     func run() async throws {
-        
-        let hooks = try await GitHubAPI.requestJSON(url: hooksURL(), token: context.githubToken)
-        let existingID = (hooks as? [[String: Any]])?
-            .first { hook in
-                guard let config = hook["config"] as? [String: Any] else { return false }
-                return config["url"] as? String == context.webhookURL
-            }?["id"]
+        let existingID = try await fetchExistingWebhookID()
+        try await upsertWebhook(existingID: existingID)
+    }
+
+}
+
+extension WebhookStep {
+
+    private func fetchExistingWebhookID() async throws -> Any? {
+
+        let hooks = try await GitHubAPI.requestJSON(url: hooksURL, token: context.githubToken)
+        return (hooks as? [[String: Any]])?.first { hook in
+            guard let config = hook["config"] as? [String: Any] else { return false }
+            return config["url"] as? String == context.webhookURL
+        }?["id"]
+    }
+
+    private func upsertWebhook(existingID: Any?) async throws {
+
+        let data = try buildWebhookPayload()
+
+        if let existingID {
+            try await GitHubAPI.requestJSON(
+                method: "PATCH", 
+                url: "\(hooksURL)/\(existingID)", 
+                token: context.githubToken, 
+                body: data
+            )
+            console.print("Updated existing GitHub webhook.")
+        } else {
+            try await GitHubAPI.requestJSON(
+                method: "POST", 
+                url: hooksURL, 
+                token: context.githubToken, 
+                body: data
+            )
+            console.print("Created GitHub webhook.")
+        }
+    }
+
+}
+
+extension WebhookStep {
+
+    private var hooksURL: String {
+        "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks"
+    }
+
+    private func buildWebhookPayload() throws -> Data {
 
         let payload: [String: Any] = [
             "name": "web",
@@ -28,19 +70,8 @@ struct WebhookStep: SetupStep {
                 "insecure_ssl": "0"
             ]
         ]
-        let data = try JSONSerialization.data(withJSONObject: payload)
-
-        if let existingID {
-            try await GitHubAPI.requestJSON(method: "PATCH", url: "\(hooksURL())/\(existingID)", token: context.githubToken, body: data)
-            console.print("Updated existing GitHub webhook.")
-        } else {
-            try await GitHubAPI.requestJSON(method: "POST", url: hooksURL(), token: context.githubToken, body: data)
-            console.print("Created GitHub webhook.")
-        }
-    }
-
-    private func hooksURL() -> String {
-        "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks"
+        
+        return try JSONSerialization.data(withJSONObject: payload)
     }
 
 }

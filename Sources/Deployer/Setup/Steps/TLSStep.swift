@@ -1,6 +1,6 @@
 import Vapor
-import Foundation
 
+/// Acquires Let's Encrypt TLS certificates and configures Nginx as a secure HTTPS reverse proxy.
 struct TLSStep: SetupStep {
 
     let context: SetupContext
@@ -9,24 +9,43 @@ struct TLSStep: SetupStep {
     let title = "Activating HTTPS reverse proxy"
 
     func run() async throws {
-        
+
         try await resolveExistingCertName()
         try await issueTLSCertificateWithStagingFallback()
         try await resolveCertNameAfterIssue()
+        
         context.usingStagingCertificates = await lineageIsStaging(context.certName)
-
-        try await SetupFileSystem.writeFile(try NginxTemplate.tls(context: context), to: paths.nginxSiteAvailable)
-        try await SetupFileSystem.installDirectory("/etc/letsencrypt/renewal-hooks/deploy", owner: "root", group: "root")
-        try await SetupFileSystem.writeFile(NginxTemplate.renewHookScript(), to: paths.certbotRenewHook, mode: "0755")
-        try await Shell.runThrowing("ln", ["-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])
-        try await Shell.runThrowing("nginx", ["-t"])
-        try await Shell.runThrowing("systemctl", ["reload", "nginx"])
+        
+        try await configureNginxTLS()
         
         console.print("HTTPS reverse proxy is active for \(context.primaryDomain).")
     }
 
+}
+
+extension TLSStep {
+
+    private func resolveExistingCertName() async throws {
+
+        for name in certificateLineages() {
+            if await lineageCoversDomains(name) {
+                context.certName = name
+                context.certLineageFound = true
+                context.currentCertLineageIsStaging = await lineageIsStaging(name)
+                
+                if context.currentCertLineageIsStaging {
+                    console.warning("Existing certificate lineage '\(name)' uses Let's Encrypt staging. Attempting to replace it with a production certificate.")
+                } else {
+                    console.print("Reusing existing certificate lineage '\(name)'.")
+                }
+                
+                return
+            }
+        }
+    }
+
     private func issueTLSCertificateWithStagingFallback() async throws {
-        
+
         do {
             try await issueTLSCertificate(
                 staging: false,
@@ -48,45 +67,8 @@ struct TLSStep: SetupStep {
         }
     }
 
-    private func issueTLSCertificate(staging: Bool, forceRenewal: Bool) async throws {
-        let emailArguments = context.tlsContactEmail.isEmpty
-            ? ["--register-unsafely-without-email"]
-            : ["--email", context.tlsContactEmail]
-        let serverArguments = staging ? ["--staging"] : []
-        let renewalArguments = forceRenewal ? ["--force-renewal"] : ["--keep-until-expiring"]
-
-        try await Shell.runThrowing("certbot", [
-            "certonly",
-            "--webroot",
-            "--agree-tos",
-            "--non-interactive"
-        ] + serverArguments + emailArguments + [
-            "--cert-name", context.certName,
-            "--expand",
-        ] + renewalArguments + [
-            "-w", paths.acmeWebroot,
-            "-d", context.primaryDomain,
-            "-d", context.aliasDomain
-        ])
-    }
-
-    private func resolveExistingCertName() async throws {
-        for name in certificateLineages() {
-            if await lineageCoversDomains(name) {
-                context.certName = name
-                context.certLineageFound = true
-                context.currentCertLineageIsStaging = await lineageIsStaging(name)
-                if context.currentCertLineageIsStaging {
-                    console.warning("Existing certificate lineage '\(name)' uses Let's Encrypt staging. Attempting to replace it with a production certificate.")
-                } else {
-                    console.print("Reusing existing certificate lineage '\(name)'.")
-                }
-                return
-            }
-        }
-    }
-
     private func resolveCertNameAfterIssue() async throws {
+
         if await lineageFilesOK(context.certName), await lineageCoversDomains(context.certName) {
             return
         }
@@ -106,9 +88,50 @@ struct TLSStep: SetupStep {
         throw SetupCommand.Error.certificateLineageNotFound(context.primaryDomain, context.aliasDomain)
     }
 
+    private func configureNginxTLS() async throws {
+
+        try await SetupFileSystem.writeFile(try NginxTemplate.tls(context: context), to: paths.nginxSiteAvailable)
+        try await SetupFileSystem.installDirectory("/etc/letsencrypt/renewal-hooks/deploy", owner: "root", group: "root")
+        try await SetupFileSystem.writeFile(NginxTemplate.renewHookScript(), to: paths.certbotRenewHook, mode: "0755")
+        
+        try await Shell.runThrowing("ln", ["-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])
+        try await Shell.runThrowing("nginx", ["-t"])
+        try await Shell.runThrowing("systemctl", ["reload", "nginx"])
+    }
+
+}
+
+extension TLSStep {
+
+    private func issueTLSCertificate(staging: Bool, forceRenewal: Bool) async throws {
+
+        let emailArguments = context.tlsContactEmail.isEmpty
+            ? ["--register-unsafely-without-email"]
+            : ["--email", context.tlsContactEmail]
+            
+        let serverArguments = staging ? ["--staging"] : []
+        let renewalArguments = forceRenewal ? ["--force-renewal"] : ["--keep-until-expiring"]
+
+        try await Shell.runThrowing("certbot", [
+            "certonly",
+            "--webroot",
+            "--agree-tos",
+            "--non-interactive"
+        ] + serverArguments + emailArguments + [
+            "--cert-name", context.certName,
+            "--expand",
+        ] + renewalArguments + [
+            "-w", paths.acmeWebroot,
+            "-d", context.primaryDomain,
+            "-d", context.aliasDomain
+        ])
+    }
+
     private func certificateLineages() -> [String] {
+
         let directory = "/etc/letsencrypt/live"
         guard let entries = try? FileManager.default.contentsOfDirectory(atPath: directory) else { return [] }
+        
         return entries.filter { entry in
             var isDirectory: ObjCBool = false
             return FileManager.default.fileExists(atPath: "\(directory)/\(entry)", isDirectory: &isDirectory) && isDirectory.boolValue
@@ -127,8 +150,10 @@ struct TLSStep: SetupStep {
     }
 
     private func lineageIsStaging(_ name: String) async -> Bool {
+
         let cert = "/etc/letsencrypt/live/\(name)/fullchain.pem"
         let issuer = await Shell.run("openssl", ["x509", "-noout", "-issuer", "-in", cert]).output
+        
         return issuer.localizedCaseInsensitiveContains("staging")
             || issuer.localizedCaseInsensitiveContains("fake le")
             || issuer.localizedCaseInsensitiveContains("pretend")

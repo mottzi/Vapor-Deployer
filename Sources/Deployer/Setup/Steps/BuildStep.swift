@@ -1,6 +1,6 @@
 import Vapor
-import Foundation
 
+/// Compiles the target app and optionally the deployer itself from source, and installs the resulting binaries.
 struct BuildStep: SetupStep {
 
     let context: SetupContext
@@ -9,45 +9,96 @@ struct BuildStep: SetupStep {
     let title = "Building deployer and target app"
 
     func run() async throws {
-        let env = ["HOME": paths.serviceHome, "USER": context.serviceUser, "PATH": paths.swiftPath]
-        let swift = "\(paths.swiftlyBinDirectory)/swift"
 
         if context.buildFromSource {
-            console.print("Building deployer in \(context.deployerBuildMode) mode...")
-            try await shell.runAsServiceUserStreamingTail(swift, ["build", "-c", context.deployerBuildMode], directory: paths.installDirectory, environment: env)
-            let binDir = try await shell.runAsServiceUser(
-                swift,
-                ["build", "-c", context.deployerBuildMode, "--show-bin-path"],
-                directory: paths.installDirectory,
-                environment: env
-            ).trimmed
-            let binary = "\(binDir)/deployer"
-            guard FileManager.default.isExecutableFile(atPath: binary) else {
-                throw SetupCommand.Error.invalidValue("deployer binary", "expected binary was not produced at '\(binary)'")
-            }
-            try await shell.runAsServiceUser("install", ["-m", "0755", binary, paths.deployerBinary], environment: env)
+            try await buildDeployer()
         }
+        
+        try await buildTargetApp()
+    }
+
+}
+
+extension BuildStep {
+
+    private func buildDeployer() async throws {
+
+        console.print("Building deployer in \(context.deployerBuildMode) mode...")
+        
+        try await shell.runAsServiceUserStreamingTail(
+            swiftBinary, 
+            ["build", "-c", context.deployerBuildMode], 
+            directory: paths.installDirectory, 
+            environment: buildEnvironment
+        )
+        
+        let binDir = try await shell.runAsServiceUser(
+            swiftBinary,
+            ["build", "-c", context.deployerBuildMode, "--show-bin-path"],
+            directory: paths.installDirectory,
+            environment: buildEnvironment
+        ).trimmed
+        
+        let binary = "\(binDir)/deployer"
+        guard FileManager.default.isExecutableFile(atPath: binary) else {
+            throw SetupCommand.Error.invalidValue("deployer binary", "expected binary was not produced at '\(binary)'")
+        }
+        
+        try await shell.runAsServiceUser(
+            "install", 
+            ["-m", "0755", binary, paths.deployerBinary], 
+            environment: buildEnvironment
+        )
+    }
+
+    private func buildTargetApp() async throws {
 
         console.print("Building target app in \(context.appBuildMode) mode...")
-        try await shell.runAsServiceUserStreamingTail(swift, ["build", "-c", context.appBuildMode], directory: paths.appDirectory, environment: env)
+        
+        try await shell.runAsServiceUserStreamingTail(
+            swiftBinary, 
+            ["build", "-c", context.appBuildMode], 
+            directory: paths.appDirectory, 
+            environment: buildEnvironment
+        )
+        
         let appBinDir = try await shell.runAsServiceUser(
-            swift,
+            swiftBinary,
             ["build", "-c", context.appBuildMode, "--show-bin-path"],
             directory: paths.appDirectory,
-            environment: env
+            environment: buildEnvironment
         ).trimmed
+        
         let appBinary = "\(appBinDir)/\(context.productName)"
         guard FileManager.default.isExecutableFile(atPath: appBinary) else {
             throw SetupCommand.Error.invalidValue("app binary", "expected binary was not produced at '\(appBinary)'")
         }
 
-        try await shell.runAsServiceUser("install", ["-d", "-m", "0755", paths.appDeployDirectory], environment: env)
+        try await shell.runAsServiceUser(
+            "install", 
+            ["-d", "-m", "0755", paths.appDeployDirectory], 
+            environment: buildEnvironment
+        )
+        
         try await shell.runAsServiceUser(
             "install",
             ["-m", "0755", appBinary, "\(paths.appDeployDirectory)/\(context.productName)"],
-            environment: env
+            environment: buildEnvironment
         )
+        
         console.print("Build artifacts installed.")
+    }
+
+}
+
+extension BuildStep {
+
+    private var swiftBinary: String {
+        "\(paths.swiftlyBinDirectory)/swift"
+    }
+
+    private var buildEnvironment: [String: String] {
+        ["HOME": paths.serviceHome, "USER": context.serviceUser, "PATH": paths.swiftPath]
     }
 
 }

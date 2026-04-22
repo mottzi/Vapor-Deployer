@@ -43,6 +43,7 @@ struct Shell {
         await run("bash", ["-c", command], directory: directory)
     }
 
+    @discardableResult
     static func run(
         _ command: String,
         _ arguments: [String],
