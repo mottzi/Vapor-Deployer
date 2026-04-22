@@ -68,6 +68,7 @@ enum DeployerctlTemplate {
           logs          Follow on-disk service log file(s) (Ctrl-C to exit)
           journal       Show recent systemd journal entries (systemd only)
           setup         Rerun deployer setup (interactive)
+          update        Update the deployer and redeploy the app (interactive)
           remove        Tear down the entire deployer installation (interactive)
 
         Targets:
@@ -89,7 +90,7 @@ enum DeployerctlTemplate {
         [[ $EUID -eq 0 ]] || die "must be run as root (try: sudo $PROG $*)"
 
         # lifecycle actions are handled before config sourcing so they work in degraded states
-        if [[ "${1:-}" == "setup" || "${1:-}" == "remove" ]]; then
+        if [[ "${1:-}" == "setup" || "${1:-}" == "remove" || "${1:-}" == "update" ]]; then
           if [[ -r "$CONFIG_FILE" ]]; then
             . "$CONFIG_FILE"
             exec "${INSTALL_DIR:-/home/vapor/deployer}/deployer" "$1"
