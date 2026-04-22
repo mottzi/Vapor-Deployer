@@ -21,8 +21,8 @@ struct SetupCommand: AsyncCommand {
             ServiceUserStep.self,
             DeployerPayloadStep.self,
             SSHStep.self,
-            AppCheckoutStep.self,  // continue
-            ResolveProductStep.self,
+            AppCheckoutStep.self,
+            ResolveProductStep.self, 
             SwiftStep.self,
             BuildStep.self,
             WriteRuntimeConfigStep.self,
