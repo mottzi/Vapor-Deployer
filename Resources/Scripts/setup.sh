@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# This script serves as the initial execution point for installing Vapor-Deployer.
+# It is designed to be a lightweight, zero-dependency bootstrapper that seamlessly
+# transitions the user from a standard shell environment into the native Swift
+# application.
+#
+# To remove Vapor-Deployer, run: sudo deployerctl remove
+
 set -Eeuo pipefail
 
 REPOSITORY="${DEPLOYER_REPOSITORY:-mottzi/Vapor-Deployer}"
