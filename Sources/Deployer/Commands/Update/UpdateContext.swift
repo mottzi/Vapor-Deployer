@@ -20,6 +20,7 @@ final class UpdateContext: SystemContext {
     var releaseAssets: DeployerReleaseAssetDirectories?
     var assetBackup: ReleaseAssetBackup?
     var currentVersion: String?
+    var isUpToDate = false
 
     init(installDirectory: URL, executableName: String, serviceName: String) {
         self.stagedBinaryURL = installDirectory.appendingPathComponent("\(executableName).new")

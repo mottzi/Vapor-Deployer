@@ -20,8 +20,9 @@ struct FetchAndDownloadReleaseStep: UpdateStep {
         let currentVersion = readInstalledVersion(at: context.versionFileURL)
         context.currentVersion = currentVersion
 
-        guard tagName != currentVersion else {
+        if tagName == currentVersion {
             console.print("Deployer is already up to date (\(tagName)).")
+            context.isUpToDate = true
             return
         }
 

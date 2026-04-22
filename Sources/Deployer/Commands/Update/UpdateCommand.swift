@@ -41,6 +41,8 @@ struct UpdateCommand: AsyncCommand {
         context.console.updateBanner()
 
         for (index, step) in steps.enumerated() {
+            if updateContext.isUpToDate { break }
+
             step.printHeader(index: index + 1, total: steps.count)
             
             do {
