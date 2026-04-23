@@ -154,6 +154,8 @@ enum DeployerctlTemplate {
               sleep 0.1
             done
 
+            cd "$SERVICE_HOME" 2>/dev/null || cd /
+
             exec runuser -u "$SERVICE_USER" -- env \
               "HOME=$SERVICE_HOME" \
               "USER=$SERVICE_USER" \
@@ -177,6 +179,9 @@ enum DeployerctlTemplate {
         id -u "$SERVICE_USER" >/dev/null 2>&1 || die "service user '$SERVICE_USER' does not exist"
         SERVICE_UID="$(id -u "$SERVICE_USER")"
         BUS_PATH="/run/user/$SERVICE_UID/bus"
+        SERVICE_HOME="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
+        [[ -n "$SERVICE_HOME" ]] || SERVICE_HOME="/home/$SERVICE_USER"
+        cd "$SERVICE_HOME" 2>/dev/null || cd /
 
         action="$1"; shift
         target="${1:-all}"
@@ -218,6 +223,8 @@ enum DeployerctlTemplate {
 
         as_service_user() {
           runuser -u "$SERVICE_USER" -- env \
+            "HOME=$SERVICE_HOME" \
+            "USER=$SERVICE_USER" \
             "XDG_RUNTIME_DIR=/run/user/$SERVICE_UID" \
             "DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS_PATH" \
             "$@"

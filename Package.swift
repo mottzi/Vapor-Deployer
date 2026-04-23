@@ -29,7 +29,7 @@ let package = Package(
                 .enableExperimentalFeature("StrictConcurrency")
             ]
         ),
-//
+// test
 //        .testTarget(
 //            name: "DeployerTests",
 //            dependencies: [

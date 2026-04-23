@@ -20,9 +20,13 @@ struct SystemdServiceManager: ServiceManager {
     func status(product: String) async -> ServiceStatus {
         
         let output = await Shell.run("\(prefix) systemctl --user is-active \(product).service").output
-        let trimmed = output.trimmed
+        let statusToken = output
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init)
+            .reversed()
+            .first(where: { ["active", "activating", "deactivating", "inactive", "failed"].contains($0) })
         
-        return switch trimmed {
+        return switch statusToken {
             case "active": .running
             case "activating": .starting
             case "deactivating": .stopping
