@@ -93,14 +93,43 @@ enum DeployerctlTemplate {
 
         [[ $EUID -eq 0 ]] || die "must be run as root (try: sudo $PROG $*)"
 
+        resolve_install_bin() {
+          if [[ -n "${INSTALL_DIR:-}" ]]; then
+            printf '%s\n' "${INSTALL_DIR%/}/deployer"
+            return 0
+          fi
+
+          if [[ -n "${SERVICE_USER:-}" ]]; then
+            local service_home
+            service_home="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
+            [[ -n "$service_home" ]] || service_home="/home/$SERVICE_USER"
+            printf '%s\n' "${service_home%/}/deployer/deployer"
+            return 0
+          fi
+
+          local discovered
+          discovered="$(find /home -mindepth 3 -maxdepth 3 -type f -path '/home/*/deployer/deployer' -print -quit 2>/dev/null || true)"
+          if [[ -n "$discovered" ]]; then
+            printf '%s\n' "$discovered"
+            return 0
+          fi
+
+          if command -v deployer >/dev/null 2>&1; then
+            command -v deployer
+            return 0
+          fi
+
+          die "could not locate deployer binary; rerun the bootstrap setup script"
+        }
+
         # lifecycle actions are handled before full config validation so they work in degraded states
         if [[ "${1:-}" == "setup" || "${1:-}" == "remove" ]]; then
           if [[ -r "$CONFIG_FILE" ]]; then
             . "$CONFIG_FILE"
-            exec "${INSTALL_DIR:-/home/vapor/deployer}/deployer" "$1"
-          else
-            exec /home/vapor/deployer/deployer "$1"
           fi
+
+          INSTALL_BIN="$(resolve_install_bin)"
+          exec "$INSTALL_BIN" "$1"
         fi
 
         if [[ "${1:-}" == "update" ]]; then
@@ -108,7 +137,7 @@ enum DeployerctlTemplate {
             . "$CONFIG_FILE"
           fi
 
-          INSTALL_BIN="${INSTALL_DIR:-/home/vapor/deployer}/deployer"
+          INSTALL_BIN="$(resolve_install_bin)"
 
           if [[ "${SERVICE_MANAGER:-}" == "systemd" && -n "${SERVICE_USER:-}" ]]; then
             id -u "$SERVICE_USER" >/dev/null 2>&1 || die "service user '$SERVICE_USER' does not exist"
