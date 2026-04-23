@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Console rendering helpers so each step presents progress and key configuration in a consistent visual format.
 extension Console {

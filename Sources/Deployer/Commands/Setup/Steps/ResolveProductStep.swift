@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Parses the application's Package.swift to identify and prompt for the executable product to deploy.
 struct ResolveProductStep: SetupStep {

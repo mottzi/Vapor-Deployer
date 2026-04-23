@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Starts the updated service and verifies it runs stably.
 struct StartServiceStep: UpdateStep {

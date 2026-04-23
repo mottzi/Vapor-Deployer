@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// One phase in the update pipeline that validates assumptions, mutates shared state, and provisions the host before the next phase.
 protocol UpdateStep {

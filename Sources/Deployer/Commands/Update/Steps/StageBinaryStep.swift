@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Stages the downloaded binary and creates a backup of current assets for rollback.
 struct StageBinaryStep: UpdateStep {

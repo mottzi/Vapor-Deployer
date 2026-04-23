@@ -2,9 +2,13 @@ import Foundation
 
 /// Shared contract for host-level operations that need the service identity and path layout.
 protocol SystemContext: AnyObject {
+    
     var serviceUser: String { get }
+    
     var serviceUserUID: Int? { get set }
+    
     var paths: SystemPaths? { get }
+    
 }
 
 extension SystemContext {

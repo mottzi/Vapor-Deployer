@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Fetches the latest release from GitHub and downloads the appropriate payload for the host.
 struct FetchAndDownloadReleaseStep: UpdateStep {

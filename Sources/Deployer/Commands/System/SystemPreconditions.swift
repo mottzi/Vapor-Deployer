@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Shared precondition checks for commands that provision or tear down host resources.
 extension AsyncCommand {

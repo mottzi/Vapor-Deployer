@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Removes deployer-generated files and the app/deployer checkout directories with strict safety guards.
 struct RemoveCheckoutsStep: RemoveStep {

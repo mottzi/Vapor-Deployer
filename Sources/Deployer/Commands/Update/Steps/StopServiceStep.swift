@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Stops the active deployer service before the final binary swap.
 struct StopServiceStep: UpdateStep {

@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Swaps the staged binary and assets into place.
 struct ActivateReleaseStep: UpdateStep {

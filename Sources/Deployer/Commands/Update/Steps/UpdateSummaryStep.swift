@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Writes the successful update version and prints the completion message.
 struct UpdateSummaryStep: UpdateStep {
