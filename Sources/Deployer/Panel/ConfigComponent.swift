@@ -26,9 +26,15 @@ struct ConfigComponent: ManualComponent {
         }
     }
 
-    init(using config: Configuration) {
+    init(using config: Configuration, deployerVersion: String) {
         self.name = "ConfigComponent-\(config.target.name)"
-        self.state = LiveState(of: ConfigState(config: config, componentName: self.name))
+        self.state = LiveState(
+            of: ConfigState(
+                config: config,
+                deployerVersion: deployerVersion,
+                componentName: self.name
+            )
+        )
     }
 
 }
@@ -40,6 +46,7 @@ struct ConfigState: ComponentData {
 
     init(
         config: Configuration,
+        deployerVersion: String,
         componentName: String
     ) {
         self.componentName = componentName
@@ -52,7 +59,8 @@ struct ConfigState: ComponentData {
             Field("Push Event", config.target.pusheventPath.displayPath)
         ]
 
-        let deployerPanelFields = [
+        let deployerFields = [
+            Field("Version", deployerVersion),
             Field("Port", String(config.port)),
             Field("DB File", config.dbFile),
             Field("Mist Socket", config.socketPath.displayPath),
@@ -60,7 +68,7 @@ struct ConfigState: ComponentData {
         ]
 
         self.groups = [
-            Group("Panel", deployerPanelFields),
+            Group("Deployer", deployerFields),
             Group("Target", targetFields)
         ]
     }

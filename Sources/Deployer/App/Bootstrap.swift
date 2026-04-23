@@ -16,6 +16,7 @@ extension Deployer {
         app.asyncCommands.use(UpdateCommand(), as: "update")
         app.asyncCommands.use(SetupCommand(), as: "setup")
         app.asyncCommands.use(RemoveCommand(), as: "remove")
+        app.asyncCommands.use(VersionCommand(), as: "version")
     }
 
     func useServer() async throws {
@@ -63,7 +64,8 @@ extension Deployer {
 
     func configurePanel(config: Configuration) async throws {
         let rowComponent = RowComponent(productName: config.target.name)
-        let configComponent = ConfigComponent(using: config)
+        let deployerVersion = await DeployerVersion.current()
+        let configComponent = ConfigComponent(using: config, deployerVersion: deployerVersion)
         let queueComponent = QueueComponent()
         let statusComponent = StatusComponent(
             product: config.target.name,

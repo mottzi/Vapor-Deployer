@@ -10,8 +10,8 @@ struct ActivateReleaseStep: UpdateStep {
 
     func run() async throws {
 
-        guard context.releaseVersion != context.currentVersion,
-              let assets = context.releaseAssets else { return }
+        guard context.releaseVersion != context.currentVersion else { return }
+        guard let assets = context.releaseAssets else { return }
 
         try activateCandidateBinary()
         try copyReleaseAssets(assets)

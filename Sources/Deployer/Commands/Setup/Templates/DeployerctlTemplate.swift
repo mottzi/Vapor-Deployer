@@ -59,6 +59,7 @@ enum DeployerctlTemplate {
 
         Usage:
           sudo $PROG <action> [target]
+          $PROG version
           sudo $PROG help
 
         Actions:
@@ -71,6 +72,7 @@ enum DeployerctlTemplate {
           disable       Disable services at boot
           logs          Follow on-disk service log file(s) (Ctrl-C to exit)
           journal       Show recent systemd journal entries (systemd only)
+          version       Print the deployer version
           setup         Rerun deployer setup (interactive)
           update        Update the deployer and redeploy the app (interactive)
           remove        Tear down the entire deployer installation (interactive)
@@ -90,8 +92,6 @@ enum DeployerctlTemplate {
         case "${1:-}" in
           ""|-h|--help|help) usage; [[ -n "${1:-}" ]] || exit 2; exit 0 ;;
         esac
-
-        [[ $EUID -eq 0 ]] || die "must be run as root (try: sudo $PROG $*)"
 
         resolve_install_bin() {
           if [[ -n "${INSTALL_DIR:-}" ]]; then
@@ -122,7 +122,18 @@ enum DeployerctlTemplate {
           die "could not locate deployer binary; rerun the bootstrap setup script"
         }
 
-        # lifecycle actions are handled before full config validation so they work in degraded states
+        # version and lifecycle actions are handled before full config validation so they work in degraded states
+        if [[ "${1:-}" == "version" ]]; then
+          if [[ -r "$CONFIG_FILE" ]]; then
+            . "$CONFIG_FILE"
+          fi
+
+          INSTALL_BIN="$(resolve_install_bin)"
+          exec "$INSTALL_BIN" version
+        fi
+
+        [[ $EUID -eq 0 ]] || die "must be run as root (try: sudo $PROG $*)"
+
         if [[ "${1:-}" == "setup" || "${1:-}" == "remove" ]]; then
           if [[ -r "$CONFIG_FILE" ]]; then
             . "$CONFIG_FILE"

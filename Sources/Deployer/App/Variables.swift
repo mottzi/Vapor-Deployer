@@ -3,6 +3,7 @@ import Vapor
 extension Deployer {
     
     func useVariables() throws {
+        
         for variable in Variables.allCases {
             guard Environment.get(variable.rawValue) == nil else { continue }
             throw Configuration.Error.invalidField(
