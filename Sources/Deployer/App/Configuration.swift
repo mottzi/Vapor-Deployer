@@ -43,9 +43,9 @@ enum ServiceManagerKind: String, Codable, Sendable {
     /// Is easier to use than systemd but requires dependency.
     case supervisor
     
-    func makeManager() -> any ServiceManager {
+    func makeManager(serviceUser: String? = nil) -> any ServiceManager {
         switch self {
-        case .systemd: SystemdServiceManager()
+        case .systemd: SystemdServiceManager(serviceUser: serviceUser)
         case .supervisor: SupervisorServiceManager()
         }
     }

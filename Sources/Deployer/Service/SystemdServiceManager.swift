@@ -3,6 +3,8 @@ import Foundation
 /// A service manager implementation that delegates to `systemctl`.
 struct SystemdServiceManager: ServiceManager {
 
+    let serviceUser: String?
+
     func start(product: String) async throws {
         try await Shell.runThrowing("\(prefix) systemctl --user start \(product).service")
     }
@@ -31,6 +33,19 @@ struct SystemdServiceManager: ServiceManager {
     }
     
     /// Prefix needed so `systemctl --user` can connect from non-login service contexts.
-    let prefix = "XDG_RUNTIME_DIR=/run/user/$(id -u)"
+    var prefix: String {
+        guard let serviceUser = normalizedServiceUser else {
+            return "XDG_RUNTIME_DIR=/run/user/$(id -u)"
+        }
+        
+        let user = serviceUser.shellQuoted
+        let runtimeDir = "/run/user/$(id -u \(user))"
+        return "XDG_RUNTIME_DIR=\(runtimeDir) DBUS_SESSION_BUS_ADDRESS=unix:path=\(runtimeDir)/bus"
+    }
+
+    private var normalizedServiceUser: String? {
+        let trimmed = serviceUser?.trimmed ?? ""
+        return trimmed.isEmpty ? nil : trimmed
+    }
 
 }

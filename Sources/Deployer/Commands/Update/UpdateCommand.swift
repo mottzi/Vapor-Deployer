@@ -25,6 +25,8 @@ struct UpdateCommand: AsyncCommand {
             executableName: executableName,
             serviceName: "deployer"
         )
+        
+        updateContext.serviceUser = await resolveServiceUser(executableURL: resolvedExecutableURL) ?? ""
 
         let stepTypes: [any UpdateStep.Type] = [
             DownloadStep.self,
@@ -64,7 +66,7 @@ extension UpdateCommand {
     private func rollback(context: UpdateContext, originalError: Swift.Error) async throws {
         let fileManager = FileManager.default
         let config = try Configuration.load()
-        let manager = config.serviceManager.makeManager()
+        let manager = config.serviceManager.makeManager(serviceUser: context.managerServiceUser)
         let executableURL = context.stagedBinaryURL.deletingPathExtension()
         
         do {
@@ -103,6 +105,22 @@ extension UpdateCommand {
 
 extension UpdateCommand {
 
+    /// Resolves the configured service user so systemd user operations can target the right user manager when invoked as root.
+    private func resolveServiceUser(executableURL: URL) async -> String? {
+        let metadata = await ConfigDiscovery.loadDeployerctl()
+        if let discovered = metadata["SERVICE_USER"]?.trimmed, !discovered.isEmpty {
+            return discovered
+        }
+        
+        let attributes = try? FileManager.default.attributesOfItem(atPath: executableURL.path)
+        if let owner = attributes?[.ownerAccountName] as? String {
+            let trimmed = owner.trimmed
+            if !trimmed.isEmpty { return trimmed }
+        }
+        
+        return nil
+    }
+    
     /// Reinstates the last known-good executable after a failed update attempt.
     private func restoreBackup(context: UpdateContext, fileManager: FileManager, executableURL: URL) throws {
         let backupBinaryExists = fileManager.fileExists(atPath: context.backupBinaryURL.path)

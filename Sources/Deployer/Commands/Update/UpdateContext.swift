@@ -22,6 +22,11 @@ final class UpdateContext: SystemContext {
     var currentVersion: String?
     var isUpToDate = false
 
+    var managerServiceUser: String? {
+        let trimmed = serviceUser.trimmed
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
     init(installDirectory: URL, executableName: String, serviceName: String) {
         self.stagedBinaryURL = installDirectory.appendingPathComponent("\(executableName).new")
         self.backupBinaryURL = installDirectory.appendingPathComponent("\(executableName).old")
