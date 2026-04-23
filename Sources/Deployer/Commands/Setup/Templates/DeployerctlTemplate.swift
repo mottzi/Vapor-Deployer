@@ -93,14 +93,47 @@ enum DeployerctlTemplate {
 
         [[ $EUID -eq 0 ]] || die "must be run as root (try: sudo $PROG $*)"
 
-        # lifecycle actions are handled before config sourcing so they work in degraded states
-        if [[ "${1:-}" == "setup" || "${1:-}" == "remove" || "${1:-}" == "update" ]]; then
+        # lifecycle actions are handled before full config validation so they work in degraded states
+        if [[ "${1:-}" == "setup" || "${1:-}" == "remove" ]]; then
           if [[ -r "$CONFIG_FILE" ]]; then
             . "$CONFIG_FILE"
             exec "${INSTALL_DIR:-/home/vapor/deployer}/deployer" "$1"
           else
             exec /home/vapor/deployer/deployer "$1"
           fi
+        fi
+
+        if [[ "${1:-}" == "update" ]]; then
+          if [[ -r "$CONFIG_FILE" ]]; then
+            . "$CONFIG_FILE"
+          fi
+
+          INSTALL_BIN="${INSTALL_DIR:-/home/vapor/deployer}/deployer"
+
+          if [[ "${SERVICE_MANAGER:-}" == "systemd" && -n "${SERVICE_USER:-}" ]]; then
+            id -u "$SERVICE_USER" >/dev/null 2>&1 || die "service user '$SERVICE_USER' does not exist"
+            SERVICE_UID="$(id -u "$SERVICE_USER")"
+            BUS_PATH="/run/user/$SERVICE_UID/bus"
+            SERVICE_HOME="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
+            [[ -n "$SERVICE_HOME" ]] || SERVICE_HOME="/home/$SERVICE_USER"
+
+            loginctl enable-linger "$SERVICE_USER" >/dev/null 2>&1 || true
+            systemctl start "user@${SERVICE_UID}.service" >/dev/null 2>&1 || true
+
+            for ((i = 0; i < 50; i++)); do
+              [[ -S "$BUS_PATH" ]] && break
+              sleep 0.1
+            done
+
+            exec runuser -u "$SERVICE_USER" -- env \
+              "HOME=$SERVICE_HOME" \
+              "USER=$SERVICE_USER" \
+              "XDG_RUNTIME_DIR=/run/user/$SERVICE_UID" \
+              "DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS_PATH" \
+              "$INSTALL_BIN" update
+          fi
+
+          exec "$INSTALL_BIN" update
         fi
 
         [[ -r "$CONFIG_FILE" ]] || die "config not found: $CONFIG_FILE (reinstall with deployer setup)"
