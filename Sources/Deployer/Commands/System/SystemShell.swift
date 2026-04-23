@@ -18,7 +18,7 @@ struct SystemShell {
             user: context.serviceUser,
             command,
             arguments,
-            directory: directory,
+            directory: directory ?? serviceUserHomeDirectory,
             environment: serviceUserEnvironment(merging: environment)
         )
     }
@@ -36,7 +36,7 @@ struct SystemShell {
             user: context.serviceUser,
             command,
             arguments,
-            directory: directory,
+            directory: directory ?? serviceUserHomeDirectory,
             environment: serviceUserEnvironment(merging: environment)
         )
     }
@@ -66,12 +66,15 @@ struct SystemShell {
     }
 
     private func serviceUserEnvironment(merging overrides: [String: String]?) -> [String: String] {
-        let paths = try? context.requirePaths()
         let base = [
-            "HOME": paths?.serviceHome ?? "/home/\(context.serviceUser)",
+            "HOME": serviceUserHomeDirectory,
             "USER": context.serviceUser
         ]
         return base.merging(overrides ?? [:]) { _, new in new }
+    }
+
+    private var serviceUserHomeDirectory: String {
+        (try? context.requirePaths().serviceHome) ?? "/home/\(context.serviceUser)"
     }
     
 }
