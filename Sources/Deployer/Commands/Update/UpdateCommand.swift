@@ -27,7 +27,7 @@ struct UpdateCommand: AsyncCommand {
         )
 
         let stepTypes: [any UpdateStep.Type] = [
-            FetchAndDownloadReleaseStep.self,
+            DownloadStep.self,
             StageBinaryStep.self,
             StopServiceStep.self,
             ActivateReleaseStep.self,
@@ -59,25 +59,25 @@ struct UpdateCommand: AsyncCommand {
 }
 
 extension UpdateCommand {
-
+    
     /// Restores the last known-good binary and requires the service manager to recover before declaring rollback success.
     private func rollback(context: UpdateContext, originalError: Swift.Error) async throws {
         let fileManager = FileManager.default
         let config = try Configuration.load()
         let manager = config.serviceManager.makeManager()
         let executableURL = context.stagedBinaryURL.deletingPathExtension()
-
+        
         do {
             let isRunning = await manager.isRunning(product: context.serviceName)
             if isRunning { try await manager.stop(product: context.serviceName) }
-
+            
             var restoreError: Swift.Error?
             do {
                 try restoreBackup(context: context, fileManager: fileManager, executableURL: executableURL)
             } catch {
                 restoreError = error
             }
-
+            
             do {
                 if let assetBackup = context.assetBackup {
                     try restoreReleaseAssets(from: assetBackup, installDirectory: executableURL.deletingLastPathComponent(), fileManager: fileManager)
@@ -85,19 +85,23 @@ extension UpdateCommand {
             } catch {
                 restoreError = restoreError ?? error
             }
-
+            
             if let restoreError { throw restoreError }
-
+            
             try await manager.start(product: context.serviceName)
-
+            
             let rollbackStatus = await waitForStableStatus(of: context.serviceName, manager: manager)
             guard rollbackStatus.isRunning else { throw Error.rollbackVerificationFailed(rollbackStatus.label) }
         } catch {
             throw Error.rollbackFailed(originalError.localizedDescription, error.localizedDescription)
         }
-
+        
         throw Error.rollbackSucceeded(originalError.localizedDescription)
     }
+    
+}
+
+extension UpdateCommand {
 
     /// Reinstates the last known-good executable after a failed update attempt.
     private func restoreBackup(context: UpdateContext, fileManager: FileManager, executableURL: URL) throws {

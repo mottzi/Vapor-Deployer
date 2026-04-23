@@ -13,7 +13,6 @@ struct RemoveInputStep: RemoveStep {
         collectServiceUser()
         await discoverFromDeployerctl()
         discoverFromConfig()
-        collectInstallPaths()
         collectTargetApp()
         collectServiceManager()
         derivePaths()
@@ -55,20 +54,22 @@ extension RemoveInputStep {
         guard FileManager.default.isReadableFile(atPath: configPath) else { return }
 
         console.print("Discovered deployerctl metadata: \(configPath)")
+        
+        let metadata = await ConfigDiscovery.loadDeployerctl(configPath: configPath)
 
-        context.nginxSiteAvailable = await readDeployerctlValue("NGINX_SITE_AVAILABLE", configPath: configPath)
-        context.nginxSiteEnabled = await readDeployerctlValue("NGINX_SITE_ENABLED", configPath: configPath)
-        context.acmeWebroot = await readDeployerctlValue("ACME_WEBROOT", configPath: configPath)
-        context.certbotRenewHook = await readDeployerctlValue("CERTBOT_RENEW_HOOK", configPath: configPath)
-        context.webhookPath = await readDeployerctlValue("WEBHOOK_PATH", configPath: configPath)
-        context.githubWebhookSettingsURL = await readDeployerctlValue("GITHUB_WEBHOOK_SETTINGS_URL", configPath: configPath)
-        context.certName = await readDeployerctlValue("CERT_NAME", configPath: configPath) ?? ""
+        context.nginxSiteAvailable = metadata["NGINX_SITE_AVAILABLE"]
+        context.nginxSiteEnabled = metadata["NGINX_SITE_ENABLED"]
+        context.acmeWebroot = metadata["ACME_WEBROOT"]
+        context.certbotRenewHook = metadata["CERTBOT_RENEW_HOOK"]
+        context.webhookPath = metadata["WEBHOOK_PATH"]
+        context.githubWebhookSettingsURL = metadata["GITHUB_WEBHOOK_SETTINGS_URL"]
+        context.certName = metadata["CERT_NAME"] ?? ""
 
-        if let product = await readDeployerctlValue("PRODUCT_NAME", configPath: configPath), !product.isEmpty {
+        if let product = metadata["PRODUCT_NAME"], !product.isEmpty {
             context.productName = product
         }
 
-        if let manager = await readDeployerctlValue("SERVICE_MANAGER", configPath: configPath),
+        if let manager = metadata["SERVICE_MANAGER"],
            let kind = ServiceManagerKind(rawValue: manager) {
             context.serviceManagerKind = kind
         }
@@ -83,24 +84,13 @@ extension RemoveInputStep {
 
         console.print("Discovered deployer config: \(configPath)")
 
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
-              let config = try? JSONDecoder().decode(Configuration.self, from: data)
-        else { return }
+        guard let config = ConfigDiscovery.loadJSON(serviceUser: context.serviceUser) else { return }
 
         if context.productName.isEmpty {
             context.productName = config.target.name
         }
 
         context.serviceManagerKind = config.serviceManager
-    }
-
-    private func collectInstallPaths() {
-
-        let serviceHome = "/home/\(context.serviceUser)"
-        let installDirDefault = "\(serviceHome)/deployer"
-
-        console.section("Installation paths")
-        _ = console.askRequired("Deployer install directory", default: installDirDefault)
     }
 
     private func collectTargetApp() {
@@ -141,6 +131,7 @@ extension RemoveInputStep {
     }
 
     private func derivePaths() {
+        
         context.paths = SystemPaths.derive(
             serviceUser: context.serviceUser,
             appName: context.appName,
@@ -150,12 +141,12 @@ extension RemoveInputStep {
 
     private func deriveProxyMetadata() {
 
-        if context.nginxSiteAvailable == nil { context.nginxSiteAvailable = paths.nginxSiteAvailable }
-        if context.nginxSiteEnabled == nil { context.nginxSiteEnabled = paths.nginxSiteEnabled }
-        if context.acmeWebroot == nil { context.acmeWebroot = paths.acmeWebroot }
-        if context.certbotRenewHook == nil { context.certbotRenewHook = paths.certbotRenewHook }
-        if context.webhookPath == nil { context.webhookPath = paths.webhookPath }
-        if context.certName.isEmpty { context.certName = context.serviceUser }
+        context.nginxSiteAvailable = context.nginxSiteAvailable ?? paths.nginxSiteAvailable
+        context.nginxSiteEnabled = context.nginxSiteEnabled ?? paths.nginxSiteEnabled
+        context.acmeWebroot = context.acmeWebroot ?? paths.acmeWebroot
+        context.certbotRenewHook = context.certbotRenewHook ?? paths.certbotRenewHook
+        context.webhookPath = context.webhookPath ?? paths.webhookPath
+        context.certName = context.certName.isEmpty ? context.serviceUser : context.certName
     }
 
     private func presentSummary() {
@@ -194,16 +185,3 @@ extension RemoveInputStep {
 
 }
 
-extension RemoveInputStep {
-
-    private func readDeployerctlValue(_ key: String, configPath: String) async -> String? {
-
-        let result = await Shell.run(
-            "DEPLOYERCTL_FILE=\(configPath.shellQuoted) DEPLOYERCTL_KEY=\(key.shellQuoted) bash -c 'source \"$DEPLOYERCTL_FILE\"; printf \"%s\" \"${!DEPLOYERCTL_KEY:-}\"'"
-        )
-
-        let output = result.output.trimmed
-        return output.isEmpty ? nil : output
-    }
-
-}

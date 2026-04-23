@@ -1,7 +1,7 @@
 import Vapor
 
 /// Fetches the latest release from GitHub and downloads the appropriate payload for the host.
-struct FetchAndDownloadReleaseStep: UpdateStep {
+struct DownloadStep: UpdateStep {
 
     let context: UpdateContext
     let console: any Console
@@ -48,7 +48,7 @@ struct FetchAndDownloadReleaseStep: UpdateStep {
 
 }
 
-extension FetchAndDownloadReleaseStep {
+extension DownloadStep {
 
     /// Returns the release tag recorded in the install directory, or nil if no version file exists.
     private func readInstalledVersion(at url: URL) -> String? {

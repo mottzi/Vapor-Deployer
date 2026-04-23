@@ -10,13 +10,28 @@ struct InputStep: SetupStep {
 
     func run() async throws {
         
-        collectServiceUser()
-        collectTargetRepository()
-        collectPorts()
-        collectPanelRoute()
-        collectServiceManager()
+        let metadata = await ConfigDiscovery.loadDeployerctl()
+        context.previousMetadata = metadata
+
+        try collectServiceUser(discovered: metadata["SERVICE_USER"])
+        
+        let jsonConfig = ConfigDiscovery.loadJSON(serviceUser: context.serviceUser)
+
+        collectTargetRepository(
+            discoveredRepo: metadata["APP_REPO_URL"],
+            discoveredName: jsonConfig?.target.name ?? metadata["PRODUCT_NAME"] ?? metadata["APP_NAME"]
+        )
+        collectPorts(
+            discoveredDeployer: jsonConfig?.port,
+            discoveredApp: metadata["APP_PORT"]
+        )
+        collectPanelRoute(discovered: jsonConfig?.panelRoute)
+        collectServiceManager(discovered: metadata["SERVICE_MANAGER"])
         try collectPanelAuth()
-        try await collectDomain()
+        try await collectDomain(
+            discoveredPrimary: metadata["PRIMARY_DOMAIN"],
+            discoveredEmail: metadata["TLS_CONTACT_EMAIL"]
+        )
         try await collectGitHubToken()
 
         console.card(title: "Planned configuration", kvs: plannedConfiguration())
@@ -26,64 +41,77 @@ struct InputStep: SetupStep {
 
 extension InputStep {
 
-    private func collectServiceUser() {
+    private func collectServiceUser(discovered: String?) throws {
         
         console.section("Runtime identity")
+                
+        if let discovered, !discovered.isEmpty {
+            context.serviceUser = discovered
+            console.print("Service user is locked to '\(discovered)' from the existing installation. Run 'deployer remove' to change it.")
+            return
+        }
         
         context.serviceUser = console.askValidated(
             "Dedicated service user",
-            default: "vapor",
+            default: discovered ?? "vapor",
             warning: "Choose a non-root user containing only letters, numbers, dots, dashes, and underscores.",
             validate: InputValidator.isNonRootSafeName
         )
     }
 
-    private func collectTargetRepository() {
+    private func collectTargetRepository(discoveredRepo: String?, discoveredName: String?) {
         
         console.section("Target repository")
         
+        let repoDefault = discoveredRepo ?? ""
+        
         while true {
-            let repoURL = console.askRequired("Private app repo SSH URL")
+            let repoURL = console.askRequired(
+                "Private app repo SSH URL",
+                default: repoDefault.isEmpty ? nil : repoDefault
+            )
+            
             if let parsed = InputValidator.parseGitHubSSHURL(repoURL) {
                 context.appRepositoryURL = repoURL
                 context.githubOwner = parsed.owner
                 context.githubRepo = parsed.repo
                 break
             }
+            
             console.warning("Use a GitHub SSH URL like git@github.com:owner/repo.git")
         }
 
         context.appName = console.askValidated(
             "Target app name",
-            default: context.githubRepo,
+            default: discoveredName ?? context.githubRepo,
             warning: "App name may contain only letters, numbers, dots, dashes, and underscores.",
             validate: InputValidator.isSafeName
         )
     }
 
-    private func collectPorts() {
+    private func collectPorts(discoveredDeployer: Int?, discoveredApp: String?) {
         
         console.section("Ports and routing")
         
         context.deployerPort = Int(console.askValidated(
             "Deployer port",
-            default: "8081",
+            default: discoveredDeployer != nil ? "\(discoveredDeployer!)" : "8081",
             warning: "Deployer port must be a number between 1 and 65535.",
             validate: InputValidator.isValidPort
         )) ?? 8081
 
         context.appPort = Int(console.askValidated(
             "Target app port",
-            default: "8080",
+            default: discoveredApp ?? "8080",
             warning: "Target app port must be a number between 1 and 65535.",
             validate: InputValidator.isValidPort
         )) ?? 8080
     }
     
-    private func collectPanelRoute() {
+    private func collectPanelRoute(discovered: String?) {
         
         while true {
-            var panelRoute = console.askRequired("Panel route", default: "/deployer")
+            var panelRoute = console.askRequired("Panel route", default: discovered ?? "/deployer")
             panelRoute = InputValidator.normalizePanelRoute(panelRoute)
                 
             guard panelRoute != "/" else {
@@ -96,22 +124,29 @@ extension InputStep {
         }
     }
 
-    private func collectServiceManager() {
+    private func collectServiceManager(discovered: String?) {
         
         console.section("Service manager")
         
         while true {
-            let value = console.askRequired("Service manager", default: "systemd")
+            let value = console.askRequired("Service manager", default: discovered ?? "systemd")
+            
             guard let kind = ServiceManagerKind(rawValue: value) else {
                 console.warning("Service manager must be 'systemd' or 'supervisor'.")
                 continue
             }
+            
             context.serviceManagerKind = kind
             break
         }
 
         context.buildFromSource = console.confirm("Build deployer from source?", defaultYes: false)
-        context.paths = SystemPaths.derive(serviceUser: context.serviceUser, appName: context.appName, panelRoute: context.panelRoute)
+        
+        context.paths = SystemPaths.derive(
+            serviceUser: context.serviceUser,
+            appName: context.appName,
+            panelRoute: context.panelRoute
+        )
     }
 
     private func collectPanelAuth() throws {
@@ -120,12 +155,14 @@ extension InputStep {
         context.webhookSecret = try generateHexSecret()
     }
 
-    private func collectDomain() async throws {
+    private func collectDomain(discoveredPrimary: String?, discoveredEmail: String?) async throws {
         
         console.section("Public endpoint")
         
+        let urlDefault = discoveredPrimary != nil ? "https://\(discoveredPrimary!)" : nil
         let publicURL = console.askValidated(
             "Public base URL",
+            default: urlDefault,
             warning: "Public base URL must look like https://example.com (HTTPS + domain only, no path, no port).",
             validate: InputValidator.isValidPublicBaseURL
         )
@@ -138,8 +175,10 @@ extension InputStep {
         try await requireResolvableDomain(context.primaryDomain, label: "Canonical domain")
         try await requireResolvableDomain(context.aliasDomain, label: "Alias domain")
 
+        let emailDefault = discoveredEmail ?? ""
         context.tlsContactEmail = console.askValidated(
             "TLS contact email",
+            default: emailDefault.isEmpty ? nil : emailDefault,
             warning: "TLS contact email must be a valid email address.",
             validate: InputValidator.isValidEmail
         )

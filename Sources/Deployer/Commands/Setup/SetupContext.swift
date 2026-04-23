@@ -37,6 +37,9 @@ final class SetupContext: SystemContext {
     var usingStagingCertificates = false
     var tlsContactEmail = ""
     var githubToken = ""
+    var previousMetadata: [String: String]?
+    var orphanedPrimaryDomain: String?
+    var orphanedCertNameToDelete: String?
     var releaseVersion: String?
 
     var webhookURL: String { publicBaseURL + (paths?.webhookPath ?? "") }

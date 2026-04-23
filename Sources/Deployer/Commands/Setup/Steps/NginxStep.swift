@@ -19,9 +19,9 @@ extension NginxStep {
 
     private func cleanupPreviousFiles() async throws {
 
-        let previousAvailable = await readDeployerctlValue("NGINX_SITE_AVAILABLE", configPath: paths.deployerctlConfig)
-        let previousEnabled = await readDeployerctlValue("NGINX_SITE_ENABLED", configPath: paths.deployerctlConfig)
-        let previousHook = await readDeployerctlValue("CERTBOT_RENEW_HOOK", configPath: paths.deployerctlConfig)
+        let previousAvailable = context.previousMetadata?["NGINX_SITE_AVAILABLE"]
+        let previousEnabled = context.previousMetadata?["NGINX_SITE_ENABLED"]
+        let previousHook = context.previousMetadata?["CERTBOT_RENEW_HOOK"]
 
         if let previousAvailable, previousAvailable != paths.nginxSiteAvailable {
             if let previousEnabled, previousEnabled.hasPrefix("/etc/nginx/sites-enabled/") {
@@ -32,7 +32,10 @@ extension NginxStep {
             }
         }
 
-        if let previousHook, previousHook != paths.certbotRenewHook, previousHook.hasPrefix("/etc/letsencrypt/renewal-hooks/deploy/") {
+        if let previousHook,
+           previousHook != paths.certbotRenewHook,
+           previousHook.hasPrefix("/etc/letsencrypt/renewal-hooks/deploy/") {
+            
             try? SystemFileSystem.removeIfPresent(previousHook)
         }
     }
@@ -42,7 +45,14 @@ extension NginxStep {
         try await SystemFileSystem.installDirectory(paths.acmeWebroot, owner: "root", group: "root")
         try await SystemFileSystem.writeFile(try NginxTemplate.bootstrap(context: context), to: paths.nginxSiteAvailable)
         
-        try await Shell.runThrowing("install", ["-d", "-m", "0755", "-o", "root", "-g", "root", "/etc/nginx/sites-available", "/etc/nginx/sites-enabled"])
+        try await Shell.runThrowing(
+            "install", [
+                "-d", "-m", "0755", "-o", "root", "-g", "root",
+                "/etc/nginx/sites-available", 
+                "/etc/nginx/sites-enabled"
+            ]
+        )
+        
         try await Shell.runThrowing("ln", ["-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])
         
         try await Shell.runThrowing("systemctl", ["enable", "--now", "nginx"])
@@ -54,17 +64,3 @@ extension NginxStep {
 
 }
 
-extension NginxStep {
-
-    private func readDeployerctlValue(_ key: String, configPath: String) async -> String? {
-
-        guard FileManager.default.isReadableFile(atPath: configPath) else { return nil }
-        
-        let output = await Shell.run(
-            "DEPLOYERCTL_FILE=\(configPath.shellQuoted) DEPLOYERCTL_KEY=\(key.shellQuoted) bash -c 'source \"$DEPLOYERCTL_FILE\"; printf \"%s\" \"${!DEPLOYERCTL_KEY:-}\"'"
-        ).output.trimmed
-        
-        return output.isEmpty ? nil : output
-    }
-
-}
