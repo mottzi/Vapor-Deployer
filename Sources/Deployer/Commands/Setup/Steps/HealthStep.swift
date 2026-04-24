@@ -62,15 +62,8 @@ extension HealthStep {
 extension HealthStep {
 
     private func isServiceRunning(_ service: String) async -> Bool {
-
-        switch context.serviceManagerKind {
-        case .systemd:
-            let output = try? await shell.runUserSystemctl("is-active", ["\(service).service"])
-            return output?.trimmed == "active"
-        case .supervisor:
-            let status = await Shell.run("supervisorctl", ["status", service]).output
-            return status.split(whereSeparator: { $0.isWhitespace }).dropFirst().first == "RUNNING"
-        }
+        let configurator = context.serviceManagerKind.makeConfigurator(shell: shell, paths: paths)
+        return await configurator.isRunning(service)
     }
 
 }

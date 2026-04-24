@@ -10,39 +10,10 @@ struct StopServicesStep: RemoveStep {
 
     func run() async throws {
 
-        switch context.serviceManagerKind {
-        case .systemd: await stopSystemdServices()
-        case .supervisor: await stopSupervisorServices()
-        }
+        let configurator = context.serviceManagerKind.makeConfigurator(shell: shell, paths: paths)
+        await configurator.disable(["deployer", context.productName])
 
         console.print("Services stopped.")
-    }
-
-}
-
-extension StopServicesStep {
-
-    private func stopSystemdServices() async {
-
-        guard await userExists() else { return }
-
-        await bestEffort("disable systemd units") {
-            try await shell.runUserSystemctl("disable --now deployer.service \(context.productName).service")
-        }
-    }
-
-    private func stopSupervisorServices() async {
-
-        await Shell.run("supervisorctl", ["stop", "deployer"])
-        await Shell.run("supervisorctl", ["stop", context.productName])
-    }
-
-}
-
-extension StopServicesStep {
-
-    private func userExists() async -> Bool {
-        await UserAccount.exists(context.serviceUser)
     }
 
 }

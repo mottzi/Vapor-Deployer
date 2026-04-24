@@ -34,14 +34,16 @@ extension RuntimeConfigStep {
 
     private func setupServiceManager() async throws {
 
+        let otherKind: ServiceManagerKind = context.serviceManagerKind == .systemd ? .supervisor : .systemd
+        let other = otherKind.makeConfigurator(shell: shell, paths: paths)
+        await other.disable(["deployer", context.productName])
+        await other.removeConfigs(for: ["deployer", context.productName])
+
         switch context.serviceManagerKind {
         case .systemd:
-            try await removeSupervisorFiles()
             try await writeSystemdUnits()
             console.print("Wrote systemd user units.")
-            
         case .supervisor:
-            try await removeSystemdFiles()
             try await writeSupervisorFiles()
             console.print("Wrote Supervisor program files.")
         }
@@ -82,29 +84,6 @@ extension RuntimeConfigStep {
             try SupervisorTemplate.appProgram(context: context),
             to: "/etc/supervisor/conf.d/\(context.productName).conf"
         )
-    }
-
-    private func removeSystemdFiles() async throws {
-
-        let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
-        _ = try? await shell.runUserSystemctl("disable", ["--now", "deployer.service", "\(context.productName).service"])
-        
-        try? SystemFileSystem.removeIfPresent("\(unitDirectory)/deployer.service")
-        try? SystemFileSystem.removeIfPresent("\(unitDirectory)/\(context.productName).service")
-        
-        _ = try? await shell.runUserSystemctl("daemon-reload")
-    }
-
-    private func removeSupervisorFiles() async throws {
-        
-        _ = await Shell.run("supervisorctl", ["stop", "deployer"])
-        _ = await Shell.run("supervisorctl", ["stop", context.productName])
-        
-        try? SystemFileSystem.removeIfPresent("/etc/supervisor/conf.d/deployer.conf")
-        try? SystemFileSystem.removeIfPresent("/etc/supervisor/conf.d/\(context.productName).conf")
-        
-        _ = await Shell.run("supervisorctl", ["reread"])
-        _ = await Shell.run("supervisorctl", ["update"])
     }
 
 }

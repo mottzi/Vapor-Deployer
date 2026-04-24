@@ -83,21 +83,10 @@ extension CleanupOrphansStep {
         serviceManager: ServiceManagerKind,
         paths: SystemPaths
     ) async throws {
-        
-        switch serviceManager {
-        case .systemd:
-            _ = try? await shell.runUserSystemctl("disable", ["--now", "\(oldProductName).service"])
-            let unitPath = "\(paths.serviceHome)/.config/systemd/user/\(oldProductName).service"
-            try? SystemFileSystem.removeIfPresent(unitPath)
-            _ = try? await shell.runUserSystemctl("daemon-reload")
-            
-        case .supervisor:
-            await Shell.run("supervisorctl", ["stop", oldProductName])
-            let confPath = "/etc/supervisor/conf.d/\(oldProductName).conf"
-            try? SystemFileSystem.removeIfPresent(confPath)
-            await Shell.run("supervisorctl", ["reread"])
-            await Shell.run("supervisorctl", ["update"])
-        }
+
+        let configurator = serviceManager.makeConfigurator(shell: shell, paths: paths)
+        await configurator.disable([oldProductName])
+        await configurator.removeConfigs(for: [oldProductName])
     }
 
     private func removeOldCheckout(oldAppName: String, paths: SystemPaths) async throws {

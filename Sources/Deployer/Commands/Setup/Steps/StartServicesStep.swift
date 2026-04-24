@@ -10,46 +10,10 @@ struct StartServicesStep: SetupStep {
 
     func run() async throws {
 
-        switch context.serviceManagerKind {
-            case .systemd: try await startSystemdServices()
-            case .supervisor: try await startSupervisorServices()
-        }
-        
+        let configurator = context.serviceManagerKind.makeConfigurator(shell: shell, paths: paths)
+        try await configurator.enableAndStart(["deployer", context.productName])
+
         console.print("Services enabled and started.")
-    }
-
-}
-
-extension StartServicesStep {
-
-    private func startSystemdServices() async throws {
-
-        let uid = try await context.requireServiceUserUID()
-        try await Shell.runThrowing("loginctl", ["enable-linger", context.serviceUser])
-        await Shell.run("systemctl", ["start", "user@\(uid).service"])
-        try await SystemShell.waitForUserBus(uid: uid)
-        try await shell.runUserSystemctl("daemon-reload")
-        try await shell.runUserSystemctl("enable", ["deployer.service", "\(context.productName).service"])
-        try await shell.runUserSystemctl("restart", ["deployer.service", "\(context.productName).service"])
-    }
-
-    private func startSupervisorServices() async throws {
-
-        try await Shell.runThrowing("systemctl", ["enable", "--now", "supervisor"])
-        try await Shell.runThrowing("supervisorctl", ["reread"])
-        try await Shell.runThrowing("supervisorctl", ["update"])
-        try await restarSupervisorProgram("deployer")
-        try await restarSupervisorProgram(context.productName)
-    }
-
-}
-
-extension StartServicesStep {
-
-    private func restarSupervisorProgram(_ program: String) async throws {
-        let restart = await Shell.run("supervisorctl", ["restart", program])
-        if restart.exitCode == 0 { return }
-        try await Shell.runThrowing("supervisorctl", ["start", program])
     }
 
 }
