@@ -25,7 +25,7 @@ extension Console {
         output("  \(title)".consoleText(isBold: true))
     }
 
-    func card(title: String, keyedValues: [(String, String)]) {
+    func card(_ title: String, keyedValues: [(String, String)]) {
         
         newLine()
         ruler(title)
@@ -40,7 +40,7 @@ extension Console {
         newLine()
     }
 
-    func lines(title: String, lines: [String]) {
+    func lines(_ title: String, lines: [String]) {
         
         newLine()
         ruler(title)

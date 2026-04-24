@@ -59,7 +59,7 @@ extension SSHStep {
         let publicKey = (try? String(contentsOfFile: "\(paths.deployKeyPath).pub", encoding: .utf8).trimmed) ?? ""
 
         console.lines(
-            title: "Action required - Add deploy key to GitHub",
+            "Action required - Add deploy key to GitHub",
             lines: [
                 "Open: https://github.com/\(context.githubOwner)/\(context.githubRepo)/settings/keys",
                 "Title: \(context.appName)-deployer",

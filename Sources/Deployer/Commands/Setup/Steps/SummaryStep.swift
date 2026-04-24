@@ -24,7 +24,7 @@ extension SummaryStep {
     private func printSummaryCard() {
         
         console.card(
-            title: "Setup complete",
+            "Setup complete",
             keyedValues: [
                 ("Deployer panel", "\(context.publicBaseURL)\(context.panelRoute)"),
                 ("Webhook endpoint", context.webhookURL),
@@ -45,7 +45,7 @@ extension SummaryStep {
     private func printStagingWarning() {
 
         console.lines(
-            title: "TLS warning - staging certificate in use",
+            "TLS warning - staging certificate in use",
             lines: [
                 "The active certificate was issued by Let's Encrypt staging/test infrastructure.",
                 "Browsers will show it as untrusted. This is useful for setup testing and rate-limit recovery only.",

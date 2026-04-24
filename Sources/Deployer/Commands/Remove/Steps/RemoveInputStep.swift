@@ -151,7 +151,7 @@ extension RemoveInputStep {
 
     private func presentSummary() {
 
-        console.card(title: "Removal summary", keyedValues: [
+        console.card("Removal summary", keyedValues: [
             ("Install dir", paths.installDirectory),
             ("App dir", paths.appDirectory),
             ("Service user", context.serviceUser),
