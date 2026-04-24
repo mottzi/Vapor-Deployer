@@ -5,7 +5,6 @@ extension SetupCommand {
     enum Error: DescribedError {
 
         case fileOperationFailed(String, Swift.Error)
-        case releaseAssetNotFound(String)
         case githubAPI(String)
         case certificateLineageNotFound(String, String)
 
@@ -13,9 +12,6 @@ extension SetupCommand {
             switch self {
             case .fileOperationFailed(let path, let error):
                 "File operation failed for '\(path)': \(error.localizedDescription)"
-
-            case .releaseAssetNotFound(let asset):
-                "No deployer release archive '\(asset)' found in the latest GitHub release."
 
             case .githubAPI(let message):
                 "GitHub API request failed: \(message)"

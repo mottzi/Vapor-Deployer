@@ -25,6 +25,10 @@ extension Console {
         output("  \(title)".consoleText(isBold: true))
     }
 
+    func summaryRow(_ label: String, _ value: String) {
+        output("  \(label.padding(toLength: 22, withPad: " ", startingAt: 0)) \(value)")
+    }
+
     func card(_ title: String, keyedValues: [(String, String)]) {
         
         newLine()
@@ -32,7 +36,7 @@ extension Console {
         newLine()
         
         for (key, value) in keyedValues {
-            output("  \(key.padding(toLength: 22, withPad: " ", startingAt: 0)) \(value)")
+            summaryRow(key, value)
         }
         
         newLine()

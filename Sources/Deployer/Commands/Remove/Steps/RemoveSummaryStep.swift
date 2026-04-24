@@ -13,11 +13,11 @@ struct RemoveSummaryStep: RemoveStep {
         console.successTitledRule("✓ Removal complete")
 
         console.newLine()
-        printKV("Service user", "\(context.serviceUser) (removed)")
-        printKV("Install dir", "\(paths.installDirectory) (removed)")
-        printKV("App dir", "\(paths.appDirectory) (removed)")
-        printKV("Nginx site", "\(context.nginxSiteAvailable ?? "—") (removed if present)")
-        printKV("ACME webroot", "\(context.acmeWebroot ?? "—") (removed if present)")
+        console.summaryRow("Service user", "\(context.serviceUser) (removed)")
+        console.summaryRow("Install dir", "\(paths.installDirectory) (removed)")
+        console.summaryRow("App dir", "\(paths.appDirectory) (removed)")
+        console.summaryRow("Nginx site", "\(context.nginxSiteAvailable ?? "—") (removed if present)")
+        console.summaryRow("ACME webroot", "\(context.acmeWebroot ?? "—") (removed if present)")
         console.newLine()
 
         console.output("  Manual follow-up:".consoleText(isBold: true))
@@ -33,14 +33,6 @@ struct RemoveSummaryStep: RemoveStep {
         }
 
         console.newLine()
-    }
-
-}
-
-extension RemoveSummaryStep {
-
-    private func printKV(_ key: String, _ value: String) {
-        console.output("  \(key.padding(toLength: 22, withPad: " ", startingAt: 0)) \(value)".consoleText())
     }
 
 }

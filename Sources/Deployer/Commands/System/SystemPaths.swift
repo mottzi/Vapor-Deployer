@@ -28,7 +28,6 @@ struct SystemPaths {
     var deployerConfig: String { "\(installDirectory)/deployer.json" }
     var deployerLog: String { "\(installDirectory)/deployer.log" }
     var appDeployDirectory: String { "\(appDirectory)/deploy" }
-    var appBinary: String { "\(appDeployDirectory)" }
 
     /// Derives all managed paths from `serviceUser`, `appName`, and `panelRoute` so reruns stay deterministic across execution contexts.
     static func derive(serviceUser: String, appName: String, panelRoute: String) -> SystemPaths {

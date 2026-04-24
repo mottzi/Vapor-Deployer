@@ -5,7 +5,6 @@ extension UpdateCommand {
     enum Error: DescribedError {
 
         case invalidExecutablePath(String)
-        case releaseAssetNotFound(String)
         case binaryNotFound(String)
         case binarySwapFailed(String)
         case restartVerificationFailed(String)
@@ -17,9 +16,6 @@ extension UpdateCommand {
             switch self {
             case .invalidExecutablePath(let path):
                 "Unable to determine deployer executable name from '\(path)'."
-
-            case .releaseAssetNotFound(let asset):
-                "No release archive '\(asset)' found in the latest GitHub release."
 
             case .binaryNotFound(let path):
                 "Expected deployer binary not found at '\(path)'."

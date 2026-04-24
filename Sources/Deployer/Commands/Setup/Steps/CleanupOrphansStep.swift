@@ -103,16 +103,12 @@ extension CleanupOrphansStep {
     private func removeOldCheckout(oldAppName: String, paths: SystemPaths) async throws {
         
         let oldCheckoutPath = "\(paths.appsRootDirectory)/\(oldAppName)"
-        
-        if FileManager.default.fileExists(atPath: oldCheckoutPath) {
-            try? SystemFileSystem.removeIfPresent(oldCheckoutPath)
-        }
+        try? SystemFileSystem.removeIfPresent(oldCheckoutPath)
     }
 
     private func removeOldDeployKey(oldAppName: String, paths: SystemPaths) async throws {
         
         let oldDeployKeyPath = "\(paths.serviceHome)/.ssh/\(oldAppName)_deploy_key"
-        
         try? SystemFileSystem.removeIfPresent(oldDeployKeyPath)
         try? SystemFileSystem.removeIfPresent("\(oldDeployKeyPath).pub")
     }

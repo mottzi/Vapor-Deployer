@@ -56,29 +56,31 @@ sudo deployerctl <action> [target]
 
 The config is a flat, sourceable shell file. Every value is wrapped in single quotes via `TemplateEscaping.shellLiteral` (which also handles embedded single quotes via `'"'"'`). 21 keys (in template order):
 
-| Key | Source | Consumer |
-|---|---|---|
-| `SERVICE_USER` | `context.serviceUser` | deployerctl script, Remove, Update |
-| `SERVICE_MANAGER` | `context.serviceManagerKind.rawValue` | deployerctl script, Remove, Setup re-runs |
-| `PRODUCT_NAME` | `context.productName` | deployerctl script (targets `app`), Remove, Setup re-runs |
-| `APP_NAME` | `context.appName` | Setup re-runs, Remove |
-| `APP_REPO_URL` | `context.appRepositoryURL` | Setup re-runs (default) |
-| `APP_PORT` | `context.appPort` | Setup re-runs (default) |
-| `TLS_CONTACT_EMAIL` | `context.tlsContactEmail` | Setup re-runs (default) |
-| `INSTALL_DIR` | `paths.installDirectory` | deployerctl `resolve_install_bin`, targets |
-| `APP_DIR` | `paths.appDirectory` | deployerctl validation |
-| `DEPLOYER_LOG` | `paths.deployerLog` | deployerctl `logs` action |
-| `APP_LOG` | `{appDeployDirectory}/{productName}.log` | deployerctl `logs` action |
-| `PRIMARY_DOMAIN` | `context.primaryDomain` | Setup re-runs, orphan detection |
-| `ALIAS_DOMAIN` | `context.aliasDomain` | (set but not consumed) |
-| `CERT_NAME` | `context.certName` | Remove, Setup orphan cleanup |
-| `NGINX_SITE_NAME` | `paths.nginxSiteName` | (set but not consumed in code) |
-| `NGINX_SITE_AVAILABLE` | `paths.nginxSiteAvailable` | Setup cleanup, Remove |
-| `NGINX_SITE_ENABLED` | `paths.nginxSiteEnabled` | Setup cleanup, Remove |
-| `ACME_WEBROOT` | `paths.acmeWebroot` | Remove |
-| `CERTBOT_RENEW_HOOK` | `paths.certbotRenewHook` | Setup cleanup, Remove |
-| `WEBHOOK_PATH` | `paths.webhookPath` | Remove summary |
-| `GITHUB_WEBHOOK_SETTINGS_URL` | `github.com/{owner}/{repo}/settings/hooks` | Remove summary |
+
+| Key                           | Source                                     | Consumer                                                  |
+| ----------------------------- | ------------------------------------------ | --------------------------------------------------------- |
+| `SERVICE_USER`                | `context.serviceUser`                      | deployerctl script, Remove, Update                        |
+| `SERVICE_MANAGER`             | `context.serviceManagerKind.rawValue`      | deployerctl script, Remove, Setup re-runs                 |
+| `PRODUCT_NAME`                | `context.productName`                      | deployerctl script (targets `app`), Remove, Setup re-runs |
+| `APP_NAME`                    | `context.appName`                          | Setup re-runs, Remove                                     |
+| `APP_REPO_URL`                | `context.appRepositoryURL`                 | Setup re-runs (default)                                   |
+| `APP_PORT`                    | `context.appPort`                          | Setup re-runs (default)                                   |
+| `TLS_CONTACT_EMAIL`           | `context.tlsContactEmail`                  | Setup re-runs (default)                                   |
+| `INSTALL_DIR`                 | `paths.installDirectory`                   | deployerctl `resolve_install_bin`, targets                |
+| `APP_DIR`                     | `paths.appDirectory`                       | deployerctl validation                                    |
+| `DEPLOYER_LOG`                | `paths.deployerLog`                        | deployerctl `logs` action                                 |
+| `APP_LOG`                     | `{appDeployDirectory}/{productName}.log`   | deployerctl `logs` action                                 |
+| `PRIMARY_DOMAIN`              | `context.primaryDomain`                    | Setup re-runs, orphan detection                           |
+| `ALIAS_DOMAIN`                | `context.aliasDomain`                      | (set but not consumed)                                    |
+| `CERT_NAME`                   | `context.certName`                         | Remove, Setup orphan cleanup                              |
+| `NGINX_SITE_NAME`             | `paths.nginxSiteName`                      | (set but not consumed in code)                            |
+| `NGINX_SITE_AVAILABLE`        | `paths.nginxSiteAvailable`                 | Setup cleanup, Remove                                     |
+| `NGINX_SITE_ENABLED`          | `paths.nginxSiteEnabled`                   | Setup cleanup, Remove                                     |
+| `ACME_WEBROOT`                | `paths.acmeWebroot`                        | Remove                                                    |
+| `CERTBOT_RENEW_HOOK`          | `paths.certbotRenewHook`                   | Setup cleanup, Remove                                     |
+| `WEBHOOK_PATH`                | `paths.webhookPath`                        | Remove summary                                            |
+| `GITHUB_WEBHOOK_SETTINGS_URL` | `github.com/{owner}/{repo}/settings/hooks` | Remove summary                                            |
+
 
 The Swift-side reader is `Commands/System/Shared/ConfigDiscovery.loadDeployerctl(configPath:)`, which **sources** the file via `bash -c`, then prints each key as `KEY\0VALUE\0` for the Swift parser. This is the correct choice (shell variables with `$` escaping must be resolved by an actual shell), but it means the list of readable keys is **hand-maintained in two places**:
 
@@ -98,13 +100,13 @@ Because the deployer service runs **under a dedicated service user (default `vap
 3. Busy-wait up to ~5s for `/run/user/${SERVICE_UID}/bus` to appear.
 4. `cd "$SERVICE_HOME"` (or `/` as a fallback) so tools started as that user don't inherit `/root`.
 5. Every systemctl/journalctl call is wrapped in:
-   ```
+  ```
    runuser -u "$SERVICE_USER" -- env \
      HOME=... USER=... \
      XDG_RUNTIME_DIR=/run/user/$SERVICE_UID \
      DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SERVICE_UID/bus \
      systemctl --user ...
-   ```
+  ```
 
 Without (3) and (5), `systemctl --user` from a root context would either fail to find the user bus or target root's own user session — a classic footgun.
 
@@ -116,13 +118,15 @@ The same root-context bridge is **implemented three more times in Swift**:
 
 That's four independent encodings of the same lifecycle — with subtle differences:
 
-| Aspect | `deployerctl` (bash) | `SystemShell.runUserSystemctl` | `SystemdServiceManager.prefix` | `DeployerctlTemplate update` action |
-|---|---|---|---|---|
-| Enables linger | yes | no | no | yes |
-| Waits for bus socket | yes (50×100ms) | yes (≤5s) | no | yes (50×100ms) |
-| Starts `user@UID.service` | yes | no | no | yes |
-| Uses `runuser` | yes | yes | no (stays in root, relies on `XDG_RUNTIME_DIR=/run/user/$(id -u USER)`) | yes |
-| Passes `HOME`/`USER` | yes | yes (as env map) | no | yes |
+
+| Aspect                    | `deployerctl` (bash) | `SystemShell.runUserSystemctl` | `SystemdServiceManager.prefix`                                          | `DeployerctlTemplate update` action |
+| ------------------------- | -------------------- | ------------------------------ | ----------------------------------------------------------------------- | ----------------------------------- |
+| Enables linger            | yes                  | no                             | no                                                                      | yes                                 |
+| Waits for bus socket      | yes (50×100ms)       | yes (≤5s)                      | no                                                                      | yes (50×100ms)                      |
+| Starts `user@UID.service` | yes                  | no                             | no                                                                      | yes                                 |
+| Uses `runuser`            | yes                  | yes                            | no (stays in root, relies on `XDG_RUNTIME_DIR=/run/user/$(id -u USER)`) | yes                                 |
+| Passes `HOME`/`USER`      | yes                  | yes (as env map)               | no                                                                      | yes                                 |
+
 
 The `SystemdServiceManager.prefix` branch is the shakiest: when run as root, `XDG_RUNTIME_DIR=/run/user/$(id -u USER)` alone is insufficient unless the user's `user@<uid>.service` is already up **and** root already has the right credentials to talk to that bus (systemd historically allows `uid=0` to talk to any user bus, so this usually works, but it is not the same contract as `deployerctl`'s). The runtime `ServiceManager` is also invoked from `UpdateCommand.rollback` / `StopServiceStep` / `StartServiceStep` — which are root-invoked via `deployerctl update` — so this asymmetry matters.
 
@@ -146,32 +150,22 @@ All three command types share the exact same template:
 
 The only meaningful variation:
 
-| | Setup | Remove | Update |
-|---|---|---|---|
-| Header color | cyan | red | yellow |
-| `paths` accessor | `preconditionFailure` if nil | `preconditionFailure` if nil | (none — paths always nil) |
-| Extra helpers | — | `bestEffort(_:_:)` | — |
-| `requireRoot` + `requireUbuntu` | yes | yes | no |
-| Context type hierarchy | `final class`, `SystemContext` | `final class`, `SystemContext` | `final class`, `SystemContext` |
+
+|                                 | Setup                          | Remove                         | Update                         |
+| ------------------------------- | ------------------------------ | ------------------------------ | ------------------------------ |
+| Header color                    | cyan                           | red                            | yellow                         |
+| `paths` accessor                | `preconditionFailure` if nil   | `preconditionFailure` if nil   | (none — paths always nil)      |
+| Extra helpers                   | —                              | `bestEffort(_:_:)`             | —                              |
+| `requireRoot` + `requireUbuntu` | yes                            | yes                            | no                             |
+| Context type hierarchy          | `final class`, `SystemContext` | `final class`, `SystemContext` | `final class`, `SystemContext` |
+
 
 This is ~180 LOC of boilerplate that would collapse behind one generic protocol, one `Pipeline<Context>` type, and a single `CommandStyle` / palette enum for color + banner. Relevant files: `Setup/SetupCommand.swift`, `Setup/SetupStep.swift`, `Remove/RemoveCommand.swift`, `Remove/RemoveStep.swift`, `Update/UpdateCommand.swift`, `Update/UpdateStep.swift`.
-
-### 3.2 Three banner + titled-rule helpers, scattered across two files
-
-`Commands/System/Console/ConsoleSection.swift` contains:
-- `banner()` (cyan "Setup")
-- `removeBanner()` (red "Remove")
-- `titledRule(_:)`, `removeTitledRule(_:)`, `successTitledRule(_:)`
-
-`Commands/Update/UpdateStep.swift` contains **another** `Console` extension with:
-- `updateBanner()` (yellow "Update")
-- `updateTitledRule(_:)`
-
-Each banner is a 6-line copy-paste that only differs by color + title + byline text. The update variant lives in a different file just because it was added last. This should be one API parameterised by style.
 
 ### 3.3 `userExists(_:)` reinvented four times
 
 Same three-line helper — `Shell.run("id", ["-u", user]).exitCode == 0` — duplicated:
+
 - `Setup/Steps/PreflightStep.swift:27`
 - `Remove/Steps/StopServicesStep.swift:44`
 - `Remove/Steps/RemoveServiceFilesStep.swift:57`
@@ -182,6 +176,7 @@ Plus a close bash cousin inside `DeployerctlTemplate.wrapperScript()`. Belongs o
 ### 3.4 `waitForStableStatus` reinvented twice
 
 Exact same 10-iteration / 500ms-sleep loop:
+
 - `Update/Steps/StartServiceStep.swift:31` (member, takes `manager`)
 - `Update/UpdateCommand.swift:145` (private, takes `serviceName` + `manager`)
 
@@ -229,6 +224,7 @@ Meanwhile `Service/ServiceManager.swift` already defines a protocol (`start/stop
 ### 3.10 `RuntimeConfigStep.remove*Files` vs `RemoveServiceFilesStep.remove*Files`
 
 Nearly-duplicate service-file teardown, once in Setup (when switching service manager) and once in Remove (when tearing down entirely). Both know the same paths:
+
 - `~/.config/systemd/user/deployer.service`
 - `~/.config/systemd/user/{productName}.service`
 - `/etc/supervisor/conf.d/deployer.conf`
@@ -239,6 +235,7 @@ Those four paths are also typed out again in `CleanupOrphansStep.stopAndRemoveOl
 ### 3.11 Three overlapping "get the release payload" code paths
 
 In `Setup/Steps/StageDeployerStep.swift::installFromBinary()`:
+
 1. If a local `Public/` + `Resources/` are present alongside the currently-running executable → use them.
 2. Else if there's a local `.version` (or `DEPLOYER_RELEASE_TAG`) → call `DeployerReleaseAssets.downloadSourceAssets(tag:into:)`.
 3. Else → `DeployerReleaseAssets.fetchLatestReleaseMetadata()` + `downloadSourceAssets` + `ensureAssets`.
@@ -251,21 +248,14 @@ And `Update/Steps/DownloadStep.swift` does (3) only.
 
 `Commands/System/Shared/GitHubAPI.swift:46,62` throws `SetupCommand.Error.githubAPI(...)`. But `Commands/Update/UpdateCommand` and its `DownloadStep` also go through this shared API. When Update calls `GitHubAPI`, failures show up as `SetupCommand.Error` — the namespace is wrong for the caller, and the Update error enum even has its own hole (no `githubAPI` case). Either `GitHubAPI` should throw its own `GitHubAPI.Error`, or there should be a top-level network error shared across commands.
 
-### 3.13 Dead error cases
-
-- `Error/SetupError.swift::releaseAssetNotFound(String)` — declared, never thrown (the actual thrown error is `DeployerReleaseAssets.Error.assetNotFound`).
-- `Error/UpdateError.swift::releaseAssetNotFound(String)` — declared, never thrown (same reason).
-
-`DeployerReleaseAssets.Error` already has `.assetNotFound`. Both command-level cases are vestigial.
-
-### 3.14 Two path systems for "where is the install?"
+### 3.13 Two path systems for "where is the install?"
 
 - Setup & Remove: `SystemPaths` (string-based, derived from `serviceUser + appName + panelRoute` via `SystemPaths.derive`).
 - Update: URL-based, computed from `Configuration.getExecutableURL()` → `resolvingSymlinksInPath` → `deletingLastPathComponent`. No `SystemPaths`.
 
 The `UpdateContext.paths: SystemPaths?` field is required by the `SystemContext` protocol but is **never populated** — it's a placeholder satisfying the protocol, and `UpdateStep` intentionally omits the `paths` convenience accessor. This is a hole in the protocol, not a genuine polymorphism.
 
-### 3.15 Configuration-key lists that must stay in sync
+### 3.14 Configuration-key lists that must stay in sync
 
 Manual, parallel string-lists across four writers/readers:
 
@@ -276,9 +266,10 @@ Manual, parallel string-lists across four writers/readers:
 
 No typed schema. Any new key requires touching all four places by hand. Candidate for a single Swift type that models the conf file and has `write(to:)` + `load(from:)` + an exhaustive key-list.
 
-### 3.16 "Previous state" is scattered, not owned
+### 3.15 "Previous state" is scattered, not owned
 
 `SetupContext.previousMetadata: [String: String]?` is populated once in `InputStep` and then read opportunistically by:
+
 - `InputStep.collectServiceUser` (lock on existing user)
 - `InputStep.collectTargetRepository`/`collectPorts`/`collectPanelRoute`/... (defaults)
 - `CleanupOrphansStep` (orphan detection)
@@ -286,9 +277,10 @@ No typed schema. Any new key requires touching all four places by hand. Candidat
 
 Defaulting, cleanup, and orphan detection are three different concerns threaded through the same untyped dictionary. A small typed snapshot (e.g. `PreviousInstallation` struct) loaded once and passed to each step would make the dependencies explicit and would remove ~10 ad-hoc `metadata["KEY"] ?? ""` sites.
 
-### 3.17 `InputStep` is 280 LOC and mixes concerns
+### 3.16 `InputStep` is 280 LOC and mixes concerns
 
 `Commands/Setup/Steps/InputStep.swift` does:
+
 1. Load `deployerctl.conf` metadata
 2. Load `deployer.json`
 3. Collect ~12 prompts
@@ -300,28 +292,29 @@ Defaulting, cleanup, and orphan detection are three different concerns threaded 
 
 Items 1–3 are "collect"; 4–6 are validation against the live world; 7 is derivation; 8 is output. Good splitting point if you decide to break it up.
 
-### 3.18 `ResolveProductStep` parses `Package.swift` with a line-regex state machine
+### 3.17 `ResolveProductStep` parses `Package.swift` with a line-regex state machine
 
 `Commands/Setup/Steps/ResolveProductStep.swift:24–47` implements a fragile mini-parser for `.executable(` / `.executableTarget(` blocks. It misreads (silently) when `.executable(` or `name: "…"` appear anywhere unexpected (string literals, multi-line product declarations, comments). A single-shot invocation of `swift package dump-package` (JSON) or `swift package describe --type json`, executed as the service user, is the robust replacement.
 
-### 3.19 Git operations duplicated
+### 3.18 Git operations duplicated
 
 Three separate "fetch / checkout / pull" sequences:
+
 - `Setup/Steps/StageDeployerStep.installFromSource()` — deployer repo
 - `Setup/Steps/AppCheckoutStep.updateRepository()` — app repo
 - (Plus remote-URL normalization in `PreflightStep.normalizeGithubRemote`, which is yet another ad-hoc normalizer next to `InputValidator.parseGitHubSSHURL`)
 
 A small `GitRepository(path: String, shell: SystemShell)` value type with `fetch`, `checkout`, `pullFastForward`, `clone`, `origin`, `isDirty`, `hasGitDirectory` would eliminate both the duplication and the two different flavors of URL-matching.
 
-### 3.20 Restore-backup logic duplicated
+### 3.19 Restore-backup logic duplicated
 
 `UpdateCommand.restoreBackup(context:fileManager:executableURL:)` and `ActivateReleaseStep.restoreBackup(fileManager:)` both do the same three steps: check that the backup binary exists, remove the live binary, move the backup back. Two copies, both private, both throw different errors.
 
-### 3.21 `UpdateCommand.rollback` reaches across layer boundaries
+### 3.20 `UpdateCommand.rollback` reaches across layer boundaries
 
 `UpdateCommand.swift` imports `Configuration`, `ServiceManager`, `SystemFileSystem`, `ReleaseAssetBackup` directly, and also redefines its own restore/status-wait helpers that largely mirror what the step files already do. Rollback is effectively a **seventh step that doesn't fit the step model** (it runs only on error from `ActivateReleaseStep` / `StartServiceStep`). That's fine as a concept — rollback is genuinely different — but the current implementation re-does too much step-level work in the command itself.
 
-### 3.22 `SystemContext.paths` optional is misleading
+### 3.21 `SystemContext.paths` optional is misleading
 
 The protocol says `var paths: SystemPaths? { get }`. All three concrete contexts expose `var paths: SystemPaths?` with a setter. Each step protocol then re-wraps this in a non-optional helper that `preconditionFailure`s on nil. This is a widely-used pattern but carries two drawbacks:
 
@@ -330,7 +323,7 @@ The protocol says `var paths: SystemPaths? { get }`. All three concrete contexts
 
 A cleaner shape is a two-phase type: `PartialXContext` during `InputStep`, then `ResolvedXContext` afterwards. Or simply remove `paths` from `SystemContext` and let each step type declare what it actually depends on.
 
-### 3.23 Root-context env propagation is partially re-discovered at call sites
+### 3.22 Root-context env propagation is partially re-discovered at call sites
 
 Because `deployerctl` runs as root, every Swift entry invoked through it inherits root's shell environment (PATH, HOME=/root, XDG_RUNTIME_DIR=/run/user/0 if any, no DBUS address). Several command flows then manually re-derive a sane environment at the call site:
 
@@ -341,22 +334,21 @@ Because `deployerctl` runs as root, every Swift entry invoked through it inherit
 
 These share no common source of truth. A single `ServiceUserEnvironment(paths:)` value type with `.shell`, `.build`, `.systemd` views would make the root-context contract explicit.
 
-### 3.24 `setup.sh` has its own duplicate sources of truth with Swift
+### 3.23 `setup.sh` has its own duplicate sources of truth with Swift
 
 Hard-coded in both `Resources/Scripts/setup.sh` and `Commands/System/Shared/DeployerReleaseAssets.swift`:
+
 - Repository slug `mottzi/Vapor-Deployer`
 - Asset pattern `deployer-linux-${ARCH}.tar.gz`
 - Env key `DEPLOYER_RELEASE_TAG`
 
 The bootstrap script also hard-codes `/tmp/deployer-${VERSION}` as its staging root and `./deployer setup` as its entry point. None of these are validated against the Swift side at build or CI time — each is a drift risk.
 
-### 3.25 Miscellaneous smaller issues
+### 3.24 Miscellaneous smaller issues
 
-- `CleanupOrphansStep.removeOldCheckout` / `removeOldDeployKey` wrap already-optional `SystemFileSystem.removeIfPresent` in `try?` and also pre-check `fileExists`, which is redundant (`removeIfPresent` already has that guard).
 - `RemoveCheckoutsStep.removeDeployerGeneratedFiles` hard-codes the four filenames `deployer`, `deployer.json`, `deployer.db`, `deployer.log` while `SystemPaths` already exposes `deployerBinary`, `deployerConfig`, `deployerLog` — `.db` is the only one not on SystemPaths, and it comes from the runtime `Configuration.dbFile` (default `"deployer.db"`).
 - `RemoveInputStep.collectServiceUser` reads `/etc/passwd` directly via `String(contentsOfFile:)`, yet `PreflightStep.homeDirectory(for:)` and `deployerctl` use `getent passwd`. Three ways to resolve a user's home.
-- `RemoveSummaryStep.printKV` duplicates the `padding(toLength: 22, …)` column format from `Console.card` instead of calling back into the existing card API.
-- `paths.deployerSocketPath` is fully derived (`"\(panelRoute)/ws"`) but stored as a separate `SystemPaths` field; likewise `paths.appBinary` is defined as `"\(appDeployDirectory)"` (literally the same value, not the binary), which looks like a leftover refactor accident — nothing actually reads `appBinary`.
+- `paths.deployerSocketPath` is fully derived (`"\(panelRoute)/ws"`) but stored as a separate `SystemPaths` field.
 - `DeployerReleaseAssets.Error` is declared inside the `DeployerReleaseAssets` enum but also has dead siblings in both `SetupError` and `UpdateError` (see 3.13). Three error namespaces for one concern.
 - `HealthStep.waitForTCP` uses `Shell.run("exec 3<>/dev/tcp/127.0.0.1/\(port)")` — this is a clever bash-only construct that is invisible to code search and depends on `Shell.run(command:directory:)` routing through `bash -c`. Works, but fragile to any future change in `Shell.run`.
 - `SetupContext` has both a stored `panelRoute: String` default (`"/deployer"`) and a stored `deploymentMode: DeploymentMode = .manual`, neither of which is reachable through any prompt in `InputStep` — `deploymentMode` is a hard-coded build-time value. Worth making explicit whether this is meant to be configurable or a constant.
@@ -368,12 +360,14 @@ The bootstrap script also hard-codes `/tmp/deployer-${VERSION}` as its staging r
 
 Today, `Commands/System/` is labeled "shared system infra" but has three kinds of code living together:
 
-| Group | Files | Concerns |
-|---|---|---|
-| Preconditions & context contract | `SystemPreconditions.swift`, `SystemContext.swift`, `SystemError.swift` | OS/OS-version assertions; protocol for command state |
-| File/shell primitives | `SystemShell.swift`, `SystemFileSystem.swift`, `SystemPaths.swift` | Invoking external commands, writing files, path derivation |
+
+| Group                                            | Files                                                                                          | Concerns                                                                                                         |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Preconditions & context contract                 | `SystemPreconditions.swift`, `SystemContext.swift`, `SystemError.swift`                        | OS/OS-version assertions; protocol for command state                                                             |
+| File/shell primitives                            | `SystemShell.swift`, `SystemFileSystem.swift`, `SystemPaths.swift`                             | Invoking external commands, writing files, path derivation                                                       |
 | Command-specific helpers pretending to be shared | `Shared/ConfigDiscovery.swift`, `Shared/DeployerReleaseAssets.swift`, `Shared/GitHubAPI.swift` | deployerctl.conf parsing (Setup + Remove + Update), release assets (Setup + Update), GitHub API (Setup + Update) |
-| Console UX | `Console/ConsolePrompt.swift`, `Console/ConsoleSection.swift`, `Console/InputValidator.swift` | Interactive prompts + formatting + validation |
+| Console UX                                       | `Console/ConsolePrompt.swift`, `Console/ConsoleSection.swift`, `Console/InputValidator.swift`  | Interactive prompts + formatting + validation                                                                    |
+
 
 Meanwhile, `App/` owns `Configuration`, which is consumed by both runtime and commands. `Service/` owns `ServiceManager`, used partially (runtime + Update, but **not** Setup/Remove).
 
@@ -389,15 +383,53 @@ A cleaner split — without inventing new modules — might be:
 
 Ranked by how much redundancy removal each one enables:
 
-1. **Unify the three command pipelines.** One generic `Pipeline<Context>`, one `CommandStyle` palette (color + banner + byline), one step protocol, one place for `printHeader`, `bestEffort`, `shell`, `paths`. Collapses `XStep.swift`, `XCommand.swift` boilerplate and the scattered banner helpers.
+1. **Unify the three command pipelines.** One generic `Pipeline<Context>`, one step protocol, one place for `printHeader`, `bestEffort`, `shell`, `paths`. Collapses `XStep.swift` / `XCommand.swift` boilerplate.
 2. **Make `ServiceManager` the one way to control services.** Extend it with `writeUnit`, `removeUnit`, `enable`, `disable`, `reload`, `waitForStable`. Every `switch context.serviceManagerKind` in Setup/Remove disappears. `waitForStableStatus` stops being duplicated.
 3. **Turn `deployerctl.conf` into a typed value.** One struct with a canonical key list, `encode()`, `decode(from:)`. Both the template and `ConfigDiscovery` go through it. The bash script's required-key list lives next to the Swift schema.
 4. **Consolidate the root→service-user bridge.** One Swift type (`ServiceUserContext`) + one bash function set (emitted from one place) that handles `enable-linger`, `user@.service` up, bus-wait, `runuser env` — instead of four independent reimplementations (`SystemShell`, `SystemdServiceManager.prefix`, `deployerctl.ensure_user_manager`, `deployerctl.update` inline).
 5. **One path layer for all commands.** Remove `SystemPaths?` from `SystemContext`; either hand derived paths in as a step dependency or give Update its own typed install-layout value so the optional lie goes away.
 6. **Merge the three release-asset entry points** into one `DeployerReleaseAssets.resolve(source:into:)` API with explicit source cases (`inPlace`, `pinned(tag:)`, `latest`).
-7. **Delete the dead-code twins**: `SetupError.releaseAssetNotFound`, `UpdateError.releaseAssetNotFound`, and pick one of `shellQuoted` / `shellLiteral` (plus one `terminalWidth`/`tputColumns`). Fold `PreflightStep.normalizeGithubRemote` into `InputValidator`.
+7. **Pick one of `shellQuoted` / `shellLiteral`** (plus one `terminalWidth`/`tputColumns`). Fold `PreflightStep.normalizeGithubRemote` into `InputValidator`.
 8. **Introduce a typed "previous installation snapshot"** populated once, consumed explicitly by the steps that care (defaults, orphan detection, stale-file cleanup) — replacing the `metadata["KEY"] ?? ""` pattern.
 9. **Reuse runtime `Configuration` more, not less, at setup time.** Today setup writes `deployer.json` but re-derives all the same values itself. A "resolved configuration" object could be the single source of truth fed into templates.
 10. **Replace `ResolveProductStep`'s regex parser** with `swift package describe --type json` run as the service user. Removes one fragile mini-parser.
 
 No repository files were changed during this review.
+
+## 6. Refactor documentation
+
+Brief log of changes completed after this review was written.
+
+- **3.2 addressed (banner/header placement cleanup):**
+  - Command banners and step-header rendering were moved to command-owned helpers in:
+    - `Commands/Setup/SetupCommand.swift`
+    - `Commands/Remove/RemoveCommand.swift`
+    - `Commands/Update/UpdateCommand.swift`
+  - Command-specific banner/titled-rule helpers were removed from shared console files and step files.
+- **Console formatting simplification:**
+  - `Commands/System/Console/ConsoleSection.swift` now provides small generic helpers (`newLine()`, `ruler(...)`) used by commands and summary/card output.
+  - `card` call sites were renamed from `kvs:` to `keyedValues:` for readability.
+- **Bug fix after refactor:**
+  - Fixed titled-ruler fill-width calculation in `ConsoleSection.ruler(_ title: ...)` to correctly subtract prefix/title width from terminal width.
+- **3.13 addressed (dead error-case cleanup):**
+  - Removed unused `releaseAssetNotFound(String)` cases from:
+    - `Sources/Deployer/Error/SetupError.swift`
+    - `Sources/Deployer/Error/UpdateError.swift`
+  - Verified with a successful `swift build`.
+- **3.24 addressed (orphan cleanup simplification):**
+  - Simplified `CleanupOrphansStep` file-removal helpers by removing redundant `fileExists` pre-checks while preserving best-effort deletion behavior with `try?`.
+  - Updated:
+    - `Sources/Deployer/Commands/Setup/Steps/CleanupOrphansStep.swift`
+  - Verified with a successful `swift build`.
+- **3.24 addressed (unused `SystemPaths.appBinary` removal):**
+  - Removed unused `SystemPaths.appBinary`, which previously duplicated `appDeployDirectory` and was not referenced by any call site.
+  - Updated:
+    - `Sources/Deployer/Commands/System/SystemPaths.swift`
+  - Verified with a successful `swift build`.
+- **3.24 addressed (shared summary-row formatting):**
+  - Added `Console.summaryRow(_:_:)` and reused it in both `Console.card(...)` and `RemoveSummaryStep` to remove duplicated alignment logic while preserving output format.
+  - Updated:
+    - `Sources/Deployer/Commands/System/Console/ConsoleSection.swift`
+    - `Sources/Deployer/Commands/Remove/Steps/RemoveSummaryStep.swift`
+  - Verified with a successful `swift build`.
+
