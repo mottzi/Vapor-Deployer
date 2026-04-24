@@ -30,7 +30,7 @@ extension PreflightStep {
 
     private func verifyServiceUser() async throws {
         
-        let home = try await homeDirectory(for: context.serviceUser)
+        let home = try await UserAccount.homeDirectory(for: context.serviceUser, errorLabel: "serviceUser")
         
         guard home == paths.serviceHome else {
             throw SystemError.invalidValue("serviceUser", "user exists with home '\(home)', not '\(paths.serviceHome)'")
@@ -93,15 +93,6 @@ extension PreflightStep {
         }
     }
     
-    private func homeDirectory(for user: String) async throws -> String {
-        
-        let passwd = try await Shell.runThrowing("getent", ["passwd", user]).trimmed
-        let fields = passwd.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
-        if fields.count >= 6 { return fields[5] }
-        
-        throw SystemError.invalidValue("serviceUser", "getent passwd for '\(user)' returned malformed output")
-    }
-
     private func isDirectoryEmpty(_ path: String) throws -> Bool {
         try FileManager.default.contentsOfDirectory(atPath: path).isEmpty
     }

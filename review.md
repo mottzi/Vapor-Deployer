@@ -346,9 +346,7 @@ The bootstrap script also hard-codes `/tmp/deployer-${VERSION}` as its staging r
 
 ### 3.24 Miscellaneous smaller issues
 
-- `RemoveInputStep.collectServiceUser` reads `/etc/passwd` directly via `String(contentsOfFile:)`, yet `PreflightStep.homeDirectory(for:)` and `deployerctl` use `getent passwd`. Three ways to resolve a user's home.
 - `paths.deployerSocketPath` is fully derived (`"\(panelRoute)/ws"`) but stored as a separate `SystemPaths` field.
-- `DeployerReleaseAssets.Error` is declared inside the `DeployerReleaseAssets` enum but also has dead siblings in both `SetupError` and `UpdateError` (see 3.13). Three error namespaces for one concern.
 - `HealthStep.waitForTCP` uses `Shell.run("exec 3<>/dev/tcp/127.0.0.1/\(port)")` — this is a clever bash-only construct that is invisible to code search and depends on `Shell.run(command:directory:)` routing through `bash -c`. Works, but fragile to any future change in `Shell.run`.
 - `SetupContext` has both a stored `panelRoute: String` default (`"/deployer"`) and a stored `deploymentMode: DeploymentMode = .manual`, neither of which is reachable through any prompt in `InputStep` — `deploymentMode` is a hard-coded build-time value. Worth making explicit whether this is meant to be configurable or a constant.
 - `Extensions.swift::StringProtocol.hexadecimalData` is used only by `Webhook.validateSignature`; fine to keep, but it sits in a top-level `App/Extensions.swift` file that mixes console/display helpers (`displayPath`), shell helpers (`shellQuoted`), and cryptography helpers — no obvious grouping.
@@ -435,5 +433,18 @@ Brief log of changes completed after this review was written.
   - Replaced inline path construction in `RemoveCheckoutsStep` with existing `SystemPaths` properties (`deployerBinary`, `deployerConfig`, `deployerLog`, `appDeployDirectory`) while preserving deletion behavior and order.
   - Updated:
     - `Sources/Deployer/Commands/Remove/Steps/RemoveCheckoutsStep.swift`
+  - Verified with a successful `swift build`.
+- **3.24 addressed (stale review note removal):**
+  - Removed the outdated note about dead `SetupError`/`UpdateError` release-asset siblings after prior cleanup removed those enum cases.
+  - Updated:
+    - `review.md`
+- **3.24 addressed (shared `getent` home-directory lookup):**
+  - Extracted the `getent passwd` home-directory helper into `UserAccount.homeDirectory(for:errorLabel:)`, reused by both `PreflightStep` and `RemoveInputStep.collectServiceUser()` so setup and remove no longer disagree on user lookup.
+  - `PreflightStep` preserves its exact `"serviceUser"` error label for the unchanged malformed-output branch; `RemoveInputStep` preserves its existing console messages.
+  - Added:
+    - `Sources/Deployer/Commands/System/Shared/UserAccount.swift`
+  - Updated:
+    - `Sources/Deployer/Commands/Setup/Steps/PreflightStep.swift`
+    - `Sources/Deployer/Commands/Remove/Steps/RemoveInputStep.swift`
   - Verified with a successful `swift build`.
 

@@ -10,7 +10,7 @@ struct RemoveInputStep: RemoveStep {
 
     func run() async throws {
 
-        collectServiceUser()
+        await collectServiceUser()
         await discoverFromDeployerctl()
         discoverFromConfig()
         collectTargetApp()
@@ -25,7 +25,7 @@ struct RemoveInputStep: RemoveStep {
 
 extension RemoveInputStep {
 
-    private func collectServiceUser() {
+    private func collectServiceUser() async {
 
         console.section("Service identity")
 
@@ -36,13 +36,8 @@ extension RemoveInputStep {
             validate: InputValidator.isNonRootSafeName
         )
 
-        let passwdPath = "/etc/passwd"
-        if let contents = try? String(contentsOfFile: passwdPath, encoding: .utf8),
-           let line = contents.split(whereSeparator: \.isNewline).first(where: { $0.hasPrefix("\(context.serviceUser):") }) {
-            let fields = line.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
-            if fields.count >= 6 {
-                console.print("Found user '\(context.serviceUser)' (home: \(fields[5])).")
-            }
+        if let home = try? await UserAccount.homeDirectory(for: context.serviceUser) {
+            console.print("Found user '\(context.serviceUser)' (home: \(home)).")
         } else {
             console.warning("User '\(context.serviceUser)' does not exist — some cleanup steps will be no-ops.")
         }
