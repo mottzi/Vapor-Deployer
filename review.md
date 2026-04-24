@@ -130,9 +130,7 @@ That's four independent encodings of the same lifecycle — with subtle differen
 
 The `SystemdServiceManager.prefix` branch is the shakiest: when run as root, `XDG_RUNTIME_DIR=/run/user/$(id -u USER)` alone is insufficient unless the user's `user@<uid>.service` is already up **and** root already has the right credentials to talk to that bus (systemd historically allows `uid=0` to talk to any user bus, so this usually works, but it is not the same contract as `deployerctl`'s). The runtime `ServiceManager` is also invoked from `UpdateCommand.rollback` / `StopServiceStep` / `StartServiceStep` — which are root-invoked via `deployerctl update` — so this asymmetry matters.
 
-### 2.5 Script internal duplication
 
-Even inside `DeployerctlTemplate.wrapperScript()` itself, the `update` action (lines 146–179) **inlines its own copy** of the identity-bridge (`id -u`, wait-for-bus loop, `runuser -u … env …`) that re-appears literally 50 lines later in `ensure_user_manager` + `as_service_user`. That's a self-contained 30-line duplication.
 
 ---
 
@@ -161,22 +159,6 @@ The only meaningful variation:
 
 
 This is ~180 LOC of boilerplate that would collapse behind one generic protocol, one `Pipeline<Context>` type, and a single `CommandStyle` / palette enum for color + banner. Relevant files: `Setup/SetupCommand.swift`, `Setup/SetupStep.swift`, `Remove/RemoveCommand.swift`, `Remove/RemoveStep.swift`, `Update/UpdateCommand.swift`, `Update/UpdateStep.swift`.
-
-### 3.4 `waitForStableStatus` reinvented twice
-
-Exact same 10-iteration / 500ms-sleep loop:
-
-- `Update/Steps/StartServiceStep.swift:31` (member, takes `manager`)
-- `Update/UpdateCommand.swift:145` (private, takes `serviceName` + `manager`)
-
-Both are used by Update only and both should live on `ServiceManager` itself (which already knows `ServiceStatus.isTransitioning`).
-
-### 3.8 `terminalWidth` / `tputColumns` duplicated between UI and streaming
-
-- `Commands/System/Console/ConsoleSection.swift:7–36` — private static inside `Console` extension, clamped to [40, 100].
-- `Deployment/Shell.swift:285–312` — top-level file-private functions, clamped to [40, 100], identical implementation.
-
-They exist in two different "layers" (Commands vs Deployment) but do the same thing. The streaming tail renderer and the console card formatter want the same number.
 
 ### 3.9 Systemd-vs-supervisor branching repeated across steps
 
@@ -213,10 +195,6 @@ In `Setup/Steps/StageDeployerStep.swift::installFromBinary()`:
 And `Update/Steps/DownloadStep.swift` does (3) only.
 
 `DeployerReleaseAssets` itself contains three related entry points: `ensureAssets`, `downloadSourceAssets`, `fetchLatestReleaseMetadata`. Three entry points, three call-site shapes. A single `DeployerReleaseAssets.resolve(tag: .latest | .pinned(String) | .inPlace)` that returns `(binaryPath?, assetDirs)` would flatten all three paths.
-
-### 3.12 Layering violation: shared infra throws command-specific errors
-
-`Commands/System/Shared/GitHubAPI.swift:46,62` throws `SetupCommand.Error.githubAPI(...)`. But `Commands/Update/UpdateCommand` and its `DownloadStep` also go through this shared API. When Update calls `GitHubAPI`, failures show up as `SetupCommand.Error` — the namespace is wrong for the caller, and the Update error enum even has its own hole (no `githubAPI` case). Either `GitHubAPI` should throw its own `GitHubAPI.Error`, or there should be a top-level network error shared across commands.
 
 ### 3.13 Two path systems for "where is the install?"
 
@@ -275,10 +253,6 @@ Three separate "fetch / checkout / pull" sequences:
 - (Plus remote-URL normalization in `PreflightStep.normalizeGithubRemote`, which is yet another ad-hoc normalizer next to `InputValidator.parseGitHubSSHURL`)
 
 A small `GitRepository(path: String, shell: SystemShell)` value type with `fetch`, `checkout`, `pullFastForward`, `clone`, `origin`, `isDirty`, `hasGitDirectory` would eliminate both the duplication and the two different flavors of URL-matching.
-
-### 3.19 Restore-backup logic duplicated
-
-`UpdateCommand.restoreBackup(context:fileManager:executableURL:)` and `ActivateReleaseStep.restoreBackup(fileManager:)` both do the same three steps: check that the backup binary exists, remove the live binary, move the backup back. Two copies, both private, both throw different errors.
 
 ### 3.20 `UpdateCommand.rollback` reaches across layer boundaries
 
@@ -346,7 +320,7 @@ A cleaner split — without inventing new modules — might be:
 Ranked by how much redundancy removal each one enables:
 
 1. **Unify the three command pipelines.** One generic `Pipeline<Context>`, one step protocol, one place for `printHeader`, `bestEffort`, `shell`, `paths`. Collapses `XStep.swift` / `XCommand.swift` boilerplate.
-2. **Make `ServiceManager` the one way to control services.** Extend it with `writeUnit`, `removeUnit`, `enable`, `disable`, `reload`, `waitForStable`. Every `switch context.serviceManagerKind` in Setup/Remove disappears. `waitForStableStatus` stops being duplicated.
+2. **Make `ServiceManager` the one way to control services.** Extend it with `writeUnit`, `removeUnit`, `enable`, `disable`, `reload`, `waitForStable`. Every `switch context.serviceManagerKind` in Setup/Remove disappears.
 3. **Turn `deployerctl.conf` into a typed value.** One struct with a canonical key list, `encode()`, `decode(from:)`. Both the template and `ConfigDiscovery` go through it. The bash script's required-key list lives next to the Swift schema.
 4. **Consolidate the root→service-user bridge.** One Swift type (`ServiceUserContext`) + one bash function set (emitted from one place) that handles `enable-linger`, `user@.service` up, bus-wait, `runuser env` — instead of four independent reimplementations (`SystemShell`, `SystemdServiceManager.prefix`, `deployerctl.ensure_user_manager`, `deployerctl.update` inline).
 5. **One path layer for all commands.** Remove `SystemPaths?` from `SystemContext`; either hand derived paths in as a step dependency or give Update its own typed install-layout value so the optional lie goes away.
@@ -464,5 +438,36 @@ Brief log of changes completed after this review was written.
     - `Sources/Deployer/Commands/Setup/Steps/StageDeployerStep.swift`
     - `Sources/Deployer/App/Bootstrap.swift`
     - `Sources/Deployer/App/Configuration.swift`
+  - Verified with a successful `swift build`.
+- **3.8 addressed (shared terminal-width detection):**
+  - Added `TerminalWidth.current()` with a hardcoded `[40, 100]` clamp and reused it across command console and deployment streaming output.
+  - Added:
+    - `Sources/Deployer/Commands/System/Shared/TerminalWidth.swift`
+  - Updated:
+    - `Sources/Deployer/Commands/System/Console/ConsoleSection.swift`
+    - `Sources/Deployer/Deployment/Shell.swift`
+  - Verified with a successful `swift build`.
+- **3.4 addressed (shared stable-status wait helper):**
+  - Added `ServiceManager.waitForStableStatus(product:)` and removed duplicated transient-state polling loops from update command/step code.
+  - Updated:
+    - `Sources/Deployer/Service/ServiceManager.swift`
+    - `Sources/Deployer/Commands/Update/Steps/StartServiceStep.swift`
+    - `Sources/Deployer/Commands/Update/UpdateCommand.swift`
+  - Verified with a successful `swift build`.
+- **3.19 addressed (shared backup-restore helper in update command):**
+  - Kept backup restoration logic in one place by introducing `UpdateCommand.restoreBackupBinary(...)` and reusing it from both rollback paths (`UpdateCommand.rollback` and `ActivateReleaseStep`).
+  - Updated:
+    - `Sources/Deployer/Commands/Update/UpdateCommand.swift`
+    - `Sources/Deployer/Commands/Update/Steps/ActivateReleaseStep.swift`
+  - Verified with a successful `swift build`.
+- **3.12 addressed (shared GitHub API error typing):**
+  - Replaced command-specific `SetupCommand.Error.githubAPI(...)` throws from shared `GitHubAPI` with a dedicated `GitHubAPI.Error` (`requestFailed`, `invalidURL`) to keep error ownership in shared infrastructure.
+  - Updated:
+    - `Sources/Deployer/Commands/System/Shared/GitHubAPI.swift`
+  - Verified with a successful `swift build`.
+- **2.5 addressed (deployerctl internal duplication):**
+  - Deduplicated the identity bridge in the `deployerctl` script template. Hoisted `ensure_user_manager` and `as_service_user` above the early-exit actions, extracted `resolve_service_identity`, and replaced the inline `update` and main-path blocks with function calls.
+  - Updated:
+    - `Sources/Deployer/Commands/Setup/Templates/DeployerctlTemplate.swift`
   - Verified with a successful `swift build`.
 

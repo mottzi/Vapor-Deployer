@@ -6,6 +6,20 @@ import FoundationNetworking
 /// Thin GitHub REST wrapper that centralizes API-version pinning, header setup, status checking, and JSON decoding.
 enum GitHubAPI {
 
+    enum Error: LocalizedError {
+        case requestFailed(String)
+        case invalidURL(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .requestFailed(let message):
+                "GitHub API request failed: \(message)"
+            case .invalidURL(let rawURL):
+                "GitHub API request failed: invalid URL '\(rawURL)'"
+            }
+        }
+    }
+
     /// Issues a GitHub REST request with the pinned API version header and optional bearer authentication.
     static func request(
         method: String = "GET",
@@ -43,7 +57,7 @@ enum GitHubAPI {
         let (data, status) = try await request(method: method, url: url, token: token, body: body)
         guard (200..<300).contains(status) else {
             let message = String(data: data, encoding: .utf8) ?? "HTTP \(status)"
-            throw SetupCommand.Error.githubAPI(message)
+            throw Error.requestFailed(message)
         }
         guard !data.isEmpty else { return [:] }
         return try JSONSerialization.jsonObject(with: data)
@@ -59,7 +73,7 @@ enum GitHubAPI {
     ) async throws -> Any {
 
         guard let url = URL(string: rawURL) else {
-            throw SetupCommand.Error.githubAPI("invalid URL '\(rawURL)'")
+            throw Error.invalidURL(rawURL)
         }
         return try await requestJSON(method: method, url: url, token: token, body: body)
     }

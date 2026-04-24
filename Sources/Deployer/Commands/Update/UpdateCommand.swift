@@ -95,7 +95,7 @@ extension UpdateCommand {
             
             var restoreError: Swift.Error?
             do {
-                try restoreBackup(context: context, fileManager: fileManager, executableURL: executableURL)
+                try Self.restoreBackupBinary(context: context, fileManager: fileManager, executableURL: executableURL)
             } catch {
                 restoreError = error
             }
@@ -112,7 +112,7 @@ extension UpdateCommand {
             
             try await manager.start(product: context.serviceName)
             
-            let rollbackStatus = await waitForStableStatus(of: context.serviceName, manager: manager)
+            let rollbackStatus = await manager.waitForStableStatus(product: context.serviceName)
             guard rollbackStatus.isRunning else { throw Error.rollbackVerificationFailed(rollbackStatus.label) }
         } catch {
             throw Error.rollbackFailed(originalError.localizedDescription, error.localizedDescription)
@@ -142,7 +142,7 @@ extension UpdateCommand {
     }
     
     /// Reinstates the last known-good executable after a failed update attempt.
-    private func restoreBackup(context: UpdateContext, fileManager: FileManager, executableURL: URL) throws {
+    static func restoreBackupBinary(context: UpdateContext, fileManager: FileManager, executableURL: URL) throws {
         let backupBinaryExists = fileManager.fileExists(atPath: context.backupBinaryURL.path)
         guard backupBinaryExists else { throw Error.binaryNotFound(context.backupBinaryURL.path) }
 
@@ -159,19 +159,6 @@ extension UpdateCommand {
             guard let source = backup.directory(named: name) else { continue }
             try fileManager.copyItem(at: source, to: destination)
         }
-    }
-
-    /// Waits through transient service states so the command judges the final service state instead of a race.
-    private func waitForStableStatus(of serviceName: String, manager: any ServiceManager) async -> ServiceStatus {
-        for _ in 0..<10 {
-            let status = await manager.status(product: serviceName)
-            let isStableStatus = status.isRunning || !status.isTransitioning
-            if isStableStatus { return status }
-
-            try? await Task.sleep(for: .milliseconds(500))
-        }
-
-        return await manager.status(product: serviceName)
     }
 
 }

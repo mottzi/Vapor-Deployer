@@ -74,11 +74,7 @@ extension ActivateReleaseStep {
     /// Reinstates the last known-good executable after a failed update attempt.
     private func restoreBackup(fileManager: FileManager) throws {
         let executableURL = context.stagedBinaryURL.deletingPathExtension()
-        let backupBinaryExists = fileManager.fileExists(atPath: context.backupBinaryURL.path)
-        guard backupBinaryExists else { throw UpdateCommand.Error.binaryNotFound(context.backupBinaryURL.path) }
-
-        try SystemFileSystem.removeIfPresent(executableURL.path)
-        try fileManager.moveItem(at: context.backupBinaryURL, to: executableURL)
+        try UpdateCommand.restoreBackupBinary(context: context, fileManager: fileManager, executableURL: executableURL)
     }
 
 }

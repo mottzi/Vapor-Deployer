@@ -122,6 +122,39 @@ enum DeployerctlTemplate {
           die "could not locate deployer binary; rerun the bootstrap setup script"
         }
 
+        resolve_service_identity() {
+          id -u "$SERVICE_USER" >/dev/null 2>&1 || die "service user '$SERVICE_USER' does not exist"
+          SERVICE_UID="$(id -u "$SERVICE_USER")"
+          BUS_PATH="/run/user/$SERVICE_UID/bus"
+          SERVICE_HOME="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
+          [[ -n "$SERVICE_HOME" ]] || SERVICE_HOME="/home/$SERVICE_USER"
+          cd "$SERVICE_HOME" 2>/dev/null || cd /
+        }
+
+        ensure_user_manager() {
+          loginctl enable-linger "$SERVICE_USER" >/dev/null 2>&1 || true
+          systemctl start "user@${SERVICE_UID}.service" >/dev/null 2>&1 || true
+
+          local i
+          for ((i = 0; i < 50; i++)); do
+            [[ -S "$BUS_PATH" ]] && return 0
+            sleep 0.1
+          done
+          die "user bus $BUS_PATH is unavailable; check 'systemctl status user@${SERVICE_UID}.service'"
+        }
+
+        as_service_user() {
+          runuser -u "$SERVICE_USER" -- env \
+            "HOME=$SERVICE_HOME" \
+            "USER=$SERVICE_USER" \
+            "XDG_RUNTIME_DIR=/run/user/$SERVICE_UID" \
+            "DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS_PATH" \
+            "$@"
+        }
+
+        user_systemctl()  { as_service_user systemctl  --user "$@"; }
+        user_journalctl() { as_service_user journalctl --user "$@"; }
+
         # version and lifecycle actions are handled before full config validation so they work in degraded states
         if [[ "${1:-}" == "version" ]]; then
           if [[ -r "$CONFIG_FILE" ]]; then
@@ -151,28 +184,9 @@ enum DeployerctlTemplate {
           INSTALL_BIN="$(resolve_install_bin)"
 
           if [[ "${SERVICE_MANAGER:-}" == "systemd" && -n "${SERVICE_USER:-}" ]]; then
-            id -u "$SERVICE_USER" >/dev/null 2>&1 || die "service user '$SERVICE_USER' does not exist"
-            SERVICE_UID="$(id -u "$SERVICE_USER")"
-            BUS_PATH="/run/user/$SERVICE_UID/bus"
-            SERVICE_HOME="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
-            [[ -n "$SERVICE_HOME" ]] || SERVICE_HOME="/home/$SERVICE_USER"
-
-            loginctl enable-linger "$SERVICE_USER" >/dev/null 2>&1 || true
-            systemctl start "user@${SERVICE_UID}.service" >/dev/null 2>&1 || true
-
-            for ((i = 0; i < 50; i++)); do
-              [[ -S "$BUS_PATH" ]] && break
-              sleep 0.1
-            done
-
-            cd "$SERVICE_HOME" 2>/dev/null || cd /
-
-            exec runuser -u "$SERVICE_USER" -- env \
-              "HOME=$SERVICE_HOME" \
-              "USER=$SERVICE_USER" \
-              "XDG_RUNTIME_DIR=/run/user/$SERVICE_UID" \
-              "DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS_PATH" \
-              "$INSTALL_BIN" update
+            resolve_service_identity
+            ensure_user_manager
+            exec as_service_user "$INSTALL_BIN" update
           fi
 
           exec "$INSTALL_BIN" update
@@ -187,12 +201,7 @@ enum DeployerctlTemplate {
           [[ -n "${!_var:-}" ]] || die "missing $_var in $CONFIG_FILE"
         done
 
-        id -u "$SERVICE_USER" >/dev/null 2>&1 || die "service user '$SERVICE_USER' does not exist"
-        SERVICE_UID="$(id -u "$SERVICE_USER")"
-        BUS_PATH="/run/user/$SERVICE_UID/bus"
-        SERVICE_HOME="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
-        [[ -n "$SERVICE_HOME" ]] || SERVICE_HOME="/home/$SERVICE_USER"
-        cd "$SERVICE_HOME" 2>/dev/null || cd /
+        resolve_service_identity
 
         action="$1"; shift
         target="${1:-all}"
@@ -219,30 +228,6 @@ enum DeployerctlTemplate {
             logs_files=("$DEPLOYER_LOG" "$APP_LOG")
             ;;
         esac
-
-        ensure_user_manager() {
-          loginctl enable-linger "$SERVICE_USER" >/dev/null 2>&1 || true
-          systemctl start "user@${SERVICE_UID}.service" >/dev/null 2>&1 || true
-
-          local i
-          for ((i = 0; i < 50; i++)); do
-            [[ -S "$BUS_PATH" ]] && return 0
-            sleep 0.1
-          done
-          die "user bus $BUS_PATH is unavailable; check 'systemctl status user@${SERVICE_UID}.service'"
-        }
-
-        as_service_user() {
-          runuser -u "$SERVICE_USER" -- env \
-            "HOME=$SERVICE_HOME" \
-            "USER=$SERVICE_USER" \
-            "XDG_RUNTIME_DIR=/run/user/$SERVICE_UID" \
-            "DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS_PATH" \
-            "$@"
-        }
-
-        user_systemctl()  { as_service_user systemctl  --user "$@"; }
-        user_journalctl() { as_service_user journalctl --user "$@"; }
 
         trap 'exit 130' INT
 

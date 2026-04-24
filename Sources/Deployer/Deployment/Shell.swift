@@ -283,32 +283,7 @@ private func isStandardOutputTTY() -> Bool {
 }
 
 private func terminalWidth() -> Int {
-    let raw = ProcessInfo.processInfo.environment["COLUMNS"].flatMap(Int.init)
-        ?? tputColumns()
-        ?? 80
-    return min(max(raw, 40), 100)
-}
-
-private func tputColumns() -> Int? {
-    let process = Process()
-    let output = Pipe()
-    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-    process.arguments = ["tput", "cols"]
-    process.standardOutput = output
-    process.standardError = Pipe()
-
-    do {
-        try process.run()
-    } catch {
-        return nil
-    }
-
-    process.waitUntilExit()
-    guard process.terminationStatus == 0 else { return nil }
-
-    let data = output.fileHandleForReading.readDataToEndOfFile()
-    let value = String(data: data, encoding: .utf8)?.trimmed
-    return value.flatMap(Int.init)
+    TerminalWidth.current()
 }
 
 extension Shell {

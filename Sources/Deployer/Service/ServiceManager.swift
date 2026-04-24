@@ -36,6 +36,19 @@ extension ServiceManager {
         let currentStatus = await status(product: product)
         return currentStatus.isRunning
     }
+
+    /// Waits through transient service states so callers judge the final state instead of a race.
+    func waitForStableStatus(product: String) async -> ServiceStatus {
+        for _ in 0..<10 {
+            let currentStatus = await status(product: product)
+            let isStableStatus = currentStatus.isRunning || !currentStatus.isTransitioning
+            if isStableStatus { return currentStatus }
+
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+
+        return await status(product: product)
+    }
     
 }
 
