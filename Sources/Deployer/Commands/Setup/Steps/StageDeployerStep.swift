@@ -104,21 +104,16 @@ extension StageDeployerStep {
         let (tagName, downloadURL) = try await DeployerReleaseAssets.fetchLatestReleaseMetadata()
         context.releaseVersion = tagName
 
-        let archivePath = try await Shell.runThrowing("mktemp", []).trimmed
-        defer { try? FileManager.default.removeItem(atPath: archivePath) }
-
         let stagingPath = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
         defer { try? FileManager.default.removeItem(atPath: stagingPath) }
 
         console.print("Downloading \(downloadURL).")
-        try await Shell.runThrowing("curl", ["--silent", "--show-error", "--fail", "--location", "-o", archivePath, downloadURL])
-        try await Shell.runThrowing("tar", ["-xzf", archivePath, "-C", stagingPath, "--warning=no-unknown-keyword"])
-        let assets = try await DeployerReleaseAssets.ensureAssets(in: stagingPath, tag: tagName)
+        let payload = try await DeployerReleaseAssets.downloadRelease(tag: tagName, downloadURL: downloadURL, into: stagingPath)
 
         try await installPayload(
-            binary: "\(stagingPath)/deployer",
-            publicDirectory: assets.publicDirectory,
-            resourcesDirectory: assets.resourcesDirectory,
+            binary: payload.binaryPath,
+            publicDirectory: payload.assets.publicDirectory,
+            resourcesDirectory: payload.assets.resourcesDirectory,
             versionFile: nil
         )
 

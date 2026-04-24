@@ -7,6 +7,13 @@ struct DeployerReleaseAssetDirectories: Sendable {
 
 }
 
+struct DeployerReleasePayload: Sendable {
+
+    let binaryPath: String
+    let assets: DeployerReleaseAssetDirectories
+
+}
+
 enum DeployerReleaseAssets {
 
     static let repository = "mottzi/Vapor-Deployer"
@@ -40,6 +47,26 @@ enum DeployerReleaseAssets {
         }
 
         return try await downloadSourceAssets(repository: repository, tag: tag, into: stagingDirectory)
+    }
+
+    static func downloadRelease(
+        tag: String,
+        downloadURL: String,
+        into stagingDirectory: String,
+        didDownloadArchive: (() -> Void)? = nil
+    ) async throws -> DeployerReleasePayload {
+
+        let archivePath = try await Shell.runThrowing("mktemp").trimmed
+        defer { try? FileManager.default.removeItem(atPath: archivePath) }
+
+        try await Shell.runThrowing("curl", ["--silent", "--show-error", "--fail", "--location", "-o", archivePath, downloadURL])
+        didDownloadArchive?()
+        try await Shell.runThrowing("tar", ["-xzf", archivePath, "-C", stagingDirectory, "--warning=no-unknown-keyword"])
+
+        return DeployerReleasePayload(
+            binaryPath: "\(stagingDirectory)/deployer",
+            assets: try await ensureAssets(in: stagingDirectory, tag: tag)
+        )
     }
 
     static func downloadSourceAssets(

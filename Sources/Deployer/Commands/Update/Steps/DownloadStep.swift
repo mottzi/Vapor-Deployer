@@ -31,19 +31,18 @@ struct DownloadStep: UpdateStep {
             console.print("Updating deployer to \(tagName).")
         }
 
-        let tmpArchive = try await Shell.runThrowing("mktemp").trimmed
-        defer { try? FileManager.default.removeItem(atPath: tmpArchive) }
-
         let stagingDir = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
         context.stagingDir = stagingDir
 
         console.print("Downloading release.")
-        try await Shell.runThrowing("curl", ["--silent", "--show-error", "--fail", "--location", "-o", tmpArchive, downloadURL])
-
-        console.print("Extracting release archive.")
-        try await Shell.runThrowing("tar", ["-xzf", tmpArchive, "-C", stagingDir, "--warning=no-unknown-keyword"])
-
-        context.releaseAssets = try await DeployerReleaseAssets.ensureAssets(in: stagingDir, tag: tagName)
+        let payload = try await DeployerReleaseAssets.downloadRelease(
+            tag: tagName,
+            downloadURL: downloadURL,
+            into: stagingDir
+        ) {
+            console.print("Extracting release archive.")
+        }
+        context.releaseAssets = payload.assets
     }
 
 }

@@ -160,42 +160,6 @@ The only meaningful variation:
 
 This is ~180 LOC of boilerplate that would collapse behind one generic protocol, one `Pipeline<Context>` type, and a single `CommandStyle` / palette enum for color + banner. Relevant files: `Setup/SetupCommand.swift`, `Setup/SetupStep.swift`, `Remove/RemoveCommand.swift`, `Remove/RemoveStep.swift`, `Update/UpdateCommand.swift`, `Update/UpdateStep.swift`.
 
-### 3.9 Systemd-vs-supervisor branching repeated across steps
-
-The pattern `switch context.serviceManagerKind { case .systemd: …; case .supervisor: … }` appears verbatim (with slightly different bodies) in six places:
-
-- `Setup/Steps/RuntimeConfigStep.setupServiceManager()` + `removeSystemdFiles()` + `removeSupervisorFiles()`
-- `Setup/Steps/StartServicesStep.startSystemdServices()` / `startSupervisorServices()`
-- `Setup/Steps/HealthStep.isServiceRunning(_:)`
-- `Setup/Steps/CleanupOrphansStep.stopAndRemoveOldService(...)`
-- `Remove/Steps/StopServicesStep.stopSystemdServices()` / `stopSupervisorServices()`
-- `Remove/Steps/RemoveServiceFilesStep.removeSystemdFiles()` / `removeSupervisorFiles()`
-
-Meanwhile `Service/ServiceManager.swift` already defines a protocol (`start/stop/restart/status/isRunning`) that abstracts exactly this — but it's only used at **runtime** (by `Bootstrap.swift`, `StopServiceStep`, `StartServiceStep`, `UpdateCommand.rollback`). Setup and Remove don't use it. A setup-oriented variant (write-config, enable-at-boot, disable, delete-config, daemon-reload) would consolidate many branches.
-
-### 3.10 `RuntimeConfigStep.remove*Files` vs `RemoveServiceFilesStep.remove*Files`
-
-Nearly-duplicate service-file teardown, once in Setup (when switching service manager) and once in Remove (when tearing down entirely). Both know the same paths:
-
-- `~/.config/systemd/user/deployer.service`
-- `~/.config/systemd/user/{productName}.service`
-- `/etc/supervisor/conf.d/deployer.conf`
-- `/etc/supervisor/conf.d/{productName}.conf`
-
-Those four paths are also typed out again in `CleanupOrphansStep.stopAndRemoveOldService`. Three hand-maintained copies of the service-file paths.
-
-### 3.11 Three overlapping "get the release payload" code paths
-
-In `Setup/Steps/StageDeployerStep.swift::installFromBinary()`:
-
-1. If a local `Public/` + `Resources/` are present alongside the currently-running executable → use them.
-2. Else if there's a local `.version` (or `DEPLOYER_RELEASE_TAG`) → call `DeployerReleaseAssets.downloadSourceAssets(tag:into:)`.
-3. Else → `DeployerReleaseAssets.fetchLatestReleaseMetadata()` + `downloadSourceAssets` + `ensureAssets`.
-
-And `Update/Steps/DownloadStep.swift` does (3) only.
-
-`DeployerReleaseAssets` itself contains three related entry points: `ensureAssets`, `downloadSourceAssets`, `fetchLatestReleaseMetadata`. Three entry points, three call-site shapes. A single `DeployerReleaseAssets.resolve(tag: .latest | .pinned(String) | .inPlace)` that returns `(binaryPath?, assetDirs)` would flatten all three paths.
-
 ### 3.13 Two path systems for "where is the install?"
 
 - Setup & Remove: `SystemPaths` (string-based, derived from `serviceUser + appName + panelRoute` via `SystemPaths.derive`).
@@ -464,6 +428,36 @@ Brief log of changes completed after this review was written.
   - Replaced command-specific `SetupCommand.Error.githubAPI(...)` throws from shared `GitHubAPI` with a dedicated `GitHubAPI.Error` (`requestFailed`, `invalidURL`) to keep error ownership in shared infrastructure.
   - Updated:
     - `Sources/Deployer/Commands/System/Shared/GitHubAPI.swift`
+  - Verified with a successful `swift build`.
+- **3.9 addressed (service-manager setup/teardown abstraction):**
+  - Added `ServiceConfigurator` to consolidate setup/remove-time service-manager behavior and removed duplicated systemd/supervisor branching across setup/remove steps.
+  - Added:
+    - `Sources/Deployer/Service/ServiceConfigurator/ServiceConfigurator.swift`
+    - `Sources/Deployer/Service/ServiceConfigurator/SystemdConfigurator.swift`
+    - `Sources/Deployer/Service/ServiceConfigurator/SupervisorConfigurator.swift`
+  - Updated:
+    - `Sources/Deployer/Commands/Setup/Steps/RuntimeConfigStep.swift`
+    - `Sources/Deployer/Commands/Setup/Steps/StartServicesStep.swift`
+    - `Sources/Deployer/Commands/Setup/Steps/HealthStep.swift`
+    - `Sources/Deployer/Commands/Setup/Steps/CleanupOrphansStep.swift`
+    - `Sources/Deployer/Commands/Remove/Steps/StopServicesStep.swift`
+    - `Sources/Deployer/Commands/Remove/Steps/RemoveServiceFilesStep.swift`
+  - Verified with a successful `swift build`.
+- **3.10 addressed (service-file teardown path centralization):**
+  - Consolidated systemd/supervisor teardown path ownership in `ServiceConfigurator.removeConfigs(for:)`, removing duplicate remove-path maintenance across setup/remove/orphan-cleanup steps.
+  - Updated:
+    - `Sources/Deployer/Service/ServiceConfigurator/SystemdConfigurator.swift`
+    - `Sources/Deployer/Service/ServiceConfigurator/SupervisorConfigurator.swift`
+    - `Sources/Deployer/Commands/Setup/Steps/RuntimeConfigStep.swift`
+    - `Sources/Deployer/Commands/Setup/Steps/CleanupOrphansStep.swift`
+    - `Sources/Deployer/Commands/Remove/Steps/RemoveServiceFilesStep.swift`
+  - Verified with a successful `swift build`.
+- **3.11 addressed (shared release archive download/extract helper):**
+  - Added `DeployerReleaseAssets.downloadRelease(...)` and `DeployerReleasePayload` to centralize the repeated latest-release archive download/extract/asset-validation path without merging setup-specific source-selection behavior.
+  - Updated:
+    - `Sources/Deployer/Commands/System/Shared/DeployerReleaseAssets.swift`
+    - `Sources/Deployer/Commands/Setup/Steps/StageDeployerStep.swift`
+    - `Sources/Deployer/Commands/Update/Steps/DownloadStep.swift`
   - Verified with a successful `swift build`.
 - **2.5 addressed (deployerctl internal duplication):**
   - Deduplicated the identity bridge in the `deployerctl` script template. Hoisted `ensure_user_manager` and `as_service_user` above the early-exit actions, extracted `resolve_service_identity`, and replaced the inline `update` and main-path blocks with function calls.
