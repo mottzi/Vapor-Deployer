@@ -19,10 +19,3 @@ protocol UpdateStep {
     func run() async throws
 
 }
-
-extension UpdateStep {
-
-    /// Convenience accessor for a `SystemShell` bound to this step's context, used for service-user shell commands.
-    var shell: SystemShell { SystemShell(context: context) }
-
-}

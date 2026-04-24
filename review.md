@@ -160,13 +160,6 @@ The only meaningful variation:
 
 This is ~180 LOC of boilerplate that would collapse behind one generic protocol, one `Pipeline<Context>` type, and a single `CommandStyle` / palette enum for color + banner. Relevant files: `Setup/SetupCommand.swift`, `Setup/SetupStep.swift`, `Remove/RemoveCommand.swift`, `Remove/RemoveStep.swift`, `Update/UpdateCommand.swift`, `Update/UpdateStep.swift`.
 
-### 3.13 Two path systems for "where is the install?"
-
-- Setup & Remove: `SystemPaths` (string-based, derived from `serviceUser + appName + panelRoute` via `SystemPaths.derive`).
-- Update: URL-based, computed from `Configuration.getExecutableURL()` → `resolvingSymlinksInPath` → `deletingLastPathComponent`. No `SystemPaths`.
-
-The `UpdateContext.paths: SystemPaths?` field is required by the `SystemContext` protocol but is **never populated** — it's a placeholder satisfying the protocol, and `UpdateStep` intentionally omits the `paths` convenience accessor. This is a hole in the protocol, not a genuine polymorphism.
-
 ### 3.14 Configuration-key lists that must stay in sync
 
 Manual, parallel string-lists across four writers/readers:
@@ -459,6 +452,12 @@ Brief log of changes completed after this review was written.
     - `Sources/Deployer/Commands/Setup/Steps/StageDeployerStep.swift`
     - `Sources/Deployer/Commands/Update/Steps/DownloadStep.swift`
   - Verified with a successful `swift build`.
+- **3.13 addressed (remove false path polymorphism from update):**
+  - Kept setup/remove on `SystemPaths` and update on executable-URL-derived paths, but removed the fake `SystemContext` conformance and unused `paths` placeholder from `UpdateContext`.
+  - Updated:
+    - `Sources/Deployer/Commands/Update/UpdateContext.swift`
+    - `Sources/Deployer/Commands/Update/UpdateStep.swift`
+  - Verified with static scans showing no update use of `SystemContext`, `paths`, or `SystemShell`, plus a successful `swift build`.
 - **2.5 addressed (deployerctl internal duplication):**
   - Deduplicated the identity bridge in the `deployerctl` script template. Hoisted `ensure_user_manager` and `as_service_user` above the early-exit actions, extracted `resolve_service_identity`, and replaced the inline `update` and main-path blocks with function calls.
   - Updated:

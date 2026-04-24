@@ -1,11 +1,10 @@
 import Foundation
 
 /// Shared mutable state for one update run, holding the identity, paths, and metadata needed to update an installation.
-final class UpdateContext: SystemContext {
+final class UpdateContext {
 
     var serviceUser = ""
     var serviceUserUID: Int?
-    var paths: SystemPaths?
 
     var serviceManagerKind = ServiceManagerKind.systemd
 
