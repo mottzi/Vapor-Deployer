@@ -23,31 +23,29 @@ extension SwiftStep {
 
     private func installSwiftly() async throws {
 
-        let workdir = try await shell.runAsServiceUser("mktemp", ["-d"], environment: userEnvironment).trimmed
+        let workdir = try await shell.runAsServiceUser("mktemp", ["-d"]).trimmed
         defer { try? FileManager.default.removeItem(atPath: workdir) }
 
-        let arch = try await shell.runAsServiceUser("uname", ["-m"], environment: userEnvironment).trimmed
+        let arch = try await shell.runAsServiceUser("uname", ["-m"]).trimmed
         let archive = "swiftly-\(arch).tar.gz"
         
         try await shell.runAsServiceUser(
             "curl",
             ["-fL", "-o", archive, "https://download.swift.org/swiftly/linux/\(archive)"],
-            directory: workdir,
-            environment: userEnvironment
+            directory: workdir
         )
         
-        try await shell.runAsServiceUser("tar", ["zxf", archive], directory: workdir, environment: userEnvironment)
+        try await shell.runAsServiceUser("tar", ["zxf", archive], directory: workdir)
         
         try await shell.runAsServiceUser(
             "./swiftly",
             ["init", "--quiet-shell-followup", "--assume-yes"],
-            directory: workdir,
-            environment: userEnvironment
+            directory: workdir
         )
     }
 
     private func printSwiftVersion() async throws {
-        let version = try await shell.runAsServiceUser(swiftBinary, ["--version"], environment: userEnvironment)
+        let version = try await shell.runAsServiceUser(swiftBinary, ["--version"])
         console.print(version.trimmed)
     }
 
@@ -57,10 +55,6 @@ extension SwiftStep {
 
     private var swiftBinary: String {
         "\(paths.swiftlyBinDirectory)/swift"
-    }
-
-    private var userEnvironment: [String: String] {
-        ["HOME": paths.serviceHome, "USER": context.serviceUser]
     }
 
     private var isSwiftlyInstalled: Bool {
