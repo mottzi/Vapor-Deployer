@@ -346,7 +346,6 @@ The bootstrap script also hard-codes `/tmp/deployer-${VERSION}` as its staging r
 
 ### 3.24 Miscellaneous smaller issues
 
-- `RemoveCheckoutsStep.removeDeployerGeneratedFiles` hard-codes the four filenames `deployer`, `deployer.json`, `deployer.db`, `deployer.log` while `SystemPaths` already exposes `deployerBinary`, `deployerConfig`, `deployerLog` — `.db` is the only one not on SystemPaths, and it comes from the runtime `Configuration.dbFile` (default `"deployer.db"`).
 - `RemoveInputStep.collectServiceUser` reads `/etc/passwd` directly via `String(contentsOfFile:)`, yet `PreflightStep.homeDirectory(for:)` and `deployerctl` use `getent passwd`. Three ways to resolve a user's home.
 - `paths.deployerSocketPath` is fully derived (`"\(panelRoute)/ws"`) but stored as a separate `SystemPaths` field.
 - `DeployerReleaseAssets.Error` is declared inside the `DeployerReleaseAssets` enum but also has dead siblings in both `SetupError` and `UpdateError` (see 3.13). Three error namespaces for one concern.
@@ -431,5 +430,10 @@ Brief log of changes completed after this review was written.
   - Updated:
     - `Sources/Deployer/Commands/System/Console/ConsoleSection.swift`
     - `Sources/Deployer/Commands/Remove/Steps/RemoveSummaryStep.swift`
+  - Verified with a successful `swift build`.
+- **3.24 addressed (path-source reuse in remove cleanup):**
+  - Replaced inline path construction in `RemoveCheckoutsStep` with existing `SystemPaths` properties (`deployerBinary`, `deployerConfig`, `deployerLog`, `appDeployDirectory`) while preserving deletion behavior and order.
+  - Updated:
+    - `Sources/Deployer/Commands/Remove/Steps/RemoveCheckoutsStep.swift`
   - Verified with a successful `swift build`.
 

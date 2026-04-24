@@ -24,8 +24,15 @@ extension RemoveCheckoutsStep {
 
     private func removeDeployerGeneratedFiles() {
 
-        for filename in ["deployer", "deployer.json", "deployer.db", "deployer.log"] {
-            try? SystemFileSystem.removeIfPresent("\(paths.installDirectory)/\(filename)")
+        let removablePaths = [
+            paths.deployerBinary,
+            paths.deployerConfig,
+            "\(paths.installDirectory)/deployer.db",
+            paths.deployerLog
+        ]
+
+        for path in removablePaths {
+            try? SystemFileSystem.removeIfPresent(path)
         }
 
         console.print("Removed deployer binary, config, database, and log files.")
@@ -33,9 +40,8 @@ extension RemoveCheckoutsStep {
 
     private func removeAppDeployDirectory() {
 
-        let deployDir = "\(paths.appDirectory)/deploy"
-        guard FileManager.default.fileExists(atPath: deployDir) else { return }
-        try? FileManager.default.removeItem(atPath: deployDir)
+        guard FileManager.default.fileExists(atPath: paths.appDeployDirectory) else { return }
+        try? FileManager.default.removeItem(atPath: paths.appDeployDirectory)
         console.print("Removed app deploy directory.")
     }
 
