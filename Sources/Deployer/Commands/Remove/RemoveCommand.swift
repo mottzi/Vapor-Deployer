@@ -42,18 +42,18 @@ struct RemoveCommand: AsyncCommand {
 private extension RemoveCommand {
 
     func printBanner(to console: any Console) {
-        console.output("")
+        console.newLine()
         console.ruler(color: .red)
         console.output("  Vapor Deployer · Remove".consoleText(color: .red, isBold: true))
         console.ruler(color: .red)
-        console.output("")
-        console.output("  Stops services, removes managed proxy files, and deletes".consoleText())
-        console.output("  the service user created by setup. This is destructive.".consoleText())
-        console.output("")
+        console.newLine()
+        console.output("  Stops services, removes managed proxy files, and deletes")
+        console.output("  the service user created by setup. This is destructive.")
+        console.newLine()
     }
 
     func printStepHeader(console: any Console, title: String, index: Int, total: Int) {
-        console.output("")
+        console.newLine()
         console.ruler("[\(index)/\(total)] \(title)", color: .red)
     }
 

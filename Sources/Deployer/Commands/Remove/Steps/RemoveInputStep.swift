@@ -163,7 +163,7 @@ extension RemoveInputStep {
             ("Cert lineage", context.certName.isEmpty ? "—" : context.certName),
         ])
 
-        console.output("")
+        console.newLine()
         console.output("  This will (destructive):".consoleText(color: .yellow, isBold: true))
         console.output("    • stop/disable deployer and app services".consoleText())
         console.output("    • remove generated unit/config files".consoleText())
@@ -173,7 +173,7 @@ extension RemoveInputStep {
         console.output("    • remove deployer and app checkout directories".consoleText())
         console.output("    • remove Linux user and home directory".consoleText())
         console.output("    • optionally delete certificate lineage".consoleText())
-        console.output("")
+        console.newLine()
     }
 
     private func confirmTeardown() throws {

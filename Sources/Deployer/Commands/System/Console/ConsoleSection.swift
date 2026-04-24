@@ -14,7 +14,7 @@ extension Console {
     func ruler(_ title: String, color: ConsoleColor? = nil) {
         
         let prefix = "━━━ "
-        let fill = max(terminalWidth - prefix.count + title.count + 1, 0)
+        let fill = max(terminalWidth - (prefix.count + title.count + 1), 0)
         let string = "\(prefix)\(title) \(String(repeating: "━", count: fill))"
         
         output(string.consoleText(color: color, isBold: true))

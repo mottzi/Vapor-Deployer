@@ -52,18 +52,18 @@ struct SetupCommand: AsyncCommand {
 private extension SetupCommand {
 
     func printBanner(console: any Console) {
-        console.output("")
+        console.newLine()
         console.ruler(color: .cyan)
         console.output("  Vapor Deployer · Setup".consoleText(color: .cyan, isBold: true))
         console.ruler(color: .cyan)
-        console.output("")
-        console.output("  Installs the deployer + target app, configures services.".consoleText())
-        console.output("  Provisions Nginx + TLS and wires the GitHub webhook.".consoleText())
-        console.output("")
+        console.newLine()
+        console.output("  Installs the deployer + target app, configures services.")
+        console.output("  Provisions Nginx + TLS and wires the GitHub webhook.")
+        console.newLine()
     }
 
     func printStepHeader(console: any Console, title: String, index: Int, total: Int) {
-        console.output("")
+        console.newLine()
         console.ruler("[\(index)/\(total)] \(title)", color: .cyan)
     }
 

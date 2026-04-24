@@ -12,13 +12,13 @@ struct RemoveSummaryStep: RemoveStep {
 
         console.successTitledRule("✓ Removal complete")
 
-        console.output("")
+        console.newLine()
         printKV("Service user", "\(context.serviceUser) (removed)")
         printKV("Install dir", "\(paths.installDirectory) (removed)")
         printKV("App dir", "\(paths.appDirectory) (removed)")
         printKV("Nginx site", "\(context.nginxSiteAvailable ?? "—") (removed if present)")
         printKV("ACME webroot", "\(context.acmeWebroot ?? "—") (removed if present)")
-        console.output("")
+        console.newLine()
 
         console.output("  Manual follow-up:".consoleText(isBold: true))
         console.output("    • Delete the GitHub webhook pointing at:".consoleText())
@@ -32,7 +32,7 @@ struct RemoveSummaryStep: RemoveStep {
             console.output("      (GitHub repo → Settings → Webhooks)".consoleText())
         }
 
-        console.output("")
+        console.newLine()
     }
 
 }

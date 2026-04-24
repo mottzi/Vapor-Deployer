@@ -63,18 +63,18 @@ struct UpdateCommand: AsyncCommand {
 private extension UpdateCommand {
 
     func printBanner(console: any Console) {
-        console.output("")
+        console.newLine()
         console.ruler(color: .yellow)
         console.output("  Vapor Deployer · Update".consoleText(color: .yellow, isBold: true))
         console.ruler(color: .yellow)
-        console.output("")
+        console.newLine()
         console.output("  Downloads and installs the latest version of the deployer.")
         console.output("  Automatically restarts the service after staging new assets.")
-        console.output("")
+        console.newLine()
     }
 
     func printStepHeader(console: any Console, title: String, index: Int, total: Int) {
-        console.output("")
+        console.newLine()
         console.ruler("[\(index)/\(total)] \(title)", color: .yellow)
     }
 
