@@ -10,7 +10,7 @@ enum DeployerTemplate {
         let config = Configuration(
             port: context.deployerPort,
             dbFile: "deployer.db",
-            socketPath: paths.deployerSocketPath,
+            socketPath: "\(context.panelRoute)/ws",
             panelRoute: context.panelRoute,
             target: TargetConfiguration(
                 name: context.productName,

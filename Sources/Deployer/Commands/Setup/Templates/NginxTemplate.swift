@@ -65,7 +65,7 @@ enum NginxTemplate {
 
             add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
-            location = \(paths.deployerSocketPath) {
+            location = \(context.panelRoute)/ws {
                 proxy_pass http://127.0.0.1:\(context.deployerPort);
                 proxy_http_version 1.1;
                 proxy_set_header Upgrade $http_upgrade;

@@ -13,7 +13,6 @@ struct SystemPaths {
     let swiftlyBinDirectory: String
     let swiftPath: String
     let webhookPath: String
-    let deployerSocketPath: String
     let nginxSiteName: String
     let nginxSiteAvailable: String
     let nginxSiteEnabled: String
@@ -51,7 +50,6 @@ struct SystemPaths {
             swiftlyBinDirectory: "\(swiftlyHomeDirectory)/bin",
             swiftPath: "\(swiftlyHomeDirectory)/bin:/usr/local/bin:/usr/bin:/bin",
             webhookPath: "/pushevent/\(appName)",
-            deployerSocketPath: "\(panelRoute)/ws",
             nginxSiteName: nginxSiteName,
             nginxSiteAvailable: "/etc/nginx/sites-available/\(nginxSiteName).conf",
             nginxSiteEnabled: "/etc/nginx/sites-enabled/\(nginxSiteName).conf",

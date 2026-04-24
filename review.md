@@ -346,9 +346,6 @@ The bootstrap script also hard-codes `/tmp/deployer-${VERSION}` as its staging r
 
 ### 3.24 Miscellaneous smaller issues
 
-- `paths.deployerSocketPath` is fully derived (`"\(panelRoute)/ws"`) but stored as a separate `SystemPaths` field.
-- `HealthStep.waitForTCP` uses `Shell.run("exec 3<>/dev/tcp/127.0.0.1/\(port)")` — this is a clever bash-only construct that is invisible to code search and depends on `Shell.run(command:directory:)` routing through `bash -c`. Works, but fragile to any future change in `Shell.run`.
-- `SetupContext` has both a stored `panelRoute: String` default (`"/deployer"`) and a stored `deploymentMode: DeploymentMode = .manual`, neither of which is reachable through any prompt in `InputStep` — `deploymentMode` is a hard-coded build-time value. Worth making explicit whether this is meant to be configurable or a constant.
 - `Extensions.swift::StringProtocol.hexadecimalData` is used only by `Webhook.validateSignature`; fine to keep, but it sits in a top-level `App/Extensions.swift` file that mixes console/display helpers (`displayPath`), shell helpers (`shellQuoted`), and cryptography helpers — no obvious grouping.
 
 ---
@@ -446,5 +443,20 @@ Brief log of changes completed after this review was written.
   - Updated:
     - `Sources/Deployer/Commands/Setup/Steps/PreflightStep.swift`
     - `Sources/Deployer/Commands/Remove/Steps/RemoveInputStep.swift`
+  - Verified with a successful `swift build`.
+- **3.24 discarded (bash `/dev/tcp` health-check note):**
+  - Removed the `HealthStep.waitForTCP` fragility note as not necessary to action right now.
+  - Updated:
+    - `review.md`
+- **3.24 discarded (comment-only setup-context note):**
+  - Removed the `SetupContext.panelRoute`/`deploymentMode` note because the action was comment/documentation-only.
+  - Updated:
+    - `review.md`
+- **3.24 addressed (remove redundant `deployerSocketPath` field):**
+  - Removed `SystemPaths.deployerSocketPath` and inlined the same derived value (`"\(context.panelRoute)/ws"`) where needed in setup templates.
+  - Updated:
+    - `Sources/Deployer/Commands/System/SystemPaths.swift`
+    - `Sources/Deployer/Commands/Setup/Templates/DeployerTemplate.swift`
+    - `Sources/Deployer/Commands/Setup/Templates/NginxTemplate.swift`
   - Verified with a successful `swift build`.
 
