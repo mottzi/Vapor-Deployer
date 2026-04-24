@@ -39,12 +39,12 @@ struct UpdateCommand: AsyncCommand {
 
         let steps = stepTypes.map { $0.init(context: updateContext, console: context.console) }
 
-        context.console.updateBanner()
+        printBanner(console: context.console)
 
         for (index, step) in steps.enumerated() {
             if updateContext.isUpToDate { break }
 
-            step.printHeader(index: index + 1, total: steps.count)
+            printStepHeader(console: context.console, title: step.title, index: index + 1, total: steps.count)
             
             do {
                 try await step.run()
@@ -56,6 +56,26 @@ struct UpdateCommand: AsyncCommand {
                 throw error
             }
         }
+    }
+
+}
+
+private extension UpdateCommand {
+
+    func printBanner(console: any Console) {
+        console.output("")
+        console.ruler(color: .yellow)
+        console.output("  Vapor Deployer · Update".consoleText(color: .yellow, isBold: true))
+        console.ruler(color: .yellow)
+        console.output("")
+        console.output("  Downloads and installs the latest version of the deployer.")
+        console.output("  Automatically restarts the service after staging new assets.")
+        console.output("")
+    }
+
+    func printStepHeader(console: any Console, title: String, index: Int, total: Int) {
+        console.output("")
+        console.ruler("[\(index)/\(total)] \(title)", color: .yellow)
     }
 
 }

@@ -25,7 +25,7 @@ extension SummaryStep {
         
         console.card(
             title: "Setup complete",
-            kvs: [
+            keyedValues: [
                 ("Deployer panel", "\(context.publicBaseURL)\(context.panelRoute)"),
                 ("Webhook endpoint", context.webhookURL),
                 ("Canonical domain", context.primaryDomain),

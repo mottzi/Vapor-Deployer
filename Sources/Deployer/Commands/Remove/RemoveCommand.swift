@@ -29,12 +29,32 @@ struct RemoveCommand: AsyncCommand {
 
         let steps = stepTypes.map { $0.init(context: removeContext, console: context.console) }
 
-        context.console.removeBanner()
+        printBanner(to: context.console)
 
         for (index, step) in steps.enumerated() {
-            step.printHeader(index: index + 1, total: steps.count)
+            printStepHeader(console: context.console, title: step.title, index: index + 1, total: steps.count)
             try await step.run()
         }
+    }
+
+}
+
+private extension RemoveCommand {
+
+    func printBanner(to console: any Console) {
+        console.output("")
+        console.ruler(color: .red)
+        console.output("  Vapor Deployer · Remove".consoleText(color: .red, isBold: true))
+        console.ruler(color: .red)
+        console.output("")
+        console.output("  Stops services, removes managed proxy files, and deletes".consoleText())
+        console.output("  the service user created by setup. This is destructive.".consoleText())
+        console.output("")
+    }
+
+    func printStepHeader(console: any Console, title: String, index: Int, total: Int) {
+        console.output("")
+        console.ruler("[\(index)/\(total)] \(title)", color: .red)
     }
 
 }

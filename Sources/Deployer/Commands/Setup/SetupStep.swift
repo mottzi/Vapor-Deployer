@@ -33,9 +33,4 @@ extension SetupStep {
         return paths
     }
 
-    /// Prints a consistent progress header so interactive setup output stays scannable across steps.
-    func printHeader(index: Int, total: Int) {
-        console.titledRule("[\(index)/\(total)] \(title)")
-    }
-
 }

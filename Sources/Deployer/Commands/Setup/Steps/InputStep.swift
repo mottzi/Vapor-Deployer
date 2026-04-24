@@ -34,7 +34,7 @@ struct InputStep: SetupStep {
         )
         try await collectGitHubToken()
 
-        console.card(title: "Planned configuration", kvs: plannedConfiguration())
+        console.card(title: "Planned configuration", keyedValues: plannedConfiguration())
     }
 
 }
@@ -190,7 +190,7 @@ extension InputStep {
         
         console.card(
             title: "How to create the GitHub token",
-            kvs: [
+            keyedValues: [
                 ("Browser", "https://github.com/settings/tokens"),
                 ("Click", "Generate new token > Generate new token (classic)"),
                 ("Select", "admin:repo_hook")

@@ -1,18 +1,83 @@
 import Vapor
 
-/// Console rendering helpers so each step presents progress and key configuration in a consistent visual format.
 extension Console {
 
-    /// Clamps detected terminal width to a readable range so card formatting remains stable across TTY environments.
-    private static var terminalWidth: Int {
-        let raw = ProcessInfo.processInfo.environment["COLUMNS"].flatMap(Int.init)
-            ?? tputColumns()
-            ?? 80
-        return min(max(raw, 40), 100)
+    func newLine() {
+        output("")
+    }
+    
+    func ruler(color: ConsoleColor? = nil) {
+        let ruler = String(repeating: "━", count: terminalWidth)
+        output(ruler.consoleText(color: color))
     }
 
+    func ruler(_ title: String, color: ConsoleColor? = nil) {
+        
+        let prefix = "━━━ "
+        let fill = max(terminalWidth - prefix.count + title.count + 1, 0)
+        let string = "\(prefix)\(title) \(String(repeating: "━", count: fill))"
+        
+        output(string.consoleText(color: color, isBold: true))
+    }
+
+    func section(_ title: String) {
+        newLine()
+        output("  \(title)".consoleText(isBold: true))
+    }
+
+    func card(title: String, keyedValues: [(String, String)]) {
+        
+        newLine()
+        ruler(title)
+        newLine()
+        
+        for (key, value) in keyedValues {
+            output("  \(key.padding(toLength: 22, withPad: " ", startingAt: 0)) \(value)")
+        }
+        
+        newLine()
+        ruler()
+        newLine()
+    }
+
+    func lines(title: String, lines: [String]) {
+        
+        newLine()
+        ruler(title)
+        newLine()
+        
+        for line in lines {
+            output("  \(line)")
+        }
+        
+        newLine()
+        ruler()
+        newLine()
+    }
+
+    func successTitledRule(_ title: String) {
+        newLine()
+        ruler(title, color: .green)
+    }
+
+}
+
+/// Console rendering helpers so each step presents progress and key configuration in a consistent visual format.
+extension Console {
+    
+    /// Clamps detected terminal width to a readable range so card formatting remains stable across TTY environments.
+    private var terminalWidth: Int {
+        
+        let raw = ProcessInfo.processInfo.environment["COLUMNS"]
+            .flatMap(Int.init)
+            ?? tputColumns()
+            ?? 80
+        
+        return min(max(raw, 40), 100)
+    }
+    
     /// Falls back to querying terminal column width when `COLUMNS` is unavailable, returning nil on non-interactive contexts.
-    private static func tputColumns() -> Int? {
+    private func tputColumns() -> Int? {
         
         let process = Process()
         let output = Pipe()
@@ -20,99 +85,16 @@ extension Console {
         process.arguments = ["tput", "cols"]
         process.standardOutput = output
         process.standardError = Pipe()
-
-        do {
-            try process.run()
-        } catch {
-            return nil
-        }
-
+        
+        do { try process.run() }
+        catch { return nil }
+        
         process.waitUntilExit()
         guard process.terminationStatus == 0 else { return nil }
-
+        
         let data = output.fileHandleForReading.readDataToEndOfFile()
         let value = String(data: data, encoding: .utf8)?.trimmed
         return value.flatMap(Int.init)
     }
-
-    static func rule(character: Character = "━") -> String {
-        String(repeating: String(character), count: terminalWidth)
-    }
-
-    static func titledRuleText(_ title: String, character: Character = "━") -> String {
-        
-        let prefix = "\(character)\(character)\(character) "
-        let used = prefix.count + title.count + 1
-        let fill = max(terminalWidth - used, 0)
-        
-        return "\(prefix)\(title) \(String(repeating: String(character), count: fill))"
-    }
-
-    func banner() {
-        self.output("")
-        self.output(Self.rule().consoleText(color: .cyan))
-        self.output("  Vapor Deployer · Setup".consoleText(color: .cyan, isBold: true))
-        self.output(Self.rule().consoleText(color: .cyan))
-        self.output("")
-        self.output("  Installs the deployer + target app, configures services.".consoleText())
-        self.output("  Provisions Nginx + TLS and wires the GitHub webhook.".consoleText())
-        self.output("")
-    }
-
-    func titledRule(_ title: String) {
-        self.output("")
-        self.output(Self.titledRuleText(title).consoleText(color: .cyan, isBold: true))
-    }
-
-    func section(_ title: String) {
-        self.output("")
-        self.output("  \(title)".consoleText(isBold: true))
-    }
-
-    func card(title: String, kvs: [(String, String)]) {
-        self.output("")
-        self.output(Self.titledRuleText(title).consoleText(isBold: true))
-        self.output("")
-        for (key, value) in kvs {
-            self.output("  \(key.padding(toLength: 22, withPad: " ", startingAt: 0)) \(value)".consoleText())
-        }
-        self.output("")
-        self.output(Self.rule().consoleText())
-        self.output("")
-    }
-
-    func lines(title: String, lines: [String]) {
-        self.output("")
-        self.output(Self.titledRuleText(title).consoleText(isBold: true))
-        self.output("")
-        for line in lines {
-            self.output("  \(line)".consoleText())
-        }
-        self.output("")
-        self.output(Self.rule().consoleText())
-        self.output("")
-    }
-
-    func removeBanner() {
-        self.output("")
-        self.output(Self.rule().consoleText(color: .red))
-        self.output("  Vapor Deployer · Remove".consoleText(color: .red, isBold: true))
-        self.output(Self.rule().consoleText(color: .red))
-        self.output("")
-        self.output("  Stops services, removes managed proxy files, and deletes".consoleText())
-        self.output("  the service user created by setup. This is destructive.".consoleText())
-        self.output("")
-    }
-
-    func removeTitledRule(_ title: String) {
-        self.output("")
-        self.output(Self.titledRuleText(title).consoleText(color: .red, isBold: true))
-    }
-
-    func successTitledRule(_ title: String) {
-        self.output("")
-        self.output(Self.titledRuleText(title).consoleText(color: .green, isBold: true))
-    }
-
+    
 }
-

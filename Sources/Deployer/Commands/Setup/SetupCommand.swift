@@ -39,12 +39,32 @@ struct SetupCommand: AsyncCommand {
 
         let steps = stepTypes.map { $0.init(context: setupContext, console: context.console) }
 
-        context.console.banner()
+        printBanner(console: context.console)
 
         for (index, step) in steps.enumerated() {
-            step.printHeader(index: index + 1, total: steps.count)
+            printStepHeader(console: context.console, title: step.title, index: index + 1, total: steps.count)
             try await step.run()
         }
+    }
+
+}
+
+private extension SetupCommand {
+
+    func printBanner(console: any Console) {
+        console.output("")
+        console.ruler(color: .cyan)
+        console.output("  Vapor Deployer · Setup".consoleText(color: .cyan, isBold: true))
+        console.ruler(color: .cyan)
+        console.output("")
+        console.output("  Installs the deployer + target app, configures services.".consoleText())
+        console.output("  Provisions Nginx + TLS and wires the GitHub webhook.".consoleText())
+        console.output("")
+    }
+
+    func printStepHeader(console: any Console, title: String, index: Int, total: Int) {
+        console.output("")
+        console.ruler("[\(index)/\(total)] \(title)", color: .cyan)
     }
 
 }

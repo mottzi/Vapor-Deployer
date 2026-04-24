@@ -25,29 +25,4 @@ extension UpdateStep {
     /// Convenience accessor for a `SystemShell` bound to this step's context, used for service-user shell commands.
     var shell: SystemShell { SystemShell(context: context) }
 
-    /// Prints a yellow-accented progress header to visually distinguish update output from setup and remove output.
-    func printHeader(index: Int, total: Int) {
-        console.updateTitledRule("[\(index)/\(total)] \(title)")
-    }
-
-}
-
-extension Console {
-
-    func updateBanner() {
-        self.output("")
-        self.output(Self.rule().consoleText(color: .yellow))
-        self.output("  Vapor Deployer · Update".consoleText(color: .yellow, isBold: true))
-        self.output(Self.rule().consoleText(color: .yellow))
-        self.output("")
-        self.output("  Downloads and installs the latest version of the deployer.".consoleText())
-        self.output("  Automatically restarts the service after staging new assets.".consoleText())
-        self.output("")
-    }
-
-    func updateTitledRule(_ title: String) {
-        self.output("")
-        self.output(Self.titledRuleText(title).consoleText(color: .yellow, isBold: true))
-    }
-
 }

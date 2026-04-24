@@ -33,11 +33,6 @@ extension RemoveStep {
         return paths
     }
 
-    /// Prints a red-accented progress header to visually distinguish teardown output from setup output.
-    func printHeader(index: Int, total: Int) {
-        console.removeTitledRule("[\(index)/\(total)] \(title)")
-    }
-
     /// Executes a closure, logging a warning on failure instead of halting the pipeline.
     func bestEffort(_ label: String, _ body: () async throws -> Void) async {
         do { try await body() }
