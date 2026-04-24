@@ -162,17 +162,6 @@ The only meaningful variation:
 
 This is ~180 LOC of boilerplate that would collapse behind one generic protocol, one `Pipeline<Context>` type, and a single `CommandStyle` / palette enum for color + banner. Relevant files: `Setup/SetupCommand.swift`, `Setup/SetupStep.swift`, `Remove/RemoveCommand.swift`, `Remove/RemoveStep.swift`, `Update/UpdateCommand.swift`, `Update/UpdateStep.swift`.
 
-### 3.3 `userExists(_:)` reinvented four times
-
-Same three-line helper — `Shell.run("id", ["-u", user]).exitCode == 0` — duplicated:
-
-- `Setup/Steps/PreflightStep.swift:27`
-- `Remove/Steps/StopServicesStep.swift:44`
-- `Remove/Steps/RemoveServiceFilesStep.swift:57`
-- `Remove/Steps/RemoveUserStep.swift:82`
-
-Plus a close bash cousin inside `DeployerctlTemplate.wrapperScript()`. Belongs on `SystemContext` or `SystemShell`.
-
 ### 3.4 `waitForStableStatus` reinvented twice
 
 Exact same 10-iteration / 500ms-sleep loop:
@@ -181,25 +170,6 @@ Exact same 10-iteration / 500ms-sleep loop:
 - `Update/UpdateCommand.swift:145` (private, takes `serviceName` + `manager`)
 
 Both are used by Update only and both should live on `ServiceManager` itself (which already knows `ServiceStatus.isTransitioning`).
-
-### 3.5 Three readers of the `.version` file
-
-- `Commands/Version/DeployerVersion.swift::readVersionFile(in:)`
-- `Commands/Update/Steps/DownloadStep.swift::readInstalledVersion(at:)`
-- `Commands/System/Shared/DeployerReleaseAssets.swift::localReleaseTag(in:)` (also consults `DEPLOYER_RELEASE_TAG`)
-
-All do "read, trim, return nil if empty" with minor differences (one extra env fallback). One helper + an explicit env-first parameter would cover every caller.
-
-### 3.6 Two "same path?" helpers, plus inline copies
-
-`StageDeployerStep.swift` defines a private `String.isSamePath(as:)` (lines 174–183), and the same normalization is written inline in `Bootstrap.createDatabaseDirectory` and `Configuration.trimmedFileSystemPath`. No shared helper.
-
-### 3.7 Two shell-quoting implementations
-
-- `Commands/Setup/Templates/TemplateEscaping.swift::shellLiteral` — used by `DeployerctlTemplate` and `SummaryStep` (via `shellCommand`).
-- `App/Extensions.swift::String.shellQuoted` — used by `SystemdServiceManager.prefix` and `Deployment/Worker.swift`.
-
-Both produce `'foo'\''bar'` encodings and are functionally identical. The Extensions one also has a sibling `displayPath` and a `hexadecimalData` helper, so it cannot simply be deleted, but the two shell-quote implementations are redundant.
 
 ### 3.8 `terminalWidth` / `tputColumns` duplicated between UI and streaming
 
@@ -346,8 +316,6 @@ The bootstrap script also hard-codes `/tmp/deployer-${VERSION}` as its staging r
 
 ### 3.24 Miscellaneous smaller issues
 
-- `Extensions.swift::StringProtocol.hexadecimalData` is used only by `Webhook.validateSignature`; fine to keep, but it sits in a top-level `App/Extensions.swift` file that mixes console/display helpers (`displayPath`), shell helpers (`shellQuoted`), and cryptography helpers — no obvious grouping.
-
 ---
 
 ## 4. Module boundaries / layering observations
@@ -458,5 +426,43 @@ Brief log of changes completed after this review was written.
     - `Sources/Deployer/Commands/System/SystemPaths.swift`
     - `Sources/Deployer/Commands/Setup/Templates/DeployerTemplate.swift`
     - `Sources/Deployer/Commands/Setup/Templates/NginxTemplate.swift`
+  - Verified with a successful `swift build`.
+- **3.24 discarded (`hexadecimalData` relocation):**
+  - Removed the `App/Extensions.swift` organization note about `hexadecimalData` placement as not necessary to action right now.
+  - Updated:
+    - `review.md`
+- **3.3 addressed (shared user-existence helper):**
+  - Added `UserAccount.exists(_:)` and replaced duplicated `id -u` checks across setup/remove steps, preserving behavior while removing repeated helpers.
+  - Added:
+    - `Sources/Deployer/Commands/System/Shared/UserAccount.swift` (`exists`)
+  - Updated:
+    - `Sources/Deployer/Commands/Setup/Steps/PreflightStep.swift`
+    - `Sources/Deployer/Commands/Setup/Steps/ServiceUserStep.swift`
+    - `Sources/Deployer/Commands/Remove/Steps/StopServicesStep.swift`
+    - `Sources/Deployer/Commands/Remove/Steps/RemoveServiceFilesStep.swift`
+    - `Sources/Deployer/Commands/Remove/Steps/RemoveUserStep.swift`
+  - Verified with a successful `swift build`.
+- **3.5 addressed (shared trimmed text-file reader):**
+  - Added `ConfigDiscovery.readTrimmedTextFile(at:)` and reused it for all `.version` readers while preserving environment-variable precedence in `DeployerReleaseAssets.localReleaseTag`.
+  - Updated:
+    - `Sources/Deployer/Commands/System/Shared/ConfigDiscovery.swift`
+    - `Sources/Deployer/Commands/Version/DeployerVersion.swift`
+    - `Sources/Deployer/Commands/Update/Steps/DownloadStep.swift`
+    - `Sources/Deployer/Commands/System/Shared/DeployerReleaseAssets.swift`
+  - Verified with a successful `swift build`.
+- **3.7 addressed (single shell-quoting implementation):**
+  - Kept `String.shellQuoted` as the canonical implementation and removed the now-redundant `TemplateEscaping.shellLiteral` wrapper, preserving exact quoting behavior while simplifying call sites.
+  - Updated:
+    - `Sources/Deployer/Commands/Setup/Templates/TemplateEscaping.swift`
+    - `Sources/Deployer/Commands/Setup/Templates/DeployerctlTemplate.swift`
+  - Verified with a successful `swift build`.
+- **3.6 addressed (shared path normalization/comparison helper):**
+  - Added `PathComparison` under shared command utilities and reused it for path-equality and standardized-path normalization previously duplicated across setup/runtime code.
+  - Added:
+    - `Sources/Deployer/Commands/System/Shared/PathComparison.swift`
+  - Updated:
+    - `Sources/Deployer/Commands/Setup/Steps/StageDeployerStep.swift`
+    - `Sources/Deployer/App/Bootstrap.swift`
+    - `Sources/Deployer/App/Configuration.swift`
   - Verified with a successful `swift build`.
 

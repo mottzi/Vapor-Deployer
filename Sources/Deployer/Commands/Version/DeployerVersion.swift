@@ -39,9 +39,7 @@ extension DeployerVersion {
     /// Reads the install-time release marker persisted by setup and update commands.
     private static func readVersionFile(in directory: URL) -> String? {
         let fileURL = directory.appendingPathComponent(".version", isDirectory: false)
-        guard let raw = try? String(contentsOf: fileURL, encoding: .utf8) else { return nil }
-        let version = raw.trimmed
-        return version.isEmpty ? nil : version
+        return ConfigDiscovery.readTrimmedTextFile(at: fileURL)
     }
 
     /// Falls back to source-control metadata when running from a development checkout.

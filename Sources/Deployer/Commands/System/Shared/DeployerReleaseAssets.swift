@@ -25,11 +25,8 @@ enum DeployerReleaseAssets {
         let environmentTag = ProcessInfo.processInfo.environment[releaseTagEnvironmentKey]?.trimmed
         if let environmentTag, !environmentTag.isEmpty { return environmentTag }
 
-        let versionFile = sourceDirectory.appendingPathComponent(".version").path
-        let fileTag = (try? String(contentsOfFile: versionFile, encoding: .utf8))?.trimmed
-        if let fileTag, !fileTag.isEmpty { return fileTag }
-
-        return nil
+        let versionFile = sourceDirectory.appendingPathComponent(".version", isDirectory: false)
+        return ConfigDiscovery.readTrimmedTextFile(at: versionFile)
     }
 
     static func ensureAssets(

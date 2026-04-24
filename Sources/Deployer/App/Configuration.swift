@@ -169,11 +169,7 @@ extension Configuration {
 
     fileprivate static func trimmedFileSystemPath(_ value: String, field: String, relativeTo baseDirectoryURL: URL) throws -> String {
         let trimmed = try trimmedValue(value, field: field)
-        if NSString(string: trimmed).isAbsolutePath {
-            return URL(fileURLWithPath: trimmed).standardizedFileURL.path
-        } else {
-            return URL(fileURLWithPath: trimmed, relativeTo: baseDirectoryURL).absoluteURL.standardizedFileURL.path
-        }
+        return PathComparison.standardizedPath(trimmed, relativeTo: baseDirectoryURL)
     }
 
 }

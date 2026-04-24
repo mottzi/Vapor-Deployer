@@ -52,9 +52,7 @@ extension DownloadStep {
 
     /// Returns the release tag recorded in the install directory, or nil if no version file exists.
     private func readInstalledVersion(at url: URL) -> String? {
-        guard let content = try? String(contentsOf: url, encoding: .utf8) else { return nil }
-        let trimmed = content.trimmed
-        return trimmed.isEmpty ? nil : trimmed
+        ConfigDiscovery.readTrimmedTextFile(at: url)
     }
 
 }

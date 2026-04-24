@@ -96,11 +96,11 @@ extension Deployer {
 
     func createDatabaseDirectory(for dbFile: String) throws {
         
-        let dbDirectoryURL = URL(fileURLWithPath: dbFile).deletingLastPathComponent().standardizedFileURL
-        let workingDirectoryURL = URL(fileURLWithPath: app.directory.workingDirectory, isDirectory: true).standardizedFileURL
+        let dbDirectoryPath = URL(fileURLWithPath: dbFile).deletingLastPathComponent().path
+        let workingDirectoryPath = app.directory.workingDirectory
         
-        guard dbDirectoryURL != workingDirectoryURL else { return }
-        try FileManager.default.createDirectory(at: dbDirectoryURL, withIntermediateDirectories: true)
+        guard !PathComparison.isSamePath(dbDirectoryPath, workingDirectoryPath) else { return }
+        try FileManager.default.createDirectory(atPath: PathComparison.standardizedPath(dbDirectoryPath), withIntermediateDirectories: true)
     }
     
     func seedFirstDeployment(config: Configuration) async {

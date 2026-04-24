@@ -55,7 +55,7 @@ extension RemoveServiceFilesStep {
 extension RemoveServiceFilesStep {
 
     private func userExists() async -> Bool {
-        await Shell.run("id", ["-u", context.serviceUser]).exitCode == 0
+        await UserAccount.exists(context.serviceUser)
     }
 
     private func commandExists(_ command: String) async -> Bool {

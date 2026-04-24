@@ -80,7 +80,7 @@ extension RemoveUserStep {
 extension RemoveUserStep {
 
     private func userExists() async -> Bool {
-        await Shell.run("id", ["-u", context.serviceUser]).exitCode == 0
+        await UserAccount.exists(context.serviceUser)
     }
 
 }

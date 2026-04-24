@@ -23,7 +23,7 @@ extension ServiceUserStep {
     /// Checks if the service user exists and creates them as a system user if necessary.
     func ensureUserExists() async throws {
         
-        if await Shell.run("id", ["-u", context.serviceUser]).exitCode == 0 {
+        if await UserAccount.exists(context.serviceUser) {
             console.print("Reusing existing user '\(context.serviceUser)'.")
         } else {
             try await Shell.runThrowing(

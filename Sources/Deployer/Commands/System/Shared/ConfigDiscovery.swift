@@ -57,6 +57,13 @@ struct ConfigDiscovery {
 
 extension ConfigDiscovery {
     
+    /// Reads a UTF-8 text file, trims surrounding whitespace/newlines, and returns nil when the file is missing or empty after trimming.
+    static func readTrimmedTextFile(at url: URL) -> String? {
+        guard let raw = try? String(contentsOf: url, encoding: .utf8) else { return nil }
+        let value = raw.trimmed
+        return value.isEmpty ? nil : value
+    }
+    
     private static func parseMetadata(_ output: String) -> [String: String] {
         var metadata: [String: String] = [:]
         let segments = output.split(separator: "\0", omittingEmptySubsequences: false).map(String.init)

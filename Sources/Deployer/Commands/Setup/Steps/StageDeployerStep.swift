@@ -59,7 +59,7 @@ extension StageDeployerStep {
         
         if FileManager.default.fileExists(atPath: publicDirectory.path),
            FileManager.default.fileExists(atPath: resourcesDirectory.path) {
-            if executableDirectory.path.isSamePath(as: paths.installDirectory) {
+            if PathComparison.isSamePath(executableDirectory.path, paths.installDirectory) {
                 try await Shell.runThrowing("chmod", ["0755", paths.deployerBinary])
                 try await Shell.runThrowing("chown", ["-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
                 if let localReleaseTag { try await writeReleaseVersion(localReleaseTag) }
@@ -138,23 +138,23 @@ extension StageDeployerStep {
             throw SystemError.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
         }
 
-        if !binary.isSamePath(as: paths.deployerBinary) {
+        if !PathComparison.isSamePath(binary, paths.deployerBinary) {
             try await Shell.runThrowing("install", ["-m", "0755", "-o", context.serviceUser, "-g", context.serviceUser, binary, paths.deployerBinary])
         }
 
         if FileManager.default.fileExists(atPath: publicDirectory),
-           !publicDirectory.isSamePath(as: "\(paths.installDirectory)/Public") {
+           !PathComparison.isSamePath(publicDirectory, "\(paths.installDirectory)/Public") {
             try SystemFileSystem.copyReplacing(source: publicDirectory, destination: "\(paths.installDirectory)/Public")
         }
         
         if FileManager.default.fileExists(atPath: resourcesDirectory),
-           !resourcesDirectory.isSamePath(as: "\(paths.installDirectory)/Resources") {
+           !PathComparison.isSamePath(resourcesDirectory, "\(paths.installDirectory)/Resources") {
             try SystemFileSystem.copyReplacing(source: resourcesDirectory, destination: "\(paths.installDirectory)/Resources")
         }
 
         if let versionFile,
            FileManager.default.fileExists(atPath: versionFile),
-           !versionFile.isSamePath(as: "\(paths.installDirectory)/.version") {
+           !PathComparison.isSamePath(versionFile, "\(paths.installDirectory)/.version") {
             try SystemFileSystem.copyReplacing(source: versionFile, destination: "\(paths.installDirectory)/.version")
         }
 
@@ -169,15 +169,4 @@ extension StageDeployerStep {
         try await SystemFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
     }
     
-}
-
-private extension String {
-
-    /// Compares two filesystem paths after `.standardizedFileURL` normalization so `/a/./b` and `/a/b` match.
-    func isSamePath(as other: String) -> Bool {
-        let selfURL = URL(fileURLWithPath: self).standardizedFileURL.path
-        let otherURL = URL(fileURLWithPath: other).standardizedFileURL.path
-        return selfURL == otherURL
-    }
-
 }

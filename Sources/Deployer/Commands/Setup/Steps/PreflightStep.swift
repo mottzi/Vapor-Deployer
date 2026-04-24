@@ -9,7 +9,7 @@ struct PreflightStep: SetupStep {
 
     func run() async throws {
         
-        if await userExists(context.serviceUser) {
+        if await UserAccount.exists(context.serviceUser) {
             try await verifyServiceUser()
             try await verifyDeployerCheckout()
             try await verifyAppCheckout()
@@ -24,10 +24,6 @@ struct PreflightStep: SetupStep {
 
 extension PreflightStep {
     
-    private func userExists(_ user: String) async -> Bool {
-        await Shell.run("id", ["-u", user]).exitCode == 0
-    }
-
     private func verifyServiceUser() async throws {
         
         let home = try await UserAccount.homeDirectory(for: context.serviceUser, errorLabel: "serviceUser")
