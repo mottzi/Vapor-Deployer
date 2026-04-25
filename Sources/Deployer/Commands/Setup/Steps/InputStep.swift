@@ -151,7 +151,8 @@ extension InputStep {
 
     private func collectPanelAuth() throws {
         console.section("Panel authentication")
-        context.panelPassword = console.askSecretConfirmed("Panel password")
+        let panelPassword = console.askSecretConfirmed("Panel password")
+        context.panelPasswordHash = try Bcrypt.hash(panelPassword)
         context.webhookSecret = try generateHexSecret()
     }
 

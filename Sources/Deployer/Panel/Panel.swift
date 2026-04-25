@@ -50,9 +50,11 @@ extension Panel {
 
     func handleLogin(request: Request) throws -> Response {
         
-        let userPassword   = try request.content.decode(LoginFormData.self).password
-        let serverPassword = Deployer.Variables.PANEL_PASSWORD.value
-        guard userPassword == serverPassword else { return request.redirect(to: loginPath + "?error=true") }
+        let userPassword = try request.content.decode(LoginFormData.self).password
+        let serverPasswordHash = Deployer.Variables.PANEL_PASSWORD_HASH.value
+        guard (try? Bcrypt.verify(userPassword, created: serverPasswordHash)) == true else {
+            return request.redirect(to: loginPath + "?error=true")
+        }
         
         request.session.data["admin_auth"] = "true"
         return request.redirect(to: panelPath)

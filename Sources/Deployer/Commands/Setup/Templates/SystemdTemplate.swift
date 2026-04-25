@@ -22,7 +22,7 @@ enum SystemdTemplate {
         Environment="HOME=\(TemplateEscaping.environmentValue(paths.serviceHome))"
         Environment="USER=\(TemplateEscaping.environmentValue(context.serviceUser))"
         Environment="GITHUB_WEBHOOK_SECRET=\(TemplateEscaping.environmentValue(context.webhookSecret))"
-        Environment="PANEL_PASSWORD=\(TemplateEscaping.environmentValue(context.panelPassword))"
+        Environment="PANEL_PASSWORD_HASH=\(TemplateEscaping.environmentValue(context.panelPasswordHash))"
         Restart=always
         RestartSec=2
         StandardOutput=append:\(paths.deployerLog)

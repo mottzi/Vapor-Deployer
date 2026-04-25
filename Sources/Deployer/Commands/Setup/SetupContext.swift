@@ -26,7 +26,7 @@ final class SetupContext: SystemContext {
 
     var productName = ""
     var executableProducts: [String] = []
-    var panelPassword = ""
+    var panelPasswordHash = ""
     var webhookSecret = ""
     var publicBaseURL = ""
     var primaryDomain = ""
