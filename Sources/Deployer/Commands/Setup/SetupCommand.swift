@@ -34,6 +34,7 @@ struct SetupCommand: AsyncCommand {
             CleanupOrphanedTLSLineageStep.self,
             DeployerctlStep.self,
             WebhookStep.self,
+            SSHHardeningStep.self,
             SummaryStep.self,
         ]
 
