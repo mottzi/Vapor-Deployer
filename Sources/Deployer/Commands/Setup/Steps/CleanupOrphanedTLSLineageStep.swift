@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Optionally deletes a superseded certificate lineage after TLS setup succeeded for the new domain configuration.
 struct CleanupOrphanedTLSLineageStep: SetupStep {

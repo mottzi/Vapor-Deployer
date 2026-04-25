@@ -3,9 +3,9 @@ import Fluent
 
 extension Deployer {
 
-    static func shouldConfigureServer(for arguments: [String]) -> Bool {
+    static func shouldConfigureServer(for environment: Environment) -> Bool {
 
-        let commandArguments = arguments.dropFirst()
+        let commandArguments = environment.arguments.dropFirst()
         guard !commandArguments.contains(where: { $0 == "--help" || $0 == "-h" }) else { return false }
 
         let command = commandArguments.first { !$0.hasPrefix("-") }

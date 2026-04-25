@@ -1,5 +1,4 @@
 import Vapor
-import Fluent
 
 extension Application {
     
@@ -19,7 +18,7 @@ extension Application {
         let app = try await Application.make(env)
         app.deployer.useCommands()
 
-        if shouldConfigureServer(for: env.arguments) {
+        if shouldConfigureServer(for: env) {
             do {
                 try await app.deployer.useServer()
             } catch {

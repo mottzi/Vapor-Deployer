@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 /// Detects if identifiers like App Name or Domain have changed since the last setup, and garabage collects orphaned state.
 struct CleanupOrphansStep: SetupStep {
