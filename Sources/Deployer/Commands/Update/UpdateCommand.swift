@@ -92,7 +92,7 @@ extension UpdateCommand {
     private func rollback(context: UpdateContext, originalError: Swift.Error) async throws {
         let fileManager = FileManager.default
         let config = try Configuration.load()
-        let manager = config.serviceManager.makeManager(serviceUser: context.managerServiceUser)
+        let manager = try config.serviceManager.makeManager(serviceUser: context.managerServiceUser)
         let executableURL = context.stagedBinaryURL.deletingPathExtension()
         
         do {

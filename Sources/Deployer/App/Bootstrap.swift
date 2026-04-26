@@ -23,7 +23,7 @@ extension Deployer {
 
         let config = try Configuration.load()
         try useVariables()
-        app.deployer.serviceManager = config.serviceManager.makeManager()
+        app.deployer.serviceManager = try config.serviceManager.makeManager(serviceUser: UserAccount.currentName())
         app.deployer.configureHTTP(config: config)
         try await app.deployer.configureDatabase(config: config)
         app.deployer.configureViews()

@@ -15,7 +15,7 @@ struct StartServiceStep: UpdateStep {
         console.print("Starting service '\(context.serviceName)'.")
         
         let config = try Configuration.load()
-        let manager = config.serviceManager.makeManager(serviceUser: context.managerServiceUser)
+        let manager = try config.serviceManager.makeManager(serviceUser: context.managerServiceUser)
         
         try await manager.start(product: context.serviceName)
 

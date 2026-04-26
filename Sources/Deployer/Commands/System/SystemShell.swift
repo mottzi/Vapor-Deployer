@@ -4,7 +4,7 @@ import Foundation
 struct SystemShell {
     
     let context: any SystemContext
-        
+
     /// Runs as the configured service user while enforcing `HOME` and `USER` so tool behavior matches non-root runtime expectations.
     @discardableResult
     func runAsServiceUser(
@@ -77,7 +77,6 @@ struct SystemShell {
     private var serviceUserHomeDirectory: String {
         (try? context.requirePaths().serviceHome) ?? "/home/\(context.serviceUser)"
     }
-    
 }
 
 extension SystemShell {
@@ -139,38 +138,18 @@ extension SystemShell {
     /// Runs `systemctl --user` in the service-user identity with the required DBus runtime environment.
     @discardableResult
     static func runUserSystemctl(
-        user: String?,
-        uid: Int? = nil,
+        user: String,
+        uid: Int,
         command: String,
         arguments: [String] = []
     ) async throws -> String {
 
         let argv = ["--user", command] + arguments
-        guard let normalizedUser = normalizedUsername(user) else {
-            let resolvedUID: Int
-            if let uid {
-                resolvedUID = uid
-            } else {
-                resolvedUID = try await resolveCurrentUID()
-            }
-            return try await Shell.runThrowing(
-                "systemctl",
-                argv,
-                environment: systemdUserEnvironment(uid: resolvedUID)
-            )
-        }
-
-        let resolvedUID: Int
-        if let uid {
-            resolvedUID = uid
-        } else {
-            resolvedUID = try await resolveUID(for: normalizedUser)
-        }
         return try await runAs(
-            user: normalizedUser,
+            user: user,
             "systemctl",
             argv,
-            environment: systemdUserEnvironment(uid: resolvedUID)
+            environment: systemdUserEnvironment(uid: uid)
         )
     }
 
@@ -195,6 +174,15 @@ extension SystemShell {
 
         throw SystemError.serviceTimeout("user@\(uid).service bus")
     }
+}
+
+extension SystemShell {
+
+    private static func shouldRunDirectly(as user: String) -> Bool {
+        if UserAccount.currentUID() == 0 { return false }
+        guard let currentUser = UserAccount.currentName() else { return false }
+        return currentUser == user
+    }
 
     private static func runuserCommand(
         user: String,
@@ -212,25 +200,6 @@ extension SystemShell {
             ? ["-u", user, "--"] + userArgv
             : ["-u", user, "--", "env"] + envArguments + userArgv
         return ("runuser", runuserArgs)
-    }
-
-    private static func shouldRunDirectly(as user: String) -> Bool {
-        if UserAccount.currentUID() == 0 { return false }
-        guard let currentUser = UserAccount.currentName() else { return false }
-        return currentUser == user
-    }
-
-    private static func normalizedUsername(_ user: String?) -> String? {
-        let trimmed = user?.trimmed ?? ""
-        return trimmed.isEmpty ? nil : trimmed
-    }
-
-    private static func resolveCurrentUID() async throws -> Int {
-        UserAccount.currentUID()
-    }
-
-    private static func resolveUID(for user: String) async throws -> Int {
-        try UserAccount.uid(for: user)
     }
 
 }

@@ -3,7 +3,7 @@ import Foundation
 /// A service manager implementation that delegates to `systemctl`.
 struct SystemdServiceManager: ServiceManager {
 
-    let serviceUser: String?
+    let serviceUser: String
 
     func start(product: String) async throws {
         try await runUserSystemctl("start", product: product)
@@ -44,8 +44,10 @@ struct SystemdServiceManager: ServiceManager {
 
     @discardableResult
     private func runUserSystemctl(_ command: String, product: String) async throws -> String {
-        try await SystemShell.runUserSystemctl(
+        let uid = try UserAccount.uid(for: serviceUser, errorLabel: "serviceUser")
+        return try await SystemShell.runUserSystemctl(
             user: serviceUser,
+            uid: uid,
             command: command,
             arguments: ["\(product).service"]
         )
