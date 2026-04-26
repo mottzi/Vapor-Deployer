@@ -183,12 +183,6 @@ enum DeployerctlTemplate {
 
           INSTALL_BIN="$(resolve_install_bin)"
 
-          if [[ "${SERVICE_MANAGER:-}" == "systemd" && -n "${SERVICE_USER:-}" ]]; then
-            resolve_service_identity
-            ensure_user_manager
-            as_service_user "$INSTALL_BIN" update; exit $?
-          fi
-
           exec "$INSTALL_BIN" update
         fi
 
