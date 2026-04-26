@@ -27,10 +27,16 @@ struct UpdateCommand: AsyncCommand {
         )
         
         updateContext.serviceUser = await resolveServiceUser(executableURL: resolvedExecutableURL) ?? ""
+        updateContext.isSourceInstall = isSourceInstall(in: installDirectory)
 
-        let stepTypes: [any UpdateStep.Type] = [
-            DownloadStep.self,
-            StageBinaryStep.self,
+        var stepTypes: [any UpdateStep.Type] = []
+        if updateContext.isSourceInstall {
+            stepTypes.append(SourceUpdateStep.self)
+        } else {
+            stepTypes.append(DownloadStep.self)
+            stepTypes.append(StageBinaryStep.self)
+        }
+        stepTypes += [
             StopServiceStep.self,
             ActivateReleaseStep.self,
             StartServiceStep.self,
@@ -68,7 +74,7 @@ private extension UpdateCommand {
         console.output("  Vapor Deployer · Update".consoleText(color: .yellow, isBold: true))
         console.ruler(color: .yellow)
         console.newLine()
-        console.output("  Downloads and installs the latest version of the deployer.")
+        console.output("  Updates the deployer from release assets or source checkout.")
         console.output("  Automatically restarts the service after staging new assets.")
         console.newLine()
     }
@@ -124,6 +130,11 @@ extension UpdateCommand {
 }
 
 extension UpdateCommand {
+    
+    private func isSourceInstall(in installDirectory: URL) -> Bool {
+        let gitMarker = installDirectory.appendingPathComponent(".git")
+        return FileManager.default.fileExists(atPath: gitMarker.path)
+    }
 
     /// Resolves the configured service user so systemd user operations can target the right user manager when invoked as root.
     private func resolveServiceUser(executableURL: URL) async -> String? {

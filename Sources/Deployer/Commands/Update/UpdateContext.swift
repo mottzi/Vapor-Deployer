@@ -20,6 +20,7 @@ final class UpdateContext {
     var assetBackup: ReleaseAssetBackup?
     var currentVersion: String?
     var isUpToDate = false
+    var isSourceInstall = false
 
     var managerServiceUser: String? {
         let trimmed = serviceUser.trimmed
