@@ -1,4 +1,11 @@
 import Foundation
+#if canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
+#else
+import Darwin
+#endif
 
 // Shell facade for setup and remove steps; instance methods use SystemContext, static members provide lower-level commands.
 struct SystemShell {
@@ -41,14 +48,15 @@ struct SystemShell {
         )
     }
     
-    /// Runs `systemctl --user` against the setup service account by resolving UID-bound DBus runtime paths from collected setup state.
+    /// Runs `systemctl --user` against the setup service account with the same identity policy used by runtime service operations.
     @discardableResult
     func runUserSystemctl(_ command: String, _ arguments: [String] = []) async throws -> String {
-        
-        try await runAsServiceUser(
-            "systemctl --user \(command)",
-            arguments,
-            environment: SystemShell.systemdUserEnvironment(uid: try await context.requireServiceUserUID())
+
+        try await SystemShell.runUserSystemctl(
+            user: context.serviceUser,
+            uid: try await context.requireServiceUserUID(),
+            command: command,
+            arguments: arguments
         )
     }
     
@@ -81,7 +89,7 @@ struct SystemShell {
 
 extension SystemShell {
 
-    /// Executes a command via `runuser` so privileged setup can perform filesystem and git operations as the target service identity.
+    /// Ensures a command runs as the target user, avoiding nested `runuser` when already in that identity.
     @discardableResult
     static func runAs(
         user: String,
@@ -90,6 +98,15 @@ extension SystemShell {
         directory: String? = nil,
         environment: [String: String]? = nil
     ) async throws -> String {
+
+        if shouldRunDirectly(as: user) {
+            return try await Shell.runThrowing(
+                command,
+                arguments,
+                directory: directory,
+                environment: environment
+            )
+        }
 
         let runuser = runuserCommand(user: user, command: command, arguments: arguments, environment: environment)
         return try await Shell.runThrowing(
@@ -109,11 +126,58 @@ extension SystemShell {
         environment: [String: String]? = nil
     ) async throws -> String {
 
+        if shouldRunDirectly(as: user) {
+            return try await Shell.runStreamingTailThrowing(
+                command,
+                arguments,
+                directory: directory,
+                environment: environment
+            )
+        }
+
         let runuser = runuserCommand(user: user, command: command, arguments: arguments, environment: environment)
         return try await Shell.runStreamingTailThrowing(
             runuser.command,
             runuser.arguments,
             directory: directory
+        )
+    }
+
+    /// Runs `systemctl --user` in the service-user identity with the required DBus runtime environment.
+    @discardableResult
+    static func runUserSystemctl(
+        user: String?,
+        uid: Int? = nil,
+        command: String,
+        arguments: [String] = []
+    ) async throws -> String {
+
+        let argv = ["--user", command] + arguments
+        guard let normalizedUser = normalizedUsername(user) else {
+            let resolvedUID: Int
+            if let uid {
+                resolvedUID = uid
+            } else {
+                resolvedUID = try await resolveCurrentUID()
+            }
+            return try await Shell.runThrowing(
+                "systemctl",
+                argv,
+                environment: systemdUserEnvironment(uid: resolvedUID)
+            )
+        }
+
+        let resolvedUID: Int
+        if let uid {
+            resolvedUID = uid
+        } else {
+            resolvedUID = try await resolveUID(for: normalizedUser)
+        }
+        return try await runAs(
+            user: normalizedUser,
+            "systemctl",
+            argv,
+            environment: systemdUserEnvironment(uid: resolvedUID)
         )
     }
 
@@ -155,6 +219,38 @@ extension SystemShell {
             ? ["-u", user, "--"] + userArgv
             : ["-u", user, "--", "env"] + envArguments + userArgv
         return ("runuser", runuserArgs)
+    }
+
+    private static func shouldRunDirectly(as user: String) -> Bool {
+        if geteuid() == 0 { return false }
+        guard let currentUser = currentUsername() else { return false }
+        return currentUser == user
+    }
+
+    private static func currentUsername() -> String? {
+        guard let entry = getpwuid(geteuid()) else { return nil }
+        return String(cString: entry.pointee.pw_name)
+    }
+
+    private static func normalizedUsername(_ user: String?) -> String? {
+        let trimmed = user?.trimmed ?? ""
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func resolveCurrentUID() async throws -> Int {
+        let rawUID = try await Shell.runThrowing("id", ["-u"]).trimmed
+        guard let uid = Int(rawUID) else {
+            throw Shell.Error(command: "id -u", output: "Failed to parse UID '\(rawUID)'.")
+        }
+        return uid
+    }
+
+    private static func resolveUID(for user: String) async throws -> Int {
+        let rawUID = try await Shell.runThrowing("id", ["-u", user]).trimmed
+        guard let uid = Int(rawUID) else {
+            throw Shell.Error(command: "id -u \(user)", output: "Failed to parse UID '\(rawUID)'.")
+        }
+        return uid
     }
 
 }

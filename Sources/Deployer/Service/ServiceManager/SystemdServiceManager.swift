@@ -6,20 +6,26 @@ struct SystemdServiceManager: ServiceManager {
     let serviceUser: String?
 
     func start(product: String) async throws {
-        try await Shell.runThrowing("\(prefix) systemctl --user start \(product).service")
+        try await runUserSystemctl("start", product: product)
     }
 
     func restart(product: String) async throws {
-        try await Shell.runThrowing("\(prefix) systemctl --user restart \(product).service")
+        try await runUserSystemctl("restart", product: product)
     }
 
     func stop(product: String) async throws {
-        try await Shell.runThrowing("\(prefix) systemctl --user stop \(product).service")
+        try await runUserSystemctl("stop", product: product)
     }
 
     func status(product: String) async -> ServiceStatus {
-        
-        let output = await Shell.run("\(prefix) systemctl --user is-active \(product).service").output
+
+        let output: String
+        do {
+            output = try await runUserSystemctl("is-active", product: product)
+        } catch {
+            output = (error as? Shell.Error)?.output ?? ""
+        }
+
         let statusToken = output
             .split(whereSeparator: \.isWhitespace)
             .map(String.init)
@@ -35,21 +41,14 @@ struct SystemdServiceManager: ServiceManager {
             default: .unknown
         }
     }
-    
-    /// Prefix needed so `systemctl --user` can connect from non-login service contexts.
-    var prefix: String {
-        guard let serviceUser = normalizedServiceUser else {
-            return "XDG_RUNTIME_DIR=/run/user/$(id -u)"
-        }
-        
-        let user = serviceUser.shellQuoted
-        let runtimeDir = "/run/user/$(id -u \(user))"
-        return "XDG_RUNTIME_DIR=\(runtimeDir) DBUS_SESSION_BUS_ADDRESS=unix:path=\(runtimeDir)/bus"
-    }
 
-    private var normalizedServiceUser: String? {
-        let trimmed = serviceUser?.trimmed ?? ""
-        return trimmed.isEmpty ? nil : trimmed
+    @discardableResult
+    private func runUserSystemctl(_ command: String, product: String) async throws -> String {
+        try await SystemShell.runUserSystemctl(
+            user: serviceUser,
+            command: command,
+            arguments: ["\(product).service"]
+        )
     }
 
 }
