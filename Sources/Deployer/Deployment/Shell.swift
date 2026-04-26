@@ -259,7 +259,7 @@ private final class StreamingTailRenderer: @unchecked Sendable {
         for line in tail {
             print("    \(truncate(line))")
         }
-        fflush(stdout)
+        fflush(nil)
         renderedLineCount = tail.count
         lastRender = now
     }
@@ -267,7 +267,7 @@ private final class StreamingTailRenderer: @unchecked Sendable {
     private func clearRenderedTail() {
         guard renderedLineCount > 0 else { return }
         print("\u{1B}[\(renderedLineCount)A\u{1B}[0J", terminator: "")
-        fflush(stdout)
+        fflush(nil)
         renderedLineCount = 0
     }
 
