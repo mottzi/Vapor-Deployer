@@ -1,20 +1,48 @@
 import Foundation
+#if canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
+#else
+import Darwin
+#endif
 
 enum UserAccount {
 
-    /// Returns whether `id -u <user>` succeeds.
+    /// Returns whether a passwd entry exists for the provided username.
     static func exists(_ user: String) async -> Bool {
-        await Shell.run("id", ["-u", user]).exitCode == 0
+        guard let cUser = user.cString(using: .utf8) else { return false }
+        return getpwnam(cUser) != nil
     }
 
-    /// Resolves a user's home directory by parsing `getent passwd <user>`.
+    /// Resolves a user's uid from the passwd database.
+    static func uid(for user: String, errorLabel: String = "user") throws -> Int {
+        guard let cUser = user.cString(using: .utf8), let entry = getpwnam(cUser) else {
+            throw SystemError.invalidValue(errorLabel, "user '\(user)' does not exist")
+        }
+
+        let raw = entry.pointee.pw_uid
+        return Int(raw)
+    }
+
+    /// Returns the effective uid of the current process.
+    static func currentUID() -> Int {
+        Int(geteuid())
+    }
+
+    /// Resolves the effective username of the current process.
+    static func currentName() -> String? {
+        guard let entry = getpwuid(geteuid()) else { return nil }
+        return String(cString: entry.pointee.pw_name)
+    }
+
+    /// Resolves a user's home directory from the passwd database.
     static func homeDirectory(for user: String, errorLabel: String = "user") async throws -> String {
+        guard let cUser = user.cString(using: .utf8), let entry = getpwnam(cUser) else {
+            throw SystemError.invalidValue(errorLabel, "user '\(user)' does not exist")
+        }
 
-        let passwd = try await Shell.runThrowing("getent", ["passwd", user]).trimmed
-        let fields = passwd.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
-        if fields.count >= 6 { return fields[5] }
-
-        throw SystemError.invalidValue(errorLabel, "getent passwd for '\(user)' returned malformed output")
+        return String(cString: entry.pointee.pw_dir)
     }
 
 }

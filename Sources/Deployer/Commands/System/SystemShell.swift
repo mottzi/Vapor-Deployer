@@ -1,11 +1,4 @@
 import Foundation
-#if canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#else
-import Darwin
-#endif
 
 // Shell facade for setup and remove steps; instance methods use SystemContext, static members provide lower-level commands.
 struct SystemShell {
@@ -222,14 +215,9 @@ extension SystemShell {
     }
 
     private static func shouldRunDirectly(as user: String) -> Bool {
-        if geteuid() == 0 { return false }
-        guard let currentUser = currentUsername() else { return false }
+        if UserAccount.currentUID() == 0 { return false }
+        guard let currentUser = UserAccount.currentName() else { return false }
         return currentUser == user
-    }
-
-    private static func currentUsername() -> String? {
-        guard let entry = getpwuid(geteuid()) else { return nil }
-        return String(cString: entry.pointee.pw_name)
     }
 
     private static func normalizedUsername(_ user: String?) -> String? {
@@ -238,19 +226,11 @@ extension SystemShell {
     }
 
     private static func resolveCurrentUID() async throws -> Int {
-        let rawUID = try await Shell.runThrowing("id", ["-u"]).trimmed
-        guard let uid = Int(rawUID) else {
-            throw Shell.Error(command: "id -u", output: "Failed to parse UID '\(rawUID)'.")
-        }
-        return uid
+        UserAccount.currentUID()
     }
 
     private static func resolveUID(for user: String) async throws -> Int {
-        let rawUID = try await Shell.runThrowing("id", ["-u", user]).trimmed
-        guard let uid = Int(rawUID) else {
-            throw Shell.Error(command: "id -u \(user)", output: "Failed to parse UID '\(rawUID)'.")
-        }
-        return uid
+        try UserAccount.uid(for: user)
     }
 
 }

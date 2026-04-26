@@ -25,12 +25,7 @@ extension SystemContext {
 
         if let serviceUserUID { return serviceUserUID }
 
-        let stringUID = try await Shell.runThrowing("id", ["-u", serviceUser]).trimmed
-
-        guard let intUID = Int(stringUID) else {
-            throw SystemError.invalidValue("serviceUserUID", "could not parse uid '\(stringUID)'")
-        }
-
+        let intUID = try UserAccount.uid(for: serviceUser, errorLabel: "serviceUserUID")
         serviceUserUID = intUID
         return intUID
     }
