@@ -1,0 +1,210 @@
+<tbody
+  mist-component="RowComponent-#(context.deployment.product)"
+  mist-id="#(context.deployment.id)"
+  data-mist-sort-value="#if(context.deployment.startedAtUnixMs):#(context.deployment.startedAtUnixMs)#endif"
+  class="dp-tbody"
+>
+
+  <!-- ── Main row ──────────────────────────────────────────── -->
+  <tr class="dp-tr
+    #if(context.deployment.displayStatus == "pushed"):row-pushed
+    #elseif(context.deployment.displayStatus == "running"):row-running
+    #elseif(context.deployment.displayStatus == "success"):row-success
+    #elseif(context.deployment.displayStatus == "deployed"):row-deployed
+    #elseif(context.deployment.displayStatus == "failed"):row-failed
+    #elseif(context.deployment.displayStatus == "canceled"):row-canceled
+    #elseif(context.deployment.displayStatus == "stale"):row-stale
+    #endif
+  ">
+
+    <!-- Status -->
+    <td class="dp-td dp-td-status">
+      #if(context.deployment.displayStatus == "pushed"):
+        <span class="dp-status dp-status--pushed">Pushed</span>
+      #elseif(context.deployment.displayStatus == "running"):
+        <button
+          class="dp-status dp-status--detail-btn dp-status--running"
+          type="button"
+          mist-action="toggleDetails"
+          aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
+        >
+          Running
+          <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+      #elseif(context.deployment.displayStatus == "success"):
+        #if(context.deployment.output):
+          <button
+            class="dp-status dp-status--detail-btn dp-status--success"
+            type="button"
+            mist-action="toggleDetails"
+            aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
+          >
+            Success
+            <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        #else:
+          <span class="dp-status dp-status--success">Success</span>
+        #endif
+      #elseif(context.deployment.displayStatus == "deployed"):
+        #if(context.deployment.output):
+          <button
+            class="dp-status dp-status--detail-btn dp-status--deployed"
+            type="button"
+            mist-action="toggleDetails"
+            aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
+          >
+            Deployed
+            <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        #else:
+          <span class="dp-status dp-status--deployed">Deployed</span>
+        #endif
+      #elseif(context.deployment.displayStatus == "failed"):
+        #if(context.deployment.output):
+          <button
+            class="dp-status dp-status--detail-btn dp-status--failed"
+            type="button"
+            mist-action="toggleDetails"
+            aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
+          >
+            Failed
+            <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        #else:
+          <span class="dp-status dp-status--failed">Failed</span>
+        #endif
+      #elseif(context.deployment.displayStatus == "canceled"):
+        <span class="dp-status dp-status--canceled">Canceled</span>
+      #elseif(context.deployment.displayStatus == "stale"):
+        <button
+          class="dp-status dp-status--detail-btn dp-status--stale"
+          type="button"
+          mist-action="toggleDetails"
+          aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
+        >
+          Stale
+          <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+      #else:
+        <span class="dp-status dp-status--canceled">#(context.deployment.displayStatus)</span>
+      #endif
+    </td>
+
+    <!-- Commit message -->
+    <td class="dp-td dp-td-commit">
+      #if(context.deployment.displayStatus == "canceled"):
+        <span class="dp-msg dp-msg--muted">#(context.deployment.commitMessage)</span>
+      #else:
+        <span class="dp-msg">#(context.deployment.commitMessage)</span>
+      #endif
+    </td>
+
+    <!-- ID -->
+    <td class="dp-td dp-td-sm-hide dp-td-mobile-hide">
+      <a
+        onclick="navigator.clipboard.writeText('#(context.deployment.id)'); return false;"
+        href="##"
+        class="dp-id"
+        title="#(context.deployment.id)"
+      >
+        #(context.deployment.shortID)
+        <svg class="dp-id-copy" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </a>
+    </td>
+
+    <!-- Started -->
+    <td class="dp-td dp-td-started">
+      #if(context.deployment.startedAtUnixMs):
+        <span
+          class="dp-time"
+          mist-behavior="local-datetime"
+          data-started-at-unix-ms="#(context.deployment.startedAtUnixMs)"
+        >
+          <span class="dp-time-value">&nbsp;</span>
+          <span class="dp-time-date">&nbsp;</span>
+        </span>
+      #else:
+        <span class="dp-time">
+          -
+          <span class="dp-time-date">-</span>
+        </span>
+      #endif
+    </td>
+
+    <!-- Duration -->
+    <td class="dp-td dp-td-duration dp-td-mobile-hide">
+      #if(context.deployment.durationString):
+        <span class="dp-duration">#(context.deployment.durationString)</span>
+      #elseif(context.deployment.displayStatus == "pushed"):
+        <span class="dp-duration-dash">—</span>
+      #elseif(context.deployment.displayStatus == "stale"):
+        <span class="dp-duration-dash">—</span>
+      #elseif(context.deployment.displayStatus == "canceled"):
+        <span class="dp-duration-dash">—</span>
+      #else:
+        <span class="dp-duration">
+          <span class="dp-spinner"></span>
+          <span
+            class="dp-duration-live"
+            mist-behavior="timer"
+            data-started-at-unix-ms="#(context.deployment.startedAtUnixMs)"
+          >0.0s</span>
+        </span>
+      #endif
+    </td>
+
+    <!-- Delete -->
+    <td class="dp-td dp-td-action">
+      <div class="dp-row-actions">
+        #if(context.deployment.canBeDeployed):
+          <button mist-action="deploy" class="dp-action-icon dp-deploy-icon" title="Deploy this commit" type="button" aria-label="Deploy this commit">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5v14l11-7z"></path>
+            </svg>
+          </button>
+        #else:
+          <span class="dp-action-slot" aria-hidden="true"></span>
+        #endif
+        <button mist-action="delete" class="dp-action-icon dp-delete" title="Delete deployment" type="button" aria-label="Delete deployment">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+          </svg>
+        </button>
+      </div>
+    </td>
+
+  </tr>
+
+  <!-- ── Output detail row ──────────────────────────────────── -->
+  #if(context.deployment.hasDetails):
+  <tr
+    class="dp-output-row dp-output-tr #if(context.deployment.hasLiveOutputStream):dp-output-tr--live#elseif(context.deployment.status == "failed"):dp-output-tr--failed#else:dp-output-tr--static#endif #if(state.detailsExpanded):dp-output-expanded#endif"
+  >
+    <td colspan="6" class="dp-output-cell">
+      #if(context.deployment.hasLiveOutputStream):
+        <pre class="dp-output-pre dp-output-pre--live" mist-stream="build-output"></pre>
+      #elseif(context.deployment.output):
+        <pre class="dp-output-pre #if(context.deployment.status == "failed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#(context.deployment.output)</pre>
+      #endif
+    </td>
+  </tr>
+  #endif
+
+</tbody>

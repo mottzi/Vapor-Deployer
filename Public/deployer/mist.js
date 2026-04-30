@@ -1,0 +1,577 @@
+// Move this file (mist.js) to: /Public 
+
+class MistSocket {
+
+    constructor(config) {
+        this.config = config;
+        this.socket = null;
+        this.streamBuffers = new Map();
+
+        this.timer = null;
+        this.initialDelay = 1000;
+        this.interval = 1000;
+
+        document.addEventListener('visibilitychange', () => this.visibilityChange());
+        window.addEventListener('online', () => this.connect());
+        document.addEventListener('click', (event) => this.handleAction(event));
+    }
+
+    subscribeToPageComponents() {
+
+        console.log("[Client] Scanning DOM and subscribing to components");
+
+        const uniqueComponents = new Set();
+
+        // Subscribe to existing components
+        document.querySelectorAll('[mist-component]').forEach(element => {
+
+            const component = element.getAttribute('mist-component');
+
+            if (component) {
+                uniqueComponents.add(component);
+            }
+        });
+
+        // Subscribe to components that containers accept (even if they don't exist yet)
+        document.querySelectorAll('[mist-container]').forEach(container => {
+
+            const acceptedComponents = container.getAttribute('mist-container');
+
+            if (acceptedComponents) {
+                acceptedComponents.split(',').forEach(component => {
+                    const trimmed = component.trim();
+                    if (trimmed) {
+                        uniqueComponents.add(trimmed);
+                    }
+                });
+            }
+        });
+
+        uniqueComponents.forEach(component => {
+            this.subscribe(component);
+        });
+    }
+
+    subscribe(component) {
+
+        if (this.isConnected()) {
+
+            const message = {
+                subscribe: {
+                    component: component
+                }
+            };
+
+            this.socket.send(JSON.stringify(message));
+        }
+    }
+
+    // Boots global behaviors (timers, etc.)
+    bootBehaviors() {
+        this.bootDateTimes();
+        this.bootTimers();
+    }
+
+    bootDateTimes() {
+        const timeFormatter = new Intl.DateTimeFormat(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+        const dateFormatter = new Intl.DateTimeFormat(undefined, {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit'
+        });
+
+        document.querySelectorAll('[mist-behavior="local-datetime"]').forEach(element => {
+            const unixMs = Number.parseInt(element.dataset.startedAtUnixMs, 10);
+            if (Number.isNaN(unixMs)) return;
+
+            const date = new Date(unixMs);
+            const timeElement = element.querySelector('.dp-time-value');
+            const dateElement = element.querySelector('.dp-time-date');
+
+            if (timeElement) {
+                timeElement.textContent = timeFormatter.format(date);
+            }
+
+            if (dateElement) {
+                dateElement.textContent = dateFormatter.format(date);
+            }
+        });
+    }
+
+    bootTimers() {
+        document.querySelectorAll('[mist-behavior="timer"]').forEach(element => {
+            if (element._mistTimer) return;
+            const unixMs = Number.parseInt(element.dataset.startedAtUnixMs, 10);
+            if (Number.isNaN(unixMs)) return;
+
+            const update = () => {
+                const elapsed = Math.max((Date.now() - unixMs) / 1000, 0);
+                element.textContent = `${elapsed.toFixed(1)}s`;
+            };
+
+            update();
+
+            element._mistTimer = setInterval(() => {
+                // Stop if element is removed from DOM
+                if (!document.body.contains(element)) {
+                    clearInterval(element._mistTimer);
+                    element._mistTimer = null;
+                    return;
+                }
+
+                // Stop if element no longer has the timer behavior (e.g. morphed into static span)
+                if (element.getAttribute('mist-behavior') !== 'timer') {
+                    clearInterval(element._mistTimer);
+                    element._mistTimer = null;
+                    return;
+                }
+
+                update();
+            }, 100);
+        });
+    }
+
+    streamKey(component, modelID, stream) {
+        return `${component}\u0000${modelID}\u0000${stream}`;
+    }
+
+    rememberStream(component, modelID, stream, text) {
+        const key = this.streamKey(component, modelID, stream);
+        this.streamBuffers.set(key, { component, modelID, stream, text });
+        return key;
+    }
+
+    replaceStream(component, modelID, stream, text) {
+        this.rememberStream(component, modelID, stream, text);
+        this.setStreamText(component, modelID, stream, text);
+    }
+
+    appendStream(component, modelID, stream, text) {
+        if (!text) return;
+
+        const key = this.streamKey(component, modelID, stream);
+        const existing = this.streamBuffers.get(key);
+        const nextText = (existing?.text || '') + text;
+        this.streamBuffers.set(key, { component, modelID, stream, text: nextText });
+
+        this.findStreamTargets(component, modelID, stream).forEach(target => {
+            target.appendChild(document.createTextNode(text));
+            this.scrollStreamTargetToBottom(target);
+        });
+    }
+
+    closeStream(component, modelID, stream) {
+        this.streamBuffers.delete(this.streamKey(component, modelID, stream));
+    }
+
+    restoreStreams() {
+        this.streamBuffers.forEach(({ component, modelID, stream, text }) => {
+            this.setStreamText(component, modelID, stream, text);
+        });
+    }
+
+    setStreamText(component, modelID, stream, text) {
+        this.findStreamTargets(component, modelID, stream).forEach(target => {
+            target.textContent = text;
+            this.scrollStreamTargetToBottom(target);
+        });
+    }
+
+    findStreamTargets(component, modelID, stream) {
+        const selector = `${this.buildComponentSelector(component, modelID)} [mist-stream="${this.escapeAttributeValue(stream)}"]`;
+        return Array.from(document.querySelectorAll(selector));
+    }
+
+    scrollStreamTargetToBottom(target) {
+        if (!(target instanceof HTMLElement)) return;
+        if (target.offsetParent === null && target.getClientRects().length === 0) return;
+        target.scrollTop = target.scrollHeight;
+    }
+
+    parseSortValue(rawValue, sortType) {
+        if (rawValue === null || rawValue === undefined || rawValue === '') {
+            return null;
+        }
+
+        if (sortType === 'number') {
+            const numericValue = Number.parseFloat(rawValue);
+            return Number.isNaN(numericValue) ? null : numericValue;
+        }
+
+        return rawValue;
+    }
+
+    findSortableCollection(element) {
+        if (!(element instanceof Element)) return null;
+        return element.closest('[mist-behavior="sortable-collection"]');
+    }
+
+    scheduleSortableCollectionReorder(collection) {
+        if (!(collection instanceof Element)) return;
+
+        const delayRawValue = collection.dataset.mistSortDelayMs;
+        const parsedDelay = Number.parseInt(delayRawValue ?? '0', 10);
+        const delayMs = Number.isNaN(parsedDelay) ? 0 : Math.max(parsedDelay, 0);
+
+        if (collection._mistSortTimer) {
+            clearTimeout(collection._mistSortTimer);
+            collection._mistSortTimer = null;
+        }
+
+        if (delayMs === 0) {
+            this.reorderSortableCollection(collection);
+            return;
+        }
+
+        collection._mistSortTimer = setTimeout(() => {
+            collection._mistSortTimer = null;
+            this.reorderSortableCollection(collection);
+        }, delayMs);
+    }
+
+    reorderSortableCollection(collection) {
+        if (!(collection instanceof Element)) return;
+
+        const sortOrder = collection.dataset.mistSortOrder || 'asc';
+        const sortType = collection.dataset.mistSortType || 'number';
+        const sortableItems = Array.from(collection.children).filter(child =>
+            child.hasAttribute('data-mist-sort-value')
+        );
+
+        if (sortableItems.length < 2) return;
+
+        const indexedItems = sortableItems.map((element, index) => ({
+            element,
+            index,
+            value: this.parseSortValue(element.getAttribute('data-mist-sort-value'), sortType)
+        }));
+
+        const sortedItems = [...indexedItems].sort((left, right) => {
+            if (left.value === null && right.value === null) return left.index - right.index;
+            if (left.value === null) return 1;
+            if (right.value === null) return -1;
+
+            if (left.value === right.value) return left.index - right.index;
+
+            if (sortOrder === 'desc') {
+                return left.value > right.value ? -1 : 1;
+            }
+
+            return left.value < right.value ? -1 : 1;
+        });
+
+        const orderChanged = sortedItems.some((item, index) => item.element !== sortableItems[index]);
+        if (!orderChanged) return;
+
+        // Preserve the positions of non-sortable siblings while reordering only sortable ones.
+        const markers = sortableItems.map(element => {
+            const marker = document.createComment('mist-sort-slot');
+            collection.insertBefore(marker, element);
+            return marker;
+        });
+
+        sortedItems.forEach((item, index) => {
+            collection.insertBefore(item.element, markers[index]);
+            markers[index].remove();
+        });
+    }
+
+    reorderCollectionsForElements(elements) {
+        const collections = new Set();
+
+        elements.forEach(element => {
+            const collection = this.findSortableCollection(element);
+            if (collection) {
+                collections.add(collection);
+            }
+        });
+
+        collections.forEach(collection => this.scheduleSortableCollectionReorder(collection));
+    }
+
+    handleAction(event) {
+
+        const target = event.target.closest('[mist-action]');
+
+        if (!target) return;
+
+        const actionName = target.getAttribute('mist-action');
+
+        // 1. Find component: ancestor with [mist-component], or [mist-actions-for="Name"] for detached controls
+        let componentElement = target.closest('[mist-component]');
+        if (!componentElement && target.hasAttribute('mist-actions-for')) {
+            const ref = target.getAttribute('mist-actions-for');
+            if (ref) {
+                const safe = ref.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                componentElement = document.querySelector('[mist-component="' + safe + '"]');
+            }
+        }
+
+        if (!componentElement || !actionName) return;
+
+        const componentName = componentElement.getAttribute('mist-component');
+        // 2. ID can now be null, which is valid
+        const targetID = componentElement.getAttribute('mist-id');
+
+        // 3. Only require componentName. targetID is optional.
+        if (!componentName) return;
+
+        if (this.isConnected()) {
+
+            const message = {
+                action: {
+                    component: componentName,
+                    targetID: targetID, // Will correctly send `targetID: null` if not found
+                    action: actionName
+                }
+            };
+
+            this.socket.send(JSON.stringify(message));
+
+            // 4. Update log message to handle null ID
+            const idLog = targetID ? targetID.substring(0, 8) : 'null';
+            console.log(`[Client] Action sent to server: ${componentName}.${actionName} (${idLog})`);
+        }
+    }
+
+    isConnected() { return this.socket?.readyState === WebSocket.OPEN; }
+    isConnecting() { return this.socket?.readyState === WebSocket.CONNECTING; }
+
+    connect() {
+
+        if (this.isConnected() || this.isConnecting()) return;
+        if (this.socket) { this.socket.close(); this.socket = null; }
+
+        // Use URL from config
+        this.socket = new WebSocket(this.config.url);
+
+        this.socket.onopen = () => {
+
+            if (this.timer) { clearInterval(this.timer); this.timer = null; }
+
+            this.subscribeToPageComponents();
+
+            this.bootBehaviors();
+        };
+
+        this.socket.onmessage = (event) => {
+            try {
+
+                const data = JSON.parse(event.data);
+                let mutatedHTML = false;
+
+                if (data.createInstanceComponent) {
+                    const { component, modelID, html } = data.createInstanceComponent;
+
+                    // Ensure the generated HTML actually belongs to the channel it was broadcasted on
+                    if (!html.includes(`mist-component="${component}"`)) {
+                        console.log(`[Client] Dropped cross-channel broadcast for ${component}`);
+                        return;
+                    }
+
+                    const existingElements = document.querySelectorAll(this.buildComponentSelector(component, modelID));
+
+                    // If component already exists, treat as update
+                    if (existingElements.length > 0) {
+                        existingElements.forEach(element => {
+                            morphdom(element, html);
+                        });
+                        mutatedHTML = true;
+                        this.reorderCollectionsForElements(Array.from(existingElements));
+                        console.log(`[Client] Component updated: ${component} (${modelID.substring(0, 8)})`);
+                    } else {
+                        // Find container that accepts this component
+                        const containers = document.querySelectorAll('[mist-container]');
+                        for (const container of containers) {
+                            const acceptedComponents = container.getAttribute('mist-container').split(',').map(c => c.trim());
+                            if (acceptedComponents.includes(component)) {
+                                // Check for custom insertion position (default: 'beforeend' to append)
+                                const insertPosition = container.getAttribute('mist-insert-position') || 'beforeend';
+                                container.insertAdjacentHTML(insertPosition, html);
+                                const insertedElements = document.querySelectorAll(this.buildComponentSelector(component, modelID));
+                                mutatedHTML = true;
+                                this.reorderCollectionsForElements(Array.from(insertedElements));
+                                console.log(`[Client] Component created: ${component} (${modelID.substring(0, 8)})`);
+                                break;
+                            }
+                        }
+                    }
+                }
+                else if (data.updateInstanceComponent) {
+                    const { component, modelID, html } = data.updateInstanceComponent;
+
+                    // Prevent WebSocket Crossover Updates
+                    if (!html.includes(`mist-component="${component}"`)) {
+                        console.log(`[Client] Dropped cross-channel update for ${component}`);
+                        return;
+                    }
+
+                    const elements = document.querySelectorAll(this.buildComponentSelector(component, modelID));
+
+                    elements.forEach(element => {
+                        morphdom(element, html);
+                    });
+                    mutatedHTML = true;
+                    this.reorderCollectionsForElements(Array.from(elements));
+
+                    console.log(`[Client] Component updated: ${component} (${modelID.substring(0, 8)})`);
+                }
+                else if (data.deleteInstanceComponent) {
+                    const { component, modelID } = data.deleteInstanceComponent;
+                    const elements = document.querySelectorAll(this.buildComponentSelector(component, modelID));
+
+                    elements.forEach(element => {
+                        element.remove();
+                    });
+
+                    console.log(`[Client] Component deleted: ${component} (${modelID.substring(0, 8)})`);
+                }
+                // Query-based component messages (no ID)
+                else if (data.updateQueryComponent) {
+                    const { component, html } = data.updateQueryComponent;
+                    const existingElements = document.querySelectorAll(this.buildComponentSelector(component, null));
+
+                    // If component already exists, replace it
+                    if (existingElements.length > 0) {
+                        existingElements.forEach(element => {
+                            morphdom(element, html);
+                        });
+                        mutatedHTML = true;
+                        console.log(`[Client] Component updated: ${component}`);
+                    } else {
+                        // Find container that accepts this component
+                        const containers = document.querySelectorAll('[mist-container]');
+
+                        for (const container of containers) {
+                            const acceptedComponents = container.getAttribute('mist-container').split(',').map(c => c.trim());
+
+                            if (acceptedComponents.includes(component)) {
+                                // Check for custom insertion position (default: 'beforeend' to append)
+                                const insertPosition = container.getAttribute('mist-insert-position') || 'beforeend';
+                                container.insertAdjacentHTML(insertPosition, html);
+                                mutatedHTML = true;
+                                console.log(`[Client] Component created: ${component}`);
+                                break;
+                            }
+                        }
+                    }
+                }
+                else if (data.deleteQueryComponent) {
+                    const { component } = data.deleteQueryComponent;
+                    const elements = document.querySelectorAll(this.buildComponentSelector(component, null));
+
+                    elements.forEach(element => {
+                        element.remove();
+                    });
+
+                    console.log(`[Client] Component deleted: ${component}`);
+                }
+                else if (data.replaceStream) {
+                    const { component, modelID, stream, text } = data.replaceStream;
+                    this.replaceStream(component, modelID, stream, text);
+                    console.log(`[Client] Stream replaced: ${component}.${stream} (${modelID.substring(0, 8)})`);
+                }
+                else if (data.appendStream) {
+                    const { component, modelID, stream, text } = data.appendStream;
+                    this.appendStream(component, modelID, stream, text);
+                    console.log(`[Client] Stream appended: ${component}.${stream} (${modelID.substring(0, 8)})`);
+                }
+                else if (data.closeStream) {
+                    const { component, modelID, stream } = data.closeStream;
+                    this.closeStream(component, modelID, stream);
+                    console.log(`[Client] Stream closed: ${component}.${stream} (${modelID.substring(0, 8)})`);
+                }
+                else if (data.actionResult) {
+                    const { component, targetID, action, result, message } = data.actionResult;
+                    const isSuccess = result.success !== undefined;
+                    const resultType = isSuccess ? '✅' : '❌';
+                    const idLog = targetID ? targetID.substring(0, 8) : 'null';
+
+                    console.log(`[Server] Action result ${resultType}: ${component}.${action} (${idLog}, ${message})`);
+                }
+                else if (data.text) {
+                    const { message } = data.text;
+                    console.log(`[Server] Message: ${message}`);
+                }
+                else {
+                    console.log(`[Client] Unhandled server message (raw): ${event.data}`);
+                }
+
+                if (mutatedHTML) {
+                    this.restoreStreams();
+                }
+                this.bootBehaviors();
+            }
+            catch (error) {
+                console.error(`[Client] Error parsing server message: ${error}`);
+            }
+        };
+
+        this.socket.onclose = () => {
+
+            if (this.timer) return
+
+            console.log("[Client] WebSocket closed: Reconnecting in 1s");
+
+            setTimeout(() => {
+                this.connect();
+
+                this.timer = setInterval(() => {
+                    this.connect();
+                },
+                this.interval);
+            },
+                this.initialDelay);
+        };
+    }
+
+    // Helper function to build component selector
+    buildComponentSelector(component, id) {
+        const safeComponent = this.escapeAttributeValue(component);
+        if (id) {
+            return `[mist-component="${safeComponent}"][mist-id="${this.escapeAttributeValue(id)}"]`;
+        } else {
+            return `[mist-component="${safeComponent}"]`;
+        }
+    }
+
+    escapeAttributeValue(value) {
+        return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    }
+
+    visibilityChange() {
+        if (document.visibilityState === "visible") {
+            console.log('[Client] Document visibility changed to visible: Connecting...');
+            this.connect();
+        }
+    }
+}
+
+// Capture the script element immediately to read attributes
+const mistScript = document.currentScript;
+
+// Wait for the DOM to be fully loaded before executing the code
+document.addEventListener('DOMContentLoaded', function () {
+    let path = '/mist/ws/'; // Default path
+
+    if (mistScript) {
+        const dataUrl = mistScript.getAttribute('data-url');
+        if (dataUrl) {
+            path = dataUrl;
+        }
+    }
+
+    // Construct full URL
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const host = window.location.host;
+    const url = `${protocol}${host}${path}`;
+
+    window.ws = new MistSocket({ url: url });
+    window.ws.bootBehaviors();
+    window.ws.connect();
+});

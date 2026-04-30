@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deployer — Sign in</title>
+  <link rel="icon" type="image/png" href="#(panelRoute)/mottzi.png">
+  <link rel="stylesheet" href="#(panelRoute)/deployer.css">
+</head>
+<body>
+
+  <div class="dp-shell">
+
+    <div class="dp-login-wrap">
+
+      <a class="dp-login-wordmark" href="#(repositoryWebPageURL)" target="_blank" rel="noopener noreferrer">
+        <img class="dp-wordmark-image" src="#(panelRoute)/mottzi.png" alt="Deployer" width="28" height="28">
+        <span class="dp-login-wordmark-title">Deployer</span>
+      </a>
+
+      <div class="dp-login-card">
+
+        <span class="dp-login-title">Sign in</span>
+        <span class="dp-login-subtitle">Enter your password to continue</span>
+
+        #if(error):
+        <div class="dp-login-error">
+          <div class="dp-login-error-dot"></div>
+          Incorrect password. Please try again.
+        </div>
+        #endif
+
+        <form method="POST" action="" style="display: flex; flex-direction: column; gap: 12px;">
+          <input type="text" name="username" style="display:none" autocomplete="username">
+          <input
+            class="dp-login-input"
+            type="password"
+            name="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            autofocus
+            required
+          >
+          <button class="dp-login-btn" type="submit">Continue</button>
+        </form>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
