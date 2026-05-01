@@ -30,6 +30,7 @@ struct UpdateCommand: AsyncCommand {
         
         updateContext.serviceUser = await resolveServiceUser(executableURL: resolvedExecutableURL) ?? ""
         updateContext.isSourceInstall = config.buildFromSource
+        updateContext.deployerBranch = config.deployerBranch
 
         if updateContext.isSourceInstall {
             let gitMarker = installDirectory.appendingPathComponent(".git")

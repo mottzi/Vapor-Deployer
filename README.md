@@ -55,17 +55,16 @@ deployerctl help
 
 | Action |  |
 | --- | --- |
-| `status` |
-| `start` |
-| `stop` |
-| `restart` |
-| `logs` | Ctrl-C to exit |
-| `version` | Print the deployer version |
-| `setup` | Rerun deployer setup |
-| `update` | Update deployer |
-| `remove` | Tear down deployer |
-| `help`|
-<!-- | | | -->
+| status |
+| start |
+| stop |
+| restart |
+| logs | Ctrl-C to exit |
+| version | Print the deployer version |
+| setup | Rerun deployer setup |
+| update | Update deployer |
+| remove | Tear down deployer |
+| help |
 
 ### Configuration
 

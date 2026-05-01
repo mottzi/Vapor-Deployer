@@ -11,6 +11,7 @@ struct Configuration: Codable, Sendable {
     let target: TargetConfiguration
     let serviceManager: ServiceManagerKind
     let buildFromSource: Bool
+    let deployerBranch: String
     let webhookSecret: String?
 }
 
@@ -23,6 +24,7 @@ struct TargetConfiguration: Codable, Sendable {
     let pusheventPath: String
     let deploymentMode: DeploymentMode
     let appPort: Int
+    let branch: String
 
 }
 
@@ -149,6 +151,7 @@ extension Configuration {
             target: try target.resolved(relativeTo: baseDirectoryURL),
             serviceManager: serviceManager,
             buildFromSource: buildFromSource,
+            deployerBranch: try Configuration.trimmedValue(deployerBranch, field: "deployerBranch"),
             webhookSecret: webhookSecret
         )
     }
@@ -168,7 +171,8 @@ extension TargetConfiguration {
             buildMode: Configuration.trimmedValue(buildMode, field: "target.buildMode"),
             pusheventPath: Configuration.trimmedValue(pusheventPath, field: "target.pusheventPath"),
             deploymentMode: deploymentMode,
-            appPort: appPort
+            appPort: appPort,
+            branch: Configuration.trimmedValue(branch, field: "target.branch")
         )
     }
 

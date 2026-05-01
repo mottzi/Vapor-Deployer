@@ -19,10 +19,12 @@ enum DeployerTemplate {
                 buildMode: context.appBuildMode,
                 pusheventPath: paths.webhookPath,
                 deploymentMode: context.deploymentMode,
-                appPort: context.appPort
+                appPort: context.appPort,
+                branch: context.appBranch
             ),
             serviceManager: context.serviceManagerKind,
             buildFromSource: context.buildFromSource,
+            deployerBranch: context.deployerRepositoryBranch,
             webhookSecret: context.webhookSecret.isEmpty ? nil : context.webhookSecret
         )
         

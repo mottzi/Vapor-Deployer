@@ -22,15 +22,39 @@ struct SourceUpdateStep: UpdateStep {
         context.assetBackup = try await backupInstalledAssets()
 
         console.print("Pulling latest source code from deployer repository.")
-        let pullOutput = try await SystemShell.runAs(
+        try await SystemShell.runAs(
             user: serviceUser,
             "git",
-            ["pull"],
+            ["fetch", "origin", context.deployerBranch],
             directory: installDirectory,
             environment: sourceBuildEnvironment(for: serviceUser)
         )
 
-        if isNoOpPullOutput(pullOutput) {
+        let outputBeforeReset = try await SystemShell.runAs(
+            user: serviceUser,
+            "git",
+            ["rev-parse", "HEAD"],
+            directory: installDirectory,
+            environment: sourceBuildEnvironment(for: serviceUser)
+        ).trimmed
+
+        try await SystemShell.runAs(
+            user: serviceUser,
+            "git",
+            ["reset", "--hard", "origin/\(context.deployerBranch)"],
+            directory: installDirectory,
+            environment: sourceBuildEnvironment(for: serviceUser)
+        )
+
+        let outputAfterReset = try await SystemShell.runAs(
+            user: serviceUser,
+            "git",
+            ["rev-parse", "HEAD"],
+            directory: installDirectory,
+            environment: sourceBuildEnvironment(for: serviceUser)
+        ).trimmed
+
+        if outputBeforeReset == outputAfterReset {
             context.releaseVersion = context.currentVersion
             context.isUpToDate = true
             console.print("Source code is already up to date.")
@@ -84,11 +108,6 @@ extension SourceUpdateStep {
             "USER": serviceUser,
             "PATH": "/home/\(serviceUser)/.local/share/swiftly/bin:/usr/local/bin:/usr/bin:/bin"
         ]
-    }
-
-    private func isNoOpPullOutput(_ output: String) -> Bool {
-        let normalized = output.lowercased()
-        return normalized.contains("already up to date") || normalized.contains("already up-to-date")
     }
 
     private func resolveHeadRevision(serviceUser: String, directory: String) async throws -> String {

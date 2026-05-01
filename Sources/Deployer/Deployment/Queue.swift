@@ -48,6 +48,12 @@ actor Queue {
     
     func recordPush(event: PushEvent, target: TargetConfiguration) async {
         
+        let eventBranch = event.branch.hasPrefix("refs/heads/")
+            ? String(event.branch.dropFirst("refs/heads/".count))
+            : event.branch
+
+        guard eventBranch == target.branch else { return }
+        
         let status: Deployment.Status = switch target.deploymentMode {
             case .automatic: isDeploying ? .canceled : .running
             case .manual: .pushed
