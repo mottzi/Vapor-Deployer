@@ -26,10 +26,10 @@ Before setup, you will need:
 - Domain pointing to the server.
 - Swift app in GitHub repository.
 
-SSH into your server and run:
+SSH into your server and run (as root):
 
 ```bash
-sudo bash <(curl -sSL https://mottzi.codes/deployer/setup.sh)
+bash <(curl -sSL https://mottzi.codes/deployer/setup.sh)
 ```
 
 Deployer will walk you through the setup interactively, prompting for configuration (Press enter for defaults).
