@@ -8,7 +8,7 @@ final class SetupContext: SystemContext {
     let appBranch = "main"
     let deployerBuildMode = "release"
     let appBuildMode = "release"
-    let deploymentMode = DeploymentMode.manual
+    var deploymentMode = DeploymentMode.manual
 
     var serviceUser = ""
     var serviceUserUID: Int?

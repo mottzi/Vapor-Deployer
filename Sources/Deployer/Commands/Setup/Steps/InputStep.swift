@@ -149,6 +149,11 @@ extension InputStep {
             appName: context.appName,
             panelRoute: context.panelRoute
         )
+
+        context.deploymentMode = console.confirm(
+            "Enable automatic deployments on push?",
+            defaultYes: false
+        ) ? .automatic : .manual
     }
 
     private func collectPanelAuth() throws {
@@ -274,6 +279,7 @@ extension InputStep {
             ("App directory", paths.appDirectory),
             ("Deployer build mode", context.deployerBuildMode),
             ("App build mode", context.appBuildMode),
+            ("Deployment mode", context.deploymentMode.rawValue),
             ("Deployer port", "\(context.deployerPort)"),
             ("App port", "\(context.appPort)"),
             ("Panel route", context.panelRoute),
