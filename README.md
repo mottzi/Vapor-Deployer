@@ -1,12 +1,15 @@
-This repository demonstrates one possible approach of implementing a simple CI/CD system that automatically self-deploys Swift web server applications when changes are pushed to the remote github repository. It uses the Vapor framework. 
+# Deployer
 
-> [!WARNING]
-> This is a proof-of-concept implementation and ready for production!
+**A simple CI/CD tool for Swift server applications that deploys automatically when changes are pushed to an app's GitHub repository.**
 
-## Overview
+With just one setup command, Deployer gets your server ready. It installs Swift, configures Nginx and GitHub webhooks, issues SSL certificates and keeps your app running on the latest commit. A live web panel shows every deployment as it happens. It streams build output, updates in real-time and provides start and stop buttons for your app.
 
-1. Local changes are pushed to remote github repository
-2. Push event is intercepted using webhooks
+<img width="957" height="880" alt="Deployer Panel" src="https://github.com/user-attachments/assets/ab34c33f-d84e-4893-a944-cc2b69401829" />
+
+<br>
+
+1. Code change is pushed to remote repository.
+2. Push event is intercepted on server using webhooks.
 3. Deployment pipeline is initiated:
      - pull changes from remote repository
      - build executable
@@ -15,79 +18,94 @@ This repository demonstrates one possible approach of implementing a simple CI/C
      - re-run latest queued deployment
      - restart application
 
-The system implements a simple deployment dashboard. This dashboard uses the "HTML over the wire" paradigm to provide real time status updates without requiring page reloads.
+## Setup
 
-## Demo
+Before setup, you will need:
 
-In this demo video, I push several build versions in rapid succession, changing the response string of the /test endpoint with each push. 
+- Ubuntu server with root access.
+- Domain pointing to the server.
+- Swift app in GitHub repository.
 
-You can see how the successive push events are processed into the deployment queue and how their statuses change. When a new push event is registered while the previous deployment is still running, the system will temporarily cancel that push event, re-trying when the pipeline is freed up.
+SSH into your server and run:
 
-After the last deployment has finished processing, you can see the correct output of the /test endpoint.
+```bash
+sudo bash <(curl -sSL https://mottzi.codes/deployer/setup.sh)
+```
 
-https://github.com/user-attachments/assets/2258e6db-c42a-4ff6-9d8f-2a4def7b4e34
+Deployer will walk you through the setup interactively, prompting for configuration (Press enter for defaults).
 
-## Architecture
+- Swift is installed via Swiftly.
+- Nginx with TLS/SSL certificates via Let's encrypt.
+- SSH deploy key is generated for registration with GitHub.
+- GitHub webhook is created to watch for pushes.
 
-### Deployment Pipeline
+Once setup completes, your app is live and Deployer is listening for pushes on main.
 
-The system processes deployments through the following sequence:
+## Deployer Control
 
-1. **Webhook Reception**: GitHub sends a push event to the webhook receiver endpoint `/pushevent`. The receiver validates the signature using a secret environment value.
+Setup installs **`deployerctl`** on the server. Example usage:
 
-2. **Deployment Creation**: Upon successful validation, the system creates a new deployment record in the SQLite database with status "running" or "canceled" depending on whether another deployment is already in progress.
+```bash
+sudo deployerctl start  # starts deployer and app
+sudo deployerctl status app 
+sudo deployerctl stop deployer
+deployerctl version
+deployerctl help
+```
 
-3. **Pipeline Execution**: If the deployment status is "running", the pipeline executes the deployment process:
-   - Performs a git pull to fetch the latest code
-   - Builds the application using Swift build tools
-   - Moves the built executable to the deployment directory
-   - Updates the deployment status in the database
+| Action |  |
+| --- | --- |
+| `status` |
+| `start` |
+| `stop` |
+| `restart` |
+| `logs` | Ctrl-C to exit |
+| `version` | Print the deployer version |
+| `setup` | Rerun deployer setup |
+| `update` | Update deployer |
+| `remove` | Tear down deployer |
+| `help`|
+<!-- | | | -->
 
-4. **Real-time Updates**: As the deployment status changes while moving through the steps above, the database middleware captures these changes and broadcasts them via WebSockets to all connected dashboard clients.
+### Configuration
 
-5. **Queue Processing**: After a successful deployment, the system checks for any queued (canceled) deployments and automatically re-initiates the latest one.
+Runtime settings live in **`deployer.json`**, in the same directory as the `deployer` executable. For a default install, that is '/home/vapor/deployer/deployer.json'. Setup writes the first version; you can edit it when you need different settings. Restart Deployer after making changes.
 
-6. **Application Restart**: If no queued deployments exist, the system restarts the application to apply the latest changes.
+```json
+{
+    "buildFromSource": false,
+    "dbFile": "deployer.db",
+    "deployerDirectory": ".",
+    "panelRoute": "/deployer",
+    "port": 8081,
+    "serviceManager": "systemd",
+    "socketPath": "/deployer/ws",
+    "target": {
+        "appPort": 8080,
+        "buildMode": "release",
+        "deploymentMode": "manual",
+        "directory": "../apps/MyProduct",
+        "name": "MyProduct",
+        "pusheventPath": "/pushevent/MyProduct"
+    }
+}
+```
 
-### Deploymet Status
+## Deployment
 
-The system maintains a database of deployments and their commit messages, duration, and current status which can be one of the follwing:
+The webhook endpoint validates HMAC-SHA256 signature before touching the queue, rejecting unsigned or malformed payloads. Manual deployment mode (default) waits for you to trigger a deployment on the web panel by pressing the play button. Automatic mode deploys a push instantly.
 
-- **running**: Deployment is in progress
-- **canceled** / **queued**: Deployment was queued (another deployment was running)
-- **success**: Deployment completed successfully
-- **failed**: Deployment failed
-- **stale**: Deployment has been running for too long (>30 min)
-- **deployed**: Current active deployment
+The pipeline runs three stages in sequence:
 
-### Files
+1. `git fetch` + detached `HEAD` checkout at the exact SHA.
+2. `swift build -c <release|debug>`, output streamed live to connected clients.
+3. Binary moves from `.build/` to `deploy/<app>`. 
 
-**Configuration**
+A successful run marks the deployment `deployed`, demotes the previous live entry back to `success`, restarts the app and persists the full build transcript. The previous binary is backed up; if the move fails, rollback is automatic.
 
-- **deployment.swift**
-  Registers all routes related to deployment functionality, including the GitHub webhook endpoint, the deployment panel endpoint, and the websocket endpoint for real time panel updates
+The `Queue` actor serializes all deployments so only one build runs at a time. While the queue is locked, the panel shows a live Locked / Unlocked badge. While a build is running, subsequent pushes are recorded as `canceled`. When the current job finishes, the queue drains to the newest canceled entry, skipping everything in between. 
 
-**Deployment**
+Deployments are persisted with [Fluent](https://github.com/vapor/fluent) on SQLite; Deployer itself is built on [Vapor](https://github.com/vapor/vapor). On first launch, Deployer seeds the database with the latest commit in the target repository so the panel doesn't start empty. The `is_live` flag tracks the active deployment currently deployed and running on the server.
 
-- **Deployment.swift**: Defines the core deployment model, database schema, and helper methods for data presentation.
+Deployer's panel uses [Mist](https://github.com/mottzi/Mist) to power real-time database driven UI updates over websockets, reflecting state change without polling or page reloads.
 
-- **DeploymentWebhook.swift**: Processes incoming GitHub webhook, validates request signature, and initiates the deployment process.
-
-- **DeploymentPipeline.swift**: Implements the deployment pipeline logic, handling the sequence of operations (pull, build, move, restart) and deployment queue management.
-
-- **DeploymentClients.swift**: Manages WebSocket client connections with thread-safe operations for broadcasting deployment updates.
-
-- **DeploymentListener.swift**: Database middleware that intercepts deployment status updates and broadcasts changes in real time to connected clients.
-  
-- **DeploymentMessage.swift**: Defines the message protocol for WebSocket communication between server and clients.
-
-**Frontend Templates**
-
-- **panel.leaf**: Main dashboard template that displays the deployment list and current deployment status.
-
-- **row.leaf**: Template fragment for rendering individual deployment entries in the dashboard.
-
-**Frontend JavaScript**
-
-- **panel.js**
-  Client-side JavaScript that establishes WebSocket connections and updates the UI/DOM in real-time as deployment states change.
