@@ -109,3 +109,6 @@ Deployments are persisted with [Fluent](https://github.com/vapor/fluent) on SQLi
 
 Deployer's panel uses [Mist](https://github.com/mottzi/Mist) to power real-time database driven UI updates over websockets, reflecting state change without polling or page reloads.
 
+## Demo Video
+
+https://github.com/user-attachments/assets/fa76fa79-0a0f-4a2b-893b-bee7b3e4cec8
