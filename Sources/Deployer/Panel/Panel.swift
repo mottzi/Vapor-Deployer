@@ -100,6 +100,7 @@ extension Panel {
             version: deployerVersion,
             port: String(config.port),
             deployerDirectory: config.deployerDirectory,
+            deployerBranch: config.deployerBranch,
             mistSocket: config.socketPath.displayPath,
             panelRoute: config.panelRoute.displayPath,
             repositoryWebPageURL: DeployerVersion.repositoryWebPageURL

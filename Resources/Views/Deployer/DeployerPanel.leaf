@@ -69,10 +69,6 @@
               </div>
 
               <div class="dp-runtime-items">
-                <div class="dp-context-item dp-context-item--version">
-                  <span class="dp-context-label">Version</span>
-                  <span class="dp-context-value">#(deployer.version)</span>
-                </div>
                 <div class="dp-context-item dp-context-item--port">
                   <span class="dp-context-label">Port</span>
                   <span class="dp-context-value">#(deployer.port)</span>
@@ -81,13 +77,19 @@
                   <span class="dp-context-label">Directory</span>
                   <span class="dp-context-value" title="#(deployer.deployerDirectory)">#(deployer.deployerDirectory)</span>
                 </div>
+                <div class="dp-context-item dp-context-item--version">
+                  <span class="dp-context-label">Version</span>
+                  <span class="dp-context-value">#(deployer.version)</span>
+                </div>
+                #if(deployer.deployerBranch != "main"):
+                  <div class="dp-context-item">
+                    <span class="dp-context-label">Branch</span>
+                    <span class="dp-context-value">#(deployer.deployerBranch)</span>
+                  </div>
+                #endif
                 <div class="dp-context-item dp-context-item--socket">
                   <span class="dp-context-label">Socket</span>
                   <span class="dp-context-value">#(deployer.mistSocket)</span>
-                </div>
-                <div class="dp-context-item dp-context-item--route">
-                  <span class="dp-context-label">Route</span>
-                  <span class="dp-context-value">#(deployer.panelRoute)</span>
                 </div>
               </div>
 
