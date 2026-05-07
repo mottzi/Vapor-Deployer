@@ -135,6 +135,7 @@ extension Panel {
         let version: String
         let port: String
         let deployerDirectory: String
+        let deployerBranch: String
         let mistSocket: String
         let panelRoute: String
         let repositoryWebPageURL: String
