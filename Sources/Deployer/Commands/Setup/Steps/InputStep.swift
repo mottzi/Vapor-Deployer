@@ -18,6 +18,10 @@ struct InputStep: SetupStep {
         
         let jsonConfig = ConfigDiscovery.loadJSON(serviceUser: context.serviceUser)
         let oldSecret = jsonConfig?.webhookSecret
+        
+        if let existingBranch = jsonConfig?.deployerBranch {
+            context.deployerRepositoryBranch = existingBranch
+        }
 
         collectTargetRepository(
             discoveredRepo: metadata["APP_REPO_URL"],
@@ -143,6 +147,13 @@ extension InputStep {
         }
 
         context.buildFromSource = console.confirm("Build deployer from source?", defaultYes: false)
+        
+        if context.buildFromSource {
+            context.deployerRepositoryBranch = console.askRequired(
+                "Deployer branch",
+                default: context.deployerRepositoryBranch
+            )
+        }
         
         context.paths = SystemPaths.derive(
             serviceUser: context.serviceUser,

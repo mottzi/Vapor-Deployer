@@ -4,7 +4,7 @@ import Foundation
 final class SetupContext: SystemContext {
 
     let deployerRepositoryURL = DeployerVersion.repositoryWebPageURL + ".git"
-    let deployerRepositoryBranch = "main"
+    var deployerRepositoryBranch = "main"
     let appBranch = "main"
     let deployerBuildMode = "release"
     let appBuildMode = "release"
