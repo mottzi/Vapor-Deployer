@@ -26,6 +26,33 @@
                     <span class="dp-wordmark-title">Deployer</span>
                   </a>
                 </h1>
+
+                <div
+                  class="dp-runtime-queue-slot"
+                  mist-container="QueueComponent"
+                  mist-insert-position="beforeend"
+                >
+                  #if(target.queueIsDeploying):
+                    <span
+                      class="dp-supervisor-badge dp-supervisor-badge--queue-locked"
+                      mist-component="QueueComponent"
+                      title="Queue locked — deployment in progress"
+                      aria-label="Queue locked — deployment in progress"
+                    >
+                      Locked
+                    </span>
+                  #else:
+                    <span
+                      class="dp-supervisor-badge dp-supervisor-badge--queue-unlocked"
+                      mist-component="QueueComponent"
+                      title="Queue unlocked — ready"
+                      aria-label="Queue unlocked — ready"
+                    >
+                      Unlocked
+                    </span>
+                  #endif
+                </div>
+
                 <!-- On mobile, sign-out moves inside brand row via CSS order -->
                 <div class="dp-runtime-actions dp-runtime-actions--mobile">
                   <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
@@ -39,32 +66,6 @@
                     </button>
                   </form>
                 </div>
-              </div>
-
-              <div
-                class="dp-runtime-queue-slot"
-                mist-container="QueueComponent"
-                mist-insert-position="beforeend"
-              >
-                #if(target.queueIsDeploying):
-                  <span
-                    class="dp-supervisor-badge dp-supervisor-badge--queue-locked"
-                    mist-component="QueueComponent"
-                    title="Queue locked — deployment in progress"
-                    aria-label="Queue locked — deployment in progress"
-                  >
-                    Locked
-                  </span>
-                #else:
-                  <span
-                    class="dp-supervisor-badge dp-supervisor-badge--queue-unlocked"
-                    mist-component="QueueComponent"
-                    title="Queue unlocked — ready"
-                    aria-label="Queue unlocked — ready"
-                  >
-                    Unlocked
-                  </span>
-                #endif
               </div>
 
               <div class="dp-runtime-items">
