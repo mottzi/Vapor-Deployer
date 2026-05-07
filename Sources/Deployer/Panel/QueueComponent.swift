@@ -14,7 +14,7 @@ struct QueueComponent: LiveComponent {
     func body(state: QueueState) -> some HTML {
         span(
             .class("dp-supervisor-badge \(state.badgeClass)"),
-            .mistComponent(value: self.name),
+            .mistComponent(self.name),
             .title(state.tooltip),
             .custom(name: "aria-label", value: state.tooltip)
         ) {

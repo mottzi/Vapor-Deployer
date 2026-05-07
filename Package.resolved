@@ -1,5 +1,5 @@
 {
-  "originHash" : "d9e3ff365a994a04aab616c05603a54bf8bceadced4ac326706067bc3534f98d",
+  "originHash" : "4d47fdc91cdb6ddd991b18997737823daf28d06085fa270215c18ba010046996",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -335,12 +335,21 @@
       }
     },
     {
+      "identity" : "vapor-elementary",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor-community/vapor-elementary.git",
+      "state" : {
+        "revision" : "e1326d2439a9d4bd271c24b9765c195f7f793e77",
+        "version" : "0.2.2"
+      }
+    },
+    {
       "identity" : "vapor-mist",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mottzi/Vapor-Mist.git",
       "state" : {
-        "revision" : "9777b916e11fd1d5370d71d323eadb2b47359bd0",
-        "version" : "0.20.2"
+        "branch" : "dev",
+        "revision" : "f76a389896af40148d04da8df5dcbc289b83de59"
       }
     },
     {

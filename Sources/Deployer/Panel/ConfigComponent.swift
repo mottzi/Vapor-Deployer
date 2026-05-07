@@ -10,7 +10,7 @@ struct ConfigComponent: ManualComponent {
     func body(state: ConfigState) -> some HTML {
         div(
             .style("display: contents;"),
-            .mistComponent(value: state.componentName)
+            .mistComponent(state.componentName)
         ) {
             for field in state.fields {
                 div(.class(Self.contextItemClass(for: field))) {
