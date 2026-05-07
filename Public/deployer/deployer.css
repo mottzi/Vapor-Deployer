@@ -260,7 +260,6 @@ body {
     min-width: 0;
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     align-content: flex-start;
     height: 60px;
     gap: 0;
@@ -500,7 +499,6 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 .dp-target-meta-strip {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     align-content: flex-start;
     height: 64px;
     gap: 0;
@@ -1438,7 +1436,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         flex-wrap: nowrap;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
         gap: 10px;
         overflow: visible;
         border-top: 1px solid var(--border-subtle);
@@ -1449,7 +1447,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         height: auto;
         flex-wrap: nowrap;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
         gap: 10px;
         overflow: visible;
     }
