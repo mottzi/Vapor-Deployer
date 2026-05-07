@@ -146,7 +146,7 @@
                 mist-insert-position="beforeend"
                 mist-ssr="true"
               >
-                <div class="dp-target-actions" mist-component="StatusActionsComponent" mist-ssr="true">
+                <div class="dp-target-actions" mist-component="StatusActionsComponent" mist-delay="1000" mist-ssr="true">
                   #if(target.isRunning):
                     <button
                       class="dp-supervisor-btn dp-supervisor-btn--stop"
