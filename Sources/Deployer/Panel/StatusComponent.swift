@@ -14,7 +14,7 @@ struct StatusComponent: LiveComponent {
         await state.set(StatusState(currentStatus))
     }
     
-    /// Badge only — Stop/Restart live in `DeployerPanel.leaf` and route actions via `mist-actions-for`.
+    /// Badge only — Stop/Restart live in `StatusActionsComponent`.
     func body(state: StatusState) -> some HTML {
         div(
             .class("dp-product-status"),
@@ -28,11 +28,11 @@ struct StatusComponent: LiveComponent {
     
     init(
         product: String,
-        status: ServiceStatus
+        state: LiveState<StatusState>
     ) {
         self.product = product
         self.name = "StatusComponent-\(product)"
-        self.state = LiveState(of: StatusState(status))
+        self.state = state
         self.actions = [
             RestartAction(productName: product, reactiveState: state),
             StopAction(productName: product, reactiveState: state)
@@ -41,21 +41,46 @@ struct StatusComponent: LiveComponent {
 
 }
 
-struct StatusState: ComponentData {
+struct StatusActionsComponent: LiveComponent {
 
-    let status: String
-    let isRunning: Bool
-    let isTransitioning: Bool
+    var name: String
+    let product: String
+    var actions: [Action]
+    let state: LiveState<StatusState>
 
-    init(_ status: ServiceStatus) {
-        self.status = status.label
-        self.isRunning = status.isRunning
-        self.isTransitioning = status.isTransitioning
+    func refresh(app: Application) async {
+        // Shared state is updated via StatusComponent or external events
+    }
+
+    func body(state: StatusState) -> some HTML {
+        div(
+            .class("dp-target-actions"),
+            .mistComponent("StatusActionsComponent-\(product)"),
+            .mistSSR(true)
+        ) {
+            if state.isRunning {
+                stopButton
+            }
+            startButton
+        }
+    }
+
+    init(
+        product: String,
+        state: LiveState<StatusState>
+    ) {
+        self.product = product
+        self.name = "StatusActionsComponent-\(product)"
+        self.state = state
+        self.actions = [
+            RestartAction(productName: product, reactiveState: state),
+            StopAction(productName: product, reactiveState: state)
+        ]
     }
 
 }
 
-extension StatusComponent {
+extension StatusActionsComponent {
     
     var stopButton: some HTML {
         button(
@@ -92,6 +117,20 @@ extension StatusComponent {
         }
     }
     
+}
+
+struct StatusState: ComponentData {
+
+    let status: String
+    let isRunning: Bool
+    let isTransitioning: Bool
+
+    init(_ status: ServiceStatus) {
+        self.status = status.label
+        self.isRunning = status.isRunning
+        self.isTransitioning = status.isTransitioning
+    }
+
 }
 
 extension StatusComponent {
@@ -133,66 +172,62 @@ extension StatusComponent {
     
 }
 
-extension StatusComponent {
+struct RestartAction: Action {
 
-    struct RestartAction: Action {
+    let name = "restart"
+    let productName: String
+    let reactiveState: LiveState<StatusState>
 
-        let name = "restart"
-        let productName: String
-        let reactiveState: LiveState<StatusState>
+    func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
-        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
-
-            do {
-                let manager = app.deployer.serviceManager
-                let status = await manager.status(product: productName)
-                switch status.isRunning {
-                    case true: await reactiveState.set(StatusState(.stopping))
-                    case false: await reactiveState.set(StatusState(.starting))
-                }
-
-                try await manager.restart(product: productName)
-                await reactiveState.set(StatusState(.starting))
-
-                let finalStatus = await manager.status(product: productName)
-                await reactiveState.set(StatusState(finalStatus))
-
-                return .success()
-            } catch {
-                let manager = app.deployer.serviceManager
-                let recoveryStatus = await manager.status(product: productName)
-                await reactiveState.set(StatusState(recoveryStatus))
-                return .failure(error.localizedDescription)
+        do {
+            let manager = app.deployer.serviceManager
+            let status = await manager.status(product: productName)
+            switch status.isRunning {
+                case true: await reactiveState.set(StatusState(.stopping))
+                case false: await reactiveState.set(StatusState(.starting))
             }
-        }
 
+            try await manager.restart(product: productName)
+            await reactiveState.set(StatusState(.starting))
+
+            let finalStatus = await manager.status(product: productName)
+            await reactiveState.set(StatusState(finalStatus))
+
+            return .success()
+        } catch {
+            let manager = app.deployer.serviceManager
+            let recoveryStatus = await manager.status(product: productName)
+            await reactiveState.set(StatusState(recoveryStatus))
+            return .failure(error.localizedDescription)
+        }
     }
 
-    struct StopAction: Action {
+}
 
-        let name = "stop"
-        let productName: String
-        let reactiveState: LiveState<StatusState>
+struct StopAction: Action {
 
-        func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
+    let name = "stop"
+    let productName: String
+    let reactiveState: LiveState<StatusState>
 
-            do {
-                let manager = app.deployer.serviceManager
-                await reactiveState.set(StatusState(.stopping))
-                try await manager.stop(product: productName)
+    func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
-                let finalStatus = await manager.status(product: productName)
-                await reactiveState.set(StatusState(finalStatus))
+        do {
+            let manager = app.deployer.serviceManager
+            await reactiveState.set(StatusState(.stopping))
+            try await manager.stop(product: productName)
 
-                return .success()
-            } catch {
-                let manager = app.deployer.serviceManager
-                let recoveryStatus = await manager.status(product: productName)
-                await reactiveState.set(StatusState(recoveryStatus))
-                return .failure(error.localizedDescription)
-            }
+            let finalStatus = await manager.status(product: productName)
+            await reactiveState.set(StatusState(finalStatus))
+
+            return .success()
+        } catch {
+            let manager = app.deployer.serviceManager
+            let recoveryStatus = await manager.status(product: productName)
+            await reactiveState.set(StatusState(recoveryStatus))
+            return .failure(error.localizedDescription)
         }
-
     }
 
 }
