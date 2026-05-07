@@ -18,7 +18,8 @@ struct StatusComponent: LiveComponent {
     func body(state: StatusState) -> some HTML {
         div(
             .class("dp-product-status"),
-            .mistComponent("StatusComponent-\(product)")
+            .mistComponent("StatusComponent-\(product)"),
+            .mistDelay(ms: 1000)
         ) {
             statusBadge(of: state)
         }
