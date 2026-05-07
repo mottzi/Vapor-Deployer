@@ -19,7 +19,8 @@ struct StatusComponent: LiveComponent {
         div(
             .class("dp-product-status"),
             .mistComponent("StatusComponent-\(product)"),
-            .mistDelay(ms: 1000)
+            .mistDelay(ms: 1000),
+            .mistSSR(true)
         ) {
             statusBadge(of: state)
         }

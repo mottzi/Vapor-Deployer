@@ -118,8 +118,9 @@
                   class="dp-status-badge-slot"
                   mist-container="StatusComponent-#(target.name)"
                   mist-insert-position="beforeend"
+                  mist-ssr="true"
                 >
-                  <div class="dp-product-status" mist-component="StatusComponent-#(target.name)" mist-delay="1000">
+                  <div class="dp-product-status" mist-component="StatusComponent-#(target.name)" mist-delay="1000" mist-ssr="true">
                     #if(target.isRunning):
                       <span class="dp-supervisor-badge dp-supervisor-badge--running">running</span>
                     #else:
