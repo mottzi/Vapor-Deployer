@@ -68,21 +68,27 @@ extension Deployer {
         let configComponent = ConfigComponent(using: config)
         let queueComponent = QueueComponent()
         
-        let statusState = LiveState(of: StatusState(await serviceManager.status(product: config.target.name)))
+        let initialStatus = await serviceManager.status(product: config.target.name)
+        let badgeState = LiveState(of: StatusState(initialStatus))
+        let actionsState = LiveState(of: StatusState(initialStatus))
+        
         let statusComponent = StatusComponent(
             product: config.target.name,
-            state: statusState
+            badgeState: badgeState,
+            actionsState: actionsState
         )
         let statusActionsComponent = StatusActionsComponent(
             product: config.target.name,
-            state: statusState
+            badgeState: badgeState,
+            actionsState: actionsState
         )
 
         useQueue(
             config: config,
             queueState: queueComponent.state,
             onStatusChange: { status in
-                await statusState.set(StatusState(status))
+                await badgeState.set(StatusState(status))
+                await actionsState.set(StatusState(status))
             }
         )
         useWebhook(config: config)

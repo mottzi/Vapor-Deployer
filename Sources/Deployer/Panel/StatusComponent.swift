@@ -28,14 +28,15 @@ struct StatusComponent: LiveComponent {
     
     init(
         product: String,
-        state: LiveState<StatusState>
+        badgeState: LiveState<StatusState>,
+        actionsState: LiveState<StatusState>
     ) {
         self.product = product
         self.name = "StatusComponent"
-        self.state = state
+        self.state = badgeState
         self.actions = [
-            RestartAction(productName: product, reactiveState: state),
-            StopAction(productName: product, reactiveState: state)
+            RestartAction(productName: product, badgeState: badgeState, actionsState: actionsState),
+            StopAction(productName: product, badgeState: badgeState, actionsState: actionsState)
         ]
     }
 
@@ -67,14 +68,15 @@ struct StatusActionsComponent: LiveComponent {
 
     init(
         product: String,
-        state: LiveState<StatusState>
+        badgeState: LiveState<StatusState>,
+        actionsState: LiveState<StatusState>
     ) {
         self.product = product
         self.name = "StatusActionsComponent"
-        self.state = state
+        self.state = actionsState
         self.actions = [
-            RestartAction(productName: product, reactiveState: state),
-            StopAction(productName: product, reactiveState: state)
+            RestartAction(productName: product, badgeState: badgeState, actionsState: actionsState),
+            StopAction(productName: product, badgeState: badgeState, actionsState: actionsState)
         ]
     }
 
@@ -176,7 +178,8 @@ struct RestartAction: Action {
 
     let name = "restart"
     let productName: String
-    let reactiveState: LiveState<StatusState>
+    let badgeState: LiveState<StatusState>
+    let actionsState: LiveState<StatusState>
 
     func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
@@ -184,21 +187,28 @@ struct RestartAction: Action {
             let manager = app.deployer.serviceManager
             let status = await manager.status(product: productName)
             switch status.isRunning {
-                case true: await reactiveState.set(StatusState(.stopping))
-                case false: await reactiveState.set(StatusState(.starting))
+                case true: 
+                    await badgeState.set(StatusState(.stopping))
+                    await actionsState.set(StatusState(.stopping))
+                case false: 
+                    await badgeState.set(StatusState(.starting))
+                    await actionsState.set(StatusState(.starting))
             }
 
             try await manager.restart(product: productName)
-            await reactiveState.set(StatusState(.starting))
+            await badgeState.set(StatusState(.starting))
+            await actionsState.set(StatusState(.starting))
 
             let finalStatus = await manager.status(product: productName)
-            await reactiveState.set(StatusState(finalStatus))
+            await badgeState.set(StatusState(finalStatus))
+            await actionsState.set(StatusState(finalStatus))
 
             return .success()
         } catch {
             let manager = app.deployer.serviceManager
             let recoveryStatus = await manager.status(product: productName)
-            await reactiveState.set(StatusState(recoveryStatus))
+            await badgeState.set(StatusState(recoveryStatus))
+            await actionsState.set(StatusState(recoveryStatus))
             return .failure(error.localizedDescription)
         }
     }
@@ -209,23 +219,27 @@ struct StopAction: Action {
 
     let name = "stop"
     let productName: String
-    let reactiveState: LiveState<StatusState>
+    let badgeState: LiveState<StatusState>
+    let actionsState: LiveState<StatusState>
 
     func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
         do {
             let manager = app.deployer.serviceManager
-            await reactiveState.set(StatusState(.stopping))
+            await badgeState.set(StatusState(.stopping))
+            await actionsState.set(StatusState(.stopping))
             try await manager.stop(product: productName)
 
             let finalStatus = await manager.status(product: productName)
-            await reactiveState.set(StatusState(finalStatus))
+            await badgeState.set(StatusState(finalStatus))
+            await actionsState.set(StatusState(finalStatus))
 
             return .success()
         } catch {
             let manager = app.deployer.serviceManager
             let recoveryStatus = await manager.status(product: productName)
-            await reactiveState.set(StatusState(recoveryStatus))
+            await badgeState.set(StatusState(recoveryStatus))
+            await actionsState.set(StatusState(recoveryStatus))
             return .failure(error.localizedDescription)
         }
     }
