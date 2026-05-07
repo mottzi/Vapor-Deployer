@@ -18,7 +18,7 @@ struct StatusComponent: LiveComponent {
     func body(state: StatusState) -> some HTML {
         div(
             .class("dp-product-status"),
-            .mistComponent("StatusComponent-\(product)"),
+            .mistComponent(name),
             .mistDelay(ms: 1000),
             .mistSSR(true)
         ) {
@@ -31,7 +31,7 @@ struct StatusComponent: LiveComponent {
         state: LiveState<StatusState>
     ) {
         self.product = product
-        self.name = "StatusComponent-\(product)"
+        self.name = "StatusComponent"
         self.state = state
         self.actions = [
             RestartAction(productName: product, reactiveState: state),
@@ -55,7 +55,7 @@ struct StatusActionsComponent: LiveComponent {
     func body(state: StatusState) -> some HTML {
         div(
             .class("dp-target-actions"),
-            .mistComponent("StatusActionsComponent-\(product)"),
+            .mistComponent(name),
             .mistSSR(true)
         ) {
             if state.isRunning {
@@ -70,7 +70,7 @@ struct StatusActionsComponent: LiveComponent {
         state: LiveState<StatusState>
     ) {
         self.product = product
-        self.name = "StatusActionsComponent-\(product)"
+        self.name = "StatusActionsComponent"
         self.state = state
         self.actions = [
             RestartAction(productName: product, reactiveState: state),

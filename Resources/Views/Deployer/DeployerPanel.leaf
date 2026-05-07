@@ -116,11 +116,11 @@
                 <h2 class="dp-target-name">#(target.name)</h2>
                 <div
                   class="dp-status-badge-slot"
-                  mist-container="StatusComponent-#(target.name)"
+                  mist-container="StatusComponent"
                   mist-insert-position="beforeend"
                   mist-ssr="true"
                 >
-                  <div class="dp-product-status" mist-component="StatusComponent-#(target.name)" mist-delay="1000" mist-ssr="true">
+                  <div class="dp-product-status" mist-component="StatusComponent" mist-delay="1000" mist-ssr="true">
                     #if(target.isRunning):
                       <span class="dp-supervisor-badge dp-supervisor-badge--running">running</span>
                     #else:
@@ -142,11 +142,11 @@
               <!-- Right: stop + restart -->
               <div
                 class="dp-runtime-actions dp-runtime-actions--desktop"
-                mist-container="StatusActionsComponent-#(target.name)"
+                mist-container="StatusActionsComponent"
                 mist-insert-position="beforeend"
                 mist-ssr="true"
               >
-                <div class="dp-target-actions" mist-component="StatusActionsComponent-#(target.name)" mist-ssr="true">
+                <div class="dp-target-actions" mist-component="StatusActionsComponent" mist-ssr="true">
                   #if(target.isRunning):
                     <button
                       class="dp-supervisor-btn dp-supervisor-btn--stop"
