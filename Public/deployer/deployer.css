@@ -405,6 +405,15 @@ body {
     white-space: nowrap;
 }
 
+.dp-target-name a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.dp-target-name a:hover {
+    opacity: 0.8;
+}
+
 .dp-status-badge-slot {
     display: flex;
     align-items: center;
