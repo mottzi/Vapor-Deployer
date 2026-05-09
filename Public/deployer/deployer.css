@@ -1064,6 +1064,46 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     padding: 0 !important;
 }
 
+.dp-output-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.dp-copy-log-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    opacity: 0;
+    z-index: 10;
+}
+
+.dp-output-wrapper:hover .dp-copy-log-btn {
+    opacity: 1;
+}
+
+.dp-copy-log-btn:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+}
+
+.dp-copy-log-btn.copied {
+    color: var(--c-deployed);
+    border-color: var(--c-deployed-border);
+    background: var(--c-deployed-bg);
+}
+
 .dp-output-pre {
     margin: 0;
     max-width: 100%;
