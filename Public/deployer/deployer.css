@@ -599,12 +599,12 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    padding: 6px 12px;
+    gap: 6px;
+    padding: 5px 10px;
     border-radius: var(--radius);
     border: 1px solid transparent;
     font-family: var(--font-sans);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
@@ -614,7 +614,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 .dp-supervisor-btn--stop,
 .dp-supervisor-btn--restart {
     background: transparent;
-    color: var(--text-muted);
+    color: var(--text-subtle);
     border: 1px solid var(--border);
 }
 

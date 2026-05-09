@@ -22,7 +22,6 @@
               <div class="dp-runtime-brand">
                 <h1 class="dp-runtime-brand-title">
                   <a class="dp-wordmark" href="#(deployer.repositoryWebPageURL)" target="_blank" rel="noopener noreferrer">
-                    <img class="dp-wordmark-image" src="#(deployer.panelRoute)/mottzi.png" alt="" width="32" height="32">
                     <span class="dp-wordmark-title">Deployer</span>
                   </a>
                 </h1>
