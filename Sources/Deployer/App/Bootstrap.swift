@@ -65,7 +65,7 @@ extension Deployer {
 
     func configurePanel(config: Configuration) async throws {
         let rowComponent = RowComponent(productName: config.target.name)
-//        let configComponent = ConfigComponent(using: config)
+        let configComponent = ConfigComponent(using: config)
         let queueComponent = QueueComponent()
         
         let initialStatus = await serviceManager.status(product: config.target.name)
@@ -95,7 +95,7 @@ extension Deployer {
         usePanel(
             config: config,
             row: rowComponent,
-//            configComponent: configComponent
+            configComponent: configComponent
         )
 
         try await app.mist.use {
@@ -103,7 +103,7 @@ extension Deployer {
             statusComponent
             statusActionsComponent
             queueComponent
-//            configComponent
+            configComponent
         }
     }
 

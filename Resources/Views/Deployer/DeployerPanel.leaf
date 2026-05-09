@@ -134,6 +134,16 @@
                 </div>
               </div>
 
+              <!-- Center: Configuration items -->
+              <div
+                class="dp-runtime-items"
+                mist-container="#(target.configComponentName)"
+                mist-insert-position="beforeend"
+                mist-ssr="true"
+              >
+                #unsafeHTML(target.configInitialHTML)
+              </div>
+
               <!-- Right: stop + restart -->
               <div
                 class="dp-runtime-actions dp-runtime-actions--desktop"
