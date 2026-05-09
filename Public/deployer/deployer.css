@@ -203,6 +203,7 @@ body {
 
 .dp-runtime-brand {
     flex: 0 0 auto;
+    width: 260px;
     margin-right: 24px;
     display: flex;
     align-items: center;
