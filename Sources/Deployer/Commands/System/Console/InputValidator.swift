@@ -36,9 +36,10 @@ enum InputValidator {
     }
 
     static func parseGitHubSSHURL(_ value: String) -> (owner: String, repo: String)? {
-
-        let pattern = #"^git@github\.com:([^/]+)/([^/]+?)(\.git)?$"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }        
+        
+        let pattern = #"^git@github\.com:([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)(\.git)?$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        
         let range = NSRange(value.startIndex..<value.endIndex, in: value)
         guard let match = regex.firstMatch(in: value, range: range), match.numberOfRanges >= 3 else { return nil }
         guard let ownerRange = Range(match.range(at: 1), in: value) else { return nil }
