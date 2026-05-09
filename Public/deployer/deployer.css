@@ -1071,16 +1071,16 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
 .dp-copy-log-btn {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 13px;
+    right: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 28px;
     height: 28px;
     border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--bg-surface);
+    border: none;
+    background: transparent;
     color: var(--text-muted);
     cursor: pointer;
     transition: all 0.15s ease;
