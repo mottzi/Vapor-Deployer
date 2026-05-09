@@ -116,7 +116,13 @@
             <div class="dp-runtime-bar">
               <!-- Left: app name + running badge -->
               <div class="dp-runtime-brand">
-                <h2 class="dp-target-name">#(target.name)</h2>
+                <h2 class="dp-target-name">
+                  #if(target.repositoryURL):
+                    <a class="dp-wordmark" href="#(target.repositoryURL)" target="_blank" rel="noopener noreferrer">#(target.name)</a>
+                  #else:
+                    #(target.name)
+                  #endif
+                </h2>
                 <div
                   class="dp-status-badge-slot"
                   mist-container="StatusComponent"

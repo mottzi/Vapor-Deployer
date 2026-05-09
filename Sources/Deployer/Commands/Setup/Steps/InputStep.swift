@@ -286,6 +286,7 @@ extension InputStep {
             ("Service manager", context.serviceManagerKind.rawValue),
             ("App name", context.appName),
             ("App repo", context.appRepositoryURL),
+            ("App repo web URL", context.appRepositoryWebURL),
             ("App branch", context.appBranch),
             ("App directory", paths.appDirectory),
             ("Deployer build mode", context.deployerBuildMode),

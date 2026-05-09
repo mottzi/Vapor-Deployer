@@ -15,6 +15,7 @@ enum DeployerTemplate {
             panelRoute: context.panelRoute,
             target: TargetConfiguration(
                 name: context.productName,
+                repositoryURL: context.appRepositoryWebURL.isEmpty ? nil : context.appRepositoryWebURL,
                 directory: paths.appDirectoryRelative,
                 buildMode: context.appBuildMode,
                 pusheventPath: paths.webhookPath,
