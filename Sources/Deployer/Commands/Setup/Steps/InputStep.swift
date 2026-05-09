@@ -81,6 +81,7 @@ extension InputStep {
                 context.appRepositoryURL = repoURL
                 context.githubOwner = parsed.owner
                 context.githubRepo = parsed.repo
+                context.appRepositoryWebURL = "https://github.com/\(parsed.owner)/\(parsed.repo)"
                 break
             }
             
