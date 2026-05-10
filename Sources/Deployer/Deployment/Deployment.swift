@@ -70,7 +70,7 @@ extension Deployment {
 
 extension Deployment {
 
-    enum Status: String, Codable {
+    enum Status: String, Codable, Sendable {
         case pushed
         case running
         case canceled
@@ -84,9 +84,9 @@ extension Deployment {
 
 extension Deployment {
     
-    var computedProperties: [String: any Encodable] { [
+    var computedProperties: [String: any SendableEncodable] { [
         "durationString": durationString,
-        "displayStatus": displayStatus,
+        "displayStatus": displayStatus.rawValue,
         "shortID": shortID,
         "startedAtUnixMs": startedAtUnixMs,
         "canBeDeployed": canBeDeployed,
