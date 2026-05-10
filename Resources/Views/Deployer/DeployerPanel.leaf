@@ -39,7 +39,7 @@
                       title="Queue locked — deployment in progress"
                       aria-label="Queue locked — deployment in progress"
                     >
-                      Locked
+                      Busy
                     </span>
                   #else:
                     <span
@@ -48,7 +48,7 @@
                       title="Queue unlocked — ready"
                       aria-label="Queue unlocked — ready"
                     >
-                      Unlocked
+                      Ready
                     </span>
                   #endif
                 </div>
