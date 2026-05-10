@@ -1418,56 +1418,71 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 
     .dp-runtime-bar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "brand actions"
+            "meta meta";
         height: auto;
-        flex-direction: column;
-        align-items: stretch;
+        align-items: center;
         padding: 12px 16px;
-        gap: 0;
+        gap: 10px 12px;
     }
 
     .dp-runtime-brand {
+        grid-area: brand;
+        min-width: 0;
         margin-right: 0;
-        justify-content: space-between;
-        width: 100%;
-        padding-bottom: 10px;
+        justify-content: flex-start;
+        width: auto;
+        gap: 10px;
+        padding-bottom: 0;
     }
 
     .dp-runtime-actions--mobile {
         display: flex;
+        margin-left: auto;
     }
 
-    .dp-runtime-actions--desktop {
+    .dp-header-panel .dp-runtime-actions--desktop {
         display: none;
+    }
+
+    .dp-target-panel .dp-runtime-actions--desktop {
+        grid-area: actions;
+        display: flex;
+        margin-left: 0;
     }
 
     .dp-runtime-queue-slot {
         margin-right: 0;
-        align-self: flex-start;
-        padding-bottom: 8px;
+        align-self: center;
+        padding-bottom: 0;
     }
 
     .dp-runtime-items {
+        grid-area: meta;
         width: 100%;
         height: auto;
-        flex-wrap: nowrap;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+        align-items: start;
+        gap: 8px 14px;
         overflow: visible;
         border-top: 1px solid var(--border-subtle);
         padding-top: 10px;
     }
 
     .dp-target-meta-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
         height: auto;
-        flex-wrap: nowrap;
-        flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
+        gap: 8px 14px;
         overflow: visible;
     }
 
+    .dp-runtime-items .dp-context-item+.dp-context-item,
     .dp-target-meta-strip .dp-context-item+.dp-context-item {
         border-left: none;
         padding-left: 0;
@@ -1489,7 +1504,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         gap: 2px;
         padding: 0;
         border-left: none !important;
-        min-width: unset;
+        min-width: 0;
     }
 
     .dp-context-value {
@@ -1506,6 +1521,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
     .dp-target-name {
         font-size: 18px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .dp-config-body-inner {
@@ -1521,8 +1539,12 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         gap: 6px;
     }
 
+    .dp-target-actions {
+        gap: 6px;
+    }
+
     .dp-supervisor-btn {
-        padding: 5px 10px;
+        padding: 5px 8px;
         font-size: 12px;
     }
 
@@ -1536,7 +1558,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 }
 
-@media (max-width: 320px) {
+@media (max-width: 380px) {
     .dp-supervisor-btn--stop {
         display: none;
     }
