@@ -1548,6 +1548,19 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         font-size: 12px;
     }
 
+    .dp-target-panel .dp-supervisor-btn {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        gap: 0;
+        font-size: 0;
+    }
+
+    .dp-target-panel .dp-supervisor-btn svg {
+        width: 13px;
+        height: 13px;
+    }
+
     .dp-config-summary-pill {
         padding: 4px 10px;
         font-size: 11px;
@@ -1555,12 +1568,6 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
     .dp-tr {
         padding: 10px 16px;
-    }
-}
-
-@media (max-width: 380px) {
-    .dp-supervisor-btn--stop {
-        display: none;
     }
 }
 
