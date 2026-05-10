@@ -57,7 +57,7 @@
     --hover-bg: var(--bg-hover);
     --row-border: var(--border-subtle);
     --error-bg: #fef2f2;
-    --dp-table-columns: 140px minmax(0, 1fr) 100px 85px 80px 85px;
+    --dp-table-columns: 130px minmax(0, 1fr) 95px 85px 80px 80px;
     --dp-row-min-height: 54px;
 }
 
@@ -691,7 +691,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-th {
-    padding: 10px 20px;
+    padding: 10px 14px;
     font-family: var(--font-sans);
     font-size: 10.5px;
     font-weight: 600;
@@ -783,7 +783,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-td {
-    padding: 12px 20px;
+    padding: 12px 14px;
     min-width: 0;
     vertical-align: middle;
 }
@@ -1294,7 +1294,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     letter-spacing: -0.02em;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 560px) {
     .dp-context-item--deployerdir {
         display: none;
     }
@@ -1405,26 +1405,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 }
 
-@media (max-width: 680px) {
-    .dp-context-item--route {
-        display: none;
-    }
-
-    .dp-runtime-bar {
-        height: 56px;
-        padding: 0 16px;
-    }
-
-    .dp-tr {
-        padding: 11px 16px;
-    }
-
-    .dp-output-row.dp-output-expanded {
-        padding: 0 16px;
-    }
-}
-
-@media (max-width: 540px) {
+@media (max-width: 480px) {
     .dp-shell {
         padding: 0 0 40px;
     }
@@ -1555,7 +1536,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 320px) {
     .dp-supervisor-btn--stop {
         display: none;
     }
