@@ -1554,11 +1554,12 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         padding: 0;
         gap: 0;
         font-size: 0;
+        line-height: 0;
     }
 
     .dp-target-panel .dp-supervisor-btn svg {
-        width: 13px;
-        height: 13px;
+        width: 14px;
+        height: 14px;
     }
 
     .dp-config-summary-pill {
