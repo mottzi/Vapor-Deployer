@@ -1294,7 +1294,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     letter-spacing: -0.02em;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 768px) {
     .dp-context-item--deployerdir {
         display: none;
     }
