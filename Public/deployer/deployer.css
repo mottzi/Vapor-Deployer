@@ -275,7 +275,7 @@ body {
     flex-direction: column;
     justify-content: center;
     gap: 2px;
-    padding: 0 20px;
+    padding: 0 clamp(10px, 1.25vw, 20px);
     min-width: 0;
     flex: 0 0 auto;
     overflow: hidden;
@@ -1294,19 +1294,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     letter-spacing: -0.02em;
 }
 
-@media (max-width: 1120px) {
-    .dp-context-item {
-        padding: 0 14px;
-    }
-}
-
 @media (max-width: 768px) {
     .dp-context-item--deployerdir {
         display: none;
-    }
-
-    .dp-context-item {
-        padding: 0 12px;
     }
 
     .dp-thead {
@@ -1423,10 +1413,6 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     .dp-runtime-bar {
         height: 56px;
         padding: 0 16px;
-    }
-
-    .dp-context-item {
-        padding: 0 10px;
     }
 
     .dp-tr {
