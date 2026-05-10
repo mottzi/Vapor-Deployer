@@ -1115,6 +1115,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
 .dp-output-pre {
     margin: 0;
+    width: 100%;
     max-width: 100%;
     max-height: min(420px, 45vh);
     padding: 14px 20px;
@@ -1388,12 +1389,11 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 
     .dp-output-row.dp-output-expanded {
-        grid-template-columns: 1fr;
-        padding: 0 20px;
+        grid-template-columns: 1fr !important;
     }
 
     .dp-output-cell {
-        grid-column: 1;
+        grid-column: 1 / -1;
     }
 
     .dp-td-sm-hide {
@@ -1569,6 +1569,18 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
     .dp-tr {
         padding: 10px 16px;
+    }
+
+    .dp-output-row.dp-output-expanded {
+        padding: 0;
+    }
+
+    .dp-output-pre {
+        padding: 14px 16px;
+    }
+
+    .dp-copy-log-btn {
+        right: 16px;
     }
 }
 
