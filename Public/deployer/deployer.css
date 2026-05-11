@@ -727,7 +727,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     min-height: var(--dp-row-min-height);
 }
 
-.dp-table>.dp-tbody:last-of-type .dp-tr {
+/* If the row is the last thing in the last tbody, and it's NOT expanded, hide border.
+   If it IS expanded, the .dp-output-row becomes the last thing (handled below). */
+.dp-table>.dp-tbody:last-of-type .dp-tr:last-child {
     border-bottom: none;
 }
 
@@ -1035,6 +1037,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 .dp-output-row {
     display: none;
     width: 100%;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .dp-output-row.dp-output-expanded {
@@ -1046,8 +1049,12 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     box-sizing: border-box;
 }
 
+.dp-table>.dp-tbody:last-of-type .dp-output-row:last-child {
+    border-bottom: none;
+}
+
 .dp-output-tr {
-    border-top: 1px solid var(--border-subtle) !important;
+    /* No border-top here to avoid double lines with .dp-tr border-bottom */
 }
 
 .dp-output-tr--live {
