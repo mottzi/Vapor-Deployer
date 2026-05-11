@@ -1,5 +1,5 @@
 {
-  "originHash" : "5f961815098d75647153c478d939c8aa0d7d938cb1a330348eb56772fefaf95a",
+  "originHash" : "2026f3b966254fed6e0cabeab1b2dbf12504f448c50af2040658763adefec268",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -348,8 +348,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mottzi/Vapor-Mist.git",
       "state" : {
-        "revision" : "5ee911177c31a186691f50cd7ed66761405b0689",
-        "version" : "0.21.6"
+        "revision" : "fa6af5e66b5a465da1743ab82e9b12558b3bdc7c",
+        "version" : "0.21.7"
       }
     },
     {

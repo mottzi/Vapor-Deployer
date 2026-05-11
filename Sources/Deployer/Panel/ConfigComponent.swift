@@ -15,10 +15,7 @@ struct ConfigComponent: ManualComponent {
             for field in state.fields {
                 div(.class(Self.contextItemClass(for: field))) {
                     span(.class("dp-context-label")) { field.label }
-                    span(
-                        .class("dp-context-value"),
-                        .title(field.value)
-                    ) { field.value }
+                    span(.class("dp-context-value"), .title(field.value)) { field.value }
                 }
             }
         }

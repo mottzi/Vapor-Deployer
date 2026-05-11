@@ -108,6 +108,7 @@ extension Panel {
 
         let target = TargetContext(
             name: config.target.name,
+            repositoryURL: config.target.repositoryURL,
             directory: config.target.directory,
             buildMode: config.target.buildMode,
             deployMode: config.target.deploymentMode.rawValue,
@@ -143,6 +144,7 @@ extension Panel {
 
     struct TargetContext: Encodable {
         let name: String
+        let repositoryURL: String?
         let directory: String
         let buildMode: String
         let deployMode: String

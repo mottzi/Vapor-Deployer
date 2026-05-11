@@ -19,6 +19,7 @@ struct Configuration: Codable, Sendable {
 struct TargetConfiguration: Codable, Sendable {
 
     let name: String
+    let repositoryURL: String?
     let directory: String
     let buildMode: String
     let pusheventPath: String
@@ -167,6 +168,7 @@ extension TargetConfiguration {
         }
         return try TargetConfiguration(
             name: Configuration.trimmedValue(name, field: "target.name"),
+            repositoryURL: repositoryURL?.trimmed,
             directory: Configuration.trimmedFileSystemPath(directory, field: "target.directory", relativeTo: baseDirectoryURL),
             buildMode: Configuration.trimmedValue(buildMode, field: "target.buildMode"),
             pusheventPath: Configuration.trimmedValue(pusheventPath, field: "target.pusheventPath"),

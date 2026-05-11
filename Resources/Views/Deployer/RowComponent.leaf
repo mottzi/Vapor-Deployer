@@ -198,11 +198,24 @@
     class="dp-output-row dp-output-tr #if(context.deployment.hasLiveOutputStream):dp-output-tr--live#elseif(context.deployment.status == "failed"):dp-output-tr--failed#else:dp-output-tr--static#endif #if(state.detailsExpanded):dp-output-expanded#endif"
   >
     <td colspan="6" class="dp-output-cell">
-      #if(context.deployment.hasLiveOutputStream):
-        <pre class="dp-output-pre dp-output-pre--live" mist-stream="build-output"></pre>
-      #elseif(context.deployment.output):
-        <pre class="dp-output-pre #if(context.deployment.status == "failed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#(context.deployment.output)</pre>
-      #endif
+      <div class="dp-output-wrapper">
+        #if(context.deployment.hasLiveOutputStream):
+          <pre class="dp-output-pre dp-output-pre--live" mist-stream="build-output"></pre>
+        #elseif(context.deployment.output):
+          <pre class="dp-output-pre #if(context.deployment.status == "failed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#(context.deployment.output)</pre>
+        #endif
+        <button
+          class="dp-copy-log-btn"
+          title="Copy log to clipboard"
+          onclick="copyLogToClipboard(this)"
+          type="button"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </div>
     </td>
   </tr>
   #endif

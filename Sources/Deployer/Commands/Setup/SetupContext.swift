@@ -13,6 +13,7 @@ final class SetupContext: SystemContext {
     var serviceUser = ""
     var serviceUserUID: Int?
     var appRepositoryURL = ""
+    var appRepositoryWebURL = ""
     var githubOwner = ""
     var githubRepo = ""
     var appName = ""

@@ -19,8 +19,8 @@ struct QueueComponent: LiveComponent {
             .custom(name: "aria-label", value: state.tooltip)
         ) {
             switch state.isDeploying {
-                case true: "Locked"
-                case false: "Unlocked"
+                case true: "Busy"
+                case false: "Ready"
             }
         }
     }
