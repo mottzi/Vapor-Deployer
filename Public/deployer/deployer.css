@@ -1081,7 +1081,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 .dp-copy-log-btn {
     position: absolute;
     top: 13px;
-    right: 20px;
+    right: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1118,7 +1118,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     width: 100%;
     max-width: 100%;
     max-height: min(420px, 45vh);
-    padding: 14px 20px;
+    padding: 14px 14px;
     box-sizing: border-box;
     font-family: var(--font-mono);
     font-size: 12.5px;
@@ -1402,6 +1402,14 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
     .dp-th-mobile-hide {
         display: none !important;
+    }
+
+    .dp-output-pre {
+        padding: 14px 20px;
+    }
+
+    .dp-copy-log-btn {
+        right: 20px;
     }
 }
 
