@@ -1052,17 +1052,14 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
 .dp-output-tr--live {
     background: rgba(56, 189, 248, 0.045);
-    border-top-color: var(--c-running-border) !important;
 }
 
 .dp-output-tr--failed {
     background: var(--error-bg);
-    border-top: 1px solid var(--c-failed-border) !important;
 }
 
 .dp-output-tr--static {
     background: var(--bg-surface-inset);
-    border-top: 1px solid var(--border-subtle) !important;
 }
 
 .dp-output-cell {
