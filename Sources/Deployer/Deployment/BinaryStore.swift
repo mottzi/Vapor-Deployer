@@ -5,13 +5,18 @@ struct BinaryStore: Sendable {
 
     let target: TargetConfiguration
 
-    var deployDirectoryPath: String { "\(target.directory)/deploy" }
-    var liveBinaryPath: String { "\(deployDirectoryPath)/\(target.name)" }
-    var binariesDirectoryPath: String { "\(deployDirectoryPath)/binaries" }
+    // /home/vapor/apps/<name>/deploy
+    var deployPath: String { "\(target.directory)/deploy" }
+    
+    // /home/vapor/apps/<name>/deploy/binaries
+    var binariesPath: String { "\(deployPath)/binaries" }
+    
+    // /home/vapor/apps/<name>/deploy/<name>
+    var liveBinaryPath: String { "\(deployPath)/\(target.name)" }
 
     func binaryPath(for deployment: Deployment) throws -> String {
         guard let id = deployment.id else { throw Worker.Error.deploymentIDMissing }
-        return "\(binariesDirectoryPath)/\(id.uuidString)"
+        return "\(binariesPath)/\(id.uuidString)"
     }
 
     func hasBinary(for deployment: Deployment) -> Bool {
@@ -32,7 +37,7 @@ struct BinaryStore: Sendable {
 
         let size = try await app.threadPool.runIfActive(eventLoop: app.eventLoopGroup.any()) {
             let fileManager = FileManager.default
-            try fileManager.createDirectory(atPath: binariesDirectoryPath, withIntermediateDirectories: true)
+            try fileManager.createDirectory(atPath: binariesPath, withIntermediateDirectories: true)
             guard fileManager.fileExists(atPath: sourcePath) else { throw Worker.Error.binaryNotFound(sourcePath) }
             guard !fileManager.fileExists(atPath: destinationPath) else { throw Worker.Error.binaryAlreadyExists(destinationPath) }
             try fileManager.moveItem(atPath: sourcePath, toPath: destinationPath)
@@ -49,7 +54,7 @@ struct BinaryStore: Sendable {
 
         let size = try await app.threadPool.runIfActive(eventLoop: app.eventLoopGroup.any()) {
             let fileManager = FileManager.default
-            try fileManager.createDirectory(atPath: binariesDirectoryPath, withIntermediateDirectories: true)
+            try fileManager.createDirectory(atPath: binariesPath, withIntermediateDirectories: true)
             guard fileManager.fileExists(atPath: liveBinaryPath) else { throw Worker.Error.binaryNotFound(liveBinaryPath) }
             if fileManager.fileExists(atPath: destinationPath) {
                 try fileManager.removeItem(atPath: destinationPath)
@@ -72,7 +77,7 @@ struct BinaryStore: Sendable {
         switch target.binaryBehaviour {
         case .all:
             return
-        case .none:
+        case .off:
             let candidates = try await automaticCandidates(on: database)
             try await remove(candidates, on: database)
         case .newest(let count):

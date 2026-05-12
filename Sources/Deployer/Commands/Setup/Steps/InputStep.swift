@@ -175,14 +175,22 @@ extension InputStep {
 
     private func collectBinaryBehaviour() {
 
+        console.section("Binary retention")
+        console.info("Deployment binaries are stored on the server to allow quick rollbacks.")
+        console.info("Choose a policy for cleaning up old versions:")
+        console.info("- newest:5   Keep a fixed number of recent binaries")
+        console.info("- auto:500   Keep binaries until total size exceeds limit (MB)")
+        console.info("- all        Indefinite retention")
+        console.info("- off       Delete immediately (no rollbacks)")
+
         while true {
             let value = console.askRequired(
-                "Binary retention",
+                "Policy",
                 default: context.binaryBehaviour.setupValue
             )
 
             guard let behaviour = BinaryBehaviour.parse(value) else {
-                console.warning("Use 'newest:5', 'automatic:500', 'all', or 'none'.")
+                console.warning("Use 'newest:5', 'auto:500', 'all', or 'off'.")
                 continue
             }
 

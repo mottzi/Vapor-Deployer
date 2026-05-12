@@ -8,7 +8,7 @@ final class BinaryBehaviourTests: XCTestCase {
         XCTAssertEqual(BinaryBehaviour.parse("automatic:500"), .automatic(mb: 500))
         XCTAssertEqual(BinaryBehaviour.parse("auto 250"), .automatic(mb: 250))
         XCTAssertEqual(BinaryBehaviour.parse("all"), .all)
-        XCTAssertEqual(BinaryBehaviour.parse("none"), BinaryBehaviour.none)
+        XCTAssertEqual(BinaryBehaviour.parse("off"), .off)
     }
 
     func testSetupInputParserRejectsInvalidPolicies() {

@@ -181,7 +181,6 @@ extension Queue {
                 try await worker.restart()
 
                 deployment.finishedAt = .now
-                deployment.output = capturedOutput
                 try await store.syncMetadata(for: deployment, on: app.db)
                 try await deployment.setCurrent(on: app.db)
                 try await store.evict(on: app.db)
@@ -269,9 +268,9 @@ extension Queue {
         }
         deployment.output = finalOutput.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if !app.didShutdown {
+//        if !app.didShutdown {
             try? await deployment.save(on: app.db)
-        }
+//        }
         await buildOutput.close()
     }
     

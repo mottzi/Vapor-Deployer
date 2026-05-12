@@ -13,7 +13,7 @@ enum BinaryBehaviour: Codable, Equatable, Sendable {
     case all
     
     /// Do not retain any binaries.
-    case none
+    case off
     
 }
 
@@ -28,7 +28,7 @@ extension BinaryBehaviour {
         case .newest(let count): "newest:\(count)"
         case .automatic(let mb): "automatic:\(mb)"
         case .all: "all"
-        case .none: "none"
+        case .off: "off"
         }
     }
 
@@ -38,7 +38,7 @@ extension BinaryBehaviour {
         guard !value.isEmpty else { return nil }
 
         if value == "all" { return .all }
-        if value == "none" { return BinaryBehaviour.none }
+        if value == "off" { return .off }
 
         let separators = CharacterSet(charactersIn: ":=() ")
         let parts = value
@@ -47,10 +47,10 @@ extension BinaryBehaviour {
 
         guard parts.count == 2, let amount = Int(parts[1]), amount > 0 else { return nil }
 
-        switch parts[0] {
-        case "newest": return .newest(count: amount)
-        case "automatic", "auto": return .automatic(mb: amount)
-        default: return nil
+        return switch parts[0] {
+        case "newest": .newest(count: amount)
+        case "automatic", "auto": .automatic(mb: amount)
+        default: nil
         }
     }
 
@@ -61,11 +61,13 @@ extension BinaryBehaviour {
             guard count > 0 else {
                 throw Configuration.Error.invalidField(field, "newest count must be greater than 0")
             }
+                
         case .automatic(let mb):
             guard mb > 0 else {
                 throw Configuration.Error.invalidField(field, "automatic megabyte limit must be greater than 0")
             }
-        case .all, .none:
+                
+        case .all, .off:
             break
         }
 
