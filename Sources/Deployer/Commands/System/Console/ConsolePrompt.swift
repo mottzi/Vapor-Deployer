@@ -13,13 +13,13 @@ extension Console {
         }
     }
 
-    func askSecret(_ label: String) -> String {
-        while true {
-            let value = setupPromptSecret(label).trimmed
-            if !value.isEmpty { return value }
-            self.warning("\(label) is required. Please try again.")
-        }
-    }
+//    func askSecret(_ label: String) -> String {
+//        while true {
+//            let value = setupPromptSecret(label).trimmed
+//            if !value.isEmpty { return value }
+//            self.warning("\(label) is required. Please try again.")
+//        }
+//    }
 
 //    func askSecretConfirmed(_ label: String) -> String {
 //        while true {

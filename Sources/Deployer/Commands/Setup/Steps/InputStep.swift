@@ -241,7 +241,8 @@ extension InputStep {
         )
         
         while true {
-            context.githubToken = console.askSecret("GitHub token")
+//            context.githubToken = console.askSecret("GitHub token")
+            context.githubToken = console.askRequired("GitHub token")
             do {
                 try await verifyGitHubAccess()
                 return
