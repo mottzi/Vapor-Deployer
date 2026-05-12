@@ -88,7 +88,7 @@ struct BinaryStore: Sendable {
             var totalBytes = try candidates.reduce(Int64(0)) { total, deployment in
                 total + (try binaryByteCount(for: deployment) ?? 0)
             }
-            let limitBytes = Int64(mb) * 1_048_576
+            let limitBytes = Int64(mb) * 1_000_000
             var evicted: [Deployment] = []
 
             while totalBytes > limitBytes, !candidates.isEmpty {
@@ -166,7 +166,7 @@ extension BinaryStore {
     static func roundedMegabytes(atPath path: String) throws -> Int {
         let attributes = try FileManager.default.attributesOfItem(atPath: path)
         let bytes = (attributes[.size] as? NSNumber)?.doubleValue ?? 0
-        return Int((bytes / 1_048_576).rounded())
+        return Int((bytes / 1_000_000).rounded())
     }
 
 }
