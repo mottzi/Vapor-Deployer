@@ -42,25 +42,48 @@ extension Worker {
     }
 
     func move() async throws {
+        let buildPath = "\(target.directory)/.build/\(target.buildMode)/\(deployment.product)"
+        let deployPath = "\(target.directory)/deploy/\(deployment.product)"
+        try await replaceLiveBinary(from: buildPath, to: deployPath, transfer: .move)
+    }
+
+    func restore(from store: BinaryStore) async throws {
+        let binaryPath = try store.binaryPath(for: deployment)
+        try await replaceLiveBinary(from: binaryPath, to: store.liveBinaryPath, transfer: .copy)
+    }
+
+}
+
+extension Worker {
+
+    private enum BinaryTransfer: Sendable {
+        case copy
+        case move
+    }
+
+    private func replaceLiveBinary(from sourcePath: String, to deployPath: String, transfer: BinaryTransfer) async throws {
 
         let eventLoop = app.eventLoopGroup.any()
         let threadPool = app.threadPool
 
-        let buildPath = "\(target.directory)/.build/\(target.buildMode)/\(deployment.product)"
-        let deployDir = "\(target.directory)/deploy"
-        let deployPath = "\(deployDir)/\(deployment.product)"
+        let deployDir = URL(fileURLWithPath: deployPath).deletingLastPathComponent().path
         let backupPath = "\(deployDir)/\(deployment.product).old"
 
         try await threadPool.runIfActive(eventLoop: eventLoop) {
             let fileManager = FileManager.default
             try fileManager.createDirectory(atPath: deployDir, withIntermediateDirectories: true)
 
-            guard fileManager.fileExists(atPath: buildPath) else { throw Error.binaryNotFound(buildPath) }
+            guard fileManager.fileExists(atPath: sourcePath) else { throw Error.binaryNotFound(sourcePath) }
             if fileManager.fileExists(atPath: backupPath) { try fileManager.removeItem(atPath: backupPath) }
             if fileManager.fileExists(atPath: deployPath) { try fileManager.moveItem(atPath: deployPath, toPath: backupPath) }
 
             do {
-                try fileManager.moveItem(atPath: buildPath, toPath: deployPath)
+                switch transfer {
+                case .copy:
+                    try fileManager.copyItem(atPath: sourcePath, toPath: deployPath)
+                case .move:
+                    try fileManager.moveItem(atPath: sourcePath, toPath: deployPath)
+                }
                 if fileManager.fileExists(atPath: backupPath) { try? fileManager.removeItem(atPath: backupPath) }
             } catch {
                 let moveError = error
@@ -172,4 +195,3 @@ actor MistStreamRelay {
     }
 
 }
-

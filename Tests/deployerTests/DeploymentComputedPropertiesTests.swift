@@ -28,8 +28,26 @@ final class DeploymentComputedPropertiesTests: XCTestCase {
         XCTAssertEqual(properties["startedAtUnixMs"] as? Int, 1_000_000)
         XCTAssertEqual(properties["durationString"] as? String, "2.5s")
         XCTAssertEqual(properties["canBeDeployed"] as? Bool, true)
+        XCTAssertEqual(properties["canSaveBinary"] as? Bool, true)
+        XCTAssertEqual(properties["canRestoreBinary"] as? Bool, false)
+        XCTAssertEqual(properties["hasSavedBinary"] as? Bool, false)
         XCTAssertEqual(properties["hasDetails"] as? Bool, false)
         XCTAssertEqual(properties["hasLiveOutputStream"] as? Bool, false)
+    }
+
+    func testSavedBinaryComputedProperties() {
+        let deployment = Deployment(
+            product: "mottzi",
+            status: .success,
+            commitMessage: "template fix",
+            commitID: "abcdef123456",
+            branch: "dev"
+        )
+        deployment.binarySizeMB = 18
+
+        XCTAssertEqual(deployment.hasSavedBinary, true)
+        XCTAssertEqual(deployment.canSaveBinary, false)
+        XCTAssertEqual(deployment.canRestoreBinary, true)
     }
 
 }

@@ -79,6 +79,20 @@ actor Queue {
     
     @discardableResult
     func deploy(deployment: Deployment, target: TargetConfiguration) async -> StartResult {
+        await start(deployment: deployment, target: target, mode: .deploy)
+    }
+
+    @discardableResult
+    func saveBinary(deployment: Deployment, target: TargetConfiguration) async -> StartResult {
+        await start(deployment: deployment, target: target, mode: .saveBinary)
+    }
+
+    @discardableResult
+    func restoreBinary(deployment: Deployment, target: TargetConfiguration) async -> StartResult {
+        await start(deployment: deployment, target: target, mode: .restoreBinary)
+    }
+
+    private func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async -> StartResult {
         
         guard !isDeploying else { return .queueBusy }
         
@@ -99,13 +113,19 @@ actor Queue {
             return .failure("Failed to start deployment: \(error.localizedDescription)")
         }
         
-        Task { await self.drainQueue(startingWith: deployment, initialTarget: target) }
+        Task { await self.run(mode: mode, startingWith: deployment, initialTarget: target) }
         return .started
     }
     
 }
 
 extension Queue {
+
+    enum JobMode: Sendable {
+        case deploy
+        case saveBinary
+        case restoreBinary
+    }
     
     enum StartResult: Sendable {
         case started
@@ -116,6 +136,64 @@ extension Queue {
     func updateUI() async {
         let newState = QueueState(isDeploying: isDeploying)
         await queueState.set(newState)
+    }
+
+    func run(mode: JobMode, startingWith initialDeployment: Deployment, initialTarget: TargetConfiguration) async {
+        switch mode {
+        case .deploy:
+            await drainQueue(startingWith: initialDeployment, initialTarget: initialTarget)
+        case .saveBinary, .restoreBinary:
+            await runSingle(deployment: initialDeployment, target: initialTarget, mode: mode)
+        }
+
+        isDeploying = false
+        await updateUI()
+    }
+
+    func runSingle(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async {
+        let worker = Worker(
+            deployment: deployment,
+            target: target,
+            app: app,
+            onStatusChange: onStatusChange
+        )
+        let store = BinaryStore(target: target)
+        let buildOutput = MistStreamRelay(app: app, deployment: deployment)
+
+        var capturedOutput: String?
+        do {
+            await buildOutput.start()
+
+            switch mode {
+            case .saveBinary:
+                try await worker.checkout()
+                capturedOutput = try await worker.build(streamingTo: buildOutput)
+                await buildOutput.flush()
+                try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
+
+                deployment.status = .success
+                deployment.finishedAt = .now
+                deployment.output = capturedOutput
+                try await deployment.save(on: app.db)
+
+            case .restoreBinary:
+                try await worker.restore(from: store)
+                try await worker.restart()
+
+                deployment.finishedAt = .now
+                deployment.output = capturedOutput
+                try await store.syncMetadata(for: deployment, on: app.db)
+                try await deployment.setCurrent(on: app.db)
+                try await store.evict(on: app.db)
+
+            case .deploy:
+                preconditionFailure("runSingle does not execute deploy jobs")
+            }
+
+            await buildOutput.close()
+        } catch {
+            await fail(deployment: deployment, buildOutput: buildOutput, capturedOutput: capturedOutput, error: error)
+        }
     }
     
     func drainQueue(startingWith initialDeployment: Deployment, initialTarget: TargetConfiguration) async {
@@ -146,8 +224,11 @@ extension Queue {
                 try await currentDeployment.save(on: app.db)
                 
                 guard let nextDeployment = try await findNextDeployment(after: currentDeployment) else {
-                    try await currentDeployment.setCurrent(on: app.db)
                     try await worker.restart()
+                    let store = BinaryStore(target: currentTarget)
+                    try await store.storeLiveBinary(for: currentDeployment, app: app, manually: false)
+                    try await currentDeployment.setCurrent(on: app.db)
+                    try await store.evict(on: app.db)
                     await buildOutput.close()
                     break
                 }
@@ -160,32 +241,38 @@ extension Queue {
                 currentTarget = config.target
                 currentDeployment = nextDeployment
             } catch {
-                await buildOutput.flush()
-                currentDeployment.status = .failed
-                currentDeployment.finishedAt = .now
-                
-                var finalOutput = ""
-                if let capturedOutput {
-                    finalOutput = capturedOutput + "\n\n"
-                }
-                
-                if let shellError = error as? Shell.Error {
-                    finalOutput += shellError.output
-                } else {
-                    finalOutput += error.localizedDescription
-                }
-                currentDeployment.output = finalOutput.trimmingCharacters(in: .whitespacesAndNewlines)
-
-                if !app.didShutdown {
-                    try? await currentDeployment.save(on: app.db)
-                }
-                await buildOutput.close()
+                await fail(deployment: currentDeployment, buildOutput: buildOutput, capturedOutput: capturedOutput, error: error)
                 break
             }
         }
-        
-        isDeploying = false
-        await updateUI()
+    }
+
+    func fail(
+        deployment: Deployment,
+        buildOutput: MistStreamRelay,
+        capturedOutput: String?,
+        error: Swift.Error
+    ) async {
+        await buildOutput.flush()
+        deployment.status = .failed
+        deployment.finishedAt = .now
+
+        var finalOutput = ""
+        if let capturedOutput {
+            finalOutput = capturedOutput + "\n\n"
+        }
+
+        if let shellError = error as? Shell.Error {
+            finalOutput += shellError.output
+        } else {
+            finalOutput += error.localizedDescription
+        }
+        deployment.output = finalOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if !app.didShutdown {
+            try? await deployment.save(on: app.db)
+        }
+        await buildOutput.close()
     }
     
     func findNextDeployment(after deployment: Deployment) async throws -> Deployment? {

@@ -17,6 +17,8 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
     @Field(key: "commit_id") var commitID: String
     @Field(key: "commit_message") var commitMessage: String
     @Field(key: "output") var output: String?
+    @Field(key: "is_manually_saved") var isManuallySaved: Bool
+    @OptionalField(key: "binary_size_mb") var binarySizeMB: Int?
 
     init() { }
 
@@ -34,6 +36,8 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
         self.branch = branch
         self.isLive = false
         self.output = nil
+        self.isManuallySaved = false
+        self.binarySizeMB = nil
     }
     
 }
@@ -57,6 +61,8 @@ extension Deployment {
                 .field("commit_id", .string, .required)
                 .field("commit_message", .string, .required)
                 .field("output", .string)
+                .field("is_manually_saved", .bool, .required, .sql(.default(false)))
+                .field("binary_size_mb", .int)
                 .create()
         }
 
@@ -90,6 +96,9 @@ extension Deployment {
         "shortID": shortID,
         "startedAtUnixMs": startedAtUnixMs,
         "canBeDeployed": canBeDeployed,
+        "canSaveBinary": canSaveBinary,
+        "canRestoreBinary": canRestoreBinary,
+        "hasSavedBinary": hasSavedBinary,
         "hasDetails": hasDetails,
         "hasLiveOutputStream": hasLiveOutputStream,
     ] }
@@ -121,6 +130,18 @@ extension Deployment {
             case .deployed: false
             default: true
         }
+    }
+
+    var hasSavedBinary: Bool {
+        binarySizeMB != nil
+    }
+
+    var canSaveBinary: Bool {
+        canBeDeployed && !hasSavedBinary
+    }
+
+    var canRestoreBinary: Bool {
+        canBeDeployed && hasSavedBinary
     }
 
     var hasDetails: Bool {

@@ -20,6 +20,7 @@ enum DeployerTemplate {
                 buildMode: context.appBuildMode,
                 pusheventPath: paths.webhookPath,
                 deploymentMode: context.deploymentMode,
+                binaryBehaviour: context.binaryBehaviour,
                 appPort: context.appPort,
                 branch: context.appBranch
             ),

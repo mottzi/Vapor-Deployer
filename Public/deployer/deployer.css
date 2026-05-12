@@ -57,7 +57,7 @@
     --hover-bg: var(--bg-hover);
     --row-border: var(--border-subtle);
     --error-bg: #fef2f2;
-    --dp-table-columns: 130px minmax(0, 1fr) 95px 85px 80px 80px;
+    --dp-table-columns: 130px minmax(0, 1fr) 95px 85px 80px 74px 108px;
     --dp-row-min-height: 54px;
 }
 
@@ -704,7 +704,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-th-duration,
-.dp-td-duration {
+.dp-td-duration,
+.dp-th-binary,
+.dp-td-binary {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
@@ -792,6 +794,10 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
 .dp-td-action {
     text-align: right;
+}
+
+.dp-td-binary {
+    color: var(--text-muted);
 }
 
 .dp-td-commit {
@@ -984,6 +990,18 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     color: var(--text-subtle);
 }
 
+.dp-binary-size,
+.dp-binary-dash {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.dp-binary-dash {
+    color: var(--text-subtle);
+}
+
 .dp-row-actions {
     display: flex;
     align-items: center;
@@ -1026,6 +1044,16 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 .dp-deploy-icon:hover {
     color: var(--c-pushed);
     background: var(--c-pushed-bg);
+}
+
+.dp-save-binary:hover {
+    color: var(--c-success);
+    background: var(--c-success-bg);
+}
+
+.dp-restore-binary:hover {
+    color: var(--c-deployed);
+    background: var(--c-deployed-bg);
 }
 
 .dp-delete:hover {
@@ -1311,10 +1339,11 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     .dp-tr {
         display: grid;
         grid-template-columns: 1fr auto auto;
-        grid-template-rows: auto auto;
+        grid-template-rows: auto auto auto;
         grid-template-areas:
             "status   started  actions"
-            "commit   duration actions";
+            "commit   duration actions"
+            "binary   binary   actions";
         column-gap: 12px;
         row-gap: 3px;
         padding: 11px 20px;
@@ -1382,9 +1411,21 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         color: var(--text-subtle);
     }
 
+    .dp-td-binary {
+        grid-area: binary;
+        align-self: center;
+        text-align: left;
+    }
+
+    .dp-binary-size,
+    .dp-binary-dash {
+        font-size: 11px;
+        color: var(--text-subtle);
+    }
+
     .dp-td-action {
         grid-area: actions;
-        grid-row: 1 / span 2;
+        grid-row: 1 / span 3;
         align-self: center;
     }
 

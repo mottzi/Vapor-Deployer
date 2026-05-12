@@ -51,6 +51,7 @@ struct ConfigState: ComponentData {
             Field("Directory", config.target.directory),
             Field("Build Mode", config.target.buildMode),
             Field("Deploy Mode", config.target.deploymentMode.rawValue),
+            Field("Binary Retention", config.target.binaryBehaviour.setupValue),
             Field("Push Event", config.target.pusheventPath.displayPath)
         ]
     }

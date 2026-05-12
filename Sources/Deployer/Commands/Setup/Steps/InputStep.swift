@@ -18,6 +18,9 @@ struct InputStep: SetupStep {
         
         let jsonConfig = ConfigDiscovery.loadJSON(serviceUser: context.serviceUser)
         let oldSecret = jsonConfig?.webhookSecret
+        if let binaryBehaviour = jsonConfig?.target.binaryBehaviour {
+            context.binaryBehaviour = binaryBehaviour
+        }
         
         if let existingBranch = jsonConfig?.deployerBranch {
             context.deployerRepositoryBranch = existingBranch
@@ -166,6 +169,26 @@ extension InputStep {
             "Enable automatic deployments on push?",
             defaultYes: false
         ) ? .automatic : .manual
+
+        collectBinaryBehaviour()
+    }
+
+    private func collectBinaryBehaviour() {
+
+        while true {
+            let value = console.askRequired(
+                "Binary retention",
+                default: context.binaryBehaviour.setupValue
+            )
+
+            guard let behaviour = BinaryBehaviour.parse(value) else {
+                console.warning("Use 'newest:5', 'automatic:500', 'all', or 'none'.")
+                continue
+            }
+
+            context.binaryBehaviour = behaviour
+            break
+        }
     }
 
     private func collectPanelAuth() throws {
@@ -293,6 +316,7 @@ extension InputStep {
             ("Deployer build mode", context.deployerBuildMode),
             ("App build mode", context.appBuildMode),
             ("Deployment mode", context.deploymentMode.rawValue),
+            ("Binary retention", context.binaryBehaviour.setupValue),
             ("Deployer port", "\(context.deployerPort)"),
             ("App port", "\(context.appPort)"),
             ("Panel route", context.panelRoute),

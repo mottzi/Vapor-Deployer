@@ -195,6 +195,7 @@
                       <th class="dp-th dp-th-sm-hide dp-th-mobile-hide">ID</th>
                       <th class="dp-th dp-th-started">Started</th>
                       <th class="dp-th dp-th-duration dp-th-mobile-hide">Duration</th>
+                      <th class="dp-th dp-th-binary">Binary</th>
                       <th class="dp-th dp-th-action">Actions</th>
                     </tr>
                   </thead>

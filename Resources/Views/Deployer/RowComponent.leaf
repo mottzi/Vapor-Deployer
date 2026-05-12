@@ -166,13 +166,40 @@
       #endif
     </td>
 
-    <!-- Delete -->
+    <!-- Binary -->
+    <td class="dp-td dp-td-binary">
+      #if(context.deployment.hasSavedBinary):
+        <span class="dp-binary-size">#(context.deployment.binarySizeMB) MB</span>
+      #else:
+        <span class="dp-binary-dash">—</span>
+      #endif
+    </td>
+
+    <!-- Actions -->
     <td class="dp-td dp-td-action">
       <div class="dp-row-actions">
         #if(context.deployment.canBeDeployed):
           <button mist-action="deploy" class="dp-action-icon dp-deploy-icon" title="Deploy this commit" type="button" aria-label="Deploy this commit">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M8 5v14l11-7z"></path>
+            </svg>
+          </button>
+        #else:
+          <span class="dp-action-slot" aria-hidden="true"></span>
+        #endif
+        #if(context.deployment.canSaveBinary):
+          <button mist-action="saveBinary" class="dp-action-icon dp-save-binary" title="Save binary" type="button" aria-label="Save binary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 21H5a2 2 0 0 1-2-2v-3"></path>
+              <path d="M7 10l5 5 5-5"></path>
+              <path d="M12 15V3"></path>
+            </svg>
+          </button>
+        #elseif(context.deployment.canRestoreBinary):
+          <button mist-action="restoreBinary" class="dp-action-icon dp-restore-binary" title="Restore binary" type="button" aria-label="Restore binary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+              <path d="M3 4v6h6"></path>
             </svg>
           </button>
         #else:
@@ -197,7 +224,7 @@
   <tr
     class="dp-output-row dp-output-tr #if(context.deployment.hasLiveOutputStream):dp-output-tr--live#elseif(context.deployment.status == "failed"):dp-output-tr--failed#else:dp-output-tr--static#endif #if(state.detailsExpanded):dp-output-expanded#endif"
   >
-    <td colspan="6" class="dp-output-cell">
+    <td colspan="7" class="dp-output-cell">
       <div class="dp-output-wrapper">
         #if(context.deployment.hasLiveOutputStream):
           <pre class="dp-output-pre dp-output-pre--live" mist-stream="build-output"></pre>
