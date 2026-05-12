@@ -48,6 +48,7 @@ extension RowComponent {
             guard let targetID else { return .failure("No ID found") }
             guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
             guard deployment.canBeDeployed else { return .failure("Deployments already in progress cannot be started again") }
+            guard !deployment.hasSavedBinary else { return .failure("Deployments with saved binaries must be restored, not built") }
             let target = app.deployer.queue.config.target
             return switch await app.deployer.queue.deploy(deployment: deployment, target: target) {
             case .started: .success("Deployment started")

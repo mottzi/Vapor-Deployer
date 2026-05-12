@@ -99,6 +99,7 @@ extension Deployment {
         "canSaveBinary": canSaveBinary,
         "canRestoreBinary": canRestoreBinary,
         "hasSavedBinary": hasSavedBinary,
+        "canBuildAndDeploy": canBuildAndDeploy,
         "hasDetails": hasDetails,
         "hasLiveOutputStream": hasLiveOutputStream,
     ] }
@@ -130,6 +131,10 @@ extension Deployment {
             case .deployed: false
             default: true
         }
+    }
+
+    var canBuildAndDeploy: Bool {
+        canBeDeployed && !hasSavedBinary
     }
 
     var hasSavedBinary: Bool {
