@@ -18,8 +18,6 @@ extension Deployer {
         let authRouter = router.grouped(panel.authenticator)
         
         authRouter.get()      { try await panel.servePanel(request: $0) }
-        authRouter.post("deployments", ":deploymentID", "save-binary") { try await panel.handleSaveBinary(request: $0) }
-        authRouter.post("deployments", ":deploymentID", "restore-binary") { try await panel.handleRestoreBinary(request: $0) }
     }
     
 }
@@ -87,14 +85,6 @@ extension Panel {
     func servePanel(request: Request) async throws -> View {
         let context = try await makePanelContext(request: request)
         return try await request.view.render("Deployer/DeployerPanel", context)
-    }
-
-    func handleSaveBinary(request: Request) async throws -> Response {
-        try await startBinaryJob(.save, request: request)
-    }
-
-    func handleRestoreBinary(request: Request) async throws -> Response {
-        try await startBinaryJob(.restore, request: request)
     }
 
     func makePanelContext(request: Request) async throws -> PanelContext {
