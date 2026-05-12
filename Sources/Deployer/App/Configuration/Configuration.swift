@@ -13,113 +13,6 @@ struct Configuration: Codable, Sendable {
     let buildFromSource: Bool
     let deployerBranch: String
     let webhookSecret: String?
-}
-
-/// Runtime configuration for the single deployment target managed by the deployer.
-struct TargetConfiguration: Codable, Sendable {
-
-    let name: String
-    let repositoryURL: String?
-    let directory: String
-    let buildMode: String
-    let pusheventPath: String
-    let deploymentMode: DeploymentMode
-    let binaryBehaviour: BinaryBehaviour
-    let appPort: Int
-    let branch: String
-
-}
-
-/// How incoming push events should be handled for the configured target.
-enum DeploymentMode: String, Codable, Sendable {
-    
-    /// Deploy immediately when a valid push event arrives.
-    case automatic
-    
-    /// Record pushes and wait for a manual deploy from the panel.
-    case manual
-    
-}
-
-/// Retention policy for deployment binaries stored under the target's deploy directory.
-enum BinaryBehaviour: Codable, Equatable, Sendable {
-
-    case newest(count: Int)
-    case automatic(mb: Int)
-    case all
-    case none
-
-    static let setupDefault: BinaryBehaviour = .newest(count: 5)
-
-    var setupValue: String {
-        switch self {
-        case .newest(let count): "newest:\(count)"
-        case .automatic(let mb): "automatic:\(mb)"
-        case .all: "all"
-        case .none: "none"
-        }
-    }
-
-    static func parse(_ rawValue: String) -> BinaryBehaviour? {
-        let value = rawValue.trimmed.lowercased()
-        guard !value.isEmpty else { return nil }
-
-        if value == "all" { return .all }
-        if value == "none" { return BinaryBehaviour.none }
-
-        let separators = CharacterSet(charactersIn: ":=() ")
-        let parts = value
-            .components(separatedBy: separators)
-            .filter { !$0.isEmpty }
-
-        guard parts.count == 2, let amount = Int(parts[1]), amount > 0 else { return nil }
-
-        switch parts[0] {
-        case "newest": return .newest(count: amount)
-        case "automatic", "auto": return .automatic(mb: amount)
-        default: return nil
-        }
-    }
-
-    func validated(field: String) throws -> BinaryBehaviour {
-        switch self {
-        case .newest(let count):
-            guard count > 0 else {
-                throw Configuration.Error.invalidField(field, "newest count must be greater than 0")
-            }
-        case .automatic(let mb):
-            guard mb > 0 else {
-                throw Configuration.Error.invalidField(field, "automatic megabyte limit must be greater than 0")
-            }
-        case .all, .none:
-            break
-        }
-
-        return self
-    }
-
-}
-
-/// The underlying service manager used to control the deployed application.
-enum ServiceManagerKind: String, Codable, Sendable {
-    
-    /// Comes preinstalled with Ubuntu.
-    case systemd
-    
-    /// Is easier to use than systemd but requires dependency.
-    case supervisor
-    
-    func makeManager(serviceUser: String? = nil) throws -> any ServiceManager {
-        switch self {
-        case .systemd:
-            guard let user = serviceUser?.trimmed, !user.isEmpty else {
-                throw SystemError.missingValue("serviceUser")
-            }
-            return SystemdServiceManager(serviceUser: user)
-        case .supervisor:
-            return SupervisorServiceManager()
-        }
-    }
     
 }
 
@@ -219,37 +112,15 @@ extension Configuration {
 
 }
 
-extension TargetConfiguration {
-
-    /// Validates and normalizes decoded target values using the executable directory as the base path.
-    func resolved(relativeTo baseDirectoryURL: URL) throws -> TargetConfiguration {
-        guard appPort > 0 else {
-            throw Configuration.Error.invalidField("target.appPort", "must be greater than 0")
-        }
-        return try TargetConfiguration(
-            name: Configuration.trimmedValue(name, field: "target.name"),
-            repositoryURL: repositoryURL?.trimmed,
-            directory: Configuration.trimmedFileSystemPath(directory, field: "target.directory", relativeTo: baseDirectoryURL),
-            buildMode: Configuration.trimmedValue(buildMode, field: "target.buildMode"),
-            pusheventPath: Configuration.trimmedValue(pusheventPath, field: "target.pusheventPath"),
-            deploymentMode: deploymentMode,
-            binaryBehaviour: try binaryBehaviour.validated(field: "target.binaryBehaviour"),
-            appPort: appPort,
-            branch: Configuration.trimmedValue(branch, field: "target.branch")
-        )
-    }
-
-}
-
 extension Configuration {
 
-    fileprivate static func trimmedValue(_ value: String, field: String) throws -> String {
+    static func trimmedValue(_ value: String, field: String) throws -> String {
         let trimmed = value.trimmed
         guard !trimmed.isEmpty else { throw Error.invalidField(field, "must not be empty") }
         return trimmed
     }
 
-    fileprivate static func trimmedFileSystemPath(_ value: String, field: String, relativeTo baseDirectoryURL: URL) throws -> String {
+    static func trimmedFileSystemPath(_ value: String, field: String, relativeTo baseDirectoryURL: URL) throws -> String {
         let trimmed = try trimmedValue(value, field: field)
         return PathComparison.standardizedPath(trimmed, relativeTo: baseDirectoryURL)
     }
