@@ -45,11 +45,18 @@ extension RowComponent {
         let productName: String
 
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
-            guard let targetID else { return .failure("No ID found") }
-            guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
-            guard deployment.canBuild else { return .failure("Deployments already in progress cannot be started again, and deployments with saved binaries must be restored") }
-            let target = app.deployer.queue.config.target
-            return switch await app.deployer.queue.deploy(deployment: deployment, target: target) {
+            
+            guard let targetID,
+                  let deployment = await loadDeployment(id: targetID, product: productName, app: app),
+                  deployment.canBuild
+            else { return .failure("Deployment not found or can't be built.") }
+            
+            let result = await app.deployer.queue.deploy(
+                deployment: deployment,
+                target: app.deployer.queue.config.target
+            )
+            
+            return switch result {
             case .started: .success("Deployment started")
             case .queueBusy: .failure("A deployment is already running")
             case .failure(let message): .failure(message)
@@ -64,10 +71,23 @@ extension RowComponent {
         let productName: String
 
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
-            guard let targetID else { return .failure("Deployment not found") }
-            guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
-            do { try await deployment.delete(on: app.db) }
-            catch { app.logger.error("\(MistError.databaseFetchFailed("Deployment delete id=\(deployment.id?.uuidString ?? "nil")", error))"); return .failure("Failed to delete deployment") }
+            
+            guard let targetID,
+                  let deployment = await loadDeployment(id: targetID, product: productName, app: app)
+            else { return .failure("Deployment not found") }
+            
+            do {
+                try await deployment.delete(on: app.db)
+            }
+            catch {
+                let error = MistError.databaseFetchFailed(
+                    "Deployment delete id=\(deployment.id?.uuidString ?? "nil")",
+                    error
+                )
+                app.logger.error("\(error)")
+                return .failure("Failed to delete deployment")
+            }
+            
             return .success()
         }
 
@@ -79,13 +99,23 @@ extension RowComponent {
         let productName: String
 
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
-            guard let targetID else { return .failure("No ID found") }
-            guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
-            guard deployment.canBuild else { return .failure("This deployment already has a saved binary or cannot be built right now") }
+            
+            guard let targetID,
+                  let deployment = await loadDeployment(id: targetID, product: productName, app: app),
+                  deployment.canBuild
+            else { return .failure("Deployment not found or can't be built.") }
+            
             let target = app.deployer.queue.config.target
             let store = BinaryStore(target: target)
-            guard !store.hasBinary(for: deployment) else { return .failure("This deployment already has a saved binary") }
-            return switch await app.deployer.queue.saveBinary(deployment: deployment, target: target) {
+            guard !store.hasBinary(for: deployment)
+            else { return .failure("This deployment already has a saved binary") }
+            
+            let result = await app.deployer.queue.saveBinary(
+                deployment: deployment,
+                target: target
+            )
+            
+            return switch result {
             case .started: .success("Binary save started")
             case .queueBusy: .failure("A deployment is already running")
             case .failure(let message): .failure(message)
@@ -100,13 +130,23 @@ extension RowComponent {
         let productName: String
 
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
-            guard let targetID else { return .failure("No ID found") }
-            guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
-            guard deployment.canRestoreBinary else { return .failure("This deployment does not have a saved binary or cannot be restored right now") }
+            
+            guard let targetID,
+                  let deployment = await loadDeployment(id: targetID, product: productName, app: app),
+                  deployment.canRestoreBinary
+            else { return .failure("Deployment not found or can't restore its binary.") }
+            
             let target = app.deployer.queue.config.target
             let store = BinaryStore(target: target)
-            guard store.hasBinary(for: deployment) else { return .failure("Saved binary not found on disk") }
-            return switch await app.deployer.queue.restoreBinary(deployment: deployment, target: target) {
+            guard store.hasBinary(for: deployment)
+            else { return .failure("Saved binary not found on disk") }
+            
+            let result = await app.deployer.queue.restoreBinary(
+                deployment: deployment,
+                target: target
+            )
+            
+            return switch result {
             case .started: .success("Binary restore started")
             case .queueBusy: .failure("A deployment is already running")
             case .failure(let message): .failure(message)
@@ -121,11 +161,15 @@ extension RowComponent {
         let productName: String
 
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
-            guard let targetID else { return .failure("No ID found") }
-            guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
-            guard deployment.hasDetails else { return .failure("No details to display") }
+            
+            guard let targetID,
+                  let deployment = await loadDeployment(id: targetID, product: productName, app: app),
+                  deployment.hasDetails
+            else { return .failure("Deployment not found or no details to display.") }
+            
             let current = state["detailsExpanded"]?.bool ?? false
             state["detailsExpanded"] = .bool(!current)
+            
             return .success()
         }
 
@@ -135,8 +179,9 @@ extension RowComponent {
 
 func loadDeployment(id: UUID, product: String, app: Application) async -> Deployment? {
     do {
-        guard let deployment = try await Deployment.find(id, on: app.db) else { return nil }
-        guard deployment.product == product else { return nil }
+        guard let deployment = try await Deployment.find(id, on: app.db),
+              deployment.product == product
+        else { return nil }
         return deployment
     } catch {
         app.logger.error("\(MistError.databaseFetchFailed("Deployment id=\(id)", error))")
