@@ -96,10 +96,9 @@ extension Deployment {
         "shortID": shortID,
         "startedAtUnixMs": startedAtUnixMs,
         "canBeDeployed": canBeDeployed,
-        "canSaveBinary": canSaveBinary,
+        "canBuild": canBuild,
         "canRestoreBinary": canRestoreBinary,
         "hasSavedBinary": hasSavedBinary,
-        "canBuildAndDeploy": canBuildAndDeploy,
         "hasDetails": hasDetails,
         "hasLiveOutputStream": hasLiveOutputStream,
     ] }
@@ -133,16 +132,12 @@ extension Deployment {
         }
     }
 
-    var canBuildAndDeploy: Bool {
+    var canBuild: Bool {
         canBeDeployed && !hasSavedBinary
     }
 
     var hasSavedBinary: Bool {
         binarySizeMB != nil
-    }
-
-    var canSaveBinary: Bool {
-        canBeDeployed && !hasSavedBinary
     }
 
     var canRestoreBinary: Bool {

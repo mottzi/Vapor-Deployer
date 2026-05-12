@@ -178,7 +178,7 @@
     <!-- Actions -->
     <td class="dp-td dp-td-action">
       <div class="dp-row-actions">
-        #if(context.deployment.canBuildAndDeploy):
+        #if(context.deployment.canBuild):
           <button mist-action="deploy" class="dp-action-icon dp-deploy-icon" title="Deploy this commit" type="button" aria-label="Deploy this commit">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M8 5v14l11-7z"></path>
@@ -187,7 +187,7 @@
         #else:
           <span class="dp-action-slot" aria-hidden="true"></span>
         #endif
-        #if(context.deployment.canSaveBinary):
+        #if(context.deployment.canBuild):
           <button mist-action="saveBinary" class="dp-action-icon dp-save-binary" title="Save binary" type="button" aria-label="Save binary">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M19 21H5a2 2 0 0 1-2-2v-3"></path>

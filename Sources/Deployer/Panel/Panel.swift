@@ -159,7 +159,7 @@ extension Panel {
         let result: Queue.StartResult
         switch job {
         case .save:
-            guard deployment.canSaveBinary else {
+            guard deployment.canBuild else {
                 throw Abort(.badRequest, reason: "Deployment already has a saved binary or cannot be built right now")
             }
             guard !store.hasBinary(for: deployment) else {

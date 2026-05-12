@@ -47,8 +47,7 @@ extension RowComponent {
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
             guard let targetID else { return .failure("No ID found") }
             guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
-            guard deployment.canBeDeployed else { return .failure("Deployments already in progress cannot be started again") }
-            guard !deployment.hasSavedBinary else { return .failure("Deployments with saved binaries must be restored, not built") }
+            guard deployment.canBuild else { return .failure("Deployments already in progress cannot be started again, and deployments with saved binaries must be restored") }
             let target = app.deployer.queue.config.target
             return switch await app.deployer.queue.deploy(deployment: deployment, target: target) {
             case .started: .success("Deployment started")
@@ -82,7 +81,7 @@ extension RowComponent {
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
             guard let targetID else { return .failure("No ID found") }
             guard let deployment = await loadDeployment(id: targetID, product: productName, app: app) else { return .failure("Deployment not found") }
-            guard deployment.canSaveBinary else { return .failure("This deployment already has a saved binary or cannot be built right now") }
+            guard deployment.canBuild else { return .failure("This deployment already has a saved binary or cannot be built right now") }
             let target = app.deployer.queue.config.target
             let store = BinaryStore(target: target)
             guard !store.hasBinary(for: deployment) else { return .failure("This deployment already has a saved binary") }
