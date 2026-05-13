@@ -1476,7 +1476,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
     .dp-tr {
         display: grid;
-        grid-template-columns: 1fr auto auto;
+        grid-template-columns: 1fr auto 28px;
         grid-template-rows: auto auto auto;
         grid-template-areas:
             "status   started  actions"
