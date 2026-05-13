@@ -89,30 +89,33 @@ actor Queue {
 
     @discardableResult
     func restoreBinary(deployment: Deployment, target: TargetConfiguration) async -> StartResult {
-        await start(deployment: deployment, target: target, mode: .restoreBinary)
+        await start(deployment: deployment, target: target, mode: .restoreBinary, preserveOutput: true)
     }
 
-    private func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async -> StartResult {
-        
+    private func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode, preserveOutput: Bool = false) async -> StartResult {
+
         guard !isDeploying else { return .queueBusy }
-        
+
         isDeploying = true
         await updateUI()
-        
+
         deployment.startedAt = .now
         deployment.status = .running
         deployment.finishedAt = nil
-        deployment.output = nil
-        
+
+        if !preserveOutput {
+            deployment.output = nil
+        }
+
         do {
             try await deployment.save(on: app.db)
         } catch {
             isDeploying = false
             await updateUI()
-            
+
             return .failure("Failed to start deployment: \(error.localizedDescription)")
         }
-        
+
         Task { await self.run(mode: mode, startingWith: deployment, initialTarget: target) }
         return .started
     }
