@@ -188,7 +188,6 @@ body {
     border-radius: var(--radius-lg);
     background: var(--bg-surface);
     box-shadow: var(--shadow);
-    overflow: clip;
 }
 
 .dp-runtime-bar {
@@ -199,6 +198,7 @@ body {
     height: 60px;
     background: var(--bg-surface-inset);
     overflow: hidden;
+    border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
 }
 
 .dp-runtime-brand {
@@ -733,6 +733,11 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
    If it IS expanded, the .dp-output-row becomes the last thing (handled below). */
 .dp-table>.dp-tbody:last-of-type .dp-tr:last-child {
     border-bottom: none;
+    border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
+}
+
+.dp-table>.dp-tbody:last-of-type .dp-output-row.dp-output-expanded:last-child {
+    border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
 }
 
 .dp-tr:hover {
@@ -1059,6 +1064,122 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 .dp-delete:hover {
     color: var(--c-failed);
     background: rgba(248, 113, 113, 0.08);
+}
+
+/* Dropdown Actions */
+.dp-dropdown {
+    position: relative;
+    display: inline-flex;
+}
+
+.dp-dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background 0.15s ease, color 0.15s ease;
+    list-style: none; /* Hide default arrow */
+    padding: 0;
+}
+
+.dp-dropdown-trigger::-webkit-details-marker {
+    display: none;
+}
+
+.dp-dropdown-trigger:hover,
+.dp-dropdown[open] .dp-dropdown-trigger {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.dp-dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 50;
+    min-width: 150px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dp-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 10px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    text-align: left;
+}
+
+.dp-dropdown-item svg {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+}
+
+.dp-dropdown-item:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.dp-dropdown-item:hover svg {
+    color: var(--text);
+}
+
+.dp-deploy-item:hover {
+    color: var(--c-pushed);
+}
+.dp-deploy-item:hover svg {
+    color: var(--c-pushed);
+}
+
+.dp-save-binary-item:hover {
+    color: var(--c-success);
+}
+.dp-save-binary-item:hover svg {
+    color: var(--c-success);
+}
+
+.dp-restore-binary-item:hover {
+    color: var(--c-deployed);
+}
+.dp-restore-binary-item:hover svg {
+    color: var(--c-deployed);
+}
+
+.dp-delete-item:hover {
+    color: var(--c-failed);
+    background: rgba(248, 113, 113, 0.08);
+}
+.dp-delete-item:hover svg {
+    color: var(--c-failed);
+}
+
+.dp-dropdown-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 2px -4px;
 }
 
 /* Must use the same grid as .dp-tr so the detail row matches table width (block/table-row was narrower). */

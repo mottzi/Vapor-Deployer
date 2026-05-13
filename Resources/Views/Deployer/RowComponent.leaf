@@ -178,42 +178,53 @@
     <!-- Actions -->
     <td class="dp-td dp-td-action">
       <div class="dp-row-actions">
-        #if(context.deployment.canBuild):
-          <button mist-action="deploy" class="dp-action-icon dp-deploy-icon" title="Deploy this commit" type="button" aria-label="Deploy this commit">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M8 5v14l11-7z"></path>
+        <details class="dp-dropdown">
+          <summary class="dp-dropdown-trigger" title="Actions" aria-label="Actions">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="1.5"></circle>
+              <circle cx="12" cy="5" r="1.5"></circle>
+              <circle cx="12" cy="19" r="1.5"></circle>
             </svg>
-          </button>
-        #else:
-          <span class="dp-action-slot" aria-hidden="true"></span>
-        #endif
-        #if(context.deployment.canBuild):
-          <button mist-action="saveBinary" class="dp-action-icon dp-save-binary" title="Save binary" type="button" aria-label="Save binary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M19 21H5a2 2 0 0 1-2-2v-3"></path>
-              <path d="M7 10l5 5 5-5"></path>
-              <path d="M12 15V3"></path>
-            </svg>
-          </button>
-        #elseif(context.deployment.canRestoreBinary):
-          <button mist-action="restoreBinary" class="dp-action-icon dp-restore-binary" title="Restore binary" type="button" aria-label="Restore binary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 12a9 9 0 1 0 3-6.7"></path>
-              <path d="M3 4v6h6"></path>
-            </svg>
-          </button>
-        #else:
-          <span class="dp-action-slot" aria-hidden="true"></span>
-        #endif
-        <button mist-action="delete" class="dp-action-icon dp-delete" title="Delete deployment" type="button" aria-label="Delete deployment">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-            <path d="M10 11v6"></path>
-            <path d="M14 11v6"></path>
-            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-          </svg>
-        </button>
+          </summary>
+          <div class="dp-dropdown-menu">
+            #if(context.deployment.canBuild):
+              <button mist-action="deploy" class="dp-dropdown-item dp-deploy-item" type="button" aria-label="Deploy this commit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8 5v14l11-7z"></path>
+                </svg>
+                Deploy
+              </button>
+              <button mist-action="saveBinary" class="dp-dropdown-item dp-save-binary-item" type="button" aria-label="Save binary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M19 21H5a2 2 0 0 1-2-2v-3"></path>
+                  <path d="M7 10l5 5 5-5"></path>
+                  <path d="M12 15V3"></path>
+                </svg>
+                Save binary
+              </button>
+              <div class="dp-dropdown-divider"></div>
+            #elseif(context.deployment.canRestoreBinary):
+              <button mist-action="restoreBinary" class="dp-dropdown-item dp-restore-binary-item" type="button" aria-label="Restore binary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+                  <path d="M3 4v6h6"></path>
+                </svg>
+                Restore binary
+              </button>
+              <div class="dp-dropdown-divider"></div>
+            #endif
+            <button mist-action="delete" class="dp-dropdown-item dp-delete-item" type="button" aria-label="Delete deployment">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+              </svg>
+              Delete
+            </button>
+          </div>
+        </details>
       </div>
     </td>
 

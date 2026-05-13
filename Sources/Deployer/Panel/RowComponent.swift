@@ -57,9 +57,12 @@ extension RowComponent {
             )
             
             return switch result {
-            case .started: .success("Deployment started")
-            case .queueBusy: .failure("A deployment is already running")
-            case .failure(let message): .failure(message)
+            case .started:
+                .success("Deployment started")
+            case .queueBusy:
+                .failure("A deployment is already running")
+            case .failure(let message):
+                .failure(message)
             }
         }
 
@@ -116,9 +119,12 @@ extension RowComponent {
             )
             
             return switch result {
-            case .started: .success("Binary save started")
-            case .queueBusy: .failure("A deployment is already running")
-            case .failure(let message): .failure(message)
+            case .started:
+                .success("Binary save started")
+            case .queueBusy:
+                .failure("A deployment is already running")
+            case .failure(let message):
+                .failure(message)
             }
         }
 
@@ -147,9 +153,12 @@ extension RowComponent {
             )
             
             return switch result {
-            case .started: .success("Binary restore started")
-            case .queueBusy: .failure("A deployment is already running")
-            case .failure(let message): .failure(message)
+            case .started:
+                .success("Binary restore started")
+            case .queueBusy:
+                .failure("A deployment is already running")
+            case .failure(let message):
+                .failure(message)
             }
         }
 
