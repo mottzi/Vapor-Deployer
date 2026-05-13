@@ -1600,10 +1600,11 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     .dp-td-commit .dp-msg {
         font-size: 13px;
         font-weight: 500;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        line-height: 1.45;
         color: var(--text-secondary);
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     .dp-time {
@@ -1775,10 +1776,86 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         height: 14px;
     }
 
-    /* Row card: tighter side padding, same two-row grid as ≤768 */
+    /* ── Row card: three-row layout, pill-free status, multi-line commit
+       Row 1: status tag           ·   time + date
+       Row 2: commit message  (full width, wraps)
+       Row 3: binary               ·   duration
+       Column alignment (status↕binary, time↕duration) preserves the
+       table feel without forcing a single horizontal row. ── */
     .dp-tr {
-        padding: 11px 14px 11px 18px;
-        column-gap: 12px;
+        grid-template-columns: minmax(0, 1fr) auto 28px;
+        grid-template-rows: auto auto auto;
+        grid-template-areas:
+            "status time    actions"
+            "meta   meta    actions"
+            "binary dur     actions";
+        column-gap: 14px;
+        row-gap: 5px;
+        padding: 13px 14px 13px 18px;
+        align-items: center;
+    }
+
+    .dp-td-status   { grid-area: status; align-self: center; justify-self: start; }
+    .dp-td-commit   { grid-area: meta;   align-self: center; }
+    .dp-td-started  { grid-area: time;   align-self: center; justify-self: end; }
+    .dp-td-binary   { grid-area: binary; align-self: center; justify-self: start; }
+    .dp-td-duration { grid-area: dur;    align-self: center; justify-self: end; }
+    .dp-td-action   { grid-area: actions; align-self: center; }
+
+    /* Status: drop the capsule, keep the color and chevron */
+    .dp-status {
+        padding: 0;
+        height: auto;
+        line-height: 1;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        gap: 5px;
+    }
+
+    .dp-status-chevron {
+        width: 9px;
+        height: 9px;
+    }
+
+    /* Commit message becomes the visual centerpiece of the card */
+    .dp-td-commit .dp-msg {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--text);
+    }
+
+    .dp-td-commit .dp-msg--muted {
+        color: var(--text-muted);
+    }
+
+    /* Time stays right-aligned, stacked tight */
+    .dp-time {
+        align-items: flex-end;
+        gap: 0;
+    }
+
+    .dp-time-value {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    .dp-time-date {
+        font-size: 11.5px;
+        color: var(--text-subtle);
+    }
+
+    .dp-binary-size,
+    .dp-binary-dash,
+    .dp-duration,
+    .dp-duration-live,
+    .dp-duration-dash {
+        font-size: 11.5px;
+        color: var(--text-subtle);
     }
 
     .dp-output-row.dp-output-expanded {
