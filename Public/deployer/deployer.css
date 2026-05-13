@@ -1482,26 +1482,100 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     letter-spacing: -0.02em;
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   Narrow viewports (≤768px)
+
+   The desktop strip is a single tight row of label/value pairs
+   separated by vertical dividers. Below 768px we keep that exact
+   visual metaphor — same item shape, same dividers, same height —
+   but allow the strip to scroll horizontally with a soft right-edge
+   fade so it never wraps into a sparse multi-row grid.
+
+   Deployment rows collapse to a two-row card where the status badge,
+   commit message and timing column stay perfectly aligned, with the
+   binary size and duration tucked underneath their natural partners.
+   ───────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+    /* ── Runtime bars: keep one-row layout, scroll the items strip ── */
+    .dp-runtime-bar {
+        height: 56px;
+        padding: 0 12px 0 18px;
+        gap: 0;
+    }
+
+    .dp-runtime-brand {
+        flex-shrink: 0;
+        margin-right: 14px;
+        gap: 12px;
+    }
+
+    .dp-wordmark-title {
+        font-size: 18px;
+    }
+
+    .dp-target-name {
+        font-size: 17px;
+    }
+
+    .dp-runtime-items {
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        height: 56px;
+        min-width: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+    }
+
+    .dp-runtime-items::-webkit-scrollbar {
+        display: none;
+    }
+
+    .dp-runtime-items .dp-context-item {
+        flex: 0 0 auto;
+        height: 56px;
+        padding: 0 14px;
+    }
+
+    .dp-runtime-items .dp-context-item:first-child {
+        padding-left: 0;
+    }
+
+    .dp-runtime-items .dp-context-value {
+        max-width: 180px;
+    }
+
+    .dp-runtime-actions {
+        flex-shrink: 0;
+        margin-left: 10px;
+    }
+
+    .dp-runtime-actions--mobile {
+        display: none;
+    }
+
     .dp-context-item--deployerdir {
         display: none;
     }
 
+    /* ── Deployment rows: compact two-row card aligned to desktop ── */
     .dp-thead {
         display: none;
     }
 
     .dp-tr {
         display: grid;
-        grid-template-columns: 1fr auto 28px;
-        grid-template-rows: auto auto auto;
+        grid-template-columns: auto minmax(0, 1fr) auto 28px;
+        grid-template-rows: auto auto;
         grid-template-areas:
-            "status   started  actions"
-            "commit   duration actions"
-            "binary   binary   actions";
-        column-gap: 12px;
-        row-gap: 3px;
-        padding: 11px 20px;
+            "status meta time actions"
+            "binary meta dur  actions";
+        column-gap: 14px;
+        row-gap: 2px;
+        padding: 12px 16px 12px 20px;
         min-height: 0;
         align-items: center;
     }
@@ -1516,76 +1590,59 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         min-width: 0;
     }
 
-    .dp-td-status {
-        grid-area: status;
-        align-self: center;
-    }
-
-    .dp-td-commit {
-        grid-area: commit;
-        align-self: center;
-    }
+    .dp-td-status   { grid-area: status;  align-self: center; }
+    .dp-td-commit   { grid-area: meta;    align-self: center; min-width: 0; }
+    .dp-td-started  { grid-area: time;    align-self: end; justify-self: end; }
+    .dp-td-duration { grid-area: dur;     align-self: start; justify-self: end; text-align: right; }
+    .dp-td-binary   { grid-area: binary;  align-self: start; }
+    .dp-td-action   { grid-area: actions; align-self: center; }
 
     .dp-td-commit .dp-msg {
-        font-size: 12.5px;
-        white-space: normal;
-        word-break: break-word;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         color: var(--text-secondary);
-    }
-
-    .dp-td-started {
-        grid-area: started;
-        align-self: center;
-        text-align: right;
     }
 
     .dp-time {
         align-items: flex-end;
+        gap: 0;
     }
 
-    .dp-time-value,
+    .dp-time-value {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
     .dp-time-date {
         font-size: 12px;
-    }
-
-    .dp-td-mobile-hide {
-        display: flex !important;
-    }
-
-    .dp-td-duration {
-        grid-area: duration;
-        align-self: center;
-        justify-content: flex-end;
-        text-align: right;
-    }
-
-    .dp-td-duration .dp-duration,
-    .dp-td-duration .dp-duration-live,
-    .dp-td-duration .dp-duration-dash {
-        font-size: 11px;
         color: var(--text-subtle);
     }
 
-    .dp-td-binary {
-        grid-area: binary;
-        align-self: center;
-        text-align: left;
+    .dp-duration,
+    .dp-duration-live,
+    .dp-duration-dash {
+        font-size: 11px;
+        color: var(--text-subtle);
+        line-height: 1.2;
     }
 
     .dp-binary-size,
     .dp-binary-dash {
         font-size: 11px;
         color: var(--text-subtle);
-    }
-
-    .dp-td-action {
-        grid-area: actions;
-        grid-row: 1 / span 3;
-        align-self: center;
+        line-height: 1.2;
     }
 
     .dp-row-actions {
         justify-content: flex-end;
+    }
+
+    .dp-td-sm-hide,
+    .dp-th-mobile-hide {
+        display: none !important;
     }
 
     .dp-output-row.dp-output-expanded {
@@ -1596,23 +1653,22 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         grid-column: 1 / -1;
     }
 
-    .dp-td-sm-hide {
-        display: none !important;
-    }
-
-    .dp-th-mobile-hide {
-        display: none !important;
-    }
-
     .dp-output-pre {
         padding: 14px 20px;
     }
 
     .dp-copy-log-btn {
-        right: 20px;
+        right: 16px;
     }
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   Mobile (≤480px)
+
+   Panels go edge-to-edge. The runtime bar wraps so brand + actions
+   share the top row and the items strip occupies a clean second row
+   with the same dividers + horizontal scroll as the medium breakpoint.
+   ───────────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
     .dp-shell {
         padding: 0 0 40px;
@@ -1625,135 +1681,84 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         border-right: none;
     }
 
+    /* Two-row bar via flex-wrap. Items strip sits on its own row. */
     .dp-runtime-bar {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas:
-            "brand actions"
-            "meta meta";
-        height: auto;
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        padding: 12px 16px;
-        gap: 10px 12px;
+        height: auto;
+        padding: 0;
+        gap: 0;
     }
 
     .dp-runtime-brand {
-        grid-area: brand;
+        flex: 1 1 auto;
         min-width: 0;
         margin-right: 0;
-        justify-content: flex-start;
-        width: auto;
+        padding: 11px 6px 11px 16px;
         gap: 10px;
-        padding-bottom: 0;
+    }
+
+    .dp-runtime-actions {
+        flex: 0 0 auto;
+        margin-left: 0;
+        padding: 11px 14px 11px 6px;
     }
 
     .dp-runtime-actions--mobile {
         display: flex;
         margin-left: auto;
+        padding: 0;
     }
 
     .dp-header-panel .dp-runtime-actions--desktop {
         display: none;
     }
 
-    .dp-target-panel .dp-runtime-actions--desktop {
-        grid-area: actions;
-        display: flex;
-        margin-left: 0;
-    }
-
-    .dp-runtime-queue-slot {
-        margin-right: 0;
-        align-self: center;
-        padding-bottom: 0;
-    }
-
     .dp-runtime-items {
-        grid-area: meta;
-        width: 100%;
-        height: auto;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
-        align-items: start;
-        gap: 8px 14px;
-        overflow: visible;
+        flex: 1 0 100%;
+        order: 99;
+        height: 52px;
         border-top: 1px solid var(--border-subtle);
-        padding-top: 10px;
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+        mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
     }
 
-    .dp-target-meta-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
-        height: auto;
-        align-items: flex-start;
-        gap: 8px 14px;
-        overflow: visible;
+    .dp-runtime-items .dp-context-item {
+        height: 52px;
+        padding: 0 14px;
     }
 
-    .dp-runtime-items .dp-context-item+.dp-context-item,
-    .dp-target-meta-strip .dp-context-item+.dp-context-item {
-        border-left: none;
-        padding-left: 0;
+    .dp-runtime-items .dp-context-item:first-child {
+        padding-left: 16px;
     }
 
-    .dp-context-item,
-    .dp-context-item--deployerdir,
-    .dp-context-item--route,
-    .dp-context-item--version,
-    .dp-context-item--port,
-    .dp-context-item--socket,
-    .dp-context-item--target-port,
-    .dp-context-item--target-directory {
-        display: flex !important;
-        flex-direction: column;
-        align-items: flex-start;
-        height: auto;
-        flex: 0 0 auto;
-        gap: 2px;
-        padding: 0;
-        border-left: none !important;
-        min-width: 0;
+    .dp-runtime-items .dp-context-item + .dp-context-item {
+        border-left: 1px solid var(--border-subtle);
+    }
+
+    .dp-context-label {
+        font-size: 9px;
     }
 
     .dp-context-value {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
+        font-size: 11.5px;
     }
 
-    .dp-target-toolbar-row {
-        padding: 12px 16px;
-        gap: 8px 10px;
+    .dp-wordmark-title {
+        font-size: 17px;
     }
 
     .dp-target-name {
-        font-size: 18px;
+        font-size: 16px;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .dp-config-body-inner {
-        padding: 0 16px;
-    }
-
-    .dp-legend {
-        gap: 14px;
-        padding: 16px 0 2px;
-    }
-
-    .dp-target-tail {
-        gap: 6px;
-    }
-
+    /* Target panel: collapse Stop / Restart into icon-only chips */
     .dp-target-actions {
         gap: 6px;
-    }
-
-    .dp-supervisor-btn {
-        padding: 5px 8px;
-        font-size: 12px;
     }
 
     .dp-target-panel .dp-supervisor-btn {
@@ -1770,13 +1775,10 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         height: 14px;
     }
 
-    .dp-config-summary-pill {
-        padding: 4px 10px;
-        font-size: 11px;
-    }
-
+    /* Row card: tighter side padding, same two-row grid as ≤768 */
     .dp-tr {
-        padding: 10px 16px;
+        padding: 11px 14px 11px 18px;
+        column-gap: 12px;
     }
 
     .dp-output-row.dp-output-expanded {
@@ -1788,7 +1790,12 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 
     .dp-copy-log-btn {
-        right: 16px;
+        right: 14px;
+    }
+
+    .dp-legend {
+        gap: 12px;
+        padding: 14px 16px 2px;
     }
 }
 
