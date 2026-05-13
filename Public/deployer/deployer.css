@@ -1600,7 +1600,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     .dp-td-commit   { grid-area: meta;    align-self: center; min-width: 0; }
     .dp-td-started  { grid-area: time;    align-self: end; justify-self: end; }
     .dp-td-duration { grid-area: dur;     align-self: start; justify-self: end; text-align: right; }
-    .dp-td-binary   { grid-area: binary;  align-self: start; }
+    .dp-td-binary   { grid-area: binary;  align-self: start; text-align: left; }
     .dp-td-action   { grid-area: actions; align-self: center; }
 
     .dp-td-commit .dp-msg {
@@ -1808,13 +1808,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         transform: translateY(-50%); 
     }
 
-    /* Dot separator before duration content (visual partner to binary) */
-    .dp-td-duration::before {
-        content: '·';
-        margin-right: 7px;
-        color: var(--text-subtle);
-        font-weight: 700;
-    }
+    /* Dot separator removed */
 
     /* Status: drop the capsule, keep the color and chevron */
     .dp-status {
