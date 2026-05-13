@@ -174,7 +174,7 @@ extension Queue {
                 await buildOutput.flush()
                 try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
 
-                deployment.status = .success
+                deployment.status = .built
                 deployment.finishedAt = .now
                 deployment.output = capturedOutput
                 try await deployment.save(on: app.db)
@@ -220,7 +220,7 @@ extension Queue {
                 await buildOutput.flush()
                 try await worker.move()
 
-                currentDeployment.status = .success
+                currentDeployment.status = .built
                 currentDeployment.finishedAt = .now
                 currentDeployment.output = capturedOutput
                 try await currentDeployment.save(on: app.db)
@@ -309,7 +309,7 @@ extension Queue {
             .filter(\.$startedAt, .greaterThan, startedAt)
             .group(.or) {
                 $0
-                    .filter(\.$status, .equal, .success)
+                    .filter(\.$status, .equal, .built)
                     .filter(\.$status, .equal, .deployed)
             }
             .first() != nil

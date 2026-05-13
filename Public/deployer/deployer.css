@@ -19,7 +19,7 @@
     --c-running: #38bdf8;
     --c-restoring: #22d3ee;
     --c-pushed: #fb923c;
-    --c-success: #a78bfa;
+    --c-built: #a78bfa;
     --c-deployed: #34d399;
     --c-failed: #f87171;
     --c-canceled: #52525b;
@@ -28,7 +28,7 @@
     --c-running-bg: rgba(56, 189, 248, 0.1);
     --c-restoring-bg: rgba(34, 211, 238, 0.1);
     --c-pushed-bg: rgba(251, 146, 60, 0.1);
-    --c-success-bg: rgba(161, 161, 170, 0.1);
+    --c-built-bg: rgba(161, 161, 170, 0.1);
     --c-deployed-bg: rgba(52, 211, 153, 0.1);
     --c-failed-bg: rgba(248, 113, 113, 0.1);
     --c-canceled-bg: rgba(82, 82, 91, 0.1);
@@ -37,7 +37,7 @@
     --c-running-border: rgba(56, 189, 248, 0.3);
     --c-restoring-border: rgba(34, 211, 238, 0.3);
     --c-pushed-border: rgba(251, 146, 60, 0.28);
-    --c-success-border: rgba(161, 161, 170, 0.22);
+    --c-built-border: rgba(161, 161, 170, 0.22);
     --c-deployed-border: rgba(52, 211, 153, 0.28);
     --c-failed-border: rgba(248, 113, 113, 0.32);
     --c-canceled-border: rgba(82, 82, 91, 0.28);
@@ -83,7 +83,7 @@
         --c-running: #38bdf8;
         --c-restoring: #22d3ee;
         --c-pushed: #fb923c;
-        --c-success: #a78bfa;
+        --c-built: #a78bfa;
         --c-deployed: #34d399;
         --c-failed: #f87171;
         --c-canceled: #71717a;
@@ -92,7 +92,7 @@
         --c-running-bg: rgba(56, 189, 248, 0.12);
         --c-restoring-bg: rgba(34, 211, 238, 0.12);
         --c-pushed-bg: rgba(251, 146, 60, 0.12);
-        --c-success-bg: rgba(161, 161, 170, 0.1);
+        --c-built-bg: rgba(161, 161, 170, 0.1);
         --c-deployed-bg: rgba(52, 211, 153, 0.12);
         --c-failed-bg: rgba(248, 113, 113, 0.12);
         --c-canceled-bg: rgba(113, 113, 122, 0.12);
@@ -101,7 +101,7 @@
         --c-running-border: rgba(56, 189, 248, 0.3);
         --c-restoring-border: rgba(34, 211, 238, 0.3);
         --c-pushed-border: rgba(251, 146, 60, 0.28);
-        --c-success-border: rgba(161, 161, 170, 0.22);
+        --c-built-border: rgba(161, 161, 170, 0.22);
         --c-deployed-border: rgba(52, 211, 153, 0.28);
         --c-failed-border: rgba(248, 113, 113, 0.3);
         --c-canceled-border: rgba(113, 113, 122, 0.28);
@@ -785,8 +785,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     opacity: 0.85;
 }
 
-.dp-tr.row-success::before {
-    background: var(--c-success);
+.dp-tr.row-built::before {
+    background: var(--c-built);
     opacity: 0.6;
 }
 
@@ -877,10 +877,10 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     border-color: var(--c-restoring-border);
 }
 
-.dp-status--success {
-    color: var(--c-success);
-    background: var(--c-success-bg);
-    border-color: var(--c-success-border);
+.dp-status--built {
+    color: var(--c-built);
+    background: var(--c-built-bg);
+    border-color: var(--c-built-border);
 }
 
 .dp-status--deployed {
@@ -1078,8 +1078,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-save-binary:hover {
-    color: var(--c-success);
-    background: var(--c-success-bg);
+    color: var(--c-built);
+    background: var(--c-built-bg);
 }
 
 .dp-restore-binary:hover {
@@ -1181,10 +1181,10 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-save-binary-item:hover {
-    color: var(--c-success);
+    color: var(--c-built);
 }
 .dp-save-binary-item:hover svg {
-    color: var(--c-success);
+    color: var(--c-built);
 }
 
 .dp-restore-binary-item:hover {

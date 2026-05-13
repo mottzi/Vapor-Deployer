@@ -82,7 +82,7 @@ extension Deployment {
         case restoring
         case canceled
         case failed
-        case success
+        case built
         case deployed
         case stale
     }
@@ -172,7 +172,7 @@ extension Deployment {
 
         for deployment in oldCurrentDeployments {
             deployment.isLive = false
-            deployment.status = .success
+            deployment.status = .built
             try await deployment.save(on: database)
         }
     }
