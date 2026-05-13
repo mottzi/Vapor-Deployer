@@ -728,7 +728,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 .dp-tr {
     display: grid;
     grid-template-columns: var(--dp-table-columns);
-    align-items: start;
+    align-items: center;
     width: 100%;
     padding: 0;
     gap: 0;
@@ -813,7 +813,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 .dp-td {
     padding: 12px 14px;
     min-width: 0;
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 .dp-td-action {
