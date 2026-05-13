@@ -15,89 +15,26 @@
     #elseif(context.deployment.displayStatus == "canceled"):row-canceled
     #elseif(context.deployment.displayStatus == "stale"):row-stale
     #endif
-  ">
+    #if(context.deployment.hasDetails):dp-tr--interactive#endif
+  "
+  #if(context.deployment.hasDetails):
+    mist-action="toggleDetails"
+    role="button"
+    aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
+    tabindex="0"
+  #endif
+  >
 
     <!-- Status -->
     <td class="dp-td dp-td-status">
-      #if(context.deployment.displayStatus == "pushed"):
-        <span class="dp-status dp-status--pushed">Pushed</span>
-      #elseif(context.deployment.displayStatus == "running"):
-        <button
-          class="dp-status dp-status--detail-btn dp-status--running"
-          type="button"
-          mist-action="toggleDetails"
-          aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
-        >
-          Running
-          <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <span class="dp-status dp-status--#(context.deployment.displayStatus)">
+        #(context.deployment.displayStatus)
+        #if(context.deployment.hasDetails):
+          <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 2px;">
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
-        </button>
-      #elseif(context.deployment.displayStatus == "success"):
-        #if(context.deployment.output):
-          <button
-            class="dp-status dp-status--detail-btn dp-status--success"
-            type="button"
-            mist-action="toggleDetails"
-            aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
-          >
-            Success
-            <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-        #else:
-          <span class="dp-status dp-status--success">Success</span>
         #endif
-      #elseif(context.deployment.displayStatus == "deployed"):
-        #if(context.deployment.output):
-          <button
-            class="dp-status dp-status--detail-btn dp-status--deployed"
-            type="button"
-            mist-action="toggleDetails"
-            aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
-          >
-            Deployed
-            <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-        #else:
-          <span class="dp-status dp-status--deployed">Deployed</span>
-        #endif
-      #elseif(context.deployment.displayStatus == "failed"):
-        #if(context.deployment.output):
-          <button
-            class="dp-status dp-status--detail-btn dp-status--failed"
-            type="button"
-            mist-action="toggleDetails"
-            aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
-          >
-            Failed
-            <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-        #else:
-          <span class="dp-status dp-status--failed">Failed</span>
-        #endif
-      #elseif(context.deployment.displayStatus == "canceled"):
-        <span class="dp-status dp-status--canceled">Canceled</span>
-      #elseif(context.deployment.displayStatus == "stale"):
-        <button
-          class="dp-status dp-status--detail-btn dp-status--stale"
-          type="button"
-          mist-action="toggleDetails"
-          aria-expanded="#if(state.detailsExpanded):true#else:false#endif"
-        >
-          Stale
-          <svg class="dp-status-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-      #else:
-        <span class="dp-status dp-status--canceled">#(context.deployment.displayStatus)</span>
-      #endif
+      </span>
     </td>
 
     <!-- Commit message -->
@@ -110,7 +47,7 @@
     </td>
 
     <!-- ID -->
-    <td class="dp-td dp-td-sm-hide dp-td-mobile-hide">
+    <td class="dp-td dp-td-sm-hide dp-td-mobile-hide" mist-action="">
       <a
         onclick="navigator.clipboard.writeText('#(context.deployment.id)'); return false;"
         href="##"
@@ -176,7 +113,7 @@
     </td>
 
     <!-- Actions -->
-    <td class="dp-td dp-td-action">
+    <td class="dp-td dp-td-action" mist-action="">
       <div class="dp-row-actions">
         <details class="dp-dropdown">
           <summary class="dp-dropdown-trigger" title="Actions" aria-label="Actions">

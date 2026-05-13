@@ -733,6 +733,10 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     min-height: var(--dp-row-min-height);
 }
 
+.dp-tr--interactive {
+    cursor: pointer;
+}
+
 /* If the row is the last thing in the last tbody, and it's NOT expanded, hide border.
    If it IS expanded, the .dp-output-row becomes the last thing (handled below). */
 .dp-table>.dp-tbody:last-of-type .dp-tr:last-child {
@@ -892,7 +896,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     opacity: 0.7;
 }
 
-.dp-status--detail-btn[aria-expanded="true"] .dp-status-chevron {
+.dp-status--detail-btn[aria-expanded="true"] .dp-status-chevron,
+.dp-tr[aria-expanded="true"] .dp-status-chevron {
     transform: rotate(180deg);
 }
 
