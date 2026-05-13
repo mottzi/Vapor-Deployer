@@ -201,7 +201,8 @@ body {
 }
 
 .dp-runtime-bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr) auto;
     align-items: center;
     gap: 0;
     padding: 0 10px 0 20px;
@@ -212,8 +213,6 @@ body {
 }
 
 .dp-runtime-brand {
-    flex: 0 0 240px;
-    margin-right: 0;
     display: flex;
     align-items: center;
     gap: 20px;
@@ -271,7 +270,6 @@ body {
 }
 
 .dp-runtime-items {
-    flex: 1 1 auto;
     min-width: 0;
     display: flex;
     flex-wrap: nowrap;
@@ -281,8 +279,8 @@ body {
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent 100%);
-    mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 56px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 56px), transparent 100%);
 }
 
 .dp-runtime-items::-webkit-scrollbar {
@@ -337,7 +335,6 @@ body {
 }
 
 .dp-runtime-actions {
-    flex: 0 0 auto;
     margin-left: 20px;
 }
 
@@ -1515,14 +1512,13 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 @media (max-width: 768px) {
     /* ── Runtime bars: keep one-row layout, scroll the items strip ── */
     .dp-runtime-bar {
+        grid-template-columns: 200px minmax(0, 1fr) auto;
         height: 56px;
         padding: 0 12px 0 18px;
         gap: 0;
     }
 
     .dp-runtime-brand {
-        flex: 0 0 200px;
-        margin-right: 0;
         gap: 12px;
     }
 
@@ -1701,13 +1697,11 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     .dp-runtime-brand {
         flex: 1 1 auto;
         min-width: 0;
-        margin-right: 0;
         padding: 11px 6px 11px 16px;
         gap: 10px;
     }
 
     .dp-runtime-actions {
-        flex: 0 0 auto;
         margin-left: 0;
         padding: 11px 14px 11px 6px;
     }
@@ -1727,6 +1721,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         order: 99;
         height: 52px;
         border-top: 1px solid var(--border-subtle);
+        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 56px), transparent 100%);
+        mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 56px), transparent 100%);
     }
 
     .dp-runtime-items .dp-context-item {
