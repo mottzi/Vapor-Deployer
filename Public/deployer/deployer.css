@@ -202,7 +202,7 @@ body {
 
 .dp-runtime-bar {
     display: grid;
-    grid-template-columns: 240px minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 0;
     padding: 0 10px 0 20px;
@@ -1508,7 +1508,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 @media (max-width: 768px) {
     /* ── Runtime bars: keep one-row layout, scroll the items strip ── */
     .dp-runtime-bar {
-        grid-template-columns: 200px minmax(0, 1fr) auto;
+        grid-template-columns: auto minmax(0, 1fr) auto;
         height: 56px;
         padding: 0 12px 0 18px;
         gap: 0;
