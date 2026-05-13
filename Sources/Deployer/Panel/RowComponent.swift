@@ -80,6 +80,10 @@ extension RowComponent {
                   let deployment = await loadDeployment(id: targetID, product: productName, app: app)
             else { return .failure("Deployment not found") }
             
+            guard !deployment.isLive else {
+                return .failure("Cannot delete the active live deployment")
+            }
+            
             do {
                 try await deployment.delete(on: app.db)
             }
