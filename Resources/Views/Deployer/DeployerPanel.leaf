@@ -196,7 +196,7 @@
                       <th class="dp-th dp-th-started">Started</th>
                       <th class="dp-th dp-th-duration dp-th-mobile-hide">Duration</th>
                       <th class="dp-th dp-th-binary">Binary</th>
-                      <th class="dp-th dp-th-action">Actions</th>
+                      <th class="dp-th dp-th-action"><span class="dp-visually-hidden">Actions</span></th>
                     </tr>
                   </thead>
 
