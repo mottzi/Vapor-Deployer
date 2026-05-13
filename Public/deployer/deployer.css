@@ -762,7 +762,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
 }
 
-.dp-tr:hover {
+.dp-tr:hover,
+.dp-tr:has(.dp-dropdown[open]) {
     background: var(--bg-hover);
 }
 
