@@ -279,8 +279,8 @@ body {
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 56px), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 56px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%);
 }
 
 .dp-runtime-items::-webkit-scrollbar {
@@ -545,10 +545,6 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     min-width: 0;
     overflow: hidden;
     padding: 0 16px;
-}
-
-.dp-target-meta-strip .dp-context-item:first-child {
-    padding-left: 0;
 }
 
 .dp-target-meta-strip .dp-context-item+.dp-context-item {
@@ -1535,13 +1531,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 
     .dp-runtime-items .dp-context-item {
-        flex: 0 0 auto;
         height: 56px;
         padding: 0 14px;
-    }
-
-    .dp-runtime-items .dp-context-item:first-child {
-        padding-left: 0;
     }
 
     .dp-runtime-items .dp-context-value {
@@ -1721,17 +1712,13 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         order: 99;
         height: 52px;
         border-top: 1px solid var(--border-subtle);
-        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 56px), transparent 100%);
-        mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 56px), transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+        mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
     }
 
     .dp-runtime-items .dp-context-item {
         height: 52px;
         padding: 0 14px;
-    }
-
-    .dp-runtime-items .dp-context-item:first-child {
-        padding-left: 16px;
     }
 
     .dp-runtime-items .dp-context-item + .dp-context-item {
