@@ -79,6 +79,7 @@ extension Deployment {
     enum Status: String, Codable, Sendable {
         case pushed
         case running
+        case restoring
         case canceled
         case failed
         case success
@@ -111,7 +112,7 @@ extension Deployment {
     static let staleThreshold: TimeInterval = 30 * 60
 
     var displayStatus: Status {
-        if status == .running,
+        if (status == .running || status == .restoring),
            let startedAt,
            Date.now.timeIntervalSince(startedAt) > Self.staleThreshold {
             .stale
@@ -127,6 +128,7 @@ extension Deployment {
     var canBeDeployed: Bool {
         switch displayStatus {
             case .running: false
+            case .restoring: false
             case .deployed: false
             default: true
         }

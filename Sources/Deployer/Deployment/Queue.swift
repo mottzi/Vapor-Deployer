@@ -89,10 +89,10 @@ actor Queue {
 
     @discardableResult
     func restoreBinary(deployment: Deployment, target: TargetConfiguration) async -> StartResult {
-        await start(deployment: deployment, target: target, mode: .restoreBinary, preserveOutput: true)
+        await start(deployment: deployment, target: target, mode: .restoreBinary)
     }
 
-    private func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode, preserveOutput: Bool = false) async -> StartResult {
+    private func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async -> StartResult {
 
         guard !isDeploying else { return .queueBusy }
 
@@ -100,10 +100,10 @@ actor Queue {
         await updateUI()
 
         deployment.startedAt = .now
-        deployment.status = .running
+        deployment.status = mode == .restoreBinary ? .restoring : .running
         deployment.finishedAt = nil
 
-        if !preserveOutput {
+        if mode != .restoreBinary {
             deployment.output = nil
         }
 

@@ -9,6 +9,7 @@
   <tr class="dp-tr
     #if(context.deployment.displayStatus == "pushed"):row-pushed
     #elseif(context.deployment.displayStatus == "running"):row-running
+    #elseif(context.deployment.displayStatus == "restoring"):row-restoring
     #elseif(context.deployment.displayStatus == "success"):row-success
     #elseif(context.deployment.displayStatus == "deployed"):row-deployed
     #elseif(context.deployment.displayStatus == "failed"):row-failed

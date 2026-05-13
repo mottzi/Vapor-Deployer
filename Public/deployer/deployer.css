@@ -17,6 +17,7 @@
     --text-subtle: #9ca3af;
 
     --c-running: #38bdf8;
+    --c-restoring: #22d3ee;
     --c-pushed: #fb923c;
     --c-success: #a78bfa;
     --c-deployed: #34d399;
@@ -25,6 +26,7 @@
     --c-stale: #fbbf24;
 
     --c-running-bg: rgba(56, 189, 248, 0.1);
+    --c-restoring-bg: rgba(34, 211, 238, 0.1);
     --c-pushed-bg: rgba(251, 146, 60, 0.1);
     --c-success-bg: rgba(161, 161, 170, 0.1);
     --c-deployed-bg: rgba(52, 211, 153, 0.1);
@@ -33,6 +35,7 @@
     --c-stale-bg: rgba(251, 191, 36, 0.1);
 
     --c-running-border: rgba(56, 189, 248, 0.3);
+    --c-restoring-border: rgba(34, 211, 238, 0.3);
     --c-pushed-border: rgba(251, 146, 60, 0.28);
     --c-success-border: rgba(161, 161, 170, 0.22);
     --c-deployed-border: rgba(52, 211, 153, 0.28);
@@ -78,6 +81,7 @@
         --text-subtle: #555555;
 
         --c-running: #38bdf8;
+        --c-restoring: #22d3ee;
         --c-pushed: #fb923c;
         --c-success: #a78bfa;
         --c-deployed: #34d399;
@@ -86,6 +90,7 @@
         --c-stale: #fbbf24;
 
         --c-running-bg: rgba(56, 189, 248, 0.12);
+        --c-restoring-bg: rgba(34, 211, 238, 0.12);
         --c-pushed-bg: rgba(251, 146, 60, 0.12);
         --c-success-bg: rgba(161, 161, 170, 0.1);
         --c-deployed-bg: rgba(52, 211, 153, 0.12);
@@ -94,6 +99,7 @@
         --c-stale-bg: rgba(251, 191, 36, 0.12);
 
         --c-running-border: rgba(56, 189, 248, 0.3);
+        --c-restoring-border: rgba(34, 211, 238, 0.3);
         --c-pushed-border: rgba(251, 146, 60, 0.28);
         --c-success-border: rgba(161, 161, 170, 0.22);
         --c-deployed-border: rgba(52, 211, 153, 0.28);
@@ -769,6 +775,11 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     opacity: 1;
 }
 
+.dp-tr.row-restoring::before {
+    background: var(--c-restoring);
+    opacity: 1;
+}
+
 .dp-tr.row-pushed::before {
     background: var(--c-pushed);
     opacity: 0.85;
@@ -858,6 +869,12 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     color: var(--c-running);
     background: var(--c-running-bg);
     border-color: var(--c-running-border);
+}
+
+.dp-status--restoring {
+    color: var(--c-restoring);
+    background: var(--c-restoring-bg);
+    border-color: var(--c-restoring-border);
 }
 
 .dp-status--success {
