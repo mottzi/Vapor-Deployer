@@ -1772,32 +1772,38 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 
     /* ── Row card: three-row layout, pill-free status, multi-line commit
-       Row 1: status tag           ·   time + date
-       Row 2: commit message  (full width, wraps)
-       Row 3: binary               ·   duration
-       Column alignment (status↕binary, time↕duration) preserves the
-       table feel without forcing a single horizontal row. ── */
+       Row 1: STATUS  TIME  DATE          (left-aligned, inline group)
+       Row 2: commit message              (full width, wraps)
+       Row 3: BINARY  ·  DURATION         (left-aligned, dot separator)
+       Both meta groups cluster on the left next to their pair so the
+       eye reads them as natural pairings without crossing the row. ── */
     .dp-tr {
-        /* Fixed right column locks time / duration to a consistent x-axis
-           across rows even when other rows have shorter content. */
-        grid-template-columns: minmax(0, 1fr) 76px 28px;
+        grid-template-columns: auto auto minmax(0, 1fr) 28px;
         grid-template-rows: auto auto auto;
         grid-template-areas:
-            "status time    actions"
-            "meta   meta    actions"
-            "binary dur     actions";
-        column-gap: 14px;
+            "status time .    actions"
+            "meta   meta meta actions"
+            "binary dur  .    actions";
+        column-gap: 10px;
         row-gap: 5px;
         padding: 13px 14px 13px 18px;
         align-items: center;
     }
 
     .dp-td-status   { grid-area: status; align-self: center; justify-self: start; }
+    .dp-td-started  { grid-area: time;   align-self: center; justify-self: start; }
     .dp-td-commit   { grid-area: meta;   align-self: center; }
-    .dp-td-started  { grid-area: time;   align-self: center; justify-self: end; }
     .dp-td-binary   { grid-area: binary; align-self: center; justify-self: start; }
-    .dp-td-duration { grid-area: dur;    align-self: center; justify-self: end; }
+    .dp-td-duration { grid-area: dur;    align-self: center; justify-self: start; }
     .dp-td-action   { grid-area: actions; align-self: center; }
+
+    /* Dot separator before duration content (visual partner to binary) */
+    .dp-td-duration::before {
+        content: '·';
+        margin-right: 7px;
+        color: var(--text-subtle);
+        font-weight: 700;
+    }
 
     /* Status: drop the capsule, keep the color and chevron */
     .dp-status {
@@ -1830,14 +1836,15 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         color: var(--text-muted);
     }
 
-    /* Time stays right-aligned, stacked tight */
+    /* Time goes inline next to status: HH:MM:SS · DD.MM.YY in one row */
     .dp-time {
-        align-items: flex-end;
-        gap: 0;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 6px;
     }
 
     .dp-time-value {
-        font-size: 12px;
+        font-size: 11.5px;
         color: var(--text-secondary);
     }
 
