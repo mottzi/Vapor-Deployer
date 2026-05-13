@@ -190,6 +190,10 @@ body {
     box-shadow: var(--shadow);
 }
 
+.dp-header-panel {
+    overflow: clip;
+}
+
 .dp-runtime-bar {
     display: flex;
     align-items: center;
