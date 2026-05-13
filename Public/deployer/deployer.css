@@ -16,29 +16,29 @@
     --text-muted: #6b7280;
     --text-subtle: #9ca3af;
 
-    --c-running: #38bdf8;
+    --c-building: #38bdf8;
     --c-restoring: #22d3ee;
     --c-pushed: #fb923c;
     --c-built: #a78bfa;
-    --c-deployed: #34d399;
+    --c-running: #34d399;
     --c-failed: #f87171;
     --c-canceled: #52525b;
     --c-stale: #fbbf24;
 
-    --c-running-bg: rgba(56, 189, 248, 0.1);
+    --c-building-bg: rgba(56, 189, 248, 0.1);
     --c-restoring-bg: rgba(34, 211, 238, 0.1);
     --c-pushed-bg: rgba(251, 146, 60, 0.1);
     --c-built-bg: rgba(161, 161, 170, 0.1);
-    --c-deployed-bg: rgba(52, 211, 153, 0.1);
+    --c-running-bg: rgba(52, 211, 153, 0.1);
     --c-failed-bg: rgba(248, 113, 113, 0.1);
     --c-canceled-bg: rgba(82, 82, 91, 0.1);
     --c-stale-bg: rgba(251, 191, 36, 0.1);
 
-    --c-running-border: rgba(56, 189, 248, 0.3);
+    --c-building-border: rgba(56, 189, 248, 0.3);
     --c-restoring-border: rgba(34, 211, 238, 0.3);
     --c-pushed-border: rgba(251, 146, 60, 0.28);
     --c-built-border: rgba(161, 161, 170, 0.22);
-    --c-deployed-border: rgba(52, 211, 153, 0.28);
+    --c-running-border: rgba(52, 211, 153, 0.28);
     --c-failed-border: rgba(248, 113, 113, 0.32);
     --c-canceled-border: rgba(82, 82, 91, 0.28);
     --c-stale-border: rgba(251, 191, 36, 0.28);
@@ -80,29 +80,29 @@
         --text-muted: #777777;
         --text-subtle: #555555;
 
-        --c-running: #38bdf8;
+        --c-building: #38bdf8;
         --c-restoring: #22d3ee;
         --c-pushed: #fb923c;
         --c-built: #a78bfa;
-        --c-deployed: #34d399;
+        --c-running: #34d399;
         --c-failed: #f87171;
         --c-canceled: #71717a;
         --c-stale: #fbbf24;
 
-        --c-running-bg: rgba(56, 189, 248, 0.12);
+        --c-building-bg: rgba(56, 189, 248, 0.12);
         --c-restoring-bg: rgba(34, 211, 238, 0.12);
         --c-pushed-bg: rgba(251, 146, 60, 0.12);
         --c-built-bg: rgba(161, 161, 170, 0.1);
-        --c-deployed-bg: rgba(52, 211, 153, 0.12);
+        --c-running-bg: rgba(52, 211, 153, 0.12);
         --c-failed-bg: rgba(248, 113, 113, 0.12);
         --c-canceled-bg: rgba(113, 113, 122, 0.12);
         --c-stale-bg: rgba(251, 191, 36, 0.12);
 
-        --c-running-border: rgba(56, 189, 248, 0.3);
+        --c-building-border: rgba(56, 189, 248, 0.3);
         --c-restoring-border: rgba(34, 211, 238, 0.3);
         --c-pushed-border: rgba(251, 146, 60, 0.28);
         --c-built-border: rgba(161, 161, 170, 0.22);
-        --c-deployed-border: rgba(52, 211, 153, 0.28);
+        --c-running-border: rgba(52, 211, 153, 0.28);
         --c-failed-border: rgba(248, 113, 113, 0.3);
         --c-canceled-border: rgba(113, 113, 122, 0.28);
         --c-stale-border: rgba(251, 191, 36, 0.28);
@@ -495,7 +495,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-target-toolbar-summary:focus-visible .dp-config-summary-pill {
-    outline: 2px solid var(--c-running);
+    outline: 2px solid var(--c-building);
     outline-offset: 2px;
 }
 
@@ -579,9 +579,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-supervisor-badge--running {
-    color: var(--c-deployed);
-    background: var(--c-deployed-bg);
-    border-color: var(--c-deployed-border);
+    color: var(--c-running);
+    background: var(--c-running-bg);
+    border-color: var(--c-running-border);
 }
 
 .dp-supervisor-badge--stopped {
@@ -609,9 +609,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-supervisor-badge--queue-unlocked {
-    color: var(--c-deployed);
-    background: var(--c-deployed-bg);
-    border-color: var(--c-deployed-border);
+    color: var(--c-running);
+    background: var(--c-running-bg);
+    border-color: var(--c-running-border);
 }
 
 .dp-supervisor-btn {
@@ -644,9 +644,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-supervisor-btn--restart:hover {
-    background: var(--c-running-bg);
-    color: var(--c-running);
-    border-color: var(--c-running-border);
+    background: var(--c-building-bg);
+    color: var(--c-building);
+    border-color: var(--c-building-border);
 }
 
 .dp-config-card {
@@ -770,8 +770,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     transition: opacity 0.2s ease;
 }
 
-.dp-tr.row-running::before {
-    background: var(--c-running);
+.dp-tr.row-building::before {
+    background: var(--c-building);
     opacity: 1;
 }
 
@@ -790,8 +790,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     opacity: 0.6;
 }
 
-.dp-tr.row-deployed::before {
-    background: var(--c-deployed);
+.dp-tr.row-running::before {
+    background: var(--c-running);
     opacity: 0.8;
 }
 
@@ -865,10 +865,10 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     border-color: var(--c-pushed-border);
 }
 
-.dp-status--running {
-    color: var(--c-running);
-    background: var(--c-running-bg);
-    border-color: var(--c-running-border);
+.dp-status--building {
+    color: var(--c-building);
+    background: var(--c-building-bg);
+    border-color: var(--c-building-border);
 }
 
 .dp-status--restoring {
@@ -883,10 +883,10 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     border-color: var(--c-built-border);
 }
 
-.dp-status--deployed {
-    color: var(--c-deployed);
-    background: var(--c-deployed-bg);
-    border-color: var(--c-deployed-border);
+.dp-status--running {
+    color: var(--c-running);
+    background: var(--c-running-bg);
+    border-color: var(--c-running-border);
 }
 
 .dp-status--failed {
@@ -994,7 +994,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 .dp-duration-live {
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--c-running);
+    color: var(--c-building);
     font-variant-numeric: tabular-nums;
 }
 
@@ -1003,7 +1003,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     width: 10px;
     height: 10px;
     border: 1.5px solid var(--border-strong);
-    border-top-color: var(--c-running);
+    border-top-color: var(--c-building);
     border-radius: 50%;
     animation: dp-spin 0.8s linear infinite;
     flex-shrink: 0;
@@ -1083,8 +1083,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-restore-binary:hover {
-    color: var(--c-deployed);
-    background: var(--c-deployed-bg);
+    color: var(--c-running);
+    background: var(--c-running-bg);
 }
 
 .dp-delete:hover {
@@ -1188,10 +1188,10 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-restore-binary-item:hover {
-    color: var(--c-deployed);
+    color: var(--c-running);
 }
 .dp-restore-binary-item:hover svg {
-    color: var(--c-deployed);
+    color: var(--c-running);
 }
 
 .dp-remove-binary-item:hover {
@@ -1295,9 +1295,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-copy-log-btn.copied {
-    color: var(--c-deployed);
-    border-color: var(--c-deployed-border);
-    background: var(--c-deployed-bg);
+    color: var(--c-running);
+    border-color: var(--c-running-border);
+    background: var(--c-running-bg);
 }
 
 .dp-output-pre {
@@ -1441,8 +1441,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-login-input:focus {
-    border-color: var(--c-running);
-    box-shadow: 0 0 0 3px var(--c-running-bg);
+    border-color: var(--c-building);
+    box-shadow: 0 0 0 3px var(--c-building-bg);
 }
 
 .dp-login-btn {

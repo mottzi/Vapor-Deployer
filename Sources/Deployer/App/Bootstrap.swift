@@ -130,7 +130,7 @@ extension Deployer {
             
             let deployment = Deployment(
                 product: config.target.name,
-                status: .deployed,
+                status: .running,
                 commitMessage: checkout.commitMessage,
                 commitID: checkout.commitID,
                 branch: checkout.branch

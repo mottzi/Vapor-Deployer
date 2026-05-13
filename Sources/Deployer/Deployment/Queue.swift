@@ -55,7 +55,7 @@ actor Queue {
         guard eventBranch == target.branch else { return }
         
         let status: Deployment.Status = switch target.deploymentMode {
-            case .automatic: isDeploying ? .canceled : .running
+            case .automatic: isDeploying ? .canceled : .building
             case .manual: .pushed
         }
         
@@ -67,7 +67,7 @@ actor Queue {
             branch: event.branch
         )
                 
-        if deployment.status == .running {
+        if deployment.status == .building {
             await deploy(deployment: deployment, target: target)
             return
         }
@@ -100,7 +100,7 @@ actor Queue {
         await updateUI()
 
         deployment.startedAt = .now
-        deployment.status = mode == .restoreBinary ? .restoring : .running
+        deployment.status = mode == .restoreBinary ? .restoring : .building
         deployment.finishedAt = nil
 
         if mode != .restoreBinary {
@@ -237,7 +237,7 @@ extension Queue {
 
                 await buildOutput.close()
 
-                nextDeployment.status = .running
+                nextDeployment.status = .building
                 try? await nextDeployment.save(on: app.db)
 
                 currentTarget = config.target
@@ -310,7 +310,7 @@ extension Queue {
             .group(.or) {
                 $0
                     .filter(\.$status, .equal, .built)
-                    .filter(\.$status, .equal, .deployed)
+                    .filter(\.$status, .equal, .running)
             }
             .first() != nil
 

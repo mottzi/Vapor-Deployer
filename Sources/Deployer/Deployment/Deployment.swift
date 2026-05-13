@@ -78,12 +78,12 @@ extension Deployment {
 
     enum Status: String, Codable, Sendable {
         case pushed
-        case running
+        case building
         case restoring
         case canceled
         case failed
         case built
-        case deployed
+        case running
         case stale
     }
     
@@ -112,7 +112,7 @@ extension Deployment {
     static let staleThreshold: TimeInterval = 30 * 60
 
     var displayStatus: Status {
-        if (status == .running || status == .restoring),
+        if (status == .building || status == .restoring),
            let startedAt,
            Date.now.timeIntervalSince(startedAt) > Self.staleThreshold {
             .stale
@@ -127,9 +127,9 @@ extension Deployment {
 
     var canBeDeployed: Bool {
         switch displayStatus {
-            case .running: false
+            case .building: false
             case .restoring: false
-            case .deployed: false
+            case .running: false
             default: true
         }
     }
@@ -151,7 +151,7 @@ extension Deployment {
     }
 
     var hasLiveOutputStream: Bool {
-        status == .running
+        status == .building
     }
 
 }
@@ -161,7 +161,7 @@ extension Deployment {
     func setCurrent(on database: Database) async throws {
         
         self.isLive = true
-        self.status = .deployed
+        self.status = .running
         try await self.save(on: database)
 
         let oldCurrentDeployments = try await Deployment.query(on: database)
