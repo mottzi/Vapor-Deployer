@@ -269,11 +269,19 @@ body {
     flex: 1 1 auto;
     min-width: 0;
     display: flex;
-    flex-wrap: wrap;
-    align-content: flex-start;
+    flex-wrap: nowrap;
     height: 60px;
     gap: 0;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent 100%);
+}
+
+.dp-runtime-items::-webkit-scrollbar {
+    display: none;
 }
 
 .dp-runtime-items .dp-context-item+.dp-context-item {
@@ -1518,20 +1526,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 
     .dp-runtime-items {
-        flex: 1 1 auto;
-        flex-wrap: nowrap;
         height: 56px;
-        min-width: 0;
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
-        mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
-    }
-
-    .dp-runtime-items::-webkit-scrollbar {
-        display: none;
     }
 
     .dp-runtime-items .dp-context-item {
@@ -1568,7 +1563,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
     .dp-tr {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto 28px;
+        /* Fixed widths on cols 1 and 3 keep status pills and time columns
+           aligned across rows even though each <tr> is its own grid. */
+        grid-template-columns: 112px minmax(0, 1fr) 76px 28px;
         grid-template-rows: auto auto;
         grid-template-areas:
             "status meta time actions"
@@ -1721,8 +1718,6 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         order: 99;
         height: 52px;
         border-top: 1px solid var(--border-subtle);
-        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
-        mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
     }
 
     .dp-runtime-items .dp-context-item {
@@ -1783,7 +1778,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
        Column alignment (status↕binary, time↕duration) preserves the
        table feel without forcing a single horizontal row. ── */
     .dp-tr {
-        grid-template-columns: minmax(0, 1fr) auto 28px;
+        /* Fixed right column locks time / duration to a consistent x-axis
+           across rows even when other rows have shorter content. */
+        grid-template-columns: minmax(0, 1fr) 76px 28px;
         grid-template-rows: auto auto auto;
         grid-template-areas:
             "status time    actions"
