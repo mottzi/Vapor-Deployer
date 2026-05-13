@@ -1787,24 +1787,26 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
        Both meta groups cluster on the left next to their pair so the
        eye reads them as natural pairings without crossing the row. ── */
     .dp-tr {
-        grid-template-columns: auto auto minmax(0, 1fr) 28px;
-        grid-template-rows: auto auto auto;
-        grid-template-areas:
-            "status time .    actions"
-            "meta   meta meta actions"
-            "binary dur  .    actions";
-        column-gap: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        padding: 13px 46px 13px 18px; /* space for actions on right */
         row-gap: 5px;
-        padding: 13px 14px 13px 18px;
+        column-gap: 10px;
         align-items: center;
+        position: relative;
     }
 
-    .dp-td-status   { grid-area: status; align-self: center; justify-self: start; }
-    .dp-td-started  { grid-area: time;   align-self: center; justify-self: start; }
-    .dp-td-commit   { grid-area: meta;   align-self: center; }
-    .dp-td-binary   { grid-area: binary; align-self: center; justify-self: start; }
-    .dp-td-duration { grid-area: dur;    align-self: center; justify-self: start; }
-    .dp-td-action   { grid-area: actions; align-self: center; }
+    .dp-td-status   { flex: 0 0 auto; }
+    .dp-td-started  { flex: 1 1 auto; }
+    .dp-td-commit   { flex: 0 0 100%; width: 100%; margin: 1px 0; }
+    .dp-td-binary   { flex: 0 0 auto; }
+    .dp-td-duration { flex: 1 1 auto; }
+    .dp-td-action   { 
+        position: absolute; 
+        right: 14px; 
+        top: 50%; 
+        transform: translateY(-50%); 
+    }
 
     /* Dot separator before duration content (visual partner to binary) */
     .dp-td-duration::before {
@@ -1822,7 +1824,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         background: transparent !important;
         border: none !important;
         border-radius: 0;
-        font-size: 11px;
+        font-size: 11.5px;
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
