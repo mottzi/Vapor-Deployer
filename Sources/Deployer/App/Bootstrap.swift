@@ -72,24 +72,23 @@ extension Deployer {
         let initialStatus = await serviceManager.status(product: config.target.name)
         let badgeState = LiveState(of: StatusState(initialStatus))
         let actionsState = LiveState(of: StatusState(initialStatus))
-        
+        let broadcaster = StatusBroadcaster(badge: badgeState, actions: actionsState)
+
         let statusComponent = StatusComponent(
             product: config.target.name,
-            badgeState: badgeState,
-            actionsState: actionsState
+            state: badgeState
         )
         let statusActionsComponent = StatusActionsComponent(
             product: config.target.name,
-            badgeState: badgeState,
-            actionsState: actionsState
+            state: actionsState,
+            broadcaster: broadcaster
         )
 
         useQueue(
             config: config,
             queueState: queueComponent.state,
             onStatusChange: { status in
-                await badgeState.set(StatusState(status))
-                await actionsState.set(StatusState(status))
+                await broadcaster.set(StatusState(status))
             }
         )
         useWebhook(config: config)

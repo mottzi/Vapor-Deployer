@@ -25,18 +25,11 @@ struct StatusComponent: LiveComponent {
         }
     }
 
-    init(
-        product: String,
-        badgeState: LiveState<StatusState>,
-        actionsState: LiveState<StatusState>
-    ) {
+    init(product: String, state: LiveState<StatusState>) {
         self.product = product
         self.name = "StatusComponent"
-        self.state = badgeState
-        self.actions = [
-            RestartAction(productName: product, badgeState: badgeState, actionsState: actionsState),
-            StopAction(productName: product, badgeState: badgeState, actionsState: actionsState)
-        ]
+        self.state = state
+        self.actions = []
     }
 
 }

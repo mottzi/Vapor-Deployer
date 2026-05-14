@@ -1,0 +1,11 @@
+import Mist
+
+struct StatusBroadcaster: Sendable {
+    let badge: LiveState<StatusState>
+    let actions: LiveState<StatusState>
+
+    func set(_ state: StatusState) async {
+        await badge.set(state)
+        await actions.set(state)
+    }
+}

@@ -7,37 +7,26 @@ extension StatusComponent {
 
         let name = "restart"
         let productName: String
-        let badgeState: LiveState<StatusState>
-        let actionsState: LiveState<StatusState>
+        let broadcaster: StatusBroadcaster
 
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
             do {
                 let manager = app.deployer.serviceManager
                 let status = await manager.status(product: productName)
-                switch status.isRunning {
-                    case true:
-                        await badgeState.set(StatusState(.stopping))
-                        await actionsState.set(StatusState(.stopping))
-                    case false:
-                        await badgeState.set(StatusState(.starting))
-                        await actionsState.set(StatusState(.starting))
-                }
+                await broadcaster.set(StatusState(status.isRunning ? .stopping : .starting))
 
                 try await manager.restart(product: productName)
-                await badgeState.set(StatusState(.starting))
-                await actionsState.set(StatusState(.starting))
+                await broadcaster.set(StatusState(.starting))
 
                 let finalStatus = await manager.status(product: productName)
-                await badgeState.set(StatusState(finalStatus))
-                await actionsState.set(StatusState(finalStatus))
+                await broadcaster.set(StatusState(finalStatus))
 
                 return .success()
             } catch {
                 let manager = app.deployer.serviceManager
                 let recoveryStatus = await manager.status(product: productName)
-                await badgeState.set(StatusState(recoveryStatus))
-                await actionsState.set(StatusState(recoveryStatus))
+                await broadcaster.set(StatusState(recoveryStatus))
                 return .failure(error.localizedDescription)
             }
         }
