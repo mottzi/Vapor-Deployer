@@ -136,56 +136,6 @@ extension Panel {
 }
 
 extension Panel {
-
-    private enum BinaryJob {
-        case save
-        case restore
-    }
-
-    private func startBinaryJob(_ job: BinaryJob, request: Request) async throws -> Response {
-        
-        guard let idString = request.parameters.get("deploymentID"),
-              let deploymentID = UUID(uuidString: idString),
-              let deployment = try await Deployment.find(deploymentID, on: request.db),
-              deployment.product == config.target.name
-        else { throw Abort(.notFound, reason: "Deployment not found") }
-
-        let store = BinaryStore(target: config.target)
-
-        let result: Queue.StartResult
-        switch job {
-        case .save:
-            guard deployment.canBuild
-            else { throw Abort(.badRequest, reason: "Deployment already has a saved binary or cannot be built right now") }
-                
-            guard !store.hasBinary(for: deployment)
-            else { throw Abort(.badRequest, reason: "Deployment already has a saved binary") }
-                
-            result = await request.application.deployer.queue.saveBinary(deployment: deployment, target: config.target)
-        
-        case .restore:
-            guard deployment.canRestoreBinary
-            else { throw Abort(.badRequest, reason: "Deployment does not have a saved binary or cannot be restored right now") }
-            
-            guard store.hasBinary(for: deployment)
-            else { throw Abort(.notFound, reason: "Saved binary not found on disk") }
-                
-            result = await request.application.deployer.queue.restoreBinary(deployment: deployment, target: config.target)
-        }
-
-        switch result {
-        case .started:
-            return Response(status: .accepted, body: .init(string: "Binary job started."))
-        case .queueBusy:
-            throw Abort(.conflict, reason: "A deployment is already running")
-        case .failure(let message):
-            throw Abort(.internalServerError, reason: message)
-        }
-    }
-
-}
-
-extension Panel {
     
     struct PanelContext: Encodable {
         let deployer: DeployerContext
