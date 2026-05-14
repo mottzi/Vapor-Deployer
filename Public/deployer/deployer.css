@@ -1564,15 +1564,15 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         /* Fixed widths on cols 1 and 3 keep status pills and time columns
            aligned across rows even though each <tr> is its own grid. */
         grid-template-columns: 112px minmax(0, 1fr) auto 28px;
-        grid-template-rows: auto min-content min-content;
+        grid-template-rows: auto auto;
         grid-template-areas:
-            "status meta   time   actions"
-            ".      meta   dur    actions"
-            ".      meta   binary actions";
+            "status meta time actions"
+            ".      meta .    actions";
         column-gap: 14px;
-        row-gap: 0;
+        row-gap: 2px;
         padding: 12px 16px 12px 20px;
         min-height: 0;
+        align-items: start;
     }
 
     .dp-tr::before {
@@ -1585,11 +1585,11 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         min-width: 0;
     }
 
-    .dp-td-status   { grid-area: status;  align-self: start; }
-    .dp-td-commit   { grid-area: meta;    align-self: start; min-width: 0; }
-    .dp-td-started  { grid-area: time;    align-self: end; justify-self: end; }
-    .dp-td-duration { grid-area: dur;     align-self: start; justify-self: end; text-align: right; }
-    .dp-td-binary   { grid-area: binary;  align-self: start; justify-self: end; text-align: right; }
+    .dp-td-status   { grid-area: status; }
+    .dp-td-commit   { grid-area: meta; min-width: 0; }
+    .dp-td-started  { grid-area: time; justify-self: end; }
+    .dp-td-duration { grid-column: 3; grid-row: 2; justify-self: end; text-align: right; }
+    .dp-td-binary   { grid-column: 3; grid-row: 2; justify-self: end; text-align: right; padding-top: 1.2em; }
     .dp-td-action   { grid-area: actions; align-self: center; }
 
     .dp-td-commit .dp-msg {
