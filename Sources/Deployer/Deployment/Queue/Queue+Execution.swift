@@ -36,7 +36,7 @@ extension Queue {
     func run(mode: JobMode, startingWith initialDeployment: Deployment, initialTarget: TargetConfiguration) async {
         switch mode {
         case .deploy:
-            await drainQueue(startingWith: initialDeployment, initialTarget: initialTarget)
+            await drainQueue(startingWith: initialDeployment)
         case .saveBinary, .restoreBinary:
             await runSingle(deployment: initialDeployment, target: initialTarget, mode: mode)
         }
@@ -91,22 +91,23 @@ extension Queue {
         }
     }
 
-    /// Builds and deploys queued commits in sequence until none remain.
-    func drainQueue(startingWith initialDeployment: Deployment, initialTarget: TargetConfiguration) async {
+    /// Builds queued commits in sequence, promoting the most recent successful build to the live service.
+    /// Honors a "last good build wins" policy: if a later iteration fails, the previous successful build is still promoted.
+    func drainQueue(startingWith initialDeployment: Deployment) async {
 
-        var currentDeployment = initialDeployment
-        var currentTarget = initialTarget
+        var current = initialDeployment
+        var lastSuccessful: (deployment: Deployment, output: String?)?
 
         while true {
             let worker = Worker(
-                deployment: currentDeployment,
-                target: currentTarget,
+                deployment: current,
+                target: config.target,
                 app: app,
                 onStatusChange: onStatusChange
             )
-            let stream = BuildOutputStream(app: app, deployment: currentDeployment)
-
+            let stream = BuildOutputStream(app: app, deployment: current)
             var capturedOutput: String?
+
             do {
                 await stream.start()
                 try await worker.checkout()
@@ -114,32 +115,52 @@ extension Queue {
                 await stream.flush()
                 try await worker.move()
 
-                currentDeployment.status = .built
-                currentDeployment.finishedAt = .now
-                currentDeployment.output = capturedOutput
-                try await currentDeployment.save(on: app.db)
-
-                guard let nextDeployment = try await findNextDeployment(after: currentDeployment) else {
-                    try await worker.restart()
-                    let store = BinaryStore(target: currentTarget)
-                    try await store.storeLiveBinary(for: currentDeployment, app: app, manually: false)
-                    try await currentDeployment.setCurrent(on: app.db)
-                    try await store.evict(on: app.db)
-                    await stream.close()
-                    break
-                }
-
-                await stream.close()
-
-                nextDeployment.status = .building
-                try? await nextDeployment.save(on: app.db)
-
-                currentTarget = config.target
-                currentDeployment = nextDeployment
+                current.status = .built
+                current.finishedAt = .now
+                current.output = capturedOutput
+                try await current.save(on: app.db)
             } catch {
-                await fail(deployment: currentDeployment, stream: stream, capturedOutput: capturedOutput, error: error)
-                break
+                await fail(deployment: current, stream: stream, capturedOutput: capturedOutput, error: error)
+                if let last = lastSuccessful {
+                    await finalize(deployment: last.deployment, stream: nil, capturedOutput: last.output)
+                }
+                return
             }
+
+            guard let next = try? await findNextDeployment(after: current) else {
+                await finalize(deployment: current, stream: stream, capturedOutput: capturedOutput)
+                return
+            }
+
+            await stream.close()
+
+            next.status = .building
+            try? await next.save(on: app.db)
+
+            lastSuccessful = (current, capturedOutput)
+            current = next
+        }
+    }
+
+    /// Restarts the service onto a built deployment, archives the binary, marks the row current, and evicts stale entries.
+    /// On failure, routes through `fail` so the deployment is recorded as failed with the build output preserved.
+    func finalize(deployment: Deployment, stream: BuildOutputStream?, capturedOutput: String?) async {
+        let worker = Worker(
+            deployment: deployment,
+            target: config.target,
+            app: app,
+            onStatusChange: onStatusChange
+        )
+        let store = BinaryStore(target: config.target)
+
+        do {
+            try await worker.restart()
+            try await store.storeLiveBinary(for: deployment, app: app, manually: false)
+            try await deployment.setCurrent(on: app.db)
+            try await store.evict(on: app.db)
+            if let stream { await stream.close() }
+        } catch {
+            await fail(deployment: deployment, stream: stream, capturedOutput: capturedOutput, error: error)
         }
     }
 
