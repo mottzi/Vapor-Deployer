@@ -1786,7 +1786,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     .dp-td-status   { grid-area: status;  align-self: center; }
     .dp-td-commit   { grid-area: meta;    align-self: center; min-width: 0; }
     .dp-td-started  { grid-area: time;    align-self: center; justify-self: end; }
-    .dp-td-duration { grid-area: dur;     align-self: center; }
+    .dp-td-duration { grid-area: dur;     align-self: center; justify-self: start; text-align: left; }
     .dp-td-binary   { grid-area: binary;  align-self: center; }
     .dp-td-action   { grid-area: actions; align-self: center; justify-self: end; position: static; transform: none; }
 
@@ -1823,11 +1823,11 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         color: var(--text-muted);
     }
 
-    /* Time sits bottom-right: stack time value over date */
+    /* Time sits bottom-right: value and date side by side */
     .dp-time {
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 1px;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 5px;
     }
 
     .dp-time-value {
