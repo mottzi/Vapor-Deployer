@@ -78,7 +78,6 @@
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding-inline: 64px;
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
 }
