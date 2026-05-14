@@ -2,23 +2,37 @@ import Vapor
 
 extension Queue {
 
+    /// Determines which execution path the queue takes for a given job.
     enum JobMode: Sendable {
+        /// Full build-and-deploy pipeline, draining any queued pushes in sequence.
         case deploy
+        /// Build and archive the binary without deploying it live.
         case saveBinary
+        /// Swap the live binary from a previously saved archive.
         case restoreBinary
     }
 
+    /// Outcome returned to callers after attempting to start a queue job.
     enum StartResult: Sendable {
+        /// Job accepted and running in the background.
         case started
+        /// Rejected because another job is already in progress.
         case queueBusy
+        /// Job could not start due to a DB or internal error.
         case failure(String)
     }
 
+}
+
+extension Queue {
+
+    /// Broadcasts current queue state to connected live panel clients.
     func updateUI() async {
         let newState = QueueState(isDeploying: isDeploying)
         await queueState.set(newState)
     }
 
+    /// Dispatches to drainQueue or runSingle based on mode, then resets isDeploying on completion.
     func run(mode: JobMode, startingWith initialDeployment: Deployment, initialTarget: TargetConfiguration) async {
         switch mode {
         case .deploy:
@@ -31,6 +45,7 @@ extension Queue {
         await updateUI()
     }
 
+    /// Executes a saveBinary or restoreBinary job to completion.
     func runSingle(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async {
         let worker = Worker(
             deployment: deployment,
@@ -76,6 +91,7 @@ extension Queue {
         }
     }
 
+    /// Builds and deploys queued commits in sequence until none remain.
     func drainQueue(startingWith initialDeployment: Deployment, initialTarget: TargetConfiguration) async {
 
         var currentDeployment = initialDeployment
@@ -127,12 +143,8 @@ extension Queue {
         }
     }
 
-    func fail(
-        deployment: Deployment,
-        stream: BuildOutputStream?,
-        capturedOutput: String?,
-        error: Swift.Error
-    ) async {
+    /// Marks a deployment as failed, assembles final output from build log and error, and persists to DB.
+    func fail(deployment: Deployment, stream: BuildOutputStream?, capturedOutput: String?, error: Swift.Error) async {
         if let stream { await stream.flush() }
         deployment.status = .failed
         deployment.finishedAt = .now
@@ -153,6 +165,11 @@ extension Queue {
         if let stream { await stream.close() }
     }
 
+}
+
+extension Queue {
+
+    /// Returns the most recent canceled deployment queued after the given one, or nil if none exists or all are superseded.
     func findNextDeployment(after deployment: Deployment) async throws -> Deployment? {
 
         guard let currentTime = deployment.startedAt else { return nil }
@@ -168,6 +185,7 @@ extension Queue {
         return candidate
     }
 
+    /// Returns true if a newer successful deployment has already run, making this candidate stale.
     func isSuperseded(_ deployment: Deployment) async throws -> Bool {
 
         guard let startedAt = deployment.startedAt else { return false }
@@ -193,3 +211,4 @@ extension Queue {
     }
 
 }
+
