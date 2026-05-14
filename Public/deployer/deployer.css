@@ -1185,10 +1185,10 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 }
 
 .dp-deploy-item:hover {
-    color: var(--c-pushed);
+    color: var(--c-running);
 }
 .dp-deploy-item:hover svg {
-    color: var(--c-pushed);
+    color: var(--c-running);
 }
 
 .dp-save-binary-item:hover {
