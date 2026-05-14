@@ -164,7 +164,7 @@ extension Queue {
 
         switch mode {
         case .saveBinary:
-            let stream = OutputStream(app: app, deployment: deployment)
+            let stream = BuildOutputStream(app: app, deployment: deployment)
             var capturedOutput: String?
             do {
                 await stream.start()
@@ -210,7 +210,7 @@ extension Queue {
                 app: app,
                 onStatusChange: onStatusChange
             )
-            let stream = OutputStream(app: app, deployment: currentDeployment)
+            let stream = BuildOutputStream(app: app, deployment: currentDeployment)
 
             var capturedOutput: String?
             do {
@@ -251,7 +251,7 @@ extension Queue {
 
     func fail(
         deployment: Deployment,
-        stream: OutputStream?,
+        stream: BuildOutputStream?,
         capturedOutput: String?,
         error: Swift.Error
     ) async {

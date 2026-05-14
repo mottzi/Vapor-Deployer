@@ -17,7 +17,7 @@ extension Worker {
     }
 
     @discardableResult
-    func build(streamingTo stream: OutputStream) async throws -> String {
+    func build(streamingTo stream: BuildOutputStream) async throws -> String {
 
         try await Shell.runStreaming(
             "swift", ["build", "-c", target.buildMode],
