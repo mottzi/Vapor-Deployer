@@ -123,11 +123,11 @@
           </summary>
           <div class="dp-dropdown-menu">
             #if(context.deployment.canBuild):
-              <button mist-action="deploy" class="dp-dropdown-item dp-deploy-item" type="button" aria-label="Deploy this commit">
+              <button mist-action="deploy" class="dp-dropdown-item dp-deploy-item" type="button" aria-label="Build and run this commit">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M8 5v14l11-7z"></path>
                 </svg>
-                Deploy
+                Build &amp; Run
               </button>
               <button mist-action="saveBinary" class="dp-dropdown-item dp-save-binary-item" type="button" aria-label="Save binary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -139,12 +139,12 @@
               </button>
               <div class="dp-dropdown-divider"></div>
             #elseif(context.deployment.canRestoreBinary):
-              <button mist-action="restoreBinary" class="dp-dropdown-item dp-restore-binary-item" type="button" aria-label="Restore binary">
+              <button mist-action="restoreBinary" class="dp-dropdown-item dp-restore-binary-item" type="button" aria-label="Run saved binary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M3 12a9 9 0 1 0 3-6.7"></path>
                   <path d="M3 4v6h6"></path>
                 </svg>
-                Restore binary
+                Run
               </button>
               <button mist-action="removeBinary" class="dp-dropdown-item dp-remove-binary-item" type="button" aria-label="Remove binary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
