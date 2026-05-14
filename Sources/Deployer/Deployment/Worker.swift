@@ -17,14 +17,13 @@ extension Worker {
     }
 
     @discardableResult
-    /// Runs `swift build` and debounces its output to all connected clients using Mist streams.
-    func build(streamingTo relay: MistStreamRelay) async throws -> String {
+    func build(streamingTo stream: OutputStream) async throws -> String {
 
         try await Shell.runStreaming(
             "swift", ["build", "-c", target.buildMode],
             directory: target.directory,
             onOutput: { chunk in
-                await relay.append(chunk)
+                await stream.append(chunk)
             }
         )
     }
@@ -99,99 +98,6 @@ extension Worker {
                 throw Error.deploymentFailed(moveError.localizedDescription)
             }
         }.get()
-    }
-
-}
-
-/// Debounces and relays output to conntected clients through Mist streams using time and data size thresholds.
-actor MistStreamRelay {
-
-    private static let streamName = "build-output"
-    private static let flushInterval: Duration = .milliseconds(100)
-    private static let flushByteThreshold = 8 * 1024
-
-    private let app: Application
-    private let component: String
-    private let modelID: UUID?
-
-    private var pending = ""
-    private var flushTask: Task<Void, Never>?
-
-    init(app: Application, deployment: Deployment) {
-        self.app = app
-        self.component = RowComponent.name(for: deployment.product)
-        self.modelID = deployment.id
-    }
-
-    /// Resets the stream by clearing any cached output from previous builds of this deployment.
-    func start() async {
-        
-        guard let modelID else { return }
-        
-        await app.mist.streams.replace(
-            component: component,
-            modelID: modelID,
-            stream: Self.streamName,
-            text: ""
-        )
-    }
-
-    /// Accumulates and streams text to connected clients once the size threshold is reached or the time interval expires.
-    func append(_ text: String) async {
-        
-        guard !text.isEmpty else { return }
-        pending.append(text)
-
-        if pending.utf8.count >= Self.flushByteThreshold {
-            await flush()
-        } else {
-            scheduleFlush()
-        }
-    }
-
-    /// Streams the accumulated text to all connected clients and resets pending debounce timers.
-    func flush() async {
-        
-        flushTask?.cancel()
-        flushTask = nil
-
-        guard !pending.isEmpty else { return }
-        guard let modelID else { return }
-        
-        let chunk = pending
-        pending = ""
-
-        await app.mist.streams.append(
-            component: component,
-            modelID: modelID,
-            stream: Self.streamName,
-            text: chunk
-        )
-    }
-
-    /// Streams remaining text and closes the Mist stream once the build has ended.
-    func close() async {
-        
-        await flush()
-        
-        guard let modelID else { return }
-        
-        await app.mist.streams.close(
-            component: component,
-            modelID: modelID,
-            stream: Self.streamName
-        )
-    }
-
-    /// Ensures exactly one delayed flush is scheduled at a time.
-    private func scheduleFlush() {
-        
-        guard flushTask == nil else { return }
-
-        flushTask = Task {
-            try? await Task.sleep(for: Self.flushInterval)
-            await self.flush()
-        }
     }
 
 }

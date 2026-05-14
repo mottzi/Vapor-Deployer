@@ -161,40 +161,40 @@ extension Queue {
             onStatusChange: onStatusChange
         )
         let store = BinaryStore(target: target)
-        let buildOutput = MistStreamRelay(app: app, deployment: deployment)
 
-        var capturedOutput: String?
-        do {
-            await buildOutput.start()
-
-            switch mode {
-            case .saveBinary:
+        switch mode {
+        case .saveBinary:
+            let stream = OutputStream(app: app, deployment: deployment)
+            var capturedOutput: String?
+            do {
+                await stream.start()
                 try await worker.checkout()
-                capturedOutput = try await worker.build(streamingTo: buildOutput)
-                await buildOutput.flush()
+                capturedOutput = try await worker.build(streamingTo: stream)
+                await stream.flush()
                 try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
-
                 deployment.status = .built
                 deployment.finishedAt = .now
                 deployment.output = capturedOutput
                 try await deployment.save(on: app.db)
+                await stream.close()
+            } catch {
+                await fail(deployment: deployment, stream: stream, capturedOutput: capturedOutput, error: error)
+            }
 
-            case .restoreBinary:
+        case .restoreBinary:
+            do {
                 try await worker.restore(from: store)
                 try await worker.restart()
-
                 deployment.finishedAt = .now
                 try await store.syncMetadata(for: deployment, on: app.db)
                 try await deployment.setCurrent(on: app.db)
                 try await store.evict(on: app.db)
-
-            case .deploy:
-                preconditionFailure("runSingle does not execute deploy jobs")
+            } catch {
+                await fail(deployment: deployment, stream: nil, capturedOutput: nil, error: error)
             }
 
-            await buildOutput.close()
-        } catch {
-            await fail(deployment: deployment, buildOutput: buildOutput, capturedOutput: capturedOutput, error: error)
+        case .deploy:
+            preconditionFailure("runSingle does not execute deploy jobs")
         }
     }
     
@@ -210,32 +210,32 @@ extension Queue {
                 app: app,
                 onStatusChange: onStatusChange
             )
-            let buildOutput = MistStreamRelay(app: app, deployment: currentDeployment)
-            
+            let stream = OutputStream(app: app, deployment: currentDeployment)
+
             var capturedOutput: String?
             do {
-                await buildOutput.start()
+                await stream.start()
                 try await worker.checkout()
-                capturedOutput = try await worker.build(streamingTo: buildOutput)
-                await buildOutput.flush()
+                capturedOutput = try await worker.build(streamingTo: stream)
+                await stream.flush()
                 try await worker.move()
 
                 currentDeployment.status = .built
                 currentDeployment.finishedAt = .now
                 currentDeployment.output = capturedOutput
                 try await currentDeployment.save(on: app.db)
-                
+
                 guard let nextDeployment = try await findNextDeployment(after: currentDeployment) else {
                     try await worker.restart()
                     let store = BinaryStore(target: currentTarget)
                     try await store.storeLiveBinary(for: currentDeployment, app: app, manually: false)
                     try await currentDeployment.setCurrent(on: app.db)
                     try await store.evict(on: app.db)
-                    await buildOutput.close()
+                    await stream.close()
                     break
                 }
 
-                await buildOutput.close()
+                await stream.close()
 
                 nextDeployment.status = .building
                 try? await nextDeployment.save(on: app.db)
@@ -243,7 +243,7 @@ extension Queue {
                 currentTarget = config.target
                 currentDeployment = nextDeployment
             } catch {
-                await fail(deployment: currentDeployment, buildOutput: buildOutput, capturedOutput: capturedOutput, error: error)
+                await fail(deployment: currentDeployment, stream: stream, capturedOutput: capturedOutput, error: error)
                 break
             }
         }
@@ -251,11 +251,11 @@ extension Queue {
 
     func fail(
         deployment: Deployment,
-        buildOutput: MistStreamRelay,
+        stream: OutputStream?,
         capturedOutput: String?,
         error: Swift.Error
     ) async {
-        await buildOutput.flush()
+        if let stream { await stream.flush() }
         deployment.status = .failed
         deployment.finishedAt = .now
 
@@ -271,10 +271,8 @@ extension Queue {
         }
         deployment.output = finalOutput.trimmingCharacters(in: .whitespacesAndNewlines)
 
-//        if !app.didShutdown {
-            try? await deployment.save(on: app.db)
-//        }
-        await buildOutput.close()
+        try? await deployment.save(on: app.db)
+        if let stream { await stream.close() }
     }
     
     func findNextDeployment(after deployment: Deployment) async throws -> Deployment? {
