@@ -1561,18 +1561,14 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
     .dp-tr {
         display: grid;
-        /* Fixed widths on cols 1 and 3 keep status pills and time columns
-           aligned across rows even though each <tr> is its own grid. */
         grid-template-columns: 112px minmax(0, 1fr) auto 28px;
-        grid-template-rows: auto auto;
-        grid-template-areas:
-            "status meta time actions"
-            ".      meta .    actions";
+        grid-template-rows: auto;
+        grid-template-areas: "status meta time actions";
         column-gap: 14px;
-        row-gap: 2px;
         padding: 12px 16px 12px 20px;
-        min-height: 0;
+        min-height: 88px;
         align-items: start;
+        position: relative;
     }
 
     .dp-tr::before {
@@ -1587,9 +1583,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
 
     .dp-td-status   { grid-area: status; }
     .dp-td-commit   { grid-area: meta; min-width: 0; }
-    .dp-td-started  { grid-area: time; justify-self: end; }
-    .dp-td-duration { grid-column: 3; grid-row: 2; justify-self: end; text-align: right; }
-    .dp-td-binary   { grid-column: 3; grid-row: 2; justify-self: end; text-align: right; padding-top: 1.2em; }
+    .dp-td-started  { grid-area: time; justify-self: end; align-self: start; }
+    .dp-td-duration { position: absolute; bottom: calc(12px + 1.2em + 2px); right: calc(16px + 28px + 14px); text-align: right; }
+    .dp-td-binary   { position: absolute; bottom: 12px;                      right: calc(16px + 28px + 14px); text-align: right; }
     .dp-td-action   { grid-area: actions; align-self: center; }
 
     .dp-td-commit .dp-msg {
