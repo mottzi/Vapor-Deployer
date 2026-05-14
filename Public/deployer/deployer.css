@@ -1566,9 +1566,9 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         grid-template-columns: 112px minmax(0, 1fr) 76px 28px;
         grid-template-rows: auto auto auto;
         grid-template-areas:
-            "status meta time   actions"
-            ".      meta dur    actions"
-            ".      meta binary actions";
+            "status meta   time   actions"
+            ".      .      dur    actions"
+            ".      .      binary actions";
         column-gap: 14px;
         row-gap: 0;
         padding: 12px 16px 12px 20px;
