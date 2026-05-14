@@ -190,6 +190,7 @@ extension RowComponent {
                 try store.deleteBinary(for: deployment)
                 deployment.binarySizeMB = nil
                 deployment.isManuallySaved = false
+                deployment.output = nil
                 deployment.status = .pushed
                 try await deployment.save(on: app.db)
             }
