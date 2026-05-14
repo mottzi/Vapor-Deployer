@@ -1566,7 +1566,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         grid-template-areas: "status meta time actions";
         column-gap: 14px;
         padding: 12px 16px 12px 20px;
-        min-height: 88px;
+        min-height: 108px;
         align-items: start;
         position: relative;
     }
@@ -1584,7 +1584,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     .dp-td-status   { grid-area: status; }
     .dp-td-commit   { grid-area: meta; min-width: 0; }
     .dp-td-started  { grid-area: time; justify-self: end; align-self: start; }
-    .dp-td-duration { position: absolute; bottom: calc(12px + 1.2em + 2px); right: calc(16px + 28px + 14px); text-align: right; }
+    .dp-td-duration { position: absolute; bottom: 27px; right: calc(16px + 28px + 14px); text-align: right; }
     .dp-td-binary   { position: absolute; bottom: 12px;                      right: calc(16px + 28px + 14px); text-align: right; }
     .dp-td-action   { grid-area: actions; align-self: center; }
 
