@@ -1778,8 +1778,8 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     .dp-td-status   { order: 1; flex: 0 0 auto; }
     .dp-td-action   { order: 2; flex: 0 0 auto; margin-left: auto; position: static; transform: none; }
     .dp-td-commit   { order: 3; flex: 0 0 100%; min-width: 0; }
-    .dp-td-duration { order: 4; flex: 0 0 auto; align-self: center; text-align: left; }
-    .dp-td-binary   { order: 5; flex: 0 0 auto; align-self: center; }
+    .dp-td-duration { order: 4; flex: 0 0 auto; align-self: center; text-align: left; position: static; bottom: auto; right: auto; padding-top: 0; }
+    .dp-td-binary   { order: 5; flex: 0 0 auto; align-self: center; position: static; bottom: auto; right: auto; padding-top: 0; }
     .dp-td-started  { order: 6; flex: 0 0 auto; margin-left: auto; align-self: center; }
 
     /* Dot separator removed */
