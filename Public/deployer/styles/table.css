@@ -1,0 +1,187 @@
+.dp-config-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    gap: 0;
+    box-sizing: border-box;
+}
+
+.dp-deployments {
+    min-width: 0;
+    background: transparent;
+}
+
+.dp-target-panel .dp-runtime-bar {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dp-table-wrap {
+    width: 100%;
+    min-width: 0;
+}
+
+.dp-table {
+    display: block;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    min-width: 0;
+}
+
+.dp-thead,
+.dp-tbody {
+    display: block;
+    width: 100%;
+}
+
+.dp-thead {
+    background: transparent;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dp-thead tr {
+    display: grid;
+    grid-template-columns: var(--dp-table-columns);
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    gap: 0;
+}
+
+.dp-th {
+    padding: 10px 14px;
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-subtle);
+    text-align: left;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.dp-th-duration,
+.dp-td-duration,
+.dp-th-binary,
+.dp-td-binary {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.dp-th-action {
+    text-align: right;
+}
+
+.dp-tr {
+    display: grid;
+    grid-template-columns: var(--dp-table-columns);
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    gap: 0;
+    border-bottom: 1px solid var(--border-subtle);
+    background: transparent;
+    position: relative;
+    transition: background-color 0.12s ease;
+    min-height: var(--dp-row-min-height);
+}
+
+.dp-tr--interactive {
+    cursor: pointer;
+}
+
+/* If the row is the last thing in the last tbody, and it's NOT expanded, hide border.
+   If it IS expanded, the .dp-output-row becomes the last thing (handled below). */
+.dp-table>.dp-tbody:last-of-type .dp-tr:last-child {
+    border-bottom: none;
+    border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
+}
+
+.dp-table>.dp-tbody:last-of-type .dp-output-row.dp-output-expanded:last-child {
+    border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
+}
+
+.dp-tr:hover,
+.dp-tr:has(.dp-dropdown[open]) {
+    background: var(--bg-hover);
+}
+
+.dp-tr::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.dp-tr.row-building::before {
+    background: var(--c-building);
+    opacity: 1;
+}
+
+.dp-tr.row-restoring::before {
+    background: var(--c-restoring);
+    opacity: 1;
+}
+
+.dp-tr.row-pushed::before {
+    background: var(--c-pushed);
+    opacity: 0.85;
+}
+
+.dp-tr.row-built::before {
+    background: var(--c-built);
+    opacity: 0.6;
+}
+
+.dp-tr.row-running::before {
+    background: var(--c-running);
+    opacity: 0.8;
+}
+
+.dp-tr.row-failed::before {
+    background: var(--c-failed);
+    opacity: 1;
+}
+
+.dp-tr.row-canceled::before {
+    background: var(--c-canceled);
+    opacity: 0.45;
+}
+
+.dp-tr.row-stale::before {
+    background: var(--c-stale);
+    opacity: 0.75;
+}
+
+.dp-td {
+    padding: 12px 14px;
+    min-width: 0;
+    vertical-align: middle;
+}
+
+.dp-td-action {
+    text-align: right;
+}
+
+.dp-td-binary {
+    color: var(--text-muted);
+}
+
+.dp-td-commit {
+    min-width: 0;
+}
+
+.dp-th-started,
+.dp-th-duration,
+.dp-td-started,
+.dp-td-duration {
+    padding-left: 12px;
+    padding-right: 12px;
+}

@@ -53,6 +53,14 @@ extension Panel {
                 return try await request.fileio.asyncStreamFile(at: filePath)
             }
         }
+
+        router.get("styles", ":filename") { request async throws -> Response in
+            guard let filename = request.parameters.get("filename"),
+                  filename.hasSuffix(".css"),
+                  !filename.contains("/") else { throw Abort(.notFound) }
+            let filePath = request.application.directory.publicDirectory + "deployer/styles/" + filename
+            return try await request.fileio.asyncStreamFile(at: filePath)
+        }
     }
     
     func serveLogin(request: Request) async throws -> View {

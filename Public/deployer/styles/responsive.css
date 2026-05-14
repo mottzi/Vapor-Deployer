@@ -1,0 +1,376 @@
+/* ─────────────────────────────────────────────────────────────────
+   Narrow viewports (≤768px)
+
+   The desktop strip is a single tight row of label/value pairs
+   separated by vertical dividers. Below 768px we keep that exact
+   visual metaphor — same item shape, same dividers, same height —
+   but allow the strip to scroll horizontally with a soft right-edge
+   fade so it never wraps into a sparse multi-row grid.
+
+   Deployment rows collapse to a two-row card where the status badge,
+   commit message and timing column stay perfectly aligned, with the
+   binary size and duration tucked underneath their natural partners.
+   ───────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* ── Runtime bars: keep one-row layout, scroll the items strip ── */
+    .dp-runtime-bar {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        height: 56px;
+        padding: 0 12px 0 18px;
+        gap: 0;
+    }
+
+    .dp-runtime-brand {
+        margin-right: 10px;
+        gap: 12px;
+    }
+
+    .dp-wordmark-title {
+        font-size: 18px;
+    }
+
+    .dp-target-name {
+        font-size: 18px;
+    }
+
+    .dp-runtime-items {
+        height: 56px;
+    }
+
+    .dp-runtime-items .dp-context-item {
+        height: 56px;
+        padding: 0 14px;
+    }
+
+    .dp-runtime-items .dp-context-value {
+        max-width: 180px;
+    }
+
+    .dp-runtime-actions {
+        flex-shrink: 0;
+        margin-left: 10px;
+    }
+
+    .dp-runtime-actions--mobile {
+        display: none;
+    }
+
+    .dp-context-item--deployerdir {
+        display: none;
+    }
+
+    /* ── Deployment rows: compact two-row card aligned to desktop ── */
+    .dp-thead {
+        display: none;
+    }
+
+    .dp-tr {
+        display: grid;
+        grid-template-columns: 112px minmax(0, 1fr) auto 28px;
+        grid-template-rows: auto;
+        grid-template-areas: "status meta time actions";
+        column-gap: 14px;
+        padding: 12px 16px 12px 20px;
+        min-height: 108px;
+        align-items: start;
+        position: relative;
+    }
+
+    .dp-tr::before {
+        top: 12px;
+        bottom: 12px;
+    }
+
+    .dp-td {
+        padding: 0;
+        min-width: 0;
+    }
+
+    .dp-td-status   { grid-area: status; }
+    .dp-td-commit   { grid-area: meta; min-width: 0; }
+    .dp-td-started  { grid-area: time; justify-self: end; align-self: start; }
+    .dp-td-duration { position: absolute; bottom: 27px; right: calc(16px + 28px + 14px); text-align: right; }
+    .dp-td-binary   { position: absolute; bottom: 12px;                      right: calc(16px + 28px + 14px); text-align: right; }
+    .dp-td-action   { grid-area: actions; align-self: center; }
+
+    .dp-td-commit .dp-msg {
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.45;
+        color: var(--text-secondary);
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    .dp-time {
+        align-items: flex-end;
+        gap: 0;
+    }
+
+    .dp-time-value {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    .dp-time-date {
+        font-size: 12px;
+        color: var(--text-subtle);
+    }
+
+    .dp-duration,
+    .dp-duration-live,
+    .dp-duration-dash {
+        font-size: 11px;
+        color: var(--text-subtle);
+        line-height: 1.2;
+    }
+
+    .dp-binary-size,
+    .dp-binary-dash {
+        font-size: 11px;
+        color: var(--text-subtle);
+        line-height: 1.2;
+    }
+
+    .dp-row-actions {
+        justify-content: flex-end;
+    }
+
+    .dp-td-sm-hide,
+    .dp-th-mobile-hide {
+        display: none !important;
+    }
+
+    .dp-output-row.dp-output-expanded {
+        grid-template-columns: 1fr !important;
+    }
+
+    .dp-output-cell {
+        grid-column: 1 / -1;
+    }
+
+    .dp-output-pre {
+        padding: 14px 20px;
+    }
+
+    .dp-copy-log-btn {
+        right: 16px;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Mobile (≤480px)
+
+   Panels go edge-to-edge. The runtime bar wraps so brand + actions
+   share the top row and the items strip occupies a clean second row
+   with the same dividers + horizontal scroll as the medium breakpoint.
+   ───────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .dp-shell {
+        padding: 0 0 40px;
+    }
+
+    .dp-header-panel,
+    .dp-target-panel {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+
+    /* Two-row bar via flex-wrap. Items strip sits on its own row. */
+    .dp-runtime-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        height: auto;
+        padding: 0;
+        gap: 0;
+    }
+
+    .dp-runtime-brand {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 11px 6px 11px 16px;
+        gap: 10px;
+    }
+
+    .dp-runtime-actions {
+        margin-left: 0;
+        padding: 11px 14px 11px 6px;
+    }
+
+    .dp-runtime-actions--mobile {
+        display: flex;
+        margin-left: auto;
+        padding: 0;
+    }
+
+    .dp-header-panel .dp-runtime-actions--desktop {
+        display: none;
+    }
+
+    .dp-runtime-items {
+        flex: 1 0 100%;
+        order: 99;
+        height: 52px;
+        border-top: 1px solid var(--border-subtle);
+        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+        mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+    }
+
+    .dp-runtime-items .dp-context-item {
+        height: 52px;
+        padding: 0 14px;
+    }
+
+    .dp-runtime-items .dp-context-item + .dp-context-item {
+        border-left: 1px solid var(--border-subtle);
+    }
+
+    .dp-context-label {
+        font-size: 9px;
+    }
+
+    .dp-context-value {
+        font-size: 11.5px;
+    }
+
+    .dp-wordmark-title {
+        font-size: 17px;
+    }
+
+    .dp-target-name {
+        font-size: 17px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Target panel: collapse Stop / Restart into icon-only chips */
+    .dp-target-actions {
+        gap: 6px;
+    }
+
+    .dp-target-panel .dp-supervisor-btn {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        gap: 0;
+        font-size: 0;
+        line-height: 0;
+    }
+
+    .dp-target-panel .dp-supervisor-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* ── Row card: three-row flex layout
+       Row 1: STATUS               ACTIONS
+       Row 2: commit message (full width)
+       Row 3: DURATION  BINARY     STARTED ── */
+    .dp-tr {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 8px;
+        row-gap: 4px;
+        padding: 13px 16px 13px 18px;
+        align-items: center;
+        position: relative;
+    }
+
+    .dp-td-status   { order: 1; flex: 0 0 auto; }
+    .dp-td-action   { order: 2; flex: 0 0 auto; margin-left: auto; position: static; transform: none; }
+    .dp-td-commit   { order: 3; flex: 0 0 100%; min-width: 0; }
+    .dp-td-duration { order: 4; flex: 0 0 auto; align-self: center; text-align: left; position: static; bottom: auto; right: auto; padding-top: 0; }
+    .dp-td-binary   { order: 5; flex: 0 0 auto; align-self: center; position: static; bottom: auto; right: auto; padding-top: 0; }
+    .dp-td-started  { order: 6; flex: 0 0 auto; margin-left: auto; align-self: center; }
+
+    /* Dot separator removed */
+
+    /* Status: drop the capsule, keep the color and chevron */
+    .dp-status {
+        padding: 0;
+        height: auto;
+        line-height: 1;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        gap: 5px;
+    }
+
+    .dp-status-chevron {
+        width: 9px;
+        height: 9px;
+    }
+
+    /* Commit message becomes the visual centerpiece of the card */
+    .dp-td-commit .dp-msg {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--text);
+    }
+
+    .dp-td-commit .dp-msg--muted {
+        color: var(--text-muted);
+    }
+
+    /* Time sits bottom-right: value and date side by side */
+    .dp-time {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 5px;
+    }
+
+    .dp-time-value {
+        font-size: 11.5px;
+        color: var(--text-secondary);
+    }
+
+    .dp-time-date {
+        font-size: 11px;
+        color: var(--text-subtle);
+    }
+
+    .dp-binary-size,
+    .dp-binary-dash,
+    .dp-duration,
+    .dp-duration-live,
+    .dp-duration-dash {
+        font-size: 11.5px;
+        color: var(--text-subtle);
+    }
+
+    .dp-output-row.dp-output-expanded {
+        padding: 0;
+    }
+
+    .dp-output-pre {
+        padding: 14px 16px;
+    }
+
+    .dp-copy-log-btn {
+        right: 14px;
+    }
+
+    .dp-legend {
+        gap: 12px;
+        padding: 14px 16px 2px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

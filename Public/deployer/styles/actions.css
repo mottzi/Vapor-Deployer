@@ -1,0 +1,183 @@
+.dp-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    width: 100%;
+}
+
+.dp-tr:hover .dp-row-actions,
+.dp-tr:focus-within .dp-row-actions {
+    opacity: 1;
+}
+
+.dp-action-slot,
+.dp-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+}
+
+.dp-action-icon {
+    border-radius: var(--radius);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 6px;
+    box-sizing: border-box;
+    transition: background 0.15s ease, color 0.15s ease;
+    color: var(--text-muted);
+}
+
+.dp-action-icon:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.dp-deploy-icon:hover {
+    color: var(--c-pushed);
+    background: var(--c-pushed-bg);
+}
+
+.dp-save-binary:hover {
+    color: var(--c-built);
+    background: var(--c-built-bg);
+}
+
+.dp-restore-binary:hover {
+    color: var(--c-running);
+    background: var(--c-running-bg);
+}
+
+.dp-delete:hover {
+    color: var(--c-failed);
+    background: rgba(248, 113, 113, 0.08);
+}
+
+/* ── Dropdown Actions ── */
+
+.dp-dropdown {
+    position: relative;
+    display: inline-flex;
+}
+
+.dp-dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background 0.15s ease, color 0.15s ease;
+    list-style: none; /* Hide default arrow */
+    padding: 0;
+}
+
+.dp-dropdown-trigger::-webkit-details-marker {
+    display: none;
+}
+
+.dp-dropdown-trigger:hover,
+.dp-dropdown[open] .dp-dropdown-trigger {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.dp-dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 50;
+    min-width: 150px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dp-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 10px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    text-align: left;
+}
+
+.dp-dropdown-item svg {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+}
+
+.dp-dropdown-item:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.dp-dropdown-item:hover svg {
+    color: var(--text);
+}
+
+.dp-deploy-item:hover {
+    color: var(--c-running);
+}
+.dp-deploy-item:hover svg {
+    color: var(--c-running);
+}
+
+.dp-save-binary-item:hover {
+    color: var(--c-built);
+}
+.dp-save-binary-item:hover svg {
+    color: var(--c-built);
+}
+
+.dp-restore-binary-item:hover {
+    color: var(--c-running);
+}
+.dp-restore-binary-item:hover svg {
+    color: var(--c-running);
+}
+
+.dp-remove-binary-item:hover {
+    color: var(--c-failed);
+    background: rgba(248, 113, 113, 0.08);
+}
+.dp-remove-binary-item:hover svg {
+    color: var(--c-failed);
+}
+
+.dp-delete-item:hover {
+    color: var(--c-failed);
+    background: rgba(248, 113, 113, 0.08);
+}
+.dp-delete-item:hover svg {
+    color: var(--c-failed);
+}
+
+.dp-dropdown-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 2px -4px;
+}
