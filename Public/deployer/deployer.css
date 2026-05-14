@@ -1765,33 +1765,30 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         height: 14px;
     }
 
-    /* ── Row card: three-row layout, pill-free status, multi-line commit
-       Row 1: STATUS  TIME  DATE          (left-aligned, inline group)
-       Row 2: commit message              (full width, wraps)
-       Row 3: BINARY  ·  DURATION         (left-aligned, dot separator)
-       Both meta groups cluster on the left next to their pair so the
-       eye reads them as natural pairings without crossing the row. ── */
+    /* ── Row card: three-row grid layout
+       Row 1: STATUS               ACTIONS
+       Row 2: commit message (full width)
+       Row 3: DURATION  BINARY     STARTED ── */
     .dp-tr {
-        display: flex;
-        flex-wrap: wrap;
-        padding: 13px 46px 13px 18px; /* space for actions on right */
-        row-gap: 5px;
-        column-gap: 10px;
-        align-items: center;
+        display: grid;
+        grid-template-columns: auto auto 1fr auto;
+        grid-template-rows: auto auto auto;
+        grid-template-areas:
+            "status .       .       actions"
+            "meta   meta    meta    meta"
+            "dur    binary  .       time";
+        column-gap: 8px;
+        row-gap: 4px;
+        padding: 13px 16px 13px 18px;
         position: relative;
     }
 
-    .dp-td-status   { flex: 0 0 auto; }
-    .dp-td-started  { flex: 1 1 auto; }
-    .dp-td-commit   { flex: 0 0 100%; width: 100%; margin: 1px 0; }
-    .dp-td-binary   { flex: 0 0 auto; }
-    .dp-td-duration { flex: 1 1 auto; }
-    .dp-td-action   { 
-        position: absolute; 
-        right: 14px; 
-        top: 50%; 
-        transform: translateY(-50%); 
-    }
+    .dp-td-status   { grid-area: status;  align-self: center; }
+    .dp-td-commit   { grid-area: meta;    align-self: center; min-width: 0; }
+    .dp-td-started  { grid-area: time;    align-self: center; justify-self: end; }
+    .dp-td-duration { grid-area: dur;     align-self: center; }
+    .dp-td-binary   { grid-area: binary;  align-self: center; }
+    .dp-td-action   { grid-area: actions; align-self: center; justify-self: end; position: static; transform: none; }
 
     /* Dot separator removed */
 
@@ -1826,11 +1823,11 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         color: var(--text-muted);
     }
 
-    /* Time goes inline next to status: HH:MM:SS · DD.MM.YY in one row */
+    /* Time sits bottom-right: stack time value over date */
     .dp-time {
-        flex-direction: row;
-        align-items: baseline;
-        gap: 6px;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 1px;
     }
 
     .dp-time-value {
@@ -1839,7 +1836,7 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
     }
 
     .dp-time-date {
-        font-size: 11.5px;
+        font-size: 11px;
         color: var(--text-subtle);
     }
 
