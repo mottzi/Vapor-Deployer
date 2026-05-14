@@ -1765,30 +1765,26 @@ details[open]>.dp-target-toolbar-summary .dp-config-chevron {
         height: 14px;
     }
 
-    /* ── Row card: three-row grid layout
+    /* ── Row card: three-row flex layout
        Row 1: STATUS               ACTIONS
        Row 2: commit message (full width)
        Row 3: DURATION  BINARY     STARTED ── */
     .dp-tr {
-        display: grid;
-        grid-template-columns: auto auto 1fr auto;
-        grid-template-rows: auto auto auto;
-        grid-template-areas:
-            "status .       .       actions"
-            "meta   meta    meta    meta"
-            "dur    binary  .       time";
+        display: flex;
+        flex-wrap: wrap;
         column-gap: 8px;
         row-gap: 4px;
         padding: 13px 16px 13px 18px;
+        align-items: center;
         position: relative;
     }
 
-    .dp-td-status   { grid-area: status;  align-self: center; }
-    .dp-td-commit   { grid-area: meta;    align-self: center; min-width: 0; }
-    .dp-td-started  { grid-area: time;    align-self: center; justify-self: end; }
-    .dp-td-duration { grid-area: dur;     align-self: center; justify-self: start; text-align: left; }
-    .dp-td-binary   { grid-area: binary;  align-self: center; }
-    .dp-td-action   { grid-area: actions; align-self: center; justify-self: end; position: static; transform: none; }
+    .dp-td-status   { order: 1; flex: 0 0 auto; }
+    .dp-td-action   { order: 2; flex: 0 0 auto; margin-left: auto; position: static; transform: none; }
+    .dp-td-commit   { order: 3; flex: 0 0 100%; min-width: 0; }
+    .dp-td-duration { order: 4; flex: 0 0 auto; align-self: center; text-align: left; }
+    .dp-td-binary   { order: 5; flex: 0 0 auto; align-self: center; }
+    .dp-td-started  { order: 6; flex: 0 0 auto; margin-left: auto; align-self: center; }
 
     /* Dot separator removed */
 
