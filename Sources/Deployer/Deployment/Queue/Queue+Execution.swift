@@ -115,8 +115,9 @@ extension Queue {
                 try await worker.checkout(streamingTo: stream)
                 await stream.appendLabel("swift build -c \(config.target.buildMode)")
                 try await worker.build(streamingTo: stream)
-                await stream.appendLabel("install binary")
+                await stream.appendLabel("deployer")
                 try await worker.move()
+                await stream.append("Install binary.\n")
                 await stream.flush()
             } catch {
                 await fail(deployment: current, stream: stream, error: error)
@@ -159,10 +160,10 @@ extension Queue {
         let store = BinaryStore(target: config.target)
 
         do {
-            await stream.appendLabel("restart service")
             try await worker.restart()
-            await stream.appendLabel("archive binary")
+            await stream.append("Restart service.\n")
             try await store.storeLiveBinary(for: deployment, app: app, manually: false)
+            await stream.append("Archive binary.\n")
             await stream.flush()
 
             deployment.finishedAt = .now

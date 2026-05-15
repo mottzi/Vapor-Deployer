@@ -172,8 +172,8 @@
       <div class="dp-output-wrapper">
         #if(context.deployment.hasLiveOutputStream):
           <pre class="dp-output-pre dp-output-pre--live" mist-stream="deployment-log"></pre>
-        #elseif(context.deployment.output):
-          <pre class="dp-output-pre #if(context.deployment.status == "failed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#(context.deployment.output)</pre>
+        #elseif(context.deployment.outputHTML):
+          <pre class="dp-output-pre #if(context.deployment.status == "failed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#unsafeHTML(context.deployment.outputHTML)</pre>
         #endif
         <button
           class="dp-copy-log-btn"

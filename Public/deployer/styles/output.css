@@ -113,5 +113,9 @@
 }
 
 .dp-output-pre--failed {
+    color: var(--text-secondary);
+}
+
+.dp-section--error {
     color: var(--c-failed);
 }

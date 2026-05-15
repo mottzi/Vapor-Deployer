@@ -32,14 +32,24 @@ actor BuildOutputStream {
 
     func append(_ text: String) async {
         guard !text.isEmpty else { return }
-        transcript.append(text)
-        pending.append(text)
+        let cleaned = Self.stripAnsi(text)
+        guard !cleaned.isEmpty else { return }
+        transcript.append(cleaned)
+        pending.append(cleaned)
 
         if pending.utf8.count >= Self.flushByteThreshold {
             await flush()
         } else {
             scheduleFlush()
         }
+    }
+
+    /// Strips ANSI escape sequences (color codes, cursor moves) so the log renders cleanly in a browser `<pre>`.
+    private static let ansiRegex = try! NSRegularExpression(pattern: "\u{001B}\\[[0-9;?]*[a-zA-Z]")
+
+    private static func stripAnsi(_ text: String) -> String {
+        let range = NSRange(text.startIndex..., in: text)
+        return ansiRegex.stringByReplacingMatches(in: text, range: range, withTemplate: "")
     }
 
     func appendLabel(_ label: String) async {
