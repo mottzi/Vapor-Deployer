@@ -11,7 +11,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/leaf.git", from: "4.4.0"),
         .package(url: "https://github.com/vapor/fluent.git", from: "4.12.0"),
         .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.8.0"),
-//        .package(url: "https://github.com/mottzi/Vapor-Mist.git", from: "0.19.0"),
+        // .package(url: "https://github.com/mottzi/Vapor-Mist.git", from: "0.19.0"),
         .package(url: "https://github.com/mottzi/Vapor-Mist.git", branch: "dev"),
         .package(url: "https://github.com/elementary-swift/elementary.git", from: "0.6.0"),
     ],
@@ -26,10 +26,6 @@ let package = Package(
                  .product(name: "Mist", package: "Vapor-Mist"),
                 .product(name: "Elementary", package: "elementary"),
             ],
-        ),
-        .testTarget(
-            name: "deployerTests",
-            dependencies: ["deployer"],
         ),
     ],
     swiftLanguageModes: [

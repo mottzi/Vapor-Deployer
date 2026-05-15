@@ -78,6 +78,19 @@
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
+}
+
+.dp-runtime-items[data-scroll-fade="right"] {
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 64px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 64px), transparent 100%);
+}
+
+.dp-runtime-items[data-scroll-fade="left"] {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 100%);
+}
+
+.dp-runtime-items[data-scroll-fade="both"] {
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
 }

@@ -260,6 +260,41 @@
   <script src="#(deployer.panelRoute)/mist.js" data-url="#(deployer.panelRoute)/ws"></script>
   <script>
     (function () {
+      function updateScrollFade(el) {
+        var atStart = el.scrollLeft <= 0;
+        var atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+        var canScroll = el.scrollWidth > el.clientWidth;
+        if (!canScroll) {
+          el.removeAttribute('data-scroll-fade');
+        } else if (atStart) {
+          el.setAttribute('data-scroll-fade', 'right');
+        } else if (atEnd) {
+          el.setAttribute('data-scroll-fade', 'left');
+        } else {
+          el.setAttribute('data-scroll-fade', 'both');
+        }
+      }
+
+      function initScrollFades() {
+        document.querySelectorAll('.dp-runtime-items').forEach(function (el) {
+          updateScrollFade(el);
+          el.addEventListener('scroll', function () { updateScrollFade(el); }, { passive: true });
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScrollFades);
+      } else {
+        initScrollFades();
+      }
+
+      var resizeObserver = new ResizeObserver(function () {
+        document.querySelectorAll('.dp-runtime-items').forEach(updateScrollFade);
+      });
+      resizeObserver.observe(document.documentElement);
+    })();
+
+    (function () {
       document.body.addEventListener('click', function (e) {
         var sum = e.target.closest('.dp-target-toolbar-summary');
         if (!sum || !sum.contains(e.target)) return;
