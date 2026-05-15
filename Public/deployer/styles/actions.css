@@ -176,6 +176,11 @@
     color: var(--c-failed);
 }
 
+.dp-table > .dp-tbody:nth-last-child(-n+3) .dp-dropdown-menu {
+    top: auto;
+    bottom: calc(100% + 4px);
+}
+
 .dp-dropdown-divider {
     height: 1px;
     background: var(--border-subtle);
