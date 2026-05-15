@@ -49,6 +49,7 @@ struct ConfigState: ComponentData {
         self.fields = [
             Field("Port", String(config.target.appPort)),
             Field("Directory", config.target.directory),
+            Field("Branch", config.target.branch),
             Field("Build Mode", config.target.buildMode),
             Field("Deploy Mode", config.target.deploymentMode.rawValue),
             Field("Binary Retention", config.target.binaryBehaviour.setupValue),

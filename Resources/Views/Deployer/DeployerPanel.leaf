@@ -87,6 +87,14 @@
                     <span class="dp-context-value">#(deployer.deployerBranch)</span>
                   </div>
                 #endif
+                <div class="dp-context-item">
+                  <span class="dp-context-label">Service Manager</span>
+                  <span class="dp-context-value">#(deployer.serviceManager)</span>
+                </div>
+                <div class="dp-context-item">
+                  <span class="dp-context-label">Build from Source</span>
+                  <span class="dp-context-value">#(deployer.buildFromSource)</span>
+                </div>
                 <div class="dp-context-item dp-context-item--socket">
                   <span class="dp-context-label">Socket</span>
                   <span class="dp-context-value">#(deployer.mistSocket)</span>

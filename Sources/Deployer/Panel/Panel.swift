@@ -111,6 +111,8 @@ extension Panel {
             port: String(config.port),
             deployerDirectory: config.deployerDirectory,
             deployerBranch: config.deployerBranch,
+            serviceManager: config.serviceManager.rawValue,
+            buildFromSource: config.buildFromSource ? "yes" : "no",
             mistSocket: config.socketPath.displayPath,
             panelRoute: config.panelRoute.displayPath,
             repositoryWebPageURL: DeployerVersion.repositoryWebPageURL
@@ -147,6 +149,8 @@ extension Panel {
         let port: String
         let deployerDirectory: String
         let deployerBranch: String
+        let serviceManager: String
+        let buildFromSource: String
         let mistSocket: String
         let panelRoute: String
         let repositoryWebPageURL: String
