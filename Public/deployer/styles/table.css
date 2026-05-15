@@ -106,7 +106,8 @@
 }
 
 .dp-tr:hover,
-.dp-tr:has(.dp-dropdown[open]) {
+.dp-tr:has(.dp-dropdown[open]),
+.dp-tr[aria-expanded="true"] {
     background: var(--bg-hover);
 }
 
