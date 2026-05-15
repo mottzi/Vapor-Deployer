@@ -215,8 +215,7 @@
         order: 99;
         height: 52px;
         border-top: 1px solid var(--border-subtle);
-        -webkit-mask-image: linear-gradient(to right, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
-        mask-image: linear-gradient(to right, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
+        animation-range: 0 48px, calc(100% - 48px) 100%;
     }
 
     .dp-runtime-items .dp-context-item {
