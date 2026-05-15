@@ -23,12 +23,12 @@ struct DeployerInfoComponent: ManualComponent {
 
     private static func contextItemClass(for field: DeployerInfoState.Field) -> String {
         let base = "dp-context-item"
-        switch field.label {
-        case "Port": return "\(base) dp-context-item--port"
-        case "Directory": return "\(base) dp-context-item--deployerdir"
-        case "Version": return "\(base) dp-context-item--version"
-        case "Socket": return "\(base) dp-context-item--socket"
-        default: return base
+        return switch field.label {
+        case "Port":      "\(base) dp-context-item--port"
+        case "Directory": "\(base) dp-context-item--deployerdir"
+        case "Version":   "\(base) dp-context-item--version"
+        case "Socket":    "\(base) dp-context-item--socket"
+        default: base
         }
     }
 
@@ -61,6 +61,7 @@ struct DeployerInfoState: ComponentData {
 
         fields.append(contentsOf: [
             Field("Service Manager", config.serviceManager.rawValue),
+            Field("User", UserAccount.currentName() ?? ""),
             Field("Build from Source", config.buildFromSource ? "yes" : "no"),
             Field("Socket", config.socketPath.displayPath)
         ])

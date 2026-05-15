@@ -66,7 +66,7 @@ extension Deployer {
 
     func configurePanel(config: Configuration) async throws {
         let rowComponent = RowComponent(productName: config.target.name)
-        let configComponent = ConfigComponent(using: config)
+        let targetInfoComponent = TargetInfoComponent(using: config)
         let queueComponent = QueueComponent()
         let deployerInfoComponent = await DeployerInfoComponent(
             using: config,
@@ -99,7 +99,7 @@ extension Deployer {
         usePanel(
             config: config,
             row: rowComponent,
-            configComponent: configComponent,
+            targetInfoComponent: targetInfoComponent,
             deployerInfoComponent: deployerInfoComponent
         )
 
@@ -108,7 +108,7 @@ extension Deployer {
             statusComponent
             statusActionsComponent
             queueComponent
-            configComponent
+            targetInfoComponent
             deployerInfoComponent
         }
     }

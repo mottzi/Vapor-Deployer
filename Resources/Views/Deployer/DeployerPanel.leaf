@@ -126,11 +126,11 @@
               <!-- Center: Configuration items -->
               <div
                 class="dp-runtime-items"
-                mist-container="#(target.configComponentName)"
+                mist-container="#(target.targetInfoComponentName)"
                 mist-insert-position="beforeend"
                 mist-ssr="true"
               >
-                #unsafeHTML(target.configInitialHTML)
+                #unsafeHTML(target.targetInfoInitialHTML)
               </div>
 
               <!-- Right: stop + restart -->

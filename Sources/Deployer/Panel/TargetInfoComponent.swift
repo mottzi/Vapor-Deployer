@@ -2,12 +2,12 @@ import Vapor
 import Mist
 import Elementary
 
-struct ConfigComponent: ManualComponent {
+struct TargetInfoComponent: ManualComponent {
 
     var name: String
-    let state: LiveState<ConfigState>
+    let state: LiveState<TargetInfoState>
 
-    func body(state: ConfigState) -> some HTML {
+    func body(state: TargetInfoState) -> some HTML {
         div(
             .style("display: contents;"),
             .mistComponent(state.componentName)
@@ -21,7 +21,7 @@ struct ConfigComponent: ManualComponent {
         }
     }
 
-    private static func contextItemClass(for field: ConfigState.Field) -> String {
+    private static func contextItemClass(for field: TargetInfoState.Field) -> String {
         let base = "dp-context-item"
         switch field.label {
         case "Port": return "\(base) dp-context-item--target-port"
@@ -31,15 +31,15 @@ struct ConfigComponent: ManualComponent {
     }
 
     init(using config: Configuration) {
-        self.name = "ConfigComponent-\(config.target.name)"
+        self.name = "TargetInfoComponent-\(config.target.name)"
         self.state = LiveState(
-            of: ConfigState(config: config, componentName: self.name)
+            of: TargetInfoState(config: config, componentName: self.name)
         )
     }
 
 }
 
-struct ConfigState: ComponentData {
+struct TargetInfoState: ComponentData {
 
     let componentName: String
     let fields: [Field]
@@ -59,7 +59,7 @@ struct ConfigState: ComponentData {
 
 }
 
-extension ConfigState {
+extension TargetInfoState {
 
     struct Field: ComponentData {
 
