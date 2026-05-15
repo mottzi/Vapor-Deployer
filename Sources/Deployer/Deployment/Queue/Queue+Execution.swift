@@ -69,8 +69,8 @@ extension Queue {
                 deployment.status = .built
                 deployment.finishedAt = .now
                 deployment.output = await stream.transcript
-                try await deployment.save(on: app.db)
                 await stream.close()
+                try await deployment.save(on: app.db)
             } catch {
                 await fail(deployment: deployment, stream: stream, error: error)
             }
@@ -166,9 +166,9 @@ extension Queue {
 
             deployment.finishedAt = .now
             deployment.output = await stream.transcript
+            await stream.close()
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
-            await stream.close()
         } catch {
             await fail(deployment: deployment, stream: stream, error: error)
         }
@@ -204,8 +204,8 @@ extension Queue {
         deployment.finishedAt = .now
         deployment.output = await stream.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        try? await deployment.save(on: app.db)
         await stream.close()
+        try? await deployment.save(on: app.db)
     }
 
     /// Marks a deployment as failed when no live stream is attached (restore jobs and last-good-build-wins finalize).

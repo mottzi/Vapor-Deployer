@@ -59,9 +59,9 @@ actor BuildOutputStream {
 
     func appendError(_ error: Swift.Error) async {
         if let shellError = error as? Shell.Error {
-            await append("\n[\(shellError.command) failed]\n")
+            await append("\nError: '\(shellError.command)' failed.\n")
         } else {
-            await append("\n\(error.localizedDescription)\n")
+            await append("\nError: \(error.localizedDescription)\n")
         }
     }
 
