@@ -12,11 +12,13 @@ struct Worker: Sendable {
 extension Worker {
 
     func checkout(streamingTo stream: BuildOutputStream) async throws {
+        await stream.appendLabel("git fetch origin \(deployment.branch)")
         try await Shell.runStreaming(
             "git", ["fetch", "origin", deployment.branch],
             directory: target.directory,
             onOutput: { chunk in await stream.append(chunk) }
         )
+        await stream.appendLabel("git checkout --detach -f \(deployment.commitID)")
         try await Shell.runStreaming(
             "git", ["checkout", "--detach", "-f", deployment.commitID],
             directory: target.directory,

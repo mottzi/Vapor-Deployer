@@ -60,7 +60,6 @@ extension Queue {
             let stream = BuildOutputStream(app: app, deployment: deployment)
             do {
                 await stream.start()
-                await stream.appendLabel("git fetch origin \(target.branch)")
                 try await worker.checkout(streamingTo: stream)
                 await stream.appendLabel("swift build -c \(target.buildMode)")
                 try await worker.build(streamingTo: stream)
@@ -111,7 +110,6 @@ extension Queue {
 
             do {
                 await stream.start()
-                await stream.appendLabel("git fetch origin \(config.target.branch)")
                 try await worker.checkout(streamingTo: stream)
                 await stream.appendLabel("swift build -c \(config.target.buildMode)")
                 try await worker.build(streamingTo: stream)
