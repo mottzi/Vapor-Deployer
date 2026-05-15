@@ -2,14 +2,14 @@ import Vapor
 import Mist
 
 actor Queue {
-
+    
     var isDeploying: Bool = false
-
+    
     let app: Application
     let config: Configuration
     let queueState: LiveState<QueueState>
     let onStatusChange: @Sendable (ServiceStatus) async -> Void
-
+    
     init(
         app: Application,
         config: Configuration,
@@ -21,20 +21,20 @@ actor Queue {
         self.queueState = queueState
         self.onStatusChange = onStatusChange
     }
-
+    
     func recordPush(event: PushEvent, target: TargetConfiguration) async {
-
+        
         let eventBranch = event.branch.hasPrefix("refs/heads/")
             ? String(event.branch.dropFirst("refs/heads/".count))
             : event.branch
-
+        
         guard eventBranch == target.branch else { return }
-
+        
         let status: Deployment.Status = switch target.deploymentMode {
             case .automatic: isDeploying ? .canceled : .building
             case .manual: .pushed
         }
-
+        
         let deployment = Deployment(
             product: target.name,
             status: status,
@@ -42,16 +42,20 @@ actor Queue {
             commitID: event.commitID,
             branch: event.branch
         )
-
+        
         if deployment.status == .building {
             await deploy(deployment: deployment, target: target)
             return
         }
-
+        
         deployment.startedAt = .now
         try? await deployment.save(on: app.db)
     }
+    
+}
 
+extension Queue {
+    
     @discardableResult
     func deploy(deployment: Deployment, target: TargetConfiguration) async -> StartResult {
         await start(deployment: deployment, target: target, mode: .deploy)
@@ -67,12 +71,16 @@ actor Queue {
         await start(deployment: deployment, target: target, mode: .restoreBinary)
     }
 
+}
+
+extension Queue {
+    
     private func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async -> StartResult {
 
         guard !isDeploying else { return .queueBusy }
 
         isDeploying = true
-        await updateUI()
+        await broadcastState()
 
         deployment.startedAt = .now
         deployment.status = mode == .restoreBinary ? .restoring : .building
@@ -86,12 +94,11 @@ actor Queue {
             try await deployment.save(on: app.db)
         } catch {
             isDeploying = false
-            await updateUI()
-
+            await broadcastState()
             return .failure("Failed to start deployment: \(error.localizedDescription)")
         }
 
-        Task { await self.run(mode: mode, startingWith: deployment, initialTarget: target) }
+        Task { await run(mode: mode, startingWith: deployment, on: target) }
         return .started
     }
 
