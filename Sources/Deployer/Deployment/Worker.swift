@@ -18,7 +18,7 @@ extension Worker {
             directory: target.directory,
             onOutput: { chunk in await stream.append(chunk) }
         )
-        await stream.appendLabel("git checkout --detach -f \(deployment.commitID)")
+        await stream.appendLabel("git checkout --detach -f \(deployment.commitID.prefix(7))")
         try await Shell.runStreaming(
             "git", ["checkout", "--detach", "-f", deployment.commitID],
             directory: target.directory,

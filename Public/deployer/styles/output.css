@@ -118,4 +118,5 @@
 
 .dp-section--error {
     color: var(--c-failed);
+    -webkit-text-fill-color: var(--c-failed);
 }
