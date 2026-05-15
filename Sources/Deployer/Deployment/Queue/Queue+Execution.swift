@@ -58,20 +58,22 @@ extension Queue {
         switch mode {
         case .saveBinary:
             let stream = BuildOutputStream(app: app, deployment: deployment)
-            var capturedOutput: String?
             do {
                 await stream.start()
-                try await worker.checkout()
-                capturedOutput = try await worker.build(streamingTo: stream)
-                await stream.flush()
+                await stream.appendLabel("git checkout")
+                try await worker.checkout(streamingTo: stream)
+                await stream.appendLabel("swift build")
+                try await worker.build(streamingTo: stream)
+                await stream.appendLabel("archive binary")
                 try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
+                await stream.flush()
                 deployment.status = .built
                 deployment.finishedAt = .now
-                deployment.output = capturedOutput
+                deployment.output = await stream.transcript
                 try await deployment.save(on: app.db)
                 await stream.close()
             } catch {
-                await fail(deployment: deployment, stream: stream, capturedOutput: capturedOutput, error: error)
+                await fail(deployment: deployment, stream: stream, error: error)
             }
 
         case .restoreBinary:
@@ -83,7 +85,7 @@ extension Queue {
                 try await deployment.setCurrent(on: app.db)
                 try await store.evict(on: app.db)
             } catch {
-                await fail(deployment: deployment, stream: nil, capturedOutput: nil, error: error)
+                await failWithoutStream(deployment: deployment, error: error)
             }
 
         case .deploy:
@@ -96,7 +98,7 @@ extension Queue {
     func drainQueue(startingWith initialDeployment: Deployment) async {
 
         var current = initialDeployment
-        var lastSuccessful: (deployment: Deployment, output: String?)?
+        var lastSuccessful: (deployment: Deployment, transcript: String)?
 
         while true {
             let worker = Worker(
@@ -106,45 +108,76 @@ extension Queue {
                 onStatusChange: onStatusChange
             )
             let stream = BuildOutputStream(app: app, deployment: current)
-            var capturedOutput: String?
 
             do {
                 await stream.start()
-                try await worker.checkout()
-                capturedOutput = try await worker.build(streamingTo: stream)
-                await stream.flush()
+                await stream.appendLabel("git checkout")
+                try await worker.checkout(streamingTo: stream)
+                await stream.appendLabel("swift build")
+                try await worker.build(streamingTo: stream)
+                await stream.appendLabel("install binary")
                 try await worker.move()
-
-                current.status = .built
-                current.finishedAt = .now
-                current.output = capturedOutput
-                try await current.save(on: app.db)
+                await stream.flush()
             } catch {
-                await fail(deployment: current, stream: stream, capturedOutput: capturedOutput, error: error)
+                await fail(deployment: current, stream: stream, error: error)
                 if let last = lastSuccessful {
-                    await finalize(deployment: last.deployment, stream: nil, capturedOutput: last.output)
+                    await finalize(deployment: last.deployment, priorTranscript: last.transcript)
                 }
                 return
             }
 
             guard let next = try? await findNextDeployment(after: current) else {
-                await finalize(deployment: current, stream: stream, capturedOutput: capturedOutput)
+                await finalize(deployment: current, stream: stream)
                 return
             }
 
+            current.status = .built
+            current.finishedAt = .now
+            current.output = await stream.transcript
+            try? await current.save(on: app.db)
+
+            let transcript = await stream.transcript
             await stream.close()
 
             next.status = .building
             try? await next.save(on: app.db)
 
-            lastSuccessful = (current, capturedOutput)
+            lastSuccessful = (current, transcript)
             current = next
         }
     }
 
-    /// Restarts the service onto a built deployment, archives the binary, marks the row current, and evicts stale entries.
-    /// On failure, routes through `fail` so the deployment is recorded as failed with the build output preserved.
-    func finalize(deployment: Deployment, stream: BuildOutputStream?, capturedOutput: String?) async {
+    /// Restarts the service onto the just-built deployment, archives the binary, marks the row current, and evicts stale entries.
+    /// Continues streaming step labels into the deployment log so the panel shows the entire pipeline live.
+    func finalize(deployment: Deployment, stream: BuildOutputStream) async {
+        let worker = Worker(
+            deployment: deployment,
+            target: config.target,
+            app: app,
+            onStatusChange: onStatusChange
+        )
+        let store = BinaryStore(target: config.target)
+
+        do {
+            await stream.appendLabel("restart service")
+            try await worker.restart()
+            await stream.appendLabel("archive binary")
+            try await store.storeLiveBinary(for: deployment, app: app, manually: false)
+            await stream.flush()
+
+            deployment.finishedAt = .now
+            deployment.output = await stream.transcript
+            try await deployment.setCurrent(on: app.db)
+            try await store.evict(on: app.db)
+            await stream.close()
+        } catch {
+            await fail(deployment: deployment, stream: stream, error: error)
+        }
+    }
+
+    /// Finalizes a previously-successful build whose stream has already closed (last-good-build-wins path).
+    /// On failure, the prior transcript is preserved and the error appended via `failWithoutStream`.
+    func finalize(deployment: Deployment, priorTranscript: String) async {
         let worker = Worker(
             deployment: deployment,
             target: config.target,
@@ -158,32 +191,36 @@ extension Queue {
             try await store.storeLiveBinary(for: deployment, app: app, manually: false)
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
-            if let stream { await stream.close() }
         } catch {
-            await fail(deployment: deployment, stream: stream, capturedOutput: capturedOutput, error: error)
+            await failWithoutStream(deployment: deployment, priorTranscript: priorTranscript, error: error)
         }
     }
 
-    /// Marks a deployment as failed, assembles final output from build log and error, and persists to DB.
-    func fail(deployment: Deployment, stream: BuildOutputStream?, capturedOutput: String?, error: Swift.Error) async {
-        if let stream { await stream.flush() }
+    /// Marks a deployment as failed, appends the error into the live stream, and persists the full transcript.
+    func fail(deployment: Deployment, stream: BuildOutputStream, error: Swift.Error) async {
+        await stream.appendError(error)
+        await stream.flush()
+
+        deployment.status = .failed
+        deployment.finishedAt = .now
+        deployment.output = await stream.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        try? await deployment.save(on: app.db)
+        await stream.close()
+    }
+
+    /// Marks a deployment as failed when no live stream is attached (restore jobs and last-good-build-wins finalize).
+    func failWithoutStream(deployment: Deployment, priorTranscript: String = "", error: Swift.Error) async {
         deployment.status = .failed
         deployment.finishedAt = .now
 
-        var finalOutput = ""
-        if let capturedOutput {
-            finalOutput = capturedOutput + "\n\n"
-        }
-
-        if let shellError = error as? Shell.Error {
-            finalOutput += shellError.output
-        } else {
-            finalOutput += error.localizedDescription
-        }
-        deployment.output = finalOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+        let errorMessage = (error as? Shell.Error)?.output ?? error.localizedDescription
+        let combined = priorTranscript.isEmpty
+            ? errorMessage
+            : priorTranscript + "\n\n" + errorMessage
+        deployment.output = combined.trimmingCharacters(in: .whitespacesAndNewlines)
 
         try? await deployment.save(on: app.db)
-        if let stream { await stream.close() }
     }
 
 }

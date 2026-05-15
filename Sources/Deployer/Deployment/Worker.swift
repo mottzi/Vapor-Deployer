@@ -11,9 +11,17 @@ struct Worker: Sendable {
 
 extension Worker {
 
-    func checkout() async throws {
-        try await Shell.runThrowing("git fetch origin \(deployment.branch.shellQuoted)", directory: target.directory)
-        try await Shell.runThrowing("git checkout --detach \(deployment.commitID.shellQuoted)", directory: target.directory)
+    func checkout(streamingTo stream: BuildOutputStream) async throws {
+        try await Shell.runStreaming(
+            "git", ["fetch", "origin", deployment.branch],
+            directory: target.directory,
+            onOutput: { chunk in await stream.append(chunk) }
+        )
+        try await Shell.runStreaming(
+            "git", ["checkout", "--detach", deployment.commitID],
+            directory: target.directory,
+            onOutput: { chunk in await stream.append(chunk) }
+        )
     }
 
     @discardableResult

@@ -2,7 +2,7 @@ import Vapor
 
 actor BuildOutputStream {
 
-    private static let streamName = "build-output"
+    private static let streamName = "deployment-log"
     private static let flushInterval: Duration = .milliseconds(100)
     private static let flushByteThreshold = 8 * 1024
 
@@ -10,6 +10,7 @@ actor BuildOutputStream {
     private let component: String
     private let modelID: UUID?
 
+    private(set) var transcript = ""
     private var pending = ""
     private var flushTask: Task<Void, Never>?
 
@@ -31,12 +32,25 @@ actor BuildOutputStream {
 
     func append(_ text: String) async {
         guard !text.isEmpty else { return }
+        transcript.append(text)
         pending.append(text)
 
         if pending.utf8.count >= Self.flushByteThreshold {
             await flush()
         } else {
             scheduleFlush()
+        }
+    }
+
+    func appendLabel(_ label: String) async {
+        await append("\n──── \(label) ────\n")
+    }
+
+    func appendError(_ error: Swift.Error) async {
+        if let shellError = error as? Shell.Error {
+            await append("\n[\(shellError.command) failed]\n")
+        } else {
+            await append("\n\(error.localizedDescription)\n")
         }
     }
 
