@@ -60,9 +60,9 @@ extension Queue {
             let stream = BuildOutputStream(app: app, deployment: deployment)
             do {
                 await stream.start()
-                await stream.appendLabel("git checkout")
+                await stream.appendLabel("git fetch origin \(target.branch)")
                 try await worker.checkout(streamingTo: stream)
-                await stream.appendLabel("swift build")
+                await stream.appendLabel("swift build -c \(target.buildMode)")
                 try await worker.build(streamingTo: stream)
                 await stream.appendLabel("archive binary")
                 try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
@@ -111,9 +111,9 @@ extension Queue {
 
             do {
                 await stream.start()
-                await stream.appendLabel("git checkout")
+                await stream.appendLabel("git fetch origin \(config.target.branch)")
                 try await worker.checkout(streamingTo: stream)
-                await stream.appendLabel("swift build")
+                await stream.appendLabel("swift build -c \(config.target.buildMode)")
                 try await worker.build(streamingTo: stream)
                 await stream.appendLabel("install binary")
                 try await worker.move()

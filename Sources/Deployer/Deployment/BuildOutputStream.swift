@@ -43,7 +43,8 @@ actor BuildOutputStream {
     }
 
     func appendLabel(_ label: String) async {
-        await append("\n──── \(label) ────\n")
+        let prefix = transcript.isEmpty ? "" : "\n"
+        await append("\(prefix)──── \(label) ────\n")
     }
 
     func appendError(_ error: Swift.Error) async {
