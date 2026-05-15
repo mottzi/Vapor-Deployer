@@ -18,7 +18,7 @@ extension Worker {
             onOutput: { chunk in await stream.append(chunk) }
         )
         try await Shell.runStreaming(
-            "git", ["checkout", "--detach", deployment.commitID],
+            "git", ["checkout", "--detach", "-f", deployment.commitID],
             directory: target.directory,
             onOutput: { chunk in await stream.append(chunk) }
         )
