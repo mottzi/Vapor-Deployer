@@ -10,7 +10,7 @@
 .dp-deployments {
     min-width: 0;
     background: transparent;
-    overflow: clip;
+    overflow-x: clip;
     border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
 }
 
