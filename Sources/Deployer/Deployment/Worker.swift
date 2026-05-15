@@ -1,13 +1,13 @@
 import Vapor
 
 struct Worker: Sendable {
-
+    
     let deployment: Deployment
     let target: TargetConfiguration
     let app: Application
     let stream: BuildOutputStream?
     let onStatusChange: @Sendable (ServiceStatus) async -> Void
-
+    
 }
 
 extension Worker {
@@ -68,12 +68,12 @@ extension Worker {
     func save(to store: BinaryStore) async throws {
         await stream?.appendLabel("deployer")
         try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
-        await stream?.append("Archive binary.\n")
+        await stream?.append("Archive binary\n")
     }
 
     func deploy(to store: BinaryStore) async throws {
         try await store.storeLiveBinary(for: deployment, app: app, manually: false)
-        await stream?.append("Archive binary.\n")
+        await stream?.append("Archive binary\n")
     }
 
 }
@@ -85,6 +85,7 @@ extension Worker {
         case move
     }
 
+    /// Atomically swaps the live binary at `deployPath` with the source, keeping a `.old` backup for rollback on failure.
     private func replaceLiveBinary(from sourcePath: String, to deployPath: String, transfer: BinaryTransfer) async throws {
 
         let eventLoop = app.eventLoopGroup.any()
@@ -97,23 +98,31 @@ extension Worker {
             let fileManager = FileManager.default
             try fileManager.createDirectory(atPath: deployDir, withIntermediateDirectories: true)
 
-            guard fileManager.fileExists(atPath: sourcePath) else { throw Error.binaryNotFound(sourcePath) }
-            if fileManager.fileExists(atPath: backupPath) { try fileManager.removeItem(atPath: backupPath) }
-            if fileManager.fileExists(atPath: deployPath) { try fileManager.moveItem(atPath: deployPath, toPath: backupPath) }
+            guard fileManager.fileExists(atPath: sourcePath) else {
+                throw Error.binaryNotFound(sourcePath)
+            }
+            if fileManager.fileExists(atPath: backupPath) {
+                try fileManager.removeItem(atPath: backupPath)
+            }
+            if fileManager.fileExists(atPath: deployPath) {
+                try fileManager.moveItem(atPath: deployPath, toPath: backupPath)
+            }
 
             do {
                 switch transfer {
-                case .copy:
-                    try fileManager.copyItem(atPath: sourcePath, toPath: deployPath)
-                case .move:
-                    try fileManager.moveItem(atPath: sourcePath, toPath: deployPath)
+                    case .copy: try fileManager.copyItem(atPath: sourcePath, toPath: deployPath)
+                    case .move: try fileManager.moveItem(atPath: sourcePath, toPath: deployPath)
                 }
-                if fileManager.fileExists(atPath: backupPath) { try? fileManager.removeItem(atPath: backupPath) }
+                if fileManager.fileExists(atPath: backupPath) {
+                    try? fileManager.removeItem(atPath: backupPath)
+                }
             } catch {
                 let moveError = error
                 if fileManager.fileExists(atPath: backupPath) {
                     do {
-                        if fileManager.fileExists(atPath: deployPath) { try fileManager.removeItem(atPath: deployPath) }
+                        if fileManager.fileExists(atPath: deployPath) {
+                            try fileManager.removeItem(atPath: deployPath)
+                        }
                         try fileManager.moveItem(atPath: backupPath, toPath: deployPath)
                     } catch {
                         throw Error.deploymentAndRollbackFailed(moveError.localizedDescription, error.localizedDescription)
