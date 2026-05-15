@@ -68,6 +68,18 @@
     letter-spacing: -0.03em;
 }
 
+@property --dp-fade-left {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0px;
+}
+
+@property --dp-fade-right {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0px;
+}
+
 .dp-runtime-items {
     min-width: 0;
     display: flex;
@@ -78,21 +90,35 @@
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
+
+    animation: dp-fade-left-in auto linear both, dp-fade-right-out auto linear both;
+    animation-timeline: scroll(self x);
+    animation-range: 0 64px, calc(100% - 64px) 100%;
+
+    -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 var(--dp-fade-left),
+        #000 calc(100% - var(--dp-fade-right)),
+        transparent 100%
+    );
+    mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 var(--dp-fade-left),
+        #000 calc(100% - var(--dp-fade-right)),
+        transparent 100%
+    );
 }
 
-.dp-runtime-items[data-scroll-fade="right"] {
-    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 64px), transparent 100%);
-    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 64px), transparent 100%);
+@keyframes dp-fade-left-in {
+    from { --dp-fade-left: 0px; }
+    to { --dp-fade-left: 64px; }
 }
 
-.dp-runtime-items[data-scroll-fade="left"] {
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 100%);
-}
-
-.dp-runtime-items[data-scroll-fade="both"] {
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
+@keyframes dp-fade-right-out {
+    from { --dp-fade-right: 64px; }
+    to { --dp-fade-right: 0px; }
 }
 
 .dp-runtime-items::-webkit-scrollbar {
