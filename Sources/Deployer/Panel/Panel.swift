@@ -4,9 +4,9 @@ import Mist
 
 extension Deployer {
     
-    func usePanel(config: Configuration, row: RowComponent, configComponent: ConfigComponent) {
+    func usePanel(config: Configuration, row: RowComponent, configComponent: ConfigComponent, deployerInfoComponent: DeployerInfoComponent) {
 
-        let panel = Panel(config: config, row: row, configComponent: configComponent)
+        let panel = Panel(config: config, row: row, configComponent: configComponent, deployerInfoComponent: deployerInfoComponent)
         let router = app.grouped(config.panelRoute.pathComponents).grouped(app.sessions.middleware)
         
         panel.registerAssetRoutes(on: app.grouped(config.panelRoute.pathComponents))
@@ -27,18 +27,20 @@ struct Panel {
     let config: Configuration
     let row: RowComponent
     let configComponent: ConfigComponent
+    let deployerInfoComponent: DeployerInfoComponent
     let panelPath: String
     let loginPath: String
     let authenticator: PanelAuthenticator
-    
-    init(config: Configuration, row: RowComponent, configComponent: ConfigComponent) {
-        
+
+    init(config: Configuration, row: RowComponent, configComponent: ConfigComponent, deployerInfoComponent: DeployerInfoComponent) {
+
         self.panelPath = config.panelRoute.displayPath
         self.loginPath = panelPath == "/" ? "/login" : panelPath + "/login"
         self.authenticator = PanelAuthenticator(path: loginPath)
         self.config = config
         self.row = row
         self.configComponent = configComponent
+        self.deployerInfoComponent = deployerInfoComponent
     }
     
 }
@@ -103,19 +105,13 @@ extension Panel {
         async let isRunning = request.application.deployer.serviceManager.isRunning(product: config.target.name)
         async let queueIsDeploying = request.application.deployer.queue.isDeploying
         async let configRender = configComponent.renderCurrent(app: request.application)
-
-        let deployerVersion = await DeployerVersion.current()
+        async let deployerInfoRender = deployerInfoComponent.renderCurrent(app: request.application)
 
         let deployer = DeployerContext(
-            version: deployerVersion,
-            port: String(config.port),
-            deployerDirectory: config.deployerDirectory,
-            deployerBranch: config.deployerBranch,
-            serviceManager: config.serviceManager.rawValue,
-            buildFromSource: config.buildFromSource ? "yes" : "no",
-            mistSocket: config.socketPath.displayPath,
             panelRoute: config.panelRoute.displayPath,
-            repositoryWebPageURL: DeployerVersion.repositoryWebPageURL
+            repositoryWebPageURL: DeployerVersion.repositoryWebPageURL,
+            infoComponentName: deployerInfoComponent.name,
+            infoInitialHTML: await deployerInfoRender.html ?? ""
         )
 
         let target = TargetContext(
@@ -145,15 +141,10 @@ extension Panel {
     }
 
     struct DeployerContext: Encodable {
-        let version: String
-        let port: String
-        let deployerDirectory: String
-        let deployerBranch: String
-        let serviceManager: String
-        let buildFromSource: String
-        let mistSocket: String
         let panelRoute: String
         let repositoryWebPageURL: String
+        let infoComponentName: String
+        let infoInitialHTML: String
     }
 
     struct TargetContext: Encodable {
