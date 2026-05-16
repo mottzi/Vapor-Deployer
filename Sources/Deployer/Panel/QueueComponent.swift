@@ -2,15 +2,10 @@ import Vapor
 import Mist
 import Elementary
 
-struct QueueComponent: LiveComponent {
-    
+struct QueueComponent: ManualComponent {
+
     let state = LiveState(of: QueueState(isDeploying: false))
 
-    func refresh(app: Application) async {
-        let isDeploying = await app.deployer.queue.isDeploying
-        await state.set(QueueState(isDeploying: isDeploying))
-    }
-    
     func body(state: QueueState) -> some HTML {
         span(
             .class("dp-supervisor-badge \(state.badgeClass)"),
