@@ -69,13 +69,14 @@
 }
 
 .dp-duration {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 6px;
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--text);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 .dp-duration-live {
@@ -108,14 +109,16 @@
     color: var(--text-subtle);
 }
 
-.dp-binary-size,
-.dp-binary-dash {
+.dp-binary-size {
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--text-subtle);
     white-space: nowrap;
 }
 
 .dp-binary-dash {
+    font-family: var(--font-mono);
+    font-size: 12px;
     color: var(--text-subtle);
+    white-space: nowrap;
 }
