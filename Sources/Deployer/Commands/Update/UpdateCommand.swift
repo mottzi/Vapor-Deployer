@@ -12,9 +12,11 @@ struct UpdateCommand: AsyncCommand {
 
     /// Downloads the latest release, extracts it, and does a stop / swap / start with rollback on failure.
     func run(using context: CommandContext, signature: Signature) async throws {
-        do { try await runPipeline(context: context) }
-        catch {
-            UpdateCommand.writeFailureSentinelIfRequested(error: error)
+        do {
+            try await runPipeline(context: context)
+            UpdateCommand.writeCompletionSentinelIfRequested(error: nil)
+        } catch {
+            UpdateCommand.writeCompletionSentinelIfRequested(error: error)
             throw error
         }
     }
@@ -89,12 +91,15 @@ struct UpdateCommand: AsyncCommand {
 
 extension UpdateCommand {
 
-    /// Writes the error description to the failure sentinel path when invoked by the panel-triggered detached child.
-    /// Cli invocations don't set the env var and skip this path. See `Updater.spawnDetachedUpdate`.
-    static func writeFailureSentinelIfRequested(error: Swift.Error) {
+    /// Writes a completion sentinel when invoked by the panel-triggered detached child.
+    /// Signals that the update process has exited (with or without an error) so the parent's
+    /// watcher Task can reset the panel state. Cli invocations don't set the env var and skip this path.
+    /// See `Updater.spawnDetachedUpdate`.
+    static func writeCompletionSentinelIfRequested(error: Swift.Error?) {
         let environment = ProcessInfo.processInfo.environment
-        guard let sentinelPath = environment["DEPLOYER_FAILURE_SENTINEL"], !sentinelPath.isEmpty else { return }
-        try? error.localizedDescription.write(toFile: sentinelPath, atomically: true, encoding: .utf8)
+        guard let sentinelPath = environment["DEPLOYER_COMPLETION_SENTINEL"], !sentinelPath.isEmpty else { return }
+        let body = error?.localizedDescription ?? ""
+        try? body.write(toFile: sentinelPath, atomically: true, encoding: .utf8)
     }
 
 }

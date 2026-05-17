@@ -32,7 +32,7 @@ actor Updater {
         catch { return .failure(error.localizedDescription) }
 
         let installDirectory = executableURL.deletingLastPathComponent()
-        let sentinelURL = installDirectory.appendingPathComponent(".deployer-self-update.failed-\(UUID().uuidString)")
+        let sentinelURL = installDirectory.appendingPathComponent(".deployer-self-update.sentinel")
         try? FileManager.default.removeItem(at: sentinelURL)
 
         do {
@@ -44,14 +44,15 @@ actor Updater {
         isUpdating = true
         await deployerState.set(.updating)
 
-        Task { await self.watchForFailure(sentinelURL: sentinelURL) }
+        Task { await self.watchForCompletion(sentinelURL: sentinelURL) }
 
         return .started
     }
 
-    /// Polls for the failure sentinel written by the child on early error.
-    /// If the child kills the parent (the success path), this Task dies with the process.
-    private func watchForFailure(sentinelURL: URL) async {
+    /// Polls for the completion sentinel written by the child on every exit (success or failure).
+    /// If the child kills the parent before writing (the late-success / late-failure-rollback paths),
+    /// this Task dies with the process; the new boot starts fresh with `isUpdating = false`.
+    private func watchForCompletion(sentinelURL: URL) async {
 
         let fileManager = FileManager.default
 
@@ -78,9 +79,9 @@ actor Updater {
         switch config.serviceManager {
             case .systemd:
                 let unitName = "deployer-self-update-\(UUID().uuidString)"
-                command = "systemd-run --user --collect --unit=\(unitName.shellQuoted) --setenv=DEPLOYER_FAILURE_SENTINEL=\(sentinelPath) -- \(binaryPath) update"
+                command = "systemd-run --user --collect --unit=\(unitName.shellQuoted) --setenv=DEPLOYER_COMPLETION_SENTINEL=\(sentinelPath) -- \(binaryPath) update"
             case .supervisor:
-                command = "DEPLOYER_FAILURE_SENTINEL=\(sentinelPath) setsid \(binaryPath) update </dev/null >/dev/null 2>&1 &"
+                command = "DEPLOYER_COMPLETION_SENTINEL=\(sentinelPath) setsid \(binaryPath) update </dev/null >/dev/null 2>&1 &"
         }
 
         let process = Process()
