@@ -16,6 +16,7 @@ struct DeployerStatus: ManualComponent {
         span(
             .class("dp-supervisor-badge \(state.badgeClass)"),
             .mistComponent(self.name),
+            .mistDebounce(ms: 500),
             .title(state.tooltip),
             .custom(name: "aria-label", value: state.tooltip)
         ) {
