@@ -14,7 +14,11 @@ extension String {
     var displayPath: String {
         let segments = self.pathComponents.map(\.description)
         guard !segments.isEmpty else { return "/" }
-        return "/" + segments.joined(separator: "/")
+        let full = "/" + segments.joined(separator: "/")
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        guard full.hasPrefix(home) else { return full }
+        let tail = full.dropFirst(home.count)
+        return "~" + tail
     }
     
     var shellQuoted: String {

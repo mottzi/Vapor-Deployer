@@ -51,7 +51,7 @@ struct DeployerInfoState: ComponentData {
 
         var fields: [Field] = [
             Field("Port", String(config.port)),
-            Field("Directory", config.deployerDirectory),
+            Field("Directory", config.deployerDirectory.displayPath),
             Field("Version", version)
         ]
 

@@ -48,7 +48,7 @@ struct TargetInfoState: ComponentData {
         self.componentName = componentName
         self.fields = [
             Field("Port", String(config.target.appPort)),
-            Field("Directory", config.target.directory),
+            Field("Directory", config.target.directory.displayPath),
             Field("Branch", config.target.branch),
             Field("Build Mode", config.target.buildMode),
             Field("Deploy Mode", config.target.deploymentMode.rawValue),
