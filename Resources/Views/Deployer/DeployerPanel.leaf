@@ -124,7 +124,7 @@
               <!-- Center: Configuration items -->
               <div
                 class="dp-runtime-items"
-                mist-container="#(target.targetInfoComponentName)"
+                mist-container="#(target.targetConfigName)"
                 mist-insert-position="beforeend"
                 mist-ssr="true"
               >
