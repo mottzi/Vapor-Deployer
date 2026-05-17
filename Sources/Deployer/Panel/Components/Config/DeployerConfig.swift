@@ -52,7 +52,6 @@ struct DeployerInfoState: ComponentData {
         var fields: [Field] = [
             Field("Port", String(config.port)),
             Field("Directory", config.deployerDirectory.displayPath),
-            Field("Version", version)
         ]
 
         if config.deployerBranch != "main" {
@@ -60,9 +59,10 @@ struct DeployerInfoState: ComponentData {
         }
 
         fields.append(contentsOf: [
-            Field("Service Manager", config.serviceManager.rawValue),
+            Field("Version", version),
             Field("User", UserAccount.currentName() ?? ""),
-            Field("Build from Source", config.buildFromSource ? "yes" : "no"),
+            Field("Service Manager", config.serviceManager.rawValue),
+            Field("Local Build", config.buildFromSource ? "yes" : "no"),
             Field("Socket", config.socketPath.displayPath)
         ])
 
