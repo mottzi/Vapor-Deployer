@@ -60,7 +60,7 @@
     --hover-bg: var(--bg-hover);
     --row-border: var(--border-subtle);
     --error-bg: #fef2f2;
-    --dp-table-columns: 130px minmax(0, 1fr) 95px 85px 80px 74px 56px;
+    --dp-table-columns: 130px minmax(0, 1fr) 95px 85px 80px 56px;
     --dp-row-min-height: 54px;
 }
 

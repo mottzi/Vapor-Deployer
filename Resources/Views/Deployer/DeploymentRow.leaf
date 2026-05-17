@@ -82,35 +82,33 @@
       #endif
     </td>
 
-    <!-- Duration -->
-    <td class="dp-td dp-td-duration dp-td-mobile-hide">
-      #if(context.deployment.durationString):
-        <span class="dp-duration">#(context.deployment.durationString)</span>
-      #elseif(context.deployment.displayStatus == "pushed"):
-        <span class="dp-duration-dash">—</span>
-      #elseif(context.deployment.displayStatus == "stale"):
-        <span class="dp-duration-dash">—</span>
-      #elseif(context.deployment.displayStatus == "canceled"):
-        <span class="dp-duration-dash">—</span>
-      #else:
-        <span class="dp-duration">
-          <span class="dp-spinner"></span>
-          <span
-            class="dp-duration-live"
-            mist-behavior="timer"
-            data-started-at-unix-ms="#(context.deployment.startedAtUnixMs)"
-          >0.0s</span>
-        </span>
-      #endif
-    </td>
-
-    <!-- Binary -->
-    <td class="dp-td dp-td-binary">
-      #if(context.deployment.hasSavedBinary):
-        <span class="dp-binary-size">#(context.deployment.binarySizeMB) MB</span>
-      #else:
-        <span class="dp-binary-dash">—</span>
-      #endif
+    <!-- Build -->
+    <td class="dp-td dp-td-build">
+      <div class="dp-build">
+        #if(context.deployment.durationString):
+          <span class="dp-duration">#(context.deployment.durationString)</span>
+        #elseif(context.deployment.displayStatus == "pushed"):
+          <span class="dp-duration-dash">—</span>
+        #elseif(context.deployment.displayStatus == "stale"):
+          <span class="dp-duration-dash">—</span>
+        #elseif(context.deployment.displayStatus == "canceled"):
+          <span class="dp-duration-dash">—</span>
+        #else:
+          <span class="dp-duration">
+            <span class="dp-spinner"></span>
+            <span
+              class="dp-duration-live"
+              mist-behavior="timer"
+              data-started-at-unix-ms="#(context.deployment.startedAtUnixMs)"
+            >0.0s</span>
+          </span>
+        #endif
+        #if(context.deployment.hasSavedBinary):
+          <span class="dp-binary-size">#(context.deployment.binarySizeMB) MB</span>
+        #else:
+          <span class="dp-binary-dash">—</span>
+        #endif
+      </div>
     </td>
 
     <!-- Actions -->
@@ -168,7 +166,7 @@
   <tr
     class="dp-output-row dp-output-tr #if(context.deployment.hasLiveOutputStream):dp-output-tr--live#elseif(context.deployment.status == "failed"):dp-output-tr--failed#else:dp-output-tr--static#endif #if(state.detailsExpanded):dp-output-expanded#endif"
   >
-    <td colspan="7" class="dp-output-cell">
+    <td colspan="6" class="dp-output-cell">
       <div class="dp-output-wrapper">
         #if(context.deployment.hasLiveOutputStream):
           <pre class="dp-output-pre dp-output-pre--live" mist-stream="deployment-log"></pre>

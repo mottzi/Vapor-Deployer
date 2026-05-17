@@ -64,10 +64,8 @@
     min-width: 0;
 }
 
-.dp-th-duration,
-.dp-td-duration,
-.dp-th-binary,
-.dp-td-binary {
+.dp-th-build,
+.dp-td-build {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
@@ -173,18 +171,14 @@
     text-align: right;
 }
 
-.dp-td-binary {
-    color: var(--text-muted);
-}
-
 .dp-td-commit {
     min-width: 0;
 }
 
 .dp-th-started,
-.dp-th-duration,
+.dp-th-build,
 .dp-td-started,
-.dp-td-duration {
+.dp-td-build {
     padding-left: 12px;
     padding-right: 12px;
 }

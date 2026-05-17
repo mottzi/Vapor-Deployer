@@ -61,6 +61,13 @@
     white-space: nowrap;
 }
 
+.dp-build {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+
 .dp-duration {
     display: inline-flex;
     align-items: center;
