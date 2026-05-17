@@ -24,11 +24,11 @@ struct DeployerInfoComponent: ManualComponent {
     private static func contextItemClass(for field: DeployerInfoState.Field) -> String {
         let base = "dp-context-item"
         return switch field.label {
-        case "Port":      "\(base) dp-context-item--port"
-        case "Directory": "\(base) dp-context-item--deployerdir"
-        case "Version":   "\(base) dp-context-item--version"
-        case "Socket":    "\(base) dp-context-item--socket"
-        default: base
+            case "Port":      "\(base) dp-context-item--port"
+            case "Directory": "\(base) dp-context-item--deployerdir"
+            case "Version":   "\(base) dp-context-item--version"
+            case "Socket":    "\(base) dp-context-item--socket"
+            default: base
         }
     }
 
