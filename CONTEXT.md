@@ -1,0 +1,12 @@
+# Vapor-Deployer Context
+
+## Domain Terms
+
+- **Target app**: The user's Vapor application that the deployer builds, deploys, and supervises. Distinct from the deployer itself.
+- **Deployment**: A single build/run of the target app, persisted as a `Deployment` row. Driven by the `Queue` actor.
+- **Queue**: Actor that serializes target-app work (deploy, save-binary, restore-binary). Holds `isDeploying` as its lock.
+- **Self-update**: Replacing the deployer's own binary (and, for source installs, its checkout) with the latest release, then restarting the deployer service. Distinct from a target-app deployment.
+- **Updater**: The primitive that owns the self-update lock and drives the self-update lifecycle.
+- **DeployerState**: Derived display state computed from Queue + Updater locks. One of `ready`, `deploying`, `updating`. Used by the panel to render the runtime badge.
+- **DeployerStateComponent**: The Mist fragment component (formerly `QueueComponent`) that renders the runtime-bar badge and owns the self-update action. Backed by a `LiveState<DeployerState>` shared between `Queue` and `Updater`.
+- **Panel**: The web dashboard served by the deployer service, rendered with Leaf and updated live via Mist.

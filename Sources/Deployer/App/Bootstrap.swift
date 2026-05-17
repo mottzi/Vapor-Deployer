@@ -67,12 +67,15 @@ extension Deployer {
     func configurePanel(config: Configuration) async throws {
         let rowComponent = RowComponent(productName: config.target.name)
         let targetInfoComponent = TargetInfoComponent(using: config)
-        let queueComponent = QueueComponent()
         let deployerInfoComponent = await DeployerInfoComponent(
             using: config,
             version: DeployerVersion.current()
         )
-        
+
+        let deployerState = LiveState(of: DeployerState.ready)
+        useUpdater(config: config, deployerState: deployerState)
+        let deployerStateComponent = DeployerStateComponent(state: deployerState, updater: updater)
+
         let initialStatus = await serviceManager.status(product: config.target.name)
         let badgeState = LiveState(of: StatusState(initialStatus))
         let actionsState = LiveState(of: StatusState(initialStatus))
@@ -90,7 +93,7 @@ extension Deployer {
 
         useQueue(
             config: config,
-            queueState: queueComponent.state,
+            deployerState: deployerState,
             onStatusChange: { status in
                 await broadcaster.set(StatusState(status))
             }
@@ -100,14 +103,15 @@ extension Deployer {
             config: config,
             row: rowComponent,
             targetInfoComponent: targetInfoComponent,
-            deployerInfoComponent: deployerInfoComponent
+            deployerInfoComponent: deployerInfoComponent,
+            deployerStateComponent: deployerStateComponent
         )
 
         try await app.mist.use {
             rowComponent
             statusComponent
             statusActionsComponent
-            queueComponent
+            deployerStateComponent
             targetInfoComponent
             deployerInfoComponent
         }

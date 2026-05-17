@@ -7,31 +7,32 @@ actor Queue {
     
     let app: Application
     let config: Configuration
-    let queueState: LiveState<QueueState>
+    let deployerState: LiveState<DeployerState>
     let onStatusChange: @Sendable (ServiceStatus) async -> Void
-    
+
     init(
         app: Application,
         config: Configuration,
-        queueState: LiveState<QueueState>,
+        deployerState: LiveState<DeployerState>,
         onStatusChange: @escaping @Sendable (ServiceStatus) async -> Void
     ) {
         self.app = app
         self.config = config
-        self.queueState = queueState
+        self.deployerState = deployerState
         self.onStatusChange = onStatusChange
     }
-    
+
     func recordPush(event: PushEvent, target: TargetConfiguration) async {
-        
+
         let eventBranch = event.branch.hasPrefix("refs/heads/")
             ? String(event.branch.dropFirst("refs/heads/".count))
             : event.branch
-        
+
         guard eventBranch == target.branch else { return }
-        
+
+        let isUpdating = await app.deployer.updater.isUpdating
         let status: Deployment.Status = switch target.deploymentMode {
-            case .automatic: isDeploying ? .canceled : .building
+            case .automatic: (isDeploying || isUpdating) ? .canceled : .building
             case .manual: .pushed
         }
         
@@ -78,6 +79,8 @@ extension Queue {
     private func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async -> StartResult {
 
         guard !isDeploying else { return .queueBusy }
+        let isUpdating = await app.deployer.updater.isUpdating
+        guard !isUpdating else { return .queueBusy }
 
         isDeploying = true
         await broadcastState()

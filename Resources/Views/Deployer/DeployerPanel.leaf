@@ -28,33 +28,23 @@
 
                 <div
                   class="dp-runtime-queue-slot"
-                  mist-container="QueueComponent"
+                  mist-container="#(deployer.stateComponentName)"
                   mist-insert-position="beforeend"
                   mist-ssr="true"
                 >
-                  #if(target.queueIsDeploying):
-                    <span
-                      class="dp-supervisor-badge dp-supervisor-badge--queue-locked"
-                      mist-component="QueueComponent"
-                      title="Queue locked — deployment in progress"
-                      aria-label="Queue locked — deployment in progress"
-                    >
-                      Busy
-                    </span>
-                  #else:
-                    <span
-                      class="dp-supervisor-badge dp-supervisor-badge--queue-unlocked"
-                      mist-component="QueueComponent"
-                      title="Queue unlocked — ready"
-                      aria-label="Queue unlocked — ready"
-                    >
-                      Ready
-                    </span>
-                  #endif
+                  #unsafeHTML(deployer.stateInitialHTML)
                 </div>
 
                 <!-- On mobile, sign-out moves inside brand row via CSS order -->
                 <div class="dp-runtime-actions dp-runtime-actions--mobile">
+                  <button type="button" class="dp-update-btn" mist-action="update" mist-actions-for="DeployerStateComponent" title="Update deployer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="23 4 23 10 17 10"/>
+                      <polyline points="1 20 1 14 7 14"/>
+                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    Update
+                  </button>
                   <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
                     <button type="submit" class="dp-logout-btn" title="Sign out">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -79,6 +69,14 @@
 
               <!-- Desktop sign-out (hidden on mobile) -->
               <div class="dp-runtime-actions dp-runtime-actions--desktop">
+                <button type="button" class="dp-update-btn" mist-action="update" mist-actions-for="DeployerStateComponent" title="Update deployer">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <polyline points="1 20 1 14 7 14"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                  Update
+                </button>
                 <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
                   <button type="submit" class="dp-logout-btn" title="Sign out">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

@@ -12,6 +12,14 @@ struct UpdateCommand: AsyncCommand {
 
     /// Downloads the latest release, extracts it, and does a stop / swap / start with rollback on failure.
     func run(using context: CommandContext, signature: Signature) async throws {
+        do { try await runPipeline(context: context) }
+        catch {
+            UpdateCommand.writeFailureSentinelIfRequested(error: error)
+            throw error
+        }
+    }
+
+    private func runPipeline(context: CommandContext) async throws {
 
         let executableURL = try Configuration.getExecutableURL()
         let resolvedExecutableURL = executableURL.standardizedFileURL.resolvingSymlinksInPath()
@@ -75,6 +83,18 @@ struct UpdateCommand: AsyncCommand {
                 throw error
             }
         }
+    }
+
+}
+
+extension UpdateCommand {
+
+    /// Writes the error description to the failure sentinel path when invoked by the panel-triggered detached child.
+    /// Cli invocations don't set the env var and skip this path. See `Updater.spawnDetachedUpdate`.
+    static func writeFailureSentinelIfRequested(error: Swift.Error) {
+        let environment = ProcessInfo.processInfo.environment
+        guard let sentinelPath = environment["DEPLOYER_FAILURE_SENTINEL"], !sentinelPath.isEmpty else { return }
+        try? error.localizedDescription.write(toFile: sentinelPath, atomically: true, encoding: .utf8)
     }
 
 }

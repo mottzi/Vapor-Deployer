@@ -53,6 +53,12 @@
     border-color: var(--c-running-border);
 }
 
+.dp-supervisor-badge--queue-updating {
+    color: var(--c-building);
+    background: var(--c-building-bg);
+    border-color: var(--c-building-border);
+}
+
 .dp-supervisor-btn {
     display: inline-flex;
     align-items: center;

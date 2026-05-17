@@ -200,3 +200,26 @@
     border-color: var(--border-strong);
     background: var(--bg-hover);
 }
+
+.dp-update-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-subtle);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.dp-update-btn:hover {
+    background: var(--c-building-bg);
+    color: var(--c-building);
+    border-color: var(--c-building-border);
+}
