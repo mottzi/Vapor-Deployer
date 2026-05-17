@@ -171,10 +171,13 @@
 }
 
 .dp-runtime-actions {
+    margin-left: 20px;
+}
+
+.dp-runtime-actions--desktop {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: 20px;
 }
 
 .dp-logout-form {
