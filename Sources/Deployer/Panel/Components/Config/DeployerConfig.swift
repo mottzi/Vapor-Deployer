@@ -13,22 +13,11 @@ struct DeployerConfig: ManualComponent {
             .mistComponent(state.componentName)
         ) {
             for field in state.fields {
-                div(.class(Self.contextItemClass(for: field))) {
+                div(.class("dp-context-item")) {
                     span(.class("dp-context-label")) { field.label }
                     span(.class("dp-context-value"), .title(field.value)) { field.value }
                 }
             }
-        }
-    }
-
-    private static func contextItemClass(for field: DeployerInfoState.Field) -> String {
-        let base = "dp-context-item"
-        return switch field.label {
-            case "Port":      "\(base) dp-context-item--port"
-            case "Directory": "\(base) dp-context-item--deployerdir"
-            case "Version":   "\(base) dp-context-item--version"
-            case "Socket":    "\(base) dp-context-item--socket"
-            default: base
         }
     }
 
