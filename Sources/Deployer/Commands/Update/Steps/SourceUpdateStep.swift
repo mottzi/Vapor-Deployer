@@ -118,7 +118,7 @@ extension SourceUpdateStep {
             directory: directory,
             environment: sourceBuildEnvironment(for: serviceUser)
         ).trimmed
-        return "source-\(revision)"
+        return revision
     }
 
     /// Copies installed assets into a temp backup so rollback can restore source updates.

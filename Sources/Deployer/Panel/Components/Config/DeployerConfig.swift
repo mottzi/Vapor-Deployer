@@ -50,8 +50,8 @@ struct DeployerInfoState: ComponentData {
         self.componentName = componentName
 
         var fields: [Field] = [
-            Field("Port", String(config.port)),
             Field("Directory", config.deployerDirectory.displayPath),
+            Field("Port", String(config.port)),
         ]
 
         if config.deployerBranch != "main" {
