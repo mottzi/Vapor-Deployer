@@ -1,6 +1,6 @@
 import Elementary
 
-extension StatusComponent {
+extension TargetStatus {
 
     @HTMLBuilder
     func statusBadge(of state: StatusState) -> some HTML {

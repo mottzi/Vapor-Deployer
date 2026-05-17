@@ -16,7 +16,7 @@ actor BuildOutputStream {
 
     init(app: Application, deployment: Deployment) {
         self.app = app
-        self.component = RowComponent.name(for: deployment.product)
+        self.component = DeploymentRow.name(for: deployment.product)
         self.modelID = deployment.id
     }
 

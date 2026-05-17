@@ -5,10 +5,10 @@ extension Deployer {
 
     func useQueue(
         config: Configuration,
-        deployerState: LiveState<DeployerState>,
+        deployerPhase: LiveState<DeployerPhase>,
         onStatusChange: @escaping @Sendable (ServiceStatus) async -> Void
     ) {
-        queue = Queue(app: app, config: config, deployerState: deployerState, onStatusChange: onStatusChange)
+        queue = Queue(app: app, config: config, deployerPhase: deployerPhase, onStatusChange: onStatusChange)
     }
 
     var queue: Queue {

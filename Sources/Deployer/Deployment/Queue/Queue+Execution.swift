@@ -176,7 +176,7 @@ extension Queue {
     /// Broadcasts current queue state to connected live panel clients.
     /// Only sets `.ready` / `.deploying` — `.updating` is owned by Updater.
     func broadcastState() async {
-        await deployerState.set(isDeploying ? .deploying : .ready)
+        await deployerPhase.set(isDeploying ? .deploying : .ready)
     }
 
 }

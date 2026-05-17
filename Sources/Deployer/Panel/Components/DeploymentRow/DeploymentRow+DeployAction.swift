@@ -1,11 +1,11 @@
 import Vapor
 import Mist
 
-extension RowComponent {
+extension DeploymentRow {
     
-    struct SaveBinaryAction: Action {
+    struct DeployAction: Action {
         
-        let name: String = "saveBinary"
+        let name: String = "deploy"
         let productName: String
         
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
@@ -15,18 +15,13 @@ extension RowComponent {
                   deployment.canBuild
             else { return .failure("Deployment not found or can't be built.") }
             
-            let target = app.deployer.queue.config.target
-            let store = BinaryStore(target: target)
-            guard !store.hasBinary(for: deployment)
-            else { return .failure("This deployment already has a saved binary") }
-            
-            let result = await app.deployer.queue.saveBinary(
+            let result = await app.deployer.queue.deploy(
                 deployment: deployment,
-                target: target
+                target: app.deployer.queue.config.target
             )
             
             return switch result {
-            case .started: .success("Binary save started")
+            case .started: .success("Deployment started")
             case .queueBusy: .failure("A deployment is already running")
             case .failure(let message): .failure(message)
             }

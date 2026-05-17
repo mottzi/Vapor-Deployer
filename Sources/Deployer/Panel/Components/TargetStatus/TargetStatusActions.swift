@@ -2,7 +2,7 @@ import Vapor
 import Mist
 import Elementary
 
-struct StatusActionsComponent: LiveComponent {
+struct TargetStatusActions: LiveComponent {
 
     var name: String
     let product: String
@@ -26,13 +26,13 @@ struct StatusActionsComponent: LiveComponent {
         }
     }
 
-    init(product: String, state: LiveState<StatusState>, broadcaster: StatusBroadcaster) {
+    init(product: String, state: LiveState<StatusState>, broadcaster: TargetStatusBroadcaster) {
         self.product = product
-        self.name = "StatusActionsComponent"
+        self.name = "TargetStatusActions"
         self.state = state
         self.actions = [
-            StatusComponent.RestartAction(productName: product, broadcaster: broadcaster),
-            StatusComponent.StopAction(productName: product, broadcaster: broadcaster)
+            TargetStatus.RestartAction(productName: product, broadcaster: broadcaster),
+            TargetStatus.StopAction(productName: product, broadcaster: broadcaster)
         ]
     }
 

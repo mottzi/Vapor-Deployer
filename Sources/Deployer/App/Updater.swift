@@ -1,6 +1,25 @@
 import Vapor
 import Mist
-import Foundation
+
+extension Deployer {
+
+    func useUpdater(config: Configuration, deployerPhase: LiveState<DeployerPhase>) {
+        updater = Updater(app: app, config: config, deployerPhase: deployerPhase)
+    }
+
+    var updater: Updater {
+        get {
+            if let updater = app.storage[UpdaterKey.self] { return updater }
+            fatalError("Updater not initialized.")
+        }
+        nonmutating set {
+            app.storage[UpdaterKey.self] = newValue
+        }
+    }
+
+    private struct UpdaterKey: StorageKey { typealias Value = Updater }
+
+}
 
 /// Owns the self-update lock and spawns the detached `deployer update` child.
 /// Mutual exclusion with `Queue.isDeploying` is best-effort (see CONTEXT.md and docs/adr/0001).
@@ -10,12 +29,12 @@ actor Updater {
 
     let app: Application
     let config: Configuration
-    let deployerState: LiveState<DeployerState>
+    let deployerPhase: LiveState<DeployerPhase>
 
-    init(app: Application, config: Configuration, deployerState: LiveState<DeployerState>) {
+    init(app: Application, config: Configuration, deployerPhase: LiveState<DeployerPhase>) {
         self.app = app
         self.config = config
-        self.deployerState = deployerState
+        self.deployerPhase = deployerPhase
     }
 
     /// Attempts to start a self-update. Refuses if any deploy is in flight or another update is running.
@@ -42,9 +61,9 @@ actor Updater {
         }
 
         isUpdating = true
-        await deployerState.set(.updating)
+        await deployerPhase.set(.updating)
 
-        Task { await self.watchForCompletion(sentinelURL: sentinelURL) }
+        Task { await watchForCompletion(sentinelURL: sentinelURL) }
 
         return .started
     }
@@ -63,7 +82,7 @@ actor Updater {
 
             try? fileManager.removeItem(at: sentinelURL)
             isUpdating = false
-            await deployerState.set(.ready)
+            await deployerPhase.set(.ready)
             return
         }
     }

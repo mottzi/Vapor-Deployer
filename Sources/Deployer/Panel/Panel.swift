@@ -4,9 +4,9 @@ import Mist
 
 extension Deployer {
     
-    func usePanel(config: Configuration, row: RowComponent, targetInfoComponent: TargetInfoComponent, deployerInfoComponent: DeployerInfoComponent, deployerStateComponent: DeployerStateComponent) {
+    func usePanel(config: Configuration, row: DeploymentRow, targetConfig: TargetConfig, deployerConfig: DeployerConfig, deployerStatus: DeployerStatus) {
 
-        let panel = Panel(config: config, row: row, targetInfoComponent: targetInfoComponent, deployerInfoComponent: deployerInfoComponent, deployerStateComponent: deployerStateComponent)
+        let panel = Panel(config: config, row: row, targetConfig: targetConfig, deployerConfig: deployerConfig, deployerStatus: deployerStatus)
         let router = app.grouped(config.panelRoute.pathComponents).grouped(app.sessions.middleware)
         
         panel.registerAssetRoutes(on: app.grouped(config.panelRoute.pathComponents))
@@ -25,24 +25,24 @@ extension Deployer {
 struct Panel {
 
     let config: Configuration
-    let row: RowComponent
-    let targetInfoComponent: TargetInfoComponent
-    let deployerInfoComponent: DeployerInfoComponent
-    let deployerStateComponent: DeployerStateComponent
+    let row: DeploymentRow
+    let targetConfig: TargetConfig
+    let deployerConfig: DeployerConfig
+    let deployerStatus: DeployerStatus
     let panelPath: String
     let loginPath: String
     let authenticator: PanelAuthenticator
 
-    init(config: Configuration, row: RowComponent, targetInfoComponent: TargetInfoComponent, deployerInfoComponent: DeployerInfoComponent, deployerStateComponent: DeployerStateComponent) {
+    init(config: Configuration, row: DeploymentRow, targetConfig: TargetConfig, deployerConfig: DeployerConfig, deployerStatus: DeployerStatus) {
 
         self.panelPath = config.panelRoute.displayPath
         self.loginPath = panelPath == "/" ? "/login" : panelPath + "/login"
         self.authenticator = PanelAuthenticator(path: loginPath)
         self.config = config
         self.row = row
-        self.targetInfoComponent = targetInfoComponent
-        self.deployerInfoComponent = deployerInfoComponent
-        self.deployerStateComponent = deployerStateComponent
+        self.targetConfig = targetConfig
+        self.deployerConfig = deployerConfig
+        self.deployerStatus = deployerStatus
     }
 
 }
@@ -107,11 +107,11 @@ extension Panel {
         async let isRunning = request.application.deployer.serviceManager.isRunning(product: config.target.name)
         async let isDeploying = request.application.deployer.queue.isDeploying
         async let isUpdating = request.application.deployer.updater.isUpdating
-        async let targetInfoRender = targetInfoComponent.renderCurrent(app: request.application)
-        async let deployerInfoRender = deployerInfoComponent.renderCurrent(app: request.application)
-        async let deployerStateRender = deployerStateComponent.renderCurrent(app: request.application)
+        async let targetInfoRender = targetConfig.renderCurrent(app: request.application)
+        async let deployerInfoRender = deployerConfig.renderCurrent(app: request.application)
+        async let deployerStateRender = deployerStatus.renderCurrent(app: request.application)
 
-        let resolvedState: DeployerState
+        let resolvedState: DeployerPhase
         if await isUpdating { resolvedState = .updating }
         else if await isDeploying { resolvedState = .deploying }
         else { resolvedState = .ready }
@@ -119,9 +119,9 @@ extension Panel {
         let deployer = DeployerContext(
             panelRoute: config.panelRoute.displayPath,
             repositoryWebPageURL: DeployerVersion.repositoryWebPageURL,
-            infoComponentName: deployerInfoComponent.name,
+            infoComponentName: deployerConfig.name,
             infoInitialHTML: await deployerInfoRender.html ?? "",
-            stateComponentName: deployerStateComponent.name,
+            stateComponentName: deployerStatus.name,
             stateInitialHTML: await deployerStateRender.html ?? "",
             state: resolvedState.rawValue
         )
@@ -135,7 +135,7 @@ extension Panel {
             pushEvent: config.target.pusheventPath.displayPath,
             rows: try await rows.contexts,
             isRunning: await isRunning,
-            targetInfoComponentName: targetInfoComponent.name,
+            targetConfigName: targetConfig.name,
             targetInfoInitialHTML: await targetInfoRender.html ?? ""
         )
 
@@ -170,7 +170,7 @@ extension Panel {
         let pushEvent: String
         let rows: [ModelContext]
         let isRunning: Bool
-        let targetInfoComponentName: String
+        let targetConfigName: String
         let targetInfoInitialHTML: String
     }
 

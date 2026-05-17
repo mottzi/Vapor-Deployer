@@ -2,7 +2,7 @@ import Vapor
 import Mist
 import Elementary
 
-struct DeployerInfoComponent: ManualComponent {
+struct DeployerConfig: ManualComponent {
 
     var name: String
     let state: LiveState<DeployerInfoState>
@@ -33,7 +33,7 @@ struct DeployerInfoComponent: ManualComponent {
     }
 
     init(using config: Configuration, version: String) {
-        self.name = "DeployerInfoComponent"
+        self.name = "DeployerConfig"
         self.state = LiveState(
             of: DeployerInfoState(config: config, version: version, componentName: self.name)
         )

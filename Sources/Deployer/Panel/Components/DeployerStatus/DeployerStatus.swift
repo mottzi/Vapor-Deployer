@@ -2,17 +2,17 @@ import Vapor
 import Mist
 import Elementary
 
-struct DeployerStateComponent: ManualComponent {
+struct DeployerStatus: ManualComponent {
 
-    let state: LiveState<DeployerState>
+    let state: LiveState<DeployerPhase>
     let actions: [any Action]
 
-    init(state: LiveState<DeployerState>, updater: Updater) {
+    init(state: LiveState<DeployerPhase>, updater: Updater) {
         self.state = state
         self.actions = [UpdateAction(updater: updater)]
     }
 
-    func body(state: DeployerState) -> some HTML {
+    func body(state: DeployerPhase) -> some HTML {
         span(
             .class("dp-supervisor-badge \(state.badgeClass)"),
             .mistComponent(self.name),
@@ -25,7 +25,7 @@ struct DeployerStateComponent: ManualComponent {
 
 }
 
-enum DeployerState: String, ComponentData {
+enum DeployerPhase: String, ComponentData {
 
     case ready
     case deploying

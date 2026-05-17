@@ -1,5 +1,5 @@
 <tbody
-  mist-component="RowComponent-#(context.deployment.product)"
+  mist-component="DeploymentRow-#(context.deployment.product)"
   mist-id="#(context.deployment.id)"
   data-mist-sort-value="#if(context.deployment.startedAtUnixMs):#(context.deployment.startedAtUnixMs)#endif"
   class="dp-tbody"

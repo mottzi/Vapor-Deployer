@@ -7,18 +7,18 @@ actor Queue {
     
     let app: Application
     let config: Configuration
-    let deployerState: LiveState<DeployerState>
+    let deployerPhase: LiveState<DeployerPhase>
     let onStatusChange: @Sendable (ServiceStatus) async -> Void
 
     init(
         app: Application,
         config: Configuration,
-        deployerState: LiveState<DeployerState>,
+        deployerPhase: LiveState<DeployerPhase>,
         onStatusChange: @escaping @Sendable (ServiceStatus) async -> Void
     ) {
         self.app = app
         self.config = config
-        self.deployerState = deployerState
+        self.deployerPhase = deployerPhase
         self.onStatusChange = onStatusChange
     }
 

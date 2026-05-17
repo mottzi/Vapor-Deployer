@@ -1,7 +1,7 @@
 import Vapor
 import Mist
 
-extension RowComponent {
+extension DeploymentRow {
     
     struct RestoreBinaryAction: Action {
         

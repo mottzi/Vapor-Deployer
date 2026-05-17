@@ -1,6 +1,7 @@
 import Mist
 
-struct StatusBroadcaster: Sendable {
+struct TargetStatusBroadcaster: Sendable {
+    
     let badge: LiveState<StatusState>
     let actions: LiveState<StatusState>
 
@@ -8,4 +9,5 @@ struct StatusBroadcaster: Sendable {
         await badge.set(state)
         await actions.set(state)
     }
+    
 }

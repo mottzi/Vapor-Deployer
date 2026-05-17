@@ -65,27 +65,27 @@ extension Deployer {
     }
 
     func configurePanel(config: Configuration) async throws {
-        let rowComponent = RowComponent(productName: config.target.name)
-        let targetInfoComponent = TargetInfoComponent(using: config)
-        let deployerInfoComponent = await DeployerInfoComponent(
+        let deploymentRow = DeploymentRow(productName: config.target.name)
+        let targetConfig = TargetConfig(using: config)
+        let deployerConfig = await DeployerConfig(
             using: config,
             version: DeployerVersion.current()
         )
 
-        let deployerState = LiveState(of: DeployerState.ready)
-        useUpdater(config: config, deployerState: deployerState)
-        let deployerStateComponent = DeployerStateComponent(state: deployerState, updater: updater)
+        let deployerPhase = LiveState(of: DeployerPhase.ready)
+        useUpdater(config: config, deployerPhase: deployerPhase)
+        let deployerStatus = DeployerStatus(state: deployerPhase, updater: updater)
 
         let initialStatus = await serviceManager.status(product: config.target.name)
         let badgeState = LiveState(of: StatusState(initialStatus))
         let actionsState = LiveState(of: StatusState(initialStatus))
-        let broadcaster = StatusBroadcaster(badge: badgeState, actions: actionsState)
+        let broadcaster = TargetStatusBroadcaster(badge: badgeState, actions: actionsState)
 
-        let statusComponent = StatusComponent(
+        let targetStatus = TargetStatus(
             product: config.target.name,
             state: badgeState
         )
-        let statusActionsComponent = StatusActionsComponent(
+        let targetStatusActions = TargetStatusActions(
             product: config.target.name,
             state: actionsState,
             broadcaster: broadcaster
@@ -93,7 +93,7 @@ extension Deployer {
 
         useQueue(
             config: config,
-            deployerState: deployerState,
+            deployerPhase: deployerPhase,
             onStatusChange: { status in
                 await broadcaster.set(StatusState(status))
             }
@@ -101,19 +101,19 @@ extension Deployer {
         useWebhook(config: config)
         usePanel(
             config: config,
-            row: rowComponent,
-            targetInfoComponent: targetInfoComponent,
-            deployerInfoComponent: deployerInfoComponent,
-            deployerStateComponent: deployerStateComponent
+            row: deploymentRow,
+            targetConfig: targetConfig,
+            deployerConfig: deployerConfig,
+            deployerStatus: deployerStatus
         )
 
         try await app.mist.use {
-            rowComponent
-            statusComponent
-            statusActionsComponent
-            deployerStateComponent
-            targetInfoComponent
-            deployerInfoComponent
+            deploymentRow
+            targetStatus
+            targetStatusActions
+            deployerStatus
+            targetConfig
+            deployerConfig
         }
     }
 

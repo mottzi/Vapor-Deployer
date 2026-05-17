@@ -2,7 +2,7 @@ import Vapor
 import Mist
 import Elementary
 
-struct TargetInfoComponent: ManualComponent {
+struct TargetConfig: ManualComponent {
 
     var name: String
     let state: LiveState<TargetInfoState>
@@ -31,7 +31,7 @@ struct TargetInfoComponent: ManualComponent {
     }
 
     init(using config: Configuration) {
-        self.name = "TargetInfoComponent-\(config.target.name)"
+        self.name = "TargetConfig-\(config.target.name)"
         self.state = LiveState(
             of: TargetInfoState(config: config, componentName: self.name)
         )

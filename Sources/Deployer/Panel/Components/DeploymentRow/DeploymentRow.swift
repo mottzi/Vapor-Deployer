@@ -2,18 +2,18 @@ import Vapor
 import Fluent
 import Mist
 
-struct RowComponent: InstanceComponent {
+struct DeploymentRow: InstanceComponent {
     
     let productName: String
     
     let name: String
     let models: [any Mist.Model.Type] = [Deployment.self]
     let actions: [any Action]
-    let template: any Template = LeafTemplate.file("Deployer/RowComponent")
+    let template: any Template = LeafTemplate.file("Deployer/DeploymentRow")
     let defaultState: ComponentState = ["detailsExpanded": .bool(false)]
 
     static func name(for productName: String) -> String {
-        "RowComponent-\(productName)"
+        "DeploymentRow-\(productName)"
     }
     
     init(productName: String) {

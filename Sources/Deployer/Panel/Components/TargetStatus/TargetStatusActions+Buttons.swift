@@ -1,6 +1,6 @@
 import Elementary
 
-extension StatusActionsComponent {
+extension TargetStatusActions {
 
     var stopButton: some HTML {
         button(

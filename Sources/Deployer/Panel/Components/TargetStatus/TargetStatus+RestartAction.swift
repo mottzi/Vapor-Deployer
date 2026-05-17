@@ -1,20 +1,23 @@
 import Vapor
 import Mist
 
-extension StatusComponent {
+extension TargetStatus {
 
-    struct StopAction: Action {
+    struct RestartAction: Action {
 
-        let name = "stop"
+        let name = "restart"
         let productName: String
-        let broadcaster: StatusBroadcaster
+        let broadcaster: TargetStatusBroadcaster
 
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
             do {
                 let manager = app.deployer.serviceManager
-                await broadcaster.set(StatusState(.stopping))
-                try await manager.stop(product: productName)
+                let status = await manager.status(product: productName)
+                await broadcaster.set(StatusState(status.isRunning ? .stopping : .starting))
+
+                try await manager.restart(product: productName)
+                await broadcaster.set(StatusState(.starting))
 
                 let finalStatus = await manager.status(product: productName)
                 await broadcaster.set(StatusState(finalStatus))
