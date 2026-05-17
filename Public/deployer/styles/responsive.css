@@ -202,6 +202,8 @@
 
     .dp-runtime-actions--mobile {
         display: flex;
+        align-items: center;
+        gap: 8px;
         margin-left: auto;
         padding: 0;
     }
