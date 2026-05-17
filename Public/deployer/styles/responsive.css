@@ -11,7 +11,7 @@
    commit message and timing column stay perfectly aligned, with the
    binary size and duration tucked underneath their natural partners.
    ───────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
+@media (max-width: 712px) {
     /* ── Runtime bars: keep one-row layout, scroll the items strip ── */
     .dp-runtime-bar {
         grid-template-columns: auto minmax(0, 1fr) auto;
