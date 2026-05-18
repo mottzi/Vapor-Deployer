@@ -49,6 +49,23 @@
     pointer-events: none;
 }
 
+/* Make :active feedback snap in instantly. Without this, a quick tap finishes
+   before the 150ms color transition has visibly progressed — the user sees
+   nothing. The fade-OUT on release still uses each element's normal transition. */
+.dp-update-btn:active,
+.dp-logout-btn:active,
+.dp-login-btn:active,
+.dp-supervisor-btn:active,
+.dp-action-icon:active,
+.dp-dropdown-trigger:active,
+.dp-dropdown-item:active,
+.dp-copy-log-btn:active,
+.dp-config-summary-pill:active,
+.dp-tr--interactive:active,
+.dp-id:active {
+    transition-duration: 0s;
+}
+
 .dp-legend {
     display: flex;
     flex-wrap: wrap;
