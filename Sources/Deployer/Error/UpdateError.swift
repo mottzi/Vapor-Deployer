@@ -11,6 +11,8 @@ extension UpdateCommand {
         case rollbackVerificationFailed(String)
         case rollbackSucceeded(String)
         case rollbackFailed(String, String)
+        case anotherUpdateInProgress
+        case lockFailed(String, String)
 
         var errorDescription: String? {
             switch self {
@@ -34,6 +36,12 @@ extension UpdateCommand {
 
             case .rollbackFailed(let original, let rollback):
                 "Update failed and rollback also failed.\nOriginal error: \(original)\nRollback error: \(rollback)"
+
+            case .anotherUpdateInProgress:
+                "Another deployer update is already running. Wait for it to finish, then retry."
+
+            case .lockFailed(let path, let reason):
+                "Unable to acquire update lock at '\(path)': \(reason)"
             }
         }
 

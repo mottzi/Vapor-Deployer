@@ -30,6 +30,9 @@ struct UpdateCommand: AsyncCommand {
 
         guard !executableName.isEmpty else { throw Error.invalidExecutablePath(resolvedExecutableURL.path) }
 
+        let lock = try UpdateLock.acquire(installDirectory: installDirectory)
+        defer { _ = lock }
+
         let config = try Configuration.load()
 
         let updateContext = UpdateContext(
