@@ -66,11 +66,26 @@
     z-index: 10;
 }
 
-.dp-output-wrapper:hover .dp-copy-log-btn {
-    opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+    .dp-output-wrapper:hover .dp-copy-log-btn {
+        opacity: 1;
+    }
+
+    .dp-copy-log-btn:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+        background: var(--bg-hover);
+    }
 }
 
-.dp-copy-log-btn:hover {
+/* On touch, the reveal-on-hover affordance doesn't work — keep the copy button visible. */
+@media (hover: none) {
+    .dp-copy-log-btn {
+        opacity: 1;
+    }
+}
+
+.dp-copy-log-btn:active {
     color: var(--text);
     border-color: var(--border-strong);
     background: var(--bg-hover);

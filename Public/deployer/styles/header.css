@@ -201,7 +201,15 @@
     white-space: nowrap;
 }
 
-.dp-logout-btn:hover {
+@media (hover: hover) and (pointer: fine) {
+    .dp-logout-btn:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+        background: var(--bg-hover);
+    }
+}
+
+.dp-logout-btn:active {
     color: var(--text);
     border-color: var(--border-strong);
     background: var(--bg-hover);
@@ -224,7 +232,15 @@
     white-space: nowrap;
 }
 
-.dp-update-btn:hover {
+@media (hover: hover) and (pointer: fine) {
+    .dp-update-btn:hover {
+        background: var(--c-building-bg);
+        color: var(--c-building);
+        border-color: var(--c-building-border);
+    }
+}
+
+.dp-update-btn:active {
     background: var(--c-building-bg);
     color: var(--c-building);
     border-color: var(--c-building-border);

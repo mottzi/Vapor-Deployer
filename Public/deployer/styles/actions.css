@@ -6,9 +6,14 @@
     width: 100%;
 }
 
-.dp-tr:hover .dp-row-actions,
 .dp-tr:focus-within .dp-row-actions {
     opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-tr:hover .dp-row-actions {
+        opacity: 1;
+    }
 }
 
 .dp-action-slot,
@@ -32,27 +37,54 @@
     color: var(--text-muted);
 }
 
-.dp-action-icon:hover {
+@media (hover: hover) and (pointer: fine) {
+    .dp-action-icon:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+    }
+
+    .dp-deploy-icon:hover {
+        color: var(--c-pushed);
+        background: var(--c-pushed-bg);
+    }
+
+    .dp-save-binary:hover {
+        color: var(--c-built);
+        background: var(--c-built-bg);
+    }
+
+    .dp-restore-binary:hover {
+        color: var(--c-running);
+        background: var(--c-running-bg);
+    }
+
+    .dp-delete:hover {
+        color: var(--c-failed);
+        background: rgba(248, 113, 113, 0.08);
+    }
+}
+
+.dp-action-icon:active {
     background: var(--bg-hover);
     color: var(--text);
 }
 
-.dp-deploy-icon:hover {
+.dp-deploy-icon:active {
     color: var(--c-pushed);
     background: var(--c-pushed-bg);
 }
 
-.dp-save-binary:hover {
+.dp-save-binary:active {
     color: var(--c-built);
     background: var(--c-built-bg);
 }
 
-.dp-restore-binary:hover {
+.dp-restore-binary:active {
     color: var(--c-running);
     background: var(--c-running-bg);
 }
 
-.dp-delete:hover {
+.dp-delete:active {
     color: var(--c-failed);
     background: rgba(248, 113, 113, 0.08);
 }
@@ -84,8 +116,19 @@
     display: none;
 }
 
-.dp-dropdown-trigger:hover,
 .dp-dropdown[open] .dp-dropdown-trigger {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-dropdown-trigger:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+    }
+}
+
+.dp-dropdown-trigger:active {
     background: var(--bg-hover);
     color: var(--text);
 }
@@ -130,49 +173,90 @@
     transition: color 0.15s ease;
 }
 
-.dp-dropdown-item:hover {
+@media (hover: hover) and (pointer: fine) {
+    .dp-dropdown-item:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+    }
+
+    .dp-dropdown-item:hover svg {
+        color: var(--text);
+    }
+
+    .dp-deploy-item:hover {
+        color: var(--c-running);
+    }
+    .dp-deploy-item:hover svg {
+        color: var(--c-running);
+    }
+
+    .dp-save-binary-item:hover {
+        color: var(--c-built);
+    }
+    .dp-save-binary-item:hover svg {
+        color: var(--c-built);
+    }
+
+    .dp-restore-binary-item:hover {
+        color: var(--c-running);
+    }
+    .dp-restore-binary-item:hover svg {
+        color: var(--c-running);
+    }
+
+    .dp-remove-binary-item:hover {
+        color: var(--c-failed);
+        background: rgba(248, 113, 113, 0.08);
+    }
+    .dp-remove-binary-item:hover svg {
+        color: var(--c-failed);
+    }
+
+    .dp-delete-item:hover {
+        color: var(--c-failed);
+        background: rgba(248, 113, 113, 0.08);
+    }
+    .dp-delete-item:hover svg {
+        color: var(--c-failed);
+    }
+}
+
+.dp-dropdown-item:active {
     background: var(--bg-hover);
     color: var(--text);
 }
-
-.dp-dropdown-item:hover svg {
+.dp-dropdown-item:active svg {
     color: var(--text);
 }
 
-.dp-deploy-item:hover {
-    color: var(--c-running);
-}
-.dp-deploy-item:hover svg {
+.dp-deploy-item:active,
+.dp-deploy-item:active svg {
     color: var(--c-running);
 }
 
-.dp-save-binary-item:hover {
-    color: var(--c-built);
-}
-.dp-save-binary-item:hover svg {
+.dp-save-binary-item:active,
+.dp-save-binary-item:active svg {
     color: var(--c-built);
 }
 
-.dp-restore-binary-item:hover {
-    color: var(--c-running);
-}
-.dp-restore-binary-item:hover svg {
+.dp-restore-binary-item:active,
+.dp-restore-binary-item:active svg {
     color: var(--c-running);
 }
 
-.dp-remove-binary-item:hover {
+.dp-remove-binary-item:active {
     color: var(--c-failed);
     background: rgba(248, 113, 113, 0.08);
 }
-.dp-remove-binary-item:hover svg {
+.dp-remove-binary-item:active svg {
     color: var(--c-failed);
 }
 
-.dp-delete-item:hover {
+.dp-delete-item:active {
     color: var(--c-failed);
     background: rgba(248, 113, 113, 0.08);
 }
-.dp-delete-item:hover svg {
+.dp-delete-item:active svg {
     color: var(--c-failed);
 }
 

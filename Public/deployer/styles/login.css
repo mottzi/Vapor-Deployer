@@ -97,11 +97,14 @@
     transition: opacity 0.15s ease, transform 0.1s ease;
 }
 
-.dp-login-btn:hover {
-    opacity: 0.88;
+@media (hover: hover) and (pointer: fine) {
+    .dp-login-btn:hover {
+        opacity: 0.88;
+    }
 }
 
 .dp-login-btn:active {
+    opacity: 0.88;
     transform: scale(0.99);
 }
 

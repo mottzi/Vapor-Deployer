@@ -82,13 +82,27 @@
     border: 1px solid var(--border);
 }
 
-.dp-supervisor-btn--stop:hover {
+@media (hover: hover) and (pointer: fine) {
+    .dp-supervisor-btn--stop:hover {
+        background: rgba(248, 113, 113, 0.08);
+        color: var(--c-failed);
+        border-color: rgba(248, 113, 113, 0.3);
+    }
+
+    .dp-supervisor-btn--restart:hover {
+        background: var(--c-building-bg);
+        color: var(--c-building);
+        border-color: var(--c-building-border);
+    }
+}
+
+.dp-supervisor-btn--stop:active {
     background: rgba(248, 113, 113, 0.08);
     color: var(--c-failed);
     border-color: rgba(248, 113, 113, 0.3);
 }
 
-.dp-supervisor-btn--restart:hover {
+.dp-supervisor-btn--restart:active {
     background: var(--c-building-bg);
     color: var(--c-building);
     border-color: var(--c-building-border);

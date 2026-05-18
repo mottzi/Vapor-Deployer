@@ -103,9 +103,18 @@
     border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
 }
 
-.dp-tr:hover,
 .dp-tr:has(.dp-dropdown[open]),
 .dp-tr[aria-expanded="true"] {
+    background: var(--bg-hover);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-tr:hover {
+        background: var(--bg-hover);
+    }
+}
+
+.dp-tr--interactive:active {
     background: var(--bg-hover);
 }
 

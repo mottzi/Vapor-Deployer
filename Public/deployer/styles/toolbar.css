@@ -66,7 +66,13 @@
     text-decoration: none;
 }
 
-.dp-target-name a:hover {
+@media (hover: hover) and (pointer: fine) {
+    .dp-target-name a:hover {
+        opacity: 0.8;
+    }
+}
+
+.dp-target-name a:active {
     opacity: 0.8;
 }
 
@@ -113,7 +119,15 @@
     white-space: nowrap;
 }
 
-.dp-config-summary-pill:hover {
+@media (hover: hover) and (pointer: fine) {
+    .dp-config-summary-pill:hover {
+        color: var(--text);
+        background: var(--bg-hover);
+        border-color: var(--border-strong);
+    }
+}
+
+.dp-target-toolbar-summary:active .dp-config-summary-pill {
     color: var(--text);
     background: var(--bg-hover);
     border-color: var(--border-strong);
