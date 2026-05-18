@@ -10,6 +10,45 @@
     border: 0;
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Touch interaction baseline for all interactive controls.
+
+   - touch-action: manipulation     → removes iOS's ~300ms tap delay so :active
+                                       fires immediately on finger-down
+   - -webkit-tap-highlight-color    → removes the default gray iOS flash that
+                                       would otherwise mask our :active styles
+   ────────────────────────────────────────────────────────────────────────── */
+.dp-update-btn,
+.dp-logout-btn,
+.dp-login-btn,
+.dp-supervisor-btn,
+.dp-action-icon,
+.dp-dropdown-trigger,
+.dp-dropdown-item,
+.dp-copy-log-btn,
+.dp-config-summary-pill,
+.dp-target-toolbar-summary,
+.dp-tr--interactive,
+.dp-id,
+.dp-target-name a,
+.dp-wordmark {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Icons inside buttons must not intercept touches — otherwise iOS doesn't
+   propagate :active to the parent <button> reliably. */
+.dp-update-btn > svg,
+.dp-logout-btn > svg,
+.dp-supervisor-btn > svg,
+.dp-action-icon > svg,
+.dp-dropdown-trigger > svg,
+.dp-dropdown-item > svg,
+.dp-copy-log-btn > svg,
+.dp-config-summary-pill > svg {
+    pointer-events: none;
+}
+
 .dp-legend {
     display: flex;
     flex-wrap: wrap;
