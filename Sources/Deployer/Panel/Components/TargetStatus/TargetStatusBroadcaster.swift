@@ -9,5 +9,9 @@ struct TargetStatusBroadcaster: Sendable {
         await badge.set(state)
         await actions.set(state)
     }
+
+    func setBadge(_ state: StatusState) async {
+        await badge.set(state)
+    }
     
 }

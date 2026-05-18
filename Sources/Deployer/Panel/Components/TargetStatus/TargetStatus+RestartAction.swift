@@ -14,10 +14,10 @@ extension TargetStatus {
             do {
                 let manager = app.deployer.serviceManager
                 let status = await manager.status(product: productName)
-                await broadcaster.set(StatusState(status.isRunning ? .stopping : .starting))
+                await broadcaster.setBadge(StatusState(status.isRunning ? .stopping : .starting))
 
                 try await manager.restart(product: productName)
-                await broadcaster.set(StatusState(.starting))
+                await broadcaster.setBadge(StatusState(.starting))
 
                 let finalStatus = await manager.status(product: productName)
                 await broadcaster.set(StatusState(finalStatus))
