@@ -207,8 +207,16 @@
               <span class="dp-legend-label">pushed</span>
             </span>
             <span class="dp-legend-item">
+              <span class="dp-legend-dot" style="background:var(--c-testing)"></span>
+              <span class="dp-legend-label">testing</span>
+            </span>
+            <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-building)"></span>
               <span class="dp-legend-label">building</span>
+            </span>
+            <span class="dp-legend-item">
+              <span class="dp-legend-dot" style="background:var(--c-tested)"></span>
+              <span class="dp-legend-label">tested</span>
             </span>
             <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-built)"></span>
@@ -217,6 +225,10 @@
             <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-running)"></span>
               <span class="dp-legend-label">running</span>
+            </span>
+            <span class="dp-legend-item">
+              <span class="dp-legend-dot" style="background:var(--c-test-failed)"></span>
+              <span class="dp-legend-label">testFailed</span>
             </span>
             <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-failed)"></span>
