@@ -16,7 +16,7 @@ struct TargetStatusActions: LiveComponent {
         div(
             .class("dp-target-actions"),
             .mistComponent(name),
-            .mistDelay(ms: 1000),
+            .mistMinDuration(ms: 1000),
             .mistSSR(true)
         ) {
             if state.isRunning {
