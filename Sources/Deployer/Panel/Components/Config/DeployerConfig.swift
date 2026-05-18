@@ -38,24 +38,16 @@ struct DeployerInfoState: ComponentData {
     init(config: Configuration, version: String, componentName: String) {
         self.componentName = componentName
 
-        var fields: [Field] = [
-            Field("Directory", config.deployerDirectory.displayPath),
+        self.fields = [
             Field("Port", String(config.port)),
-        ]
-
-        if config.deployerBranch != "main" {
-            fields.append(Field("Branch", config.deployerBranch))
-        }
-
-        fields.append(contentsOf: [
+            Field("Directory", config.deployerDirectory.displayPath),
+            Field("Branch", config.deployerBranch),
             Field("Version", version),
             Field("User", UserAccount.currentName() ?? ""),
             Field("Service Manager", config.serviceManager.rawValue),
             Field("Local Build", config.buildFromSource ? "yes" : "no"),
-            Field("Socket", config.socketPath.displayPath)
-        ])
-
-        self.fields = fields
+            Field("Socket", config.socketPath.displayPath),
+        ]
     }
 
 }
