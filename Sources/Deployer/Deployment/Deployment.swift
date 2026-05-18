@@ -78,11 +78,14 @@ extension Deployment {
 
     enum Status: String, Codable, Sendable {
         case pushed
+        case testing
         case building
         case restoring
         case canceled
         case failed
+        case testFailed
         case built
+        case tested
         case running
         case stale
     }
@@ -113,7 +116,7 @@ extension Deployment {
     static let staleThreshold: TimeInterval = 30 * 60
 
     var displayStatus: Status {
-        if (status == .building || status == .restoring),
+        if (status == .building || status == .restoring || status == .testing),
            let startedAt,
            Date.now.timeIntervalSince(startedAt) > Self.staleThreshold {
             .stale
@@ -129,6 +132,7 @@ extension Deployment {
     var canBeDeployed: Bool {
         switch displayStatus {
             case .building: false
+            case .testing: false
             case .restoring: false
             case .running: false
             default: true
@@ -152,13 +156,13 @@ extension Deployment {
     }
 
     var hasLiveOutputStream: Bool {
-        status == .building
+        status == .building || status == .testing
     }
 
     /// HTML-rendered output: escapes user-facing text and, on failure, wraps the failing pipeline section in a red span.
     var outputHTML: String? {
         guard let output, !output.isEmpty else { return nil }
-        return status == .failed
+        return (status == .failed || status == .testFailed)
             ? Self.wrapFailedSection(in: output)
             : Self.htmlEscape(output)
     }

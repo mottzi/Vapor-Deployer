@@ -12,6 +12,7 @@ struct TargetConfiguration: Codable, Sendable {
     let binaryBehaviour: BinaryBehaviour
     let appPort: Int
     let branch: String
+    let testing: Bool
 
 }
 
@@ -33,7 +34,8 @@ extension TargetConfiguration {
             deploymentMode: deploymentMode,
             binaryBehaviour: binaryBehaviour.validated(field: "target.binaryBehaviour"),
             appPort: appPort,
-            branch: Configuration.trimmedValue(branch, field: "target.branch")
+            branch: Configuration.trimmedValue(branch, field: "target.branch"),
+            testing: testing
         )
     }
 

@@ -14,19 +14,22 @@ actor BuildOutputStream {
     private var pending = ""
     private var flushTask: Task<Void, Never>?
 
-    init(app: Application, deployment: Deployment) {
+    init(app: Application, deployment: Deployment, priorTranscript: String = "") {
         self.app = app
         self.component = DeploymentRow.name(for: deployment.product)
         self.modelID = deployment.id
+        self.transcript = priorTranscript
     }
 
+    /// Replaces the live panel view with the seed transcript so a manual test run on a row with
+    /// prior `output` shows that history immediately and appends the new section beneath it.
     func start() async {
         guard let modelID else { return }
         await app.mist.streams.replace(
             component: component,
             modelID: modelID,
             stream: Self.streamName,
-            text: ""
+            text: transcript
         )
     }
 

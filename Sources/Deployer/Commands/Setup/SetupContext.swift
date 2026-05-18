@@ -10,6 +10,7 @@ final class SetupContext: SystemContext {
     let appBuildMode = "release"
     var deploymentMode = DeploymentMode.manual
     var binaryBehaviour = BinaryBehaviour.setupDefault
+    var testing = true
 
     var serviceUser = ""
     var serviceUserUID: Int?

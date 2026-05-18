@@ -24,6 +24,9 @@
     --c-failed: #f87171;
     --c-canceled: #52525b;
     --c-stale: #fbbf24;
+    --c-testing: #818cf8;
+    --c-tested: #2dd4bf;
+    --c-test-failed: #fb7185;
 
     --c-building-bg: rgba(56, 189, 248, 0.1);
     --c-restoring-bg: rgba(34, 211, 238, 0.1);
@@ -33,6 +36,9 @@
     --c-failed-bg: rgba(248, 113, 113, 0.1);
     --c-canceled-bg: rgba(82, 82, 91, 0.1);
     --c-stale-bg: rgba(251, 191, 36, 0.1);
+    --c-testing-bg: rgba(129, 140, 248, 0.1);
+    --c-tested-bg: rgba(45, 212, 191, 0.1);
+    --c-test-failed-bg: rgba(251, 113, 133, 0.1);
 
     --c-building-border: rgba(56, 189, 248, 0.3);
     --c-restoring-border: rgba(34, 211, 238, 0.3);
@@ -42,6 +48,9 @@
     --c-failed-border: rgba(248, 113, 113, 0.32);
     --c-canceled-border: rgba(82, 82, 91, 0.28);
     --c-stale-border: rgba(251, 191, 36, 0.28);
+    --c-testing-border: rgba(129, 140, 248, 0.3);
+    --c-tested-border: rgba(45, 212, 191, 0.28);
+    --c-test-failed-border: rgba(251, 113, 133, 0.32);
 
     --radius-sm: 4px;
     --radius: 6px;
@@ -88,6 +97,9 @@
         --c-failed: #f87171;
         --c-canceled: #71717a;
         --c-stale: #fbbf24;
+        --c-testing: #818cf8;
+        --c-tested: #2dd4bf;
+        --c-test-failed: #fb7185;
 
         --c-building-bg: rgba(56, 189, 248, 0.12);
         --c-restoring-bg: rgba(34, 211, 238, 0.12);
@@ -97,6 +109,9 @@
         --c-failed-bg: rgba(248, 113, 113, 0.12);
         --c-canceled-bg: rgba(113, 113, 122, 0.12);
         --c-stale-bg: rgba(251, 191, 36, 0.12);
+        --c-testing-bg: rgba(129, 140, 248, 0.12);
+        --c-tested-bg: rgba(45, 212, 191, 0.12);
+        --c-test-failed-bg: rgba(251, 113, 133, 0.12);
 
         --c-building-border: rgba(56, 189, 248, 0.3);
         --c-restoring-border: rgba(34, 211, 238, 0.3);
@@ -106,6 +121,9 @@
         --c-failed-border: rgba(248, 113, 113, 0.3);
         --c-canceled-border: rgba(113, 113, 122, 0.28);
         --c-stale-border: rgba(251, 191, 36, 0.28);
+        --c-testing-border: rgba(129, 140, 248, 0.3);
+        --c-tested-border: rgba(45, 212, 191, 0.28);
+        --c-test-failed-border: rgba(251, 113, 133, 0.3);
 
         --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
         --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.4);

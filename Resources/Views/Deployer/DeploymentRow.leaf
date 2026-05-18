@@ -8,11 +8,14 @@
   <!-- ── Main row ──────────────────────────────────────────── -->
   <tr class="dp-tr
     #if(context.deployment.displayStatus == "pushed"):row-pushed
+    #elseif(context.deployment.displayStatus == "testing"):row-testing
     #elseif(context.deployment.displayStatus == "building"):row-building
     #elseif(context.deployment.displayStatus == "restoring"):row-restoring
     #elseif(context.deployment.displayStatus == "built"):row-built
+    #elseif(context.deployment.displayStatus == "tested"):row-tested
     #elseif(context.deployment.displayStatus == "running"):row-running
     #elseif(context.deployment.displayStatus == "failed"):row-failed
+    #elseif(context.deployment.displayStatus == "testFailed"):row-test-failed
     #elseif(context.deployment.displayStatus == "canceled"):row-canceled
     #elseif(context.deployment.displayStatus == "stale"):row-stale
     #endif
@@ -129,6 +132,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 640 640" fill="currentColor" aria-hidden="true"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M246.9 82.3L271 67.8C292.6 54.8 317.3 48 342.5 48C379.3 48 414.7 62.6 440.7 88.7L504.6 152.6C519.6 167.6 528 188 528 209.2L528 240.1L547.7 259.8L547.7 259.8C563.3 244.2 588.6 244.2 604.3 259.8C620 275.4 619.9 300.7 604.3 316.4L540.3 380.4C524.7 396 499.4 396 483.7 380.4C468 364.8 468.1 339.5 483.7 323.8L464 304L433.1 304C411.9 304 391.5 295.6 376.5 280.6L327.4 231.5C312.4 216.5 304 196.1 304 174.9L304 162.2C304 151 298.1 140.5 288.5 134.8L246.9 109.8C236.5 103.6 236.5 88.6 246.9 82.4zM50.7 466.7L272.8 244.6L363.3 335.1L141.2 557.2C116.2 582.2 75.7 582.2 50.7 557.2C25.7 532.2 25.7 491.7 50.7 466.7z"/></svg>
                 Build
               </button>
+              <button mist-action="test" class="dp-dropdown-item dp-test-item" type="button" aria-label="Run swift test against this commit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 640 640" fill="currentColor" aria-hidden="true"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M288 0C296.8 0 304 7.2 304 16C304 24.8 296.8 32 288 32L272 32L272 138L443.7 392.5C459.4 415.7 449.3 446 423.7 456.2C407.1 462.7 388.7 460.3 374.4 449.7L327.7 414C313.2 403.1 294.5 400.6 277.6 407.5L259.8 414.8C237.5 423.9 212.5 423.9 190.2 414.8L172.4 407.5C155.5 400.6 136.8 403.1 122.3 414L75.6 449.7C61.3 460.3 42.9 462.7 26.3 456.2C0.7 446 -9.4 415.7 6.3 392.5L178 138L178 32L160 32C151.2 32 144 24.8 144 16C144 7.2 151.2 0 160 0L288 0z"/></svg>
+                Test
+              </button>
               <div class="dp-dropdown-divider"></div>
             #elseif(context.deployment.canRestoreBinary):
               <button mist-action="restoreBinary" class="dp-dropdown-item dp-restore-binary-item" type="button" aria-label="Run saved binary">
@@ -164,14 +171,14 @@
   <!-- ── Output detail row ──────────────────────────────────── -->
   #if(context.deployment.hasDetails):
   <tr
-    class="dp-output-row dp-output-tr #if(context.deployment.hasLiveOutputStream):dp-output-tr--live#elseif(context.deployment.status == "failed"):dp-output-tr--failed#else:dp-output-tr--static#endif #if(state.detailsExpanded):dp-output-expanded#endif"
+    class="dp-output-row dp-output-tr #if(context.deployment.hasLiveOutputStream):dp-output-tr--live#elseif(context.deployment.status == "failed" || context.deployment.status == "testFailed"):dp-output-tr--failed#else:dp-output-tr--static#endif #if(state.detailsExpanded):dp-output-expanded#endif"
   >
     <td colspan="6" class="dp-output-cell">
       <div class="dp-output-wrapper">
         #if(context.deployment.hasLiveOutputStream):
           <pre class="dp-output-pre dp-output-pre--live" mist-stream="deployment-log"></pre>
         #elseif(context.deployment.outputHTML):
-          <pre class="dp-output-pre #if(context.deployment.status == "failed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#unsafeHTML(context.deployment.outputHTML)</pre>
+          <pre class="dp-output-pre #if(context.deployment.status == "failed" || context.deployment.status == "testFailed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#unsafeHTML(context.deployment.outputHTML)</pre>
         #endif
         <button
           class="dp-copy-log-btn"

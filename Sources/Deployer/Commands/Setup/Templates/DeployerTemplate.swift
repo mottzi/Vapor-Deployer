@@ -22,7 +22,8 @@ enum DeployerTemplate {
                 deploymentMode: context.deploymentMode,
                 binaryBehaviour: context.binaryBehaviour,
                 appPort: context.appPort,
-                branch: context.appBranch
+                branch: context.appBranch,
+                testing: context.testing
             ),
             serviceManager: context.serviceManagerKind,
             buildFromSource: context.buildFromSource,

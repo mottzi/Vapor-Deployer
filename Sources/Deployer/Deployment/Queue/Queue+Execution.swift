@@ -4,13 +4,14 @@ extension Queue {
     
     /// Dispatches to drainQueue or runSingle based on mode, then resets isDeploying on completion.
     func run(mode: JobMode, startingWith deployment: Deployment, on target: TargetConfiguration) async {
-        
+
         switch mode {
             case .deploy: await runQueue(startingWith: deployment)
             case .saveBinary: await runSaveBinary(on: deployment, target: target)
             case .restoreBinary: await runRestoreBinary(on: deployment, target: target)
+            case .test: await runTest(on: deployment, target: target)
         }
-        
+
         isDeploying = false
         await broadcastState()
     }
@@ -36,6 +37,29 @@ extension Queue {
         }
     }
 
+    /// Runs `swift test` against the deployment's commit and persists the outcome to `.tested` or `.testFailed`.
+    /// Appends a new labeled section onto the row's existing `output` rather than replacing it.
+    func runTest(on deployment: Deployment, target: TargetConfiguration) async {
+
+        let priorOutput = deployment.output ?? ""
+        let stream = BuildOutputStream(app: app, deployment: deployment, priorTranscript: priorOutput)
+        let worker = Worker(deployment: deployment, target: target, app: app, stream: stream, onStatusChange: onStatusChange)
+
+        do {
+            await stream.start()
+            try await worker.checkout()
+            try await worker.test()
+            await stream.flush()
+            deployment.status = .tested
+            deployment.finishedAt = .now
+            deployment.output = await stream.transcript
+            await stream.close()
+            try await deployment.save(on: app.db)
+        } catch {
+            await fail(deployment: deployment, stream: stream, error: error, status: .testFailed)
+        }
+    }
+
     /// Restores a previously archived binary and restarts the live service onto it.
     func runRestoreBinary(on deployment: Deployment, target: TargetConfiguration) async {
         
@@ -58,22 +82,35 @@ extension Queue {
     /// Builds queued commits in sequence, promoting the most recent successful build to the live service.
     /// Honors a "last good build wins" policy: if a later iteration fails, the previous successful build is still promoted.
     func runQueue(startingWith deployment: Deployment) async {
-        
+
         var current = deployment
         var lastSuccessful: (deployment: Deployment, transcript: String)?
-        
+        let target = config.target
+
         while true {
             let stream = BuildOutputStream(app: app, deployment: current)
-            let worker = Worker(deployment: current, target: config.target, app: app, stream: stream, onStatusChange: onStatusChange)
-            
+            let worker = Worker(deployment: current, target: target, app: app, stream: stream, onStatusChange: onStatusChange)
+            // Pre-set to .testFailed before `worker.test()` so that if it throws we already
+            // know the correct terminal status without nested do/catch. Reset to .failed once test passes.
+            var failureStatus: Deployment.Status = .failed
+
             do {
                 await stream.start()
                 try await worker.checkout()
+                if target.testing {
+                    current.status = .testing
+                    try? await current.save(on: app.db)
+                    failureStatus = .testFailed
+                    try await worker.test()
+                    failureStatus = .failed
+                    current.status = .building
+                    try? await current.save(on: app.db)
+                }
                 try await worker.build()
                 try await worker.move()
                 await stream.flush()
             } catch {
-                await fail(deployment: current, stream: stream, error: error)
+                await fail(deployment: current, stream: stream, error: error, status: failureStatus)
                 if let last = lastSuccessful {
                     await finalizeQueue(deployment: last.deployment, priorTranscript: last.transcript)
                 }
@@ -144,13 +181,15 @@ extension Queue {
         }
     }
 
-    /// Marks a deployment as failed, appends the error into the live stream, and persists the full transcript.
-    func fail(deployment: Deployment, stream: BuildOutputStream, error: Swift.Error) async {
-        
+    /// Marks a deployment with the given terminal status (defaults to `.failed`), appends the error into the
+    /// live stream, and persists the full transcript. Pass `.testFailed` from paths where a `swift test` failure
+    /// is what caused the abort, so the row can be distinguished from build/move/restart failures.
+    func fail(deployment: Deployment, stream: BuildOutputStream, error: Swift.Error, status: Deployment.Status = .failed) async {
+
         await stream.appendError(error)
         await stream.flush()
 
-        deployment.status = .failed
+        deployment.status = status
         deployment.finishedAt = .now
         deployment.output = await stream.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
 

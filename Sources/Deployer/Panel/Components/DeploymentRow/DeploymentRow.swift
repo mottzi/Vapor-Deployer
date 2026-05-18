@@ -22,6 +22,7 @@ struct DeploymentRow: InstanceComponent {
         self.actions = [
             DeployAction(productName: productName),
             SaveBinaryAction(productName: productName),
+            TestAction(productName: productName),
             RestoreBinaryAction(productName: productName),
             RemoveBinaryAction(productName: productName),
             DeleteAction(productName: productName),

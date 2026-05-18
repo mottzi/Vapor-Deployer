@@ -38,6 +38,16 @@ extension Worker {
         )
     }
 
+    @discardableResult
+    func test() async throws -> String {
+        await stream?.appendLabel("swift test -c \(target.buildMode)")
+        return try await Shell.runStreaming(
+            "swift", ["test", "-c", target.buildMode],
+            directory: target.directory,
+            onOutput: { chunk in await stream?.append(chunk) }
+        )
+    }
+
     func restart() async throws {
         let manager = app.deployer.serviceManager
         let status = await manager.status(product: deployment.product)

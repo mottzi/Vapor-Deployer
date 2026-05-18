@@ -197,6 +197,13 @@
         color: var(--c-built);
     }
 
+    .dp-test-item:hover {
+        color: var(--c-testing);
+    }
+    .dp-test-item:hover svg {
+        color: var(--c-testing);
+    }
+
     .dp-restore-binary-item:hover {
         color: var(--c-running);
     }
@@ -237,6 +244,11 @@
 .dp-save-binary-item:active,
 .dp-save-binary-item:active svg {
     color: var(--c-built);
+}
+
+.dp-test-item:active,
+.dp-test-item:active svg {
+    color: var(--c-testing);
 }
 
 .dp-restore-binary-item:active,

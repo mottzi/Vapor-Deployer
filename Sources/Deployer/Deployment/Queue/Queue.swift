@@ -72,6 +72,11 @@ extension Queue {
         await start(deployment: deployment, target: target, mode: .restoreBinary)
     }
 
+    @discardableResult
+    func test(deployment: Deployment, target: TargetConfiguration) async -> StartResult {
+        await start(deployment: deployment, target: target, mode: .test)
+    }
+
 }
 
 extension Queue {
@@ -86,11 +91,18 @@ extension Queue {
         await broadcastState()
 
         deployment.startedAt = .now
-        deployment.status = mode == .restoreBinary ? .restoring : .building
+        deployment.status = switch mode {
+            case .restoreBinary: .restoring
+            case .test: .testing
+            default: .building
+        }
         deployment.finishedAt = nil
 
-        if mode != .restoreBinary {
-            deployment.output = nil
+        // .restoreBinary preserves the prior build transcript; .test appends a new
+        // labeled section onto whatever was already there.
+        switch mode {
+            case .restoreBinary, .test: break
+            default: deployment.output = nil
         }
 
         do {

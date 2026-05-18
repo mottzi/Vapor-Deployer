@@ -181,6 +181,24 @@
     border-color: var(--c-stale-border);
 }
 
+.dp-status--testing {
+    color: var(--c-testing);
+    background: var(--c-testing-bg);
+    border-color: var(--c-testing-border);
+}
+
+.dp-status--tested {
+    color: var(--c-tested);
+    background: var(--c-tested-bg);
+    border-color: var(--c-tested-border);
+}
+
+.dp-status--testFailed {
+    color: var(--c-test-failed);
+    background: var(--c-test-failed-bg);
+    border-color: var(--c-test-failed-border);
+}
+
 .dp-status-chevron {
     transition: transform 0.2s ease;
     flex-shrink: 0;

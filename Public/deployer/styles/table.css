@@ -170,6 +170,21 @@
     opacity: 0.75;
 }
 
+.dp-tr.row-testing::before {
+    background: var(--c-testing);
+    opacity: 1;
+}
+
+.dp-tr.row-tested::before {
+    background: var(--c-tested);
+    opacity: 0.6;
+}
+
+.dp-tr.row-test-failed::before {
+    background: var(--c-test-failed);
+    opacity: 1;
+}
+
 .dp-td {
     padding: 12px 14px;
     min-width: 0;

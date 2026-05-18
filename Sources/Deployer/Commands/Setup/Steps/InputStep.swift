@@ -21,7 +21,11 @@ struct InputStep: SetupStep {
         if let binaryBehaviour = jsonConfig?.target.binaryBehaviour {
             context.binaryBehaviour = binaryBehaviour
         }
-        
+
+        if let existingTesting = jsonConfig?.target.testing {
+            context.testing = existingTesting
+        }
+
         if let existingBranch = jsonConfig?.deployerBranch {
             context.deployerRepositoryBranch = existingBranch
         }
@@ -169,6 +173,11 @@ extension InputStep {
             "Enable automatic deployments on push?",
             defaultYes: false
         ) ? .automatic : .manual
+
+        context.testing = console.confirm(
+            "Run swift test before each build?",
+            defaultYes: true
+        )
 
         collectBinaryBehaviour()
     }
@@ -325,6 +334,7 @@ extension InputStep {
             ("Deployer build mode", context.deployerBuildMode),
             ("App build mode", context.appBuildMode),
             ("Deployment mode", context.deploymentMode.rawValue),
+            ("Testing", context.testing ? "swift test before build" : "disabled"),
             ("Binary retention", context.binaryBehaviour.setupValue),
             ("Deployer port", "\(context.deployerPort)"),
             ("App port", "\(context.appPort)"),
