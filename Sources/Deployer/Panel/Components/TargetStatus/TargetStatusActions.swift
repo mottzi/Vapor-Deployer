@@ -2,15 +2,12 @@ import Vapor
 import Mist
 import Elementary
 
-struct TargetStatusActions: LiveComponent {
+struct TargetStatusActions: ManualComponent {
 
     var name: String
     let product: String
     var actions: [Action]
     let state: LiveState<StatusState>
-
-    // Shared state is updated via StatusComponent or external events
-    func refresh(app: Application) async { }
 
     func body(state: StatusState) -> some HTML {
         div(
