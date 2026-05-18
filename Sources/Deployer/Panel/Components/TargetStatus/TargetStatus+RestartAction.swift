@@ -15,9 +15,11 @@ extension TargetStatus {
                 let manager = app.deployer.serviceManager
                 let status = await manager.status(product: productName)
                 await broadcaster.setBadge(StatusState(status.isRunning ? .stopping : .starting))
+                async let minHold: Void = Task.sleep(for: .seconds(1))
 
                 try await manager.restart(product: productName)
                 await broadcaster.setBadge(StatusState(.starting))
+                try? await minHold
 
                 let finalStatus = await manager.status(product: productName)
                 await broadcaster.set(StatusState(finalStatus))
