@@ -158,6 +158,13 @@
    with the same dividers + horizontal scroll as the medium breakpoint.
    ───────────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
+    .dp-shell {
+        padding: 16px 12px 24px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+        padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
+
     /* Two-row bar via flex-wrap. Items strip sits on its own row. */
     .dp-runtime-bar {
         display: flex;
