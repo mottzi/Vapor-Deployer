@@ -4,9 +4,6 @@
     flex-direction: column;
     align-items: center;
     padding: 32px 24px 48px;
-    padding-left: max(24px, env(safe-area-inset-left));
-    padding-right: max(24px, env(safe-area-inset-right));
-    padding-bottom: max(48px, env(safe-area-inset-bottom));
     box-sizing: border-box;
 }
 
