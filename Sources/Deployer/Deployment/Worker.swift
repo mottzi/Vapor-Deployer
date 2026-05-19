@@ -41,11 +41,9 @@ extension Worker {
     @discardableResult
     func test() async throws -> String {
         // Isolated `.build-tests` scratch path so `-enable-testing` artifacts from `swift test`
-        // never overwrite the production `.build/` cache used by `swift build`. Without this,
-        // alternating between the two commands clobbers each other's object files and forces a
-        // full rebuild every push (SwiftPM bug #8031). Costs ~doubled disk usage per target;
-        // restores ~20s incremental builds. Matches SwiftPM's own CI pattern.
-        await stream?.appendLabel("swift test -c \(target.buildMode) --scratch-path .build-tests")
+        // never overwrite the production `.build/` cache used by `swift build` — see ADR 0003.
+        // The scratch flag is an implementation detail not surfaced in the user-visible label.
+        await stream?.appendLabel("swift test -c \(target.buildMode)")
         return try await Shell.runStreaming(
             "swift", ["test", "-c", target.buildMode, "--scratch-path", ".build-tests"],
             directory: target.directory,

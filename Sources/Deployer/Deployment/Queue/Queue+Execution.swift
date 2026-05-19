@@ -39,6 +39,7 @@ extension Queue {
 
     /// Runs `swift test` against the deployment's commit and persists the outcome to `.tested` or `.testFailed`.
     /// Appends a new labeled section onto the row's existing `output` rather than replacing it.
+    /// Updates `lastTestOutcome` regardless of the prior value — manual test runs always record fresh truth.
     func runTest(on deployment: Deployment, target: TargetConfiguration) async {
 
         let priorOutput = deployment.output ?? ""
@@ -51,11 +52,13 @@ extension Queue {
             try await worker.test()
             await stream.flush()
             deployment.status = .tested
+            deployment.lastTestOutcome = true
             deployment.finishedAt = .now
             deployment.output = await stream.transcript
             await stream.close()
             try await deployment.save(on: app.db)
         } catch {
+            deployment.lastTestOutcome = false
             await fail(deployment: deployment, stream: stream, error: error, status: .testFailed)
         }
     }
@@ -97,11 +100,16 @@ extension Queue {
             do {
                 await stream.start()
                 try await worker.checkout()
-                if target.testing {
+                if target.testing && current.lastTestOutcome == true {
+                    // Determinism shortcut: tests already passed for this commit, skip swift test.
+                    // The user can still force a re-test via the manual Test action.
+                    await stream.appendLabel("swift test (skipped — already passed for this commit)")
+                } else if target.testing {
                     current.status = .testing
                     try? await current.save(on: app.db)
                     failureStatus = .testFailed
                     try await worker.test()
+                    current.lastTestOutcome = true
                     failureStatus = .failed
                     current.status = .building
                     try? await current.save(on: app.db)
@@ -110,6 +118,7 @@ extension Queue {
                 try await worker.move()
                 await stream.flush()
             } catch {
+                if failureStatus == .testFailed { current.lastTestOutcome = false }
                 await fail(deployment: current, stream: stream, error: error, status: failureStatus)
                 if let last = lastSuccessful {
                     await finalizeQueue(deployment: last.deployment, priorTranscript: last.transcript)

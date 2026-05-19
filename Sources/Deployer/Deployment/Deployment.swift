@@ -19,6 +19,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
     @Field(key: "output") var output: String?
     @Field(key: "is_manually_saved") var isManuallySaved: Bool
     @OptionalField(key: "binary_size_mb") var binarySizeMB: Int?
+    @OptionalField(key: "last_test_outcome") var lastTestOutcome: Bool?
 
     init() { }
 
@@ -38,18 +39,19 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
         self.output = nil
         self.isManuallySaved = false
         self.binarySizeMB = nil
+        self.lastTestOutcome = nil
     }
     
 }
 
 extension Deployment {
-    
-    static var migration: Migration { Table() }
-    
+
+    static var migrations: [Migration] { [Table(), AddLastTestOutcome()] }
+
     struct Table: AsyncMigration {
-        
+
         func prepare(on database: Database) async throws {
-            
+
             try await database.schema(Deployment.schema)
                 .id()
                 .field("started_at", .datetime)
@@ -69,9 +71,29 @@ extension Deployment {
         func revert(on database: Database) async throws {
             try await database.schema(Deployment.schema).delete()
         }
-        
+
     }
-    
+
+    /// Adds `last_test_outcome` for tracking per-commit test history. Nullable: nil = never tested,
+    /// true = tests passed, false = tests failed. Used to skip the inline `swift test` step when
+    /// re-deploying a row whose tests are already known to pass. Existing rows backfill to nil
+    /// (truthfully: we have no record of whether they were tested).
+    struct AddLastTestOutcome: AsyncMigration {
+
+        func prepare(on database: Database) async throws {
+            try await database.schema(Deployment.schema)
+                .field("last_test_outcome", .bool)
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema(Deployment.schema)
+                .deleteField("last_test_outcome")
+                .update()
+        }
+
+    }
+
 }
 
 extension Deployment {
@@ -102,6 +124,7 @@ extension Deployment {
         "canBeDeployed": canBeDeployed,
         "canBuild": canBuild,
         "canRestoreBinary": canRestoreBinary,
+        "canTest": canTest,
         "hasSavedBinary": hasSavedBinary,
         "hasDetails": hasDetails,
         "hasLiveOutputStream": hasLiveOutputStream,
@@ -149,6 +172,16 @@ extension Deployment {
 
     var canRestoreBinary: Bool {
         canBeDeployed && hasSavedBinary
+    }
+
+    /// Test eligibility — permissive. Allowed on every non-actively-transient state, including
+    /// `.running` (the live binary is untouched; tests compile into `.build-tests/`). The queue
+    /// lock still serializes execution.
+    var canTest: Bool {
+        switch displayStatus {
+            case .building, .testing, .restoring: false
+            default: true
+        }
     }
 
     var hasDetails: Bool {
