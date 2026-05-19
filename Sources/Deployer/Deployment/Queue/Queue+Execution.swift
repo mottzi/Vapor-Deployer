@@ -49,6 +49,7 @@ extension Queue {
         let priorOutput = deployment.output ?? ""
 
         deployment.status = .testing
+        deployment.testStartedAt = .now
         try? await deployment.save(on: app.db)
 
         let stream = BuildOutputStream(app: app, deployment: deployment, priorTranscript: priorOutput)
@@ -60,6 +61,7 @@ extension Queue {
             try await worker.test()
             await stream.flush()
             deployment.status = priorStatus
+            deployment.testStartedAt = nil
             deployment.lastTestOutcome = true
             deployment.output = await stream.transcript
             await stream.close()
@@ -68,6 +70,7 @@ extension Queue {
             await stream.appendError(error)
             await stream.flush()
             deployment.status = priorStatus
+            deployment.testStartedAt = nil
             deployment.lastTestOutcome = false
             deployment.output = await stream.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             await stream.close()

@@ -20,6 +20,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
     @Field(key: "is_manually_saved") var isManuallySaved: Bool
     @OptionalField(key: "binary_size_mb") var binarySizeMB: Int?
     @OptionalField(key: "last_test_outcome") var lastTestOutcome: Bool?
+    @OptionalField(key: "test_started_at") var testStartedAt: Date?
 
     init() { }
 
@@ -40,6 +41,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
         self.isManuallySaved = false
         self.binarySizeMB = nil
         self.lastTestOutcome = nil
+        self.testStartedAt = nil
     }
     
 }
@@ -66,6 +68,7 @@ extension Deployment {
                 .field("is_manually_saved", .bool, .required, .sql(.default(false)))
                 .field("binary_size_mb", .int)
                 .field("last_test_outcome", .bool)
+                .field("test_started_at", .datetime)
                 .create()
         }
 
@@ -121,8 +124,8 @@ extension Deployment {
 
     var displayStatus: Status {
         if (status == .building || status == .restoring || status == .testing),
-           let startedAt,
-           Date.now.timeIntervalSince(startedAt) > Self.staleThreshold {
+           let referenceTime = (status == .testing ? (testStartedAt ?? startedAt) : startedAt),
+           Date.now.timeIntervalSince(referenceTime) > Self.staleThreshold {
             .stale
         } else {
             status
