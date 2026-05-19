@@ -101,7 +101,7 @@
     margin: 0;
     width: 100%;
     max-width: 100%;
-    max-height: min(420px, 45vh);
+    max-height: 420px;
     padding: 14px 14px;
     box-sizing: border-box;
     font-family: var(--font-mono);
