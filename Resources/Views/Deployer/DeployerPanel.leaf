@@ -260,14 +260,6 @@
           e.stopPropagation();
         }
       }, true);
-
-      document.addEventListener('click', function (e) {
-        document.querySelectorAll('details.dp-dropdown[open]').forEach(function(dropdown) {
-          if (!dropdown.contains(e.target)) {
-            dropdown.removeAttribute('open');
-          }
-        });
-      });
     })();
 
     function copyLogToClipboard(btn) {

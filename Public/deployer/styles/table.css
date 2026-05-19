@@ -103,7 +103,7 @@
     border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
 }
 
-.dp-tr:has(.dp-dropdown[open]),
+.dp-tr:has(.dp-dropdown-menu:popover-open),
 .dp-tr[aria-expanded="true"] {
     background: var(--bg-hover);
 }

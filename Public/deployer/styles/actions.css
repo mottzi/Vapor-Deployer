@@ -91,11 +91,6 @@
 
 /* ── Dropdown Actions ── */
 
-.dp-dropdown {
-    position: relative;
-    display: inline-flex;
-}
-
 .dp-dropdown-trigger {
     display: inline-flex;
     align-items: center;
@@ -108,15 +103,10 @@
     cursor: pointer;
     color: var(--text-muted);
     transition: background 0.15s ease, color 0.15s ease;
-    list-style: none; /* Hide default arrow */
     padding: 0;
 }
 
-.dp-dropdown-trigger::-webkit-details-marker {
-    display: none;
-}
-
-.dp-dropdown[open] .dp-dropdown-trigger {
+.dp-dropdown-trigger:has(+ .dp-dropdown-menu:popover-open) {
     background: var(--bg-hover);
     color: var(--text);
 }
@@ -133,20 +123,73 @@
     color: var(--text);
 }
 
-.dp-dropdown-menu {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 4px);
-    z-index: 50;
+/* Popover menu — rendered in the top-layer so it escapes every
+   overflow:clip / overflow:hidden ancestor. Anchor positioning
+   keeps it visually tied to its trigger, and position-try-fallbacks
+   auto-flips block/inline when there's no room. */
+.dp-dropdown-menu[popover] {
+    position: fixed;
+    margin: 0;
+    padding: 4px;
+    inset: auto;
     min-width: 150px;
+    max-width: min(260px, 100vw - 16px);
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
-    padding: 4px;
     display: flex;
     flex-direction: column;
     gap: 2px;
+    box-sizing: border-box;
+
+    /* Default placement: below the trigger, right-aligned to it. */
+    top: calc(anchor(bottom) + 4px);
+    right: calc(100% - anchor(right));
+
+    /* Fallbacks (tried in order). The browser picks the first that fits. */
+    position-try-order: most-block-size;
+    position-try-fallbacks:
+        --dp-menu-flip-up,
+        --dp-menu-flip-inline,
+        --dp-menu-flip-both;
+}
+
+@position-try --dp-menu-flip-up {
+    top: auto;
+    bottom: calc(100vh - anchor(top) + 4px);
+    right: calc(100% - anchor(right));
+    left: auto;
+}
+
+@position-try --dp-menu-flip-inline {
+    top: calc(anchor(bottom) + 4px);
+    bottom: auto;
+    left: anchor(left);
+    right: auto;
+}
+
+@position-try --dp-menu-flip-both {
+    top: auto;
+    bottom: calc(100vh - anchor(top) + 4px);
+    left: anchor(left);
+    right: auto;
+}
+
+/* Graceful degradation: if a browser lacks anchor positioning,
+   the popover still renders in the top-layer but unanchored —
+   pin it to the bottom-right of the viewport instead of letting
+   it land at (0,0). Anchor-aware browsers override this. */
+@supports not (anchor-name: --x) {
+    .dp-dropdown-menu[popover] {
+        top: auto;
+        right: 16px;
+        bottom: 16px;
+        left: auto;
+    }
 }
 
 .dp-dropdown-item {
@@ -270,11 +313,6 @@
 }
 .dp-delete-item:active svg {
     color: var(--c-failed);
-}
-
-.dp-table > .dp-tbody:nth-last-child(-n+3) .dp-dropdown-menu {
-    top: auto;
-    bottom: calc(100% + 4px);
 }
 
 .dp-dropdown-divider {
