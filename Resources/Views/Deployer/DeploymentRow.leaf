@@ -121,7 +121,6 @@
           type="button"
           class="dp-dropdown-trigger"
           popovertarget="dp-menu-#(context.deployment.id)"
-          style="anchor-name: --dp-a-#(context.deployment.id)"
           title="Actions"
           aria-label="Actions"
         >
@@ -131,7 +130,6 @@
           id="dp-menu-#(context.deployment.id)"
           popover
           class="dp-dropdown-menu"
-          style="position-anchor: --dp-a-#(context.deployment.id)"
         >
             #if(context.deployment.canBuild):
               <button mist-action="deploy" popovertarget="dp-menu-#(context.deployment.id)" popovertargetaction="hide" class="dp-dropdown-item dp-deploy-item" type="button" aria-label="Build and run this commit">
