@@ -46,8 +46,7 @@ extension Deployer {
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
         app.databases.middleware.use(DeploymentBinaryCleanupMiddleware(target: config.target))
         app.sessions.use(.fluent)
-        for migration in Deployment.migrations { app.migrations.add(migration) }
-        app.migrations.add(SessionRecord.migration)
+        app.migrations.add(Deployment.migration, SessionRecord.migration)
         try await app.autoMigrate()
         await seedFirstDeployment(config: config)
     }
