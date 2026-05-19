@@ -146,7 +146,7 @@
                 <div class="dp-dropdown-divider"></div>
               #endif
               <button mist-action="test" class="dp-dropdown-item dp-test-item" type="button" aria-label="Run swift test against this commit">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 640 640" fill="currentColor" aria-hidden="true"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M288 0C296.8 0 304 7.2 304 16C304 24.8 296.8 32 288 32L272 32L272 138L443.7 392.5C459.4 415.7 449.3 446 423.7 456.2C407.1 462.7 388.7 460.3 374.4 449.7L327.7 414C313.2 403.1 294.5 400.6 277.6 407.5L259.8 414.8C237.5 423.9 212.5 423.9 190.2 414.8L172.4 407.5C155.5 400.6 136.8 403.1 122.3 414L75.6 449.7C61.3 460.3 42.9 462.7 26.3 456.2C0.7 446 -9.4 415.7 6.3 392.5L178 138L178 32L160 32C151.2 32 144 24.8 144 16C144 7.2 151.2 0 160 0L288 0z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 640 640" fill="currentColor" aria-hidden="true"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M81 279L279 81C289.9 70.1 304.6 64 320 64C335.4 64 350.1 70.1 361 81L559 279C569.9 289.9 576 304.6 576 320C576 335.4 569.9 350.1 559 361L361 559C350.1 569.9 335.4 576 320 576C304.6 576 289.9 569.9 279 559L81 361C70.1 350.1 64 335.4 64 320C64 304.6 70.1 289.9 81 279z"/></svg>
                 Test
               </button>
             #endif
