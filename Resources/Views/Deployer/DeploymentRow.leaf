@@ -39,21 +39,6 @@
       </span>
     </td>
 
-    <!-- Tests (audit indicator — driven entirely by lastTestOutcome, independent of status) -->
-    <td class="dp-td dp-td-tests dp-td-sm-hide dp-td-mobile-hide">
-      #if(context.deployment.testsPassed):
-        <span class="dp-test-glyph dp-test-glyph--pass" title="Tests passed" aria-label="Tests passed">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 640 640" fill="currentColor" aria-hidden="true"><path d="M480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160C96 124.7 124.7 96 160 96L480 96zM438 209.7C427.3 201.9 412.3 204.3 404.5 215L285.1 379.2L233 327.1C223.6 317.7 208.4 317.7 199.1 327.1C189.8 336.5 189.7 351.7 199.1 361L271.1 433C276.1 438 283 440.5 289.9 440C296.8 439.5 303.3 435.9 307.4 430.2L443.3 243.2C451.1 232.5 448.7 217.5 438 209.7z"/></svg>
-        </span>
-      #elseif(context.deployment.testsFailed):
-        <span class="dp-test-glyph dp-test-glyph--fail" title="Tests failed" aria-label="Tests failed">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 640 640" fill="currentColor" aria-hidden="true"><path d="M160 96C124.7 96 96 124.7 96 160L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 160C544 124.7 515.3 96 480 96L160 96zM231 231C240.4 221.6 255.6 221.6 264.9 231L319.9 286L374.9 231C384.3 221.6 399.5 221.6 408.8 231C418.1 240.4 418.2 255.6 408.8 264.9L353.8 319.9L408.8 374.9C418.2 384.3 418.2 399.5 408.8 408.8C399.4 418.1 384.2 418.2 374.9 408.8L319.9 353.8L264.9 408.8C255.5 418.2 240.3 418.2 231 408.8C221.7 399.4 221.6 384.2 231 374.9L286 319.9L231 264.9C221.6 255.5 221.6 240.3 231 231z"/></svg>
-        </span>
-      #else:
-        <span class="dp-test-glyph-dash">—</span>
-      #endif
-    </td>
-
     <!-- Commit message -->
     <td class="dp-td dp-td-commit">
       #if(context.deployment.displayStatus == "canceled"):
@@ -125,6 +110,21 @@
           <span class="dp-binary-dash">—</span>
         #endif
       </div>
+    </td>
+
+    <!-- Tests (audit indicator — driven entirely by lastTestOutcome, independent of status) -->
+    <td class="dp-td dp-td-tests dp-td-sm-hide dp-td-mobile-hide">
+      #if(context.deployment.testsPassed):
+        <span class="dp-test-glyph dp-test-glyph--pass" title="Tests passed" aria-label="Tests passed">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 640 640" fill="currentColor" aria-hidden="true"><path d="M480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160C96 124.7 124.7 96 160 96L480 96zM438 209.7C427.3 201.9 412.3 204.3 404.5 215L285.1 379.2L233 327.1C223.6 317.7 208.4 317.7 199.1 327.1C189.8 336.5 189.7 351.7 199.1 361L271.1 433C276.1 438 283 440.5 289.9 440C296.8 439.5 303.3 435.9 307.4 430.2L443.3 243.2C451.1 232.5 448.7 217.5 438 209.7z"/></svg>
+        </span>
+      #elseif(context.deployment.testsFailed):
+        <span class="dp-test-glyph dp-test-glyph--fail" title="Tests failed" aria-label="Tests failed">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 640 640" fill="currentColor" aria-hidden="true"><path d="M160 96C124.7 96 96 124.7 96 160L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 160C544 124.7 515.3 96 480 96L160 96zM231 231C240.4 221.6 255.6 221.6 264.9 231L319.9 286L374.9 231C384.3 221.6 399.5 221.6 408.8 231C418.1 240.4 418.2 255.6 408.8 264.9L353.8 319.9L408.8 374.9C418.2 384.3 418.2 399.5 408.8 408.8C399.4 418.1 384.2 418.2 374.9 408.8L319.9 353.8L264.9 408.8C255.5 418.2 240.3 418.2 231 408.8C221.7 399.4 221.6 384.2 231 374.9L286 319.9L231 264.9C221.6 255.5 221.6 240.3 231 231z"/></svg>
+        </span>
+      #else:
+        <span class="dp-test-glyph-dash">—</span>
+      #endif
     </td>
 
     <!-- Actions -->
