@@ -130,7 +130,8 @@
     margin: 0;
     padding: 4px;
     min-width: 160px;
-    max-width: 280px;
+    max-width: min(280px, 100vw - 16px);
+    max-height: calc(100dvh - 16px);
     overflow-y: auto;
     overscroll-behavior: contain;
     background: var(--bg-surface);
