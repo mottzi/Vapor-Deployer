@@ -18,7 +18,14 @@ struct InputStep: SetupStep {
         
         let jsonConfig = ConfigDiscovery.loadJSON(serviceUser: context.serviceUser)
         let oldSecret = jsonConfig?.webhookSecret
-        
+        if let binaryBehaviour = jsonConfig?.target.binaryBehaviour {
+            context.binaryBehaviour = binaryBehaviour
+        }
+
+        if let existingTesting = jsonConfig?.target.testing {
+            context.testing = existingTesting
+        }
+
         if let existingBranch = jsonConfig?.deployerBranch {
             context.deployerRepositoryBranch = existingBranch
         }
@@ -166,6 +173,39 @@ extension InputStep {
             "Enable automatic deployments on push?",
             defaultYes: false
         ) ? .automatic : .manual
+
+        context.testing = console.confirm(
+            "Run swift test before each build?",
+            defaultYes: true
+        )
+
+        collectBinaryBehaviour()
+    }
+
+    private func collectBinaryBehaviour() {
+
+        console.section("Binary retention")
+        console.info("Deployment binaries are stored on the server to allow quick rollbacks.")
+        console.info("Choose a policy for cleaning up old versions:")
+        console.info("- newest:5   Keep a fixed number of recent binaries")
+        console.info("- auto:500   Keep binaries until total size exceeds limit (MB)")
+        console.info("- all        Indefinite retention")
+        console.info("- off       Delete immediately (no rollbacks)")
+
+        while true {
+            let value = console.askRequired(
+                "Policy",
+                default: context.binaryBehaviour.setupValue
+            )
+
+            guard let behaviour = BinaryBehaviour.parse(value) else {
+                console.warning("Use 'newest:5', 'auto:500', 'all', or 'off'.")
+                continue
+            }
+
+            context.binaryBehaviour = behaviour
+            break
+        }
     }
 
     private func collectPanelAuth() throws {
@@ -218,7 +258,8 @@ extension InputStep {
         )
         
         while true {
-            context.githubToken = console.askSecret("GitHub token")
+//            context.githubToken = console.askSecret("GitHub token")
+            context.githubToken = console.askRequired("GitHub token")
             do {
                 try await verifyGitHubAccess()
                 return
@@ -293,6 +334,8 @@ extension InputStep {
             ("Deployer build mode", context.deployerBuildMode),
             ("App build mode", context.appBuildMode),
             ("Deployment mode", context.deploymentMode.rawValue),
+            ("Testing", context.testing ? "swift test before build" : "disabled"),
+            ("Binary retention", context.binaryBehaviour.setupValue),
             ("Deployer port", "\(context.deployerPort)"),
             ("App port", "\(context.appPort)"),
             ("Panel route", context.panelRoute),

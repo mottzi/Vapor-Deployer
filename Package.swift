@@ -26,10 +26,6 @@ let package = Package(
                 .product(name: "Elementary", package: "elementary"),
             ],
         ),
-        .testTarget(
-            name: "deployerTests",
-            dependencies: ["deployer"],
-        ),
     ],
     swiftLanguageModes: [
         .v6

@@ -1,0 +1,19 @@
+# Vapor-Deployer Context
+
+## Domain Terms
+
+- **Target app**: The user's Vapor application that the deployer builds, deploys, and supervises. Distinct from the deployer itself.
+- **Deployment**: A repo snapshot (commit) that the deployer can test, build, and run. Persisted as a `Deployment` row. Operations against it are driven by the `Queue` actor.
+- **Queue**: Actor that serializes target-app work (deploy, save-binary, restore-binary, test). Holds `isDeploying` as its lock.
+- **Test run**: Executing `swift test` against a Deployment's commit. Two distinct flavors with different semantics:
+  - **Inline pipeline test**: a phase of the deploy pipeline, runs before `swift build` when `target.testing` is true (skipped if `lastTestOutcome == true` on the row). Affects `status` like any other pipeline phase: `.testing` while in flight, `.failed` if it throws (with `lastTestOutcome = false` to carry the test-vs-build phase distinction).
+  - **Manual test**: triggered by the row's Test action. Pure **audit** — never alters `status`. Outcome lives in `lastTestOutcome` and the appended transcript section. A `.running` row whose tests fail manually stays `.running`; a `.pushed` row whose tests pass manually stays `.pushed`. The row's Tests column reflects the audit.
+
+  Test runs use a `.build-tests/` scratch directory in the target, isolated from `.build/` — see [ADR 0003](docs/adr/0003-test-scratch-path-isolates-build-cache.md).
+- **`lastTestOutcome`**: Per-Deployment `Bool?` recording the most recent test outcome for that commit. `nil` = never tested. `true` = tests passed. `false` = tests failed. Set by both the inline pipeline test step and the manual Test action. Three jobs: (1) skip the redundant `swift test` step in the deploy pipeline when `true`, on the basis that tests are deterministic for a given commit; (2) carry the test-vs-build phase distinction that `.failed` rows would otherwise lose; (3) drive the row's Tests column glyph (`nil` → muted em-dash, `true` → green check, `false` → red X). Not a UI eligibility gate — env drift means a user may always re-run any action, and the action's transcript appended to `output` is the source of truth for outcomes.
+- **Deployment status semantics** (see [ADR 0004](docs/adr/0004-status-is-lifecycle-tests-are-audits.md)): A Deployment's `status` reflects its **deployment-lifecycle** state, not "outcome of last operation." Test runs are orthogonal audits and never alter status — only the deploy pipeline (and the Stop/Restart supervisor actions) advance status. Lifecycle states: `.pushed` (commit received) → `.testing` / `.building` / `.restoring` (transient pipeline phases) → `.built` (artifact ready, not live) → `.running` (live) → `.failed` / `.canceled` / `.stale` (terminal off-paths). Test outcomes live entirely in `lastTestOutcome` + the transcript section appended to `output`. Action eligibility is permissive: any non-transient row exposes every action whose lifecycle state it isn't already in. The full audit trail of every operation that has streamed against the row lives in `output`.
+- **Self-update**: Replacing the deployer's own binary (and, for source installs, its checkout) with the latest release, then restarting the deployer service. Distinct from a target-app deployment.
+- **Updater**: The primitive that owns the self-update lock and drives the self-update lifecycle.
+- **DeployerPhase**: Derived display state computed from Queue + Updater locks. One of `ready`, `deploying`, `updating`. Used by the panel to render the runtime badge.
+- **DeployerStatus**: The Mist fragment component that renders the runtime-bar badge and owns the self-update action. Backed by a `LiveState<DeployerPhase>` shared between `Queue` and `Updater`.
+- **Panel**: The web dashboard served by the deployer service, rendered with Leaf and updated live via Mist.

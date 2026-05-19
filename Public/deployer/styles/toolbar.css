@@ -1,0 +1,204 @@
+.dp-target-toolbar {
+    width: 100%;
+    min-width: 0;
+}
+
+.dp-config-disclosure {
+    width: 100%;
+    min-width: 0;
+    display: block;
+    border: none;
+    box-sizing: border-box;
+}
+
+.dp-target-toolbar-summary {
+    display: block;
+    width: 100%;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dp-target-toolbar-summary::-webkit-details-marker {
+    display: none;
+}
+
+.dp-target-toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    padding: 14px 20px;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.dp-target-lead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.dp-target-name {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.03em;
+    margin: 0;
+    flex: 0 1 auto;
+    cursor: default;
+    white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dp-target-name a {
+    color: inherit;
+    text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-target-name a:hover {
+        opacity: 0.8;
+    }
+}
+
+.dp-target-name a:active {
+    opacity: 0.8;
+}
+
+.dp-status-badge-slot {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.dp-product-status {
+    display: inline-flex;
+    align-items: center;
+}
+
+.dp-target-tail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.dp-target-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.dp-config-summary-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    user-select: none;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-config-summary-pill:hover {
+        color: var(--text);
+        background: var(--bg-hover);
+        border-color: var(--border-strong);
+    }
+}
+
+.dp-target-toolbar-summary:active .dp-config-summary-pill {
+    color: var(--text);
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+}
+
+.dp-config-chevron {
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    color: currentColor;
+    opacity: 0.7;
+}
+
+details[open]>.dp-target-toolbar-summary .dp-config-summary-pill {
+    color: var(--text);
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+}
+
+details[open]>.dp-target-toolbar-summary .dp-config-chevron {
+    transform: rotate(90deg);
+}
+
+.dp-target-toolbar-summary:focus-visible {
+    outline: none;
+}
+
+.dp-target-toolbar-summary:focus-visible .dp-config-summary-pill {
+    outline: 2px solid var(--c-building);
+    outline-offset: 2px;
+}
+
+.dp-config-body {
+    width: 100%;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dp-config-body-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    padding: 0 20px;
+    background: var(--bg-surface-inset);
+    box-sizing: border-box;
+}
+
+.dp-target-meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    height: 64px;
+    gap: 0;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.dp-target-meta-strip .dp-context-item {
+    flex: 0 0 auto;
+    height: 64px;
+    min-width: 0;
+    overflow: hidden;
+    padding: 0 16px;
+}
+
+.dp-target-meta-strip .dp-context-item+.dp-context-item {
+    border-left: 1px solid var(--border-subtle);
+}
+
+.dp-target-meta-strip .dp-context-value {
+    display: block;
+    width: 100%;
+}

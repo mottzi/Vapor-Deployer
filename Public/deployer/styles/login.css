@@ -1,0 +1,124 @@
+.dp-login-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 24px;
+}
+
+.dp-login-wrap>* {
+    width: 100%;
+    max-width: 380px;
+}
+
+.dp-login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: var(--shadow-lg);
+}
+
+.dp-login-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    letter-spacing: -0.02em;
+}
+
+.dp-login-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: -6px;
+}
+
+.dp-login-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    background: var(--c-failed-bg);
+    border: 1px solid var(--c-failed-border);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c-failed);
+}
+
+.dp-login-error-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c-failed);
+    flex-shrink: 0;
+}
+
+.dp-login-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 11px 14px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: all 0.15s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.dp-login-input::placeholder {
+    color: var(--text-subtle);
+}
+
+.dp-login-input:focus {
+    border-color: var(--c-building);
+    box-shadow: 0 0 0 3px var(--c-building-bg);
+}
+
+.dp-login-btn {
+    width: 100%;
+    padding: 11px 14px;
+    background: var(--text);
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--bg);
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-login-btn:hover {
+        opacity: 0.88;
+    }
+}
+
+.dp-login-btn:active {
+    opacity: 0.88;
+    transform: scale(0.99);
+}
+
+.dp-login-wordmark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.dp-login-wordmark-title {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+}

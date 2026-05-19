@@ -1,18 +1,16 @@
-// Move this file (mist.js) to: /Public
-
 class MistSocket {
 
     constructor(config) {
+        
         this.config = config;
         this.socket = null;
         this.streamBuffers = new Map();
         this.throttledUpdates = new Map();
+        this.minDurationUpdates = new Map();
 
-        // Reconnect
         this.reconnectTimer = null;
         this.reconnectDelay = 1000;
 
-        // Heartbeat
         this.heartbeatTimer        = null;
         this.heartbeatInterval     = 30_000;
         this.heartbeatTimeoutTimer = null;
@@ -26,15 +24,16 @@ class MistSocket {
     }
 
     forceReconnect() {
+        
         if (this.socket) {
-            // Null all handlers before close so onclose doesn't schedule a competing reconnect loop
-            this.socket.onclose   = null;
-            this.socket.onerror   = null;
-            this.socket.onopen    = null;
+            this.socket.onclose = null;
+            this.socket.onerror = null;
+            this.socket.onopen = null;
             this.socket.onmessage = null;
             this.socket.close();
             this.socket = null;
         }
+        
         this.stopHeartbeat();
         this.clearReconnectTimer();
         this.connect();
@@ -46,6 +45,7 @@ class MistSocket {
     }
 
     stopHeartbeat() {
+        
         clearInterval(this.heartbeatTimer);
         clearTimeout(this.heartbeatTimeoutTimer);
         this.heartbeatTimer        = null;
@@ -54,10 +54,11 @@ class MistSocket {
     }
 
     sendHeartbeat() {
+        
         if (!this.isConnected()) return;
 
         if (this.pendingHeartbeat) {
-            console.warn('[Client] Heartbeat timeout — connection is dead, forcing reconnect');
+            console.warn('[Client] WebSocket closed. Reconnecting.');
             this.forceReconnect();
             return;
         }
@@ -67,13 +68,14 @@ class MistSocket {
 
         this.heartbeatTimeoutTimer = setTimeout(() => {
             if (this.pendingHeartbeat) {
-                console.warn('[Client] Heartbeat pong not received — forcing reconnect');
+                console.warn('[Client] WebSocket closed. Reconnecting.');
                 this.forceReconnect();
             }
         }, this.heartbeatTimeout);
     }
 
     handlePong() {
+        
         const wasPending = this.pendingHeartbeat;
         this.pendingHeartbeat = false;
 
@@ -82,15 +84,13 @@ class MistSocket {
             this.heartbeatTimeoutTimer = null;
         }
 
-        // If a pong arrives and the heartbeat interval is not running, 
-        // it means we just successfully verified the connection after a wake-up.
         if (wasPending && !this.heartbeatTimer && this.isConnected()) {
-            console.log('[Client] Connection verified — resuming heartbeats');
             this.startHeartbeat();
         }
     }
 
     clearReconnectTimer() {
+        
         if (this.reconnectTimer) {
             clearTimeout(this.reconnectTimer);
             this.reconnectTimer = null;
@@ -98,27 +98,26 @@ class MistSocket {
     }
 
     subscribeToPageComponents() {
-
-        console.log("[Client] Scanning DOM and subscribing to components");
+        
+        if (this.hasConnectedOnce) {
+            this.resubscribeToPageComponents();
+            return;
+        }
 
         const uniqueComponents = new Map();
 
-        // Subscribe to existing components
         document.querySelectorAll('[mist-component]').forEach(element => {
-
             const component = element.getAttribute('mist-component');
-            const ssrReady = !this.hasConnectedOnce && element.getAttribute('mist-ssr') === 'true';
+            const ssrReady = element.getAttribute('mist-ssr') === 'true';
 
             if (component) {
                 uniqueComponents.set(component, ssrReady);
             }
         });
 
-        // Subscribe to components that containers accept (even if they don't exist yet)
         document.querySelectorAll('[mist-container]').forEach(container => {
-
             const acceptedComponents = container.getAttribute('mist-container');
-            const ssrReady = !this.hasConnectedOnce && container.getAttribute('mist-ssr') === 'true';
+            const ssrReady = container.getAttribute('mist-ssr') === 'true';
 
             if (acceptedComponents) {
                 acceptedComponents.split(',').forEach(component => {
@@ -135,14 +134,59 @@ class MistSocket {
         });
     }
 
+    resubscribeToPageComponents() {
+
+        const componentToIDs = new Map();
+
+        document.querySelectorAll('[mist-component]').forEach(element => {
+            const component = element.getAttribute('mist-component');
+            if (!component) return;
+
+            if (!componentToIDs.has(component)) componentToIDs.set(component, new Set());
+
+            if (element.getAttribute('mist-rehydrate') === 'false') return;
+
+            const modelID = element.getAttribute('mist-id');
+            if (modelID) componentToIDs.get(component).add(modelID);
+        });
+
+        document.querySelectorAll('[mist-container]').forEach(container => {
+            const acceptedComponents = container.getAttribute('mist-container');
+            if (!acceptedComponents) return;
+
+            acceptedComponents.split(',').forEach(component => {
+                const trimmed = component.trim();
+                if (!trimmed) return;
+                if (!componentToIDs.has(trimmed)) componentToIDs.set(trimmed, new Set());
+            });
+        });
+
+        componentToIDs.forEach((ids, component) => {
+            this.resubscribe(component, Array.from(ids));
+        });
+    }
+
     subscribe(component, ssrReady = false) {
 
         if (this.isConnected()) {
-
             const message = {
                 subscribe: {
                     component: component,
                     ssrReady: ssrReady
+                }
+            };
+            
+            this.socket.send(JSON.stringify(message));
+        }
+    }
+
+    resubscribe(component, knownIDs) {
+
+        if (this.isConnected()) {
+            const message = {
+                resubscribe: {
+                    component: component,
+                    knownIDs: knownIDs
                 }
             };
 
@@ -150,19 +194,20 @@ class MistSocket {
         }
     }
 
-    // Boots global behaviors (timers, etc.)
     bootBehaviors() {
         this.bootDateTimes();
         this.bootTimers();
     }
 
     bootDateTimes() {
+        
         const timeFormatter = new Intl.DateTimeFormat(undefined, {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
             hour12: false
         });
+        
         const dateFormatter = new Intl.DateTimeFormat(undefined, {
             day: '2-digit',
             month: '2-digit',
@@ -188,6 +233,7 @@ class MistSocket {
     }
 
     bootTimers() {
+        
         document.querySelectorAll('[mist-behavior="timer"]').forEach(element => {
             if (element._mistTimer) return;
             const unixMs = Number.parseInt(element.dataset.startedAtUnixMs, 10);
@@ -201,14 +247,12 @@ class MistSocket {
             update();
 
             element._mistTimer = setInterval(() => {
-                // Stop if element is removed from DOM
                 if (!document.body.contains(element)) {
                     clearInterval(element._mistTimer);
                     element._mistTimer = null;
                     return;
                 }
 
-                // Stop if element no longer has the timer behavior (e.g. morphed into static span)
                 if (element.getAttribute('mist-behavior') !== 'timer') {
                     clearInterval(element._mistTimer);
                     element._mistTimer = null;
@@ -240,7 +284,45 @@ class MistSocket {
                 }
             }, delayMs)
         };
+
         this.throttledUpdates.set(key, record);
+
+        return true;
+    }
+
+    applyMinDurationUpdate(key, minMs, applyFn, data) {
+        const now = Date.now();
+        const existing = this.minDurationUpdates.get(key);
+
+        if (!existing) {
+            applyFn(data);
+            this.minDurationUpdates.set(key, { lastAppliedAt: now, timer: null, pendingData: null });
+            return true;
+        }
+
+        const elapsed = now - existing.lastAppliedAt;
+
+        if (elapsed >= minMs && !existing.timer) {
+            applyFn(data);
+            this.minDurationUpdates.set(key, { lastAppliedAt: now, timer: null, pendingData: null });
+            return true;
+        }
+
+        if (existing.timer) {
+            existing.pendingData = data;
+            return false;
+        }
+
+        const remaining = Math.max(minMs - elapsed, 0);
+        existing.pendingData = data;
+        existing.timer = setTimeout(() => {
+            const r = this.minDurationUpdates.get(key);
+            if (!r) return;
+            const pending = r.pendingData;
+            this.minDurationUpdates.set(key, { lastAppliedAt: Date.now(), timer: null, pendingData: null });
+            if (pending !== null) applyFn(pending);
+        }, remaining);
+
         return true;
     }
 
@@ -260,6 +342,7 @@ class MistSocket {
     }
 
     appendStream(component, modelID, stream, text) {
+        
         if (!text) return;
 
         const key = this.streamKey(component, modelID, stream);
@@ -320,6 +403,7 @@ class MistSocket {
     }
 
     scheduleSortableCollectionReorder(collection) {
+        
         if (!(collection instanceof Element)) return;
 
         const delayRawValue = collection.dataset.mistSortDelayMs;
@@ -343,6 +427,7 @@ class MistSocket {
     }
 
     reorderSortableCollection(collection) {
+        
         if (!(collection instanceof Element)) return;
 
         const sortOrder = collection.dataset.mistSortOrder || 'asc';
@@ -376,7 +461,6 @@ class MistSocket {
         const orderChanged = sortedItems.some((item, index) => item.element !== sortableItems[index]);
         if (!orderChanged) return;
 
-        // Preserve the positions of non-sortable siblings while reordering only sortable ones.
         const markers = sortableItems.map(element => {
             const marker = document.createComment('mist-sort-slot');
             collection.insertBefore(marker, element);
@@ -390,6 +474,7 @@ class MistSocket {
     }
 
     reorderCollectionsForElements(elements) {
+        
         const collections = new Set();
 
         elements.forEach(element => {
@@ -417,6 +502,7 @@ class MistSocket {
     }
 
     insertIntoAcceptedContainer(component, html) {
+        
         const containers = document.querySelectorAll('[mist-container]');
 
         for (const container of containers) {
@@ -433,9 +519,27 @@ class MistSocket {
     }
 
     applyInstanceHTML(component, modelID, html, insertIfMissing = false) {
+        
         const elements = this.findComponentElements(component, modelID);
 
         if (elements.length > 0) {
+            const minDuration = elements[0].getAttribute('mist-min-duration');
+            if (minDuration) {
+                const minMs = parseInt(minDuration, 10);
+                if (!isNaN(minMs) && minMs > 0) {
+                    const key = `instance:${component}:${modelID}`;
+                    const applied = this.applyMinDurationUpdate(key, minMs, (latestHTML) => {
+                        const currentElements = this.findComponentElements(component, modelID);
+                        if (currentElements.length > 0) {
+                            this.morphComponentElements(currentElements, latestHTML);
+                            this.reorderCollectionsForElements(currentElements);
+                            this.restoreStreams();
+                            this.bootBehaviors();
+                        }
+                    }, html);
+                    return applied ? 'updated' : null;
+                }
+            }
             const delay = elements[0].getAttribute('mist-delay');
             if (delay) {
                 const delayMs = parseInt(delay, 10);
@@ -448,7 +552,6 @@ class MistSocket {
                             this.reorderCollectionsForElements(currentElements);
                             this.restoreStreams();
                             this.bootBehaviors();
-                            console.log(`[Client] Component updated: ${component} (${this.shortID(modelID)})`);
                         }
                     }, html);
                     return applied ? 'updated' : null;
@@ -469,9 +572,26 @@ class MistSocket {
     }
 
     applyQueryHTML(component, html) {
+        
         const elements = this.findComponentElements(component, null);
 
         if (elements.length > 0) {
+            const minDuration = elements[0].getAttribute('mist-min-duration');
+            if (minDuration) {
+                const minMs = parseInt(minDuration, 10);
+                if (!isNaN(minMs) && minMs > 0) {
+                    const key = `query:${component}`;
+                    const applied = this.applyMinDurationUpdate(key, minMs, (latestHTML) => {
+                        const currentElements = this.findComponentElements(component, null);
+                        if (currentElements.length > 0) {
+                            this.morphComponentElements(currentElements, latestHTML);
+                            this.restoreStreams();
+                            this.bootBehaviors();
+                        }
+                    }, html);
+                    return applied ? 'updated' : null;
+                }
+            }
             const delay = elements[0].getAttribute('mist-delay');
             if (delay) {
                 const delayMs = parseInt(delay, 10);
@@ -483,7 +603,6 @@ class MistSocket {
                             this.morphComponentElements(currentElements, latestHTML);
                             this.restoreStreams();
                             this.bootBehaviors();
-                            console.log(`[Client] Component updated: ${component}`);
                         }
                     }, html);
                     return applied ? 'updated' : null;
@@ -501,6 +620,7 @@ class MistSocket {
     }
 
     removeComponentElements(component, modelID = null) {
+        
         const elements = this.findComponentElements(component, modelID);
 
         elements.forEach(element => {
@@ -518,7 +638,6 @@ class MistSocket {
 
         const actionName = target.getAttribute('mist-action');
 
-        // 1. Find component: ancestor with [mist-component], or [mist-actions-for="Name"] for detached controls
         let componentElement = target.closest('[mist-component]');
         if (!componentElement && target.hasAttribute('mist-actions-for')) {
             const ref = target.getAttribute('mist-actions-for');
@@ -531,10 +650,8 @@ class MistSocket {
         if (!componentElement || !actionName) return;
 
         const componentName = componentElement.getAttribute('mist-component');
-        // 2. ID can now be null, which is valid
         const targetID = componentElement.getAttribute('mist-id');
 
-        // 3. Only require componentName. targetID is optional.
         if (!componentName) return;
 
         if (this.isConnected()) {
@@ -548,15 +665,19 @@ class MistSocket {
             };
 
             this.socket.send(JSON.stringify(message));
-
-            console.log(`[Client] Action sent to server: ${componentName}.${actionName} (${this.shortID(targetID)})`);
         }
     }
 
-    isConnected() { return this.socket?.readyState === WebSocket.OPEN; }
-    isConnecting() { return this.socket?.readyState === WebSocket.CONNECTING; }
+    isConnected() {
+        return this.socket?.readyState === WebSocket.OPEN;
+    }
+    
+    isConnecting() {
+        return this.socket?.readyState === WebSocket.CONNECTING;
+    }
 
     connect() {
+        
         if (this.isConnected() || this.isConnecting()) return;
         if (this.socket) { this.socket.close(); this.socket = null; }
 
@@ -568,7 +689,6 @@ class MistSocket {
             this.subscribeToPageComponents();
             this.bootBehaviors();
             this.hasConnectedOnce = true;
-            console.log('[Client] WebSocket connected');
         };
 
         this.socket.onmessage = (event) => {
@@ -589,15 +709,10 @@ class MistSocket {
             }
         };
 
-        this.socket.onerror = (error) => {
-            console.error('[Client] WebSocket error:', error);
-            // onclose always fires after onerror — reconnect logic lives there
-        };
-
         this.socket.onclose = (event) => {
             this.stopHeartbeat();
             this.clearReconnectTimer();
-            console.log(`[Client] WebSocket closed (code ${event.code}) — reconnecting in ${this.reconnectDelay}ms`);
+            console.log(`[Client] WebSocket closed. Reconnecting.`);
             this.reconnectTimer = setTimeout(() => {
                 this.reconnectTimer = null;
                 this.connect();
@@ -606,7 +721,8 @@ class MistSocket {
     }
 
     applyServerMessage(data, rawMessage) {
-        if (data.pong) return false;   // handled in onmessage; defensive guard only
+        
+        if (data.pong) return false;
         if (data.createInstanceComponent) return this.applyInstanceCreateMessage(data.createInstanceComponent);
         if (data.updateInstanceComponent) return this.applyInstanceUpdateMessage(data.updateInstanceComponent);
         if (data.deleteInstanceComponent) return this.applyInstanceDeleteMessage(data.deleteInstanceComponent);
@@ -623,14 +739,15 @@ class MistSocket {
     }
 
     applyInstanceCreateMessage(message) {
+        
         const { component, modelID, html } = message;
 
         if (!this.htmlBelongsToComponent(html, component)) {
-            console.log(`[Client] Dropped cross-channel broadcast for ${component}`);
             return null;
         }
 
         const result = this.applyInstanceHTML(component, modelID, html, true);
+        
         if (result === 'updated') {
             console.log(`[Client] Component updated: ${component} (${this.shortID(modelID)})`);
         } else if (result === 'created') {
@@ -641,10 +758,11 @@ class MistSocket {
     }
 
     applyInstanceUpdateMessage(message) {
+        
         const { component, modelID, html } = message;
 
         if (!this.htmlBelongsToComponent(html, component)) {
-            console.log(`[Client] Dropped cross-channel update for ${component}`);
+            // console.log(`[Client] Dropped cross-channel update for ${component}`);
             return null;
         }
 
@@ -657,6 +775,7 @@ class MistSocket {
     }
 
     applyInstanceDeleteMessage(message) {
+        
         const { component, modelID } = message;
         this.removeComponentElements(component, modelID);
         console.log(`[Client] Component deleted: ${component} (${this.shortID(modelID)})`);
@@ -664,6 +783,7 @@ class MistSocket {
     }
 
     applyQueryUpdateMessage(message) {
+        
         const { component, html } = message;
         const result = this.applyQueryHTML(component, html);
 
@@ -677,6 +797,7 @@ class MistSocket {
     }
 
     applyQueryDeleteMessage(message) {
+        
         const { component } = message;
         this.removeComponentElements(component, null);
         console.log(`[Client] Component deleted: ${component}`);
@@ -684,6 +805,7 @@ class MistSocket {
     }
 
     applyStreamReplaceMessage(message) {
+        
         const { component, modelID, stream, text } = message;
         this.replaceStream(component, modelID, stream, text);
         console.log(`[Client] Stream replaced: ${component}.${stream} (${this.shortID(modelID)})`);
@@ -691,6 +813,7 @@ class MistSocket {
     }
 
     applyStreamAppendMessage(message) {
+        
         const { component, modelID, stream, text } = message;
         this.appendStream(component, modelID, stream, text);
         console.log(`[Client] Stream appended: ${component}.${stream} (${this.shortID(modelID)})`);
@@ -698,6 +821,7 @@ class MistSocket {
     }
 
     applyStreamCloseMessage(message) {
+        
         const { component, modelID, stream } = message;
         this.closeStream(component, modelID, stream);
         console.log(`[Client] Stream closed: ${component}.${stream} (${this.shortID(modelID)})`);
@@ -705,6 +829,7 @@ class MistSocket {
     }
 
     applyActionResultMessage(message) {
+        
         const { component, targetID, action, result, message: textMessage } = message;
         const isSuccess = result.success !== undefined;
         const resultType = isSuccess ? '✅' : '❌';
@@ -713,14 +838,17 @@ class MistSocket {
     }
 
     applyTextMessage(message) {
+        
         console.log(`[Server] Message: ${message.message}`);
         return false;
     }
 
     afterServerMessageApplied(mutatedHTML) {
+        
         if (mutatedHTML) {
             this.restoreStreams();
         }
+        
         this.bootBehaviors();
     }
 
@@ -728,9 +856,10 @@ class MistSocket {
         return id ? id.substring(0, 8) : 'null';
     }
 
-    // Helper function to build component selector
     buildComponentSelector(component, id) {
+        
         const safeComponent = this.escapeAttributeValue(component);
+        
         if (id) {
             return `[mist-component="${safeComponent}"][mist-id="${this.escapeAttributeValue(id)}"]`;
         } else {
@@ -743,6 +872,7 @@ class MistSocket {
     }
 
     visibilityChange() {
+        
         if (document.visibilityState === 'visible') {
             if (this.isConnected()) {
                 this.verifyConnection();
@@ -751,21 +881,17 @@ class MistSocket {
                 this.forceReconnect();
             }
         } else {
-            // Stop heartbeat while hidden — background timers are throttled and cause false-positive pong timeouts
             this.stopHeartbeat();
         }
     }
 
     verifyConnection() {
-        console.log('[Client] Page became visible — verifying connection...');
 
-        // Stop any existing heartbeat interval/timeout before the check
         this.stopHeartbeat();
 
         this.pendingHeartbeat = true;
         this.socket.send(JSON.stringify({ ping: {} }));
 
-        // Use a short timeout for the wake-up check to detect zombie sockets quickly
         const wakeUpTimeout = 1500;
 
         this.heartbeatTimeoutTimer = setTimeout(() => {
@@ -777,12 +903,10 @@ class MistSocket {
     }
 }
 
-// Capture the script element immediately to read attributes
 const mistScript = document.currentScript;
 
-// Wait for the DOM to be fully loaded before executing the code
 document.addEventListener('DOMContentLoaded', function () {
-    let path = '/mist/ws/'; // Default path
+    let path = '/mist/ws/';
 
     if (mistScript) {
         const dataUrl = mistScript.getAttribute('data-url');
@@ -791,7 +915,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Construct full URL
     const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
     const host = window.location.host;
     const url = `${protocol}${host}${path}`;

@@ -1,0 +1,305 @@
+.dp-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    width: 100%;
+}
+
+.dp-tr:focus-within .dp-row-actions {
+    opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-tr:hover .dp-row-actions {
+        opacity: 1;
+    }
+}
+
+.dp-action-slot,
+.dp-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+}
+
+.dp-action-icon {
+    border-radius: var(--radius);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 6px;
+    box-sizing: border-box;
+    transition: background 0.15s ease, color 0.15s ease;
+    color: var(--text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-action-icon:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+    }
+
+    .dp-deploy-icon:hover {
+        color: var(--c-pushed);
+        background: var(--c-pushed-bg);
+    }
+
+    .dp-save-binary:hover {
+        color: var(--c-built);
+        background: var(--c-built-bg);
+    }
+
+    .dp-restore-binary:hover {
+        color: var(--c-running);
+        background: var(--c-running-bg);
+    }
+
+    .dp-delete:hover {
+        color: var(--c-failed);
+        background: rgba(248, 113, 113, 0.08);
+    }
+}
+
+.dp-action-icon:active {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.dp-deploy-icon:active {
+    color: var(--c-pushed);
+    background: var(--c-pushed-bg);
+}
+
+.dp-save-binary:active {
+    color: var(--c-built);
+    background: var(--c-built-bg);
+}
+
+.dp-restore-binary:active {
+    color: var(--c-running);
+    background: var(--c-running-bg);
+}
+
+.dp-delete:active {
+    color: var(--c-failed);
+    background: rgba(248, 113, 113, 0.08);
+}
+
+/* ── Dropdown Actions ── */
+
+.dp-dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background 0.15s ease, color 0.15s ease;
+    padding: 0;
+}
+
+.dp-dropdown-trigger:has(+ .dp-dropdown-menu:popover-open) {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-dropdown-trigger:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+    }
+}
+
+.dp-dropdown-trigger:active {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+/* Popover menu — visual styling only. The UA stylesheet keeps closed
+   popovers at display:none; we add layout (display: flex) ONLY when the
+   popover is open, so the hide rule is never undermined. */
+.dp-dropdown-menu[popover] {
+    margin: 0;
+    padding: 4px;
+    min-width: 160px;
+    max-width: 280px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    box-sizing: border-box;
+    /* Reset author-side inset so position-area can drive placement. */
+    inset: auto;
+}
+
+.dp-dropdown-menu[popover]:popover-open {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Anchor positioning: a popover's invoker (the button with
+   popovertarget=) is automatically its implicit anchor — no
+   anchor-name/position-anchor wiring needed. position-area declares
+   the preferred placement; position-try-fallbacks tells the browser
+   which alternates to try when the default would overflow. */
+@supports (position-area: block-end) {
+    .dp-dropdown-menu[popover] {
+        position-area: block-end span-inline-start;
+        margin-top: 4px;
+        position-try-order: most-block-size;
+        position-try-fallbacks:
+            flip-block,
+            flip-inline,
+            flip-block flip-inline;
+    }
+}
+
+/* Fallback for browsers without position-area: keep the popover in the
+   top-layer but pin it to the bottom-right of the viewport rather than
+   letting it land unanchored at (0,0). */
+@supports not (position-area: block-end) {
+    .dp-dropdown-menu[popover] {
+        right: 16px;
+        bottom: 16px;
+    }
+}
+
+.dp-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 10px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    text-align: left;
+}
+
+.dp-dropdown-item svg {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-dropdown-item:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+    }
+
+    .dp-dropdown-item:hover svg {
+        color: var(--text);
+    }
+
+    .dp-deploy-item:hover {
+        color: var(--c-running);
+    }
+    .dp-deploy-item:hover svg {
+        color: var(--c-running);
+    }
+
+    .dp-save-binary-item:hover {
+        color: var(--c-built);
+    }
+    .dp-save-binary-item:hover svg {
+        color: var(--c-built);
+    }
+
+    .dp-test-item:hover {
+        color: var(--c-testing);
+    }
+    .dp-test-item:hover svg {
+        color: var(--c-testing);
+    }
+
+    .dp-restore-binary-item:hover {
+        color: var(--c-running);
+    }
+    .dp-restore-binary-item:hover svg {
+        color: var(--c-running);
+    }
+
+    .dp-remove-binary-item:hover {
+        color: var(--c-failed);
+        background: rgba(248, 113, 113, 0.08);
+    }
+    .dp-remove-binary-item:hover svg {
+        color: var(--c-failed);
+    }
+
+    .dp-delete-item:hover {
+        color: var(--c-failed);
+        background: rgba(248, 113, 113, 0.08);
+    }
+    .dp-delete-item:hover svg {
+        color: var(--c-failed);
+    }
+}
+
+.dp-dropdown-item:active {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+.dp-dropdown-item:active svg {
+    color: var(--text);
+}
+
+.dp-deploy-item:active,
+.dp-deploy-item:active svg {
+    color: var(--c-running);
+}
+
+.dp-save-binary-item:active,
+.dp-save-binary-item:active svg {
+    color: var(--c-built);
+}
+
+.dp-test-item:active,
+.dp-test-item:active svg {
+    color: var(--c-testing);
+}
+
+.dp-restore-binary-item:active,
+.dp-restore-binary-item:active svg {
+    color: var(--c-running);
+}
+
+.dp-remove-binary-item:active {
+    color: var(--c-failed);
+    background: rgba(248, 113, 113, 0.08);
+}
+.dp-remove-binary-item:active svg {
+    color: var(--c-failed);
+}
+
+.dp-delete-item:active {
+    color: var(--c-failed);
+    background: rgba(248, 113, 113, 0.08);
+}
+.dp-delete-item:active svg {
+    color: var(--c-failed);
+}
+
+.dp-dropdown-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 2px -4px;
+}

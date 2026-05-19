@@ -2,18 +2,18 @@ import Vapor
 import Mist
 import Elementary
 
-struct ConfigComponent: ManualComponent {
+struct TargetConfig: ManualComponent {
 
     var name: String
-    let state: LiveState<ConfigState>
+    let state: LiveState<TargetInfoState>
 
-    func body(state: ConfigState) -> some HTML {
+    func body(state: TargetInfoState) -> some HTML {
         div(
             .style("display: contents;"),
             .mistComponent(state.componentName)
         ) {
             for field in state.fields {
-                div(.class(Self.contextItemClass(for: field))) {
+                div(.class("dp-context-item")) {
                     span(.class("dp-context-label")) { field.label }
                     span(.class("dp-context-value"), .title(field.value)) { field.value }
                 }
@@ -21,25 +21,16 @@ struct ConfigComponent: ManualComponent {
         }
     }
 
-    private static func contextItemClass(for field: ConfigState.Field) -> String {
-        let base = "dp-context-item"
-        switch field.label {
-        case "Port": return "\(base) dp-context-item--target-port"
-        case "Directory": return "\(base) dp-context-item--target-directory"
-        default: return base
-        }
-    }
-
     init(using config: Configuration) {
-        self.name = "ConfigComponent-\(config.target.name)"
+        self.name = "TargetConfig-\(config.target.name)"
         self.state = LiveState(
-            of: ConfigState(config: config, componentName: self.name)
+            of: TargetInfoState(config: config, componentName: self.name)
         )
     }
 
 }
 
-struct ConfigState: ComponentData {
+struct TargetInfoState: ComponentData {
 
     let componentName: String
     let fields: [Field]
@@ -48,16 +39,19 @@ struct ConfigState: ComponentData {
         self.componentName = componentName
         self.fields = [
             Field("Port", String(config.target.appPort)),
-            Field("Directory", config.target.directory),
+            Field("Directory", config.target.directory.displayPath),
+            Field("Branch", config.target.branch),
             Field("Build Mode", config.target.buildMode),
             Field("Deploy Mode", config.target.deploymentMode.rawValue),
+            Field("Testing", config.target.testing ? "enabled" : "disabled"),
+            Field("Binary Retention", config.target.binaryBehaviour.setupValue),
             Field("Push Event", config.target.pusheventPath.displayPath)
         ]
     }
 
 }
 
-extension ConfigState {
+extension TargetInfoState {
 
     struct Field: ComponentData {
 

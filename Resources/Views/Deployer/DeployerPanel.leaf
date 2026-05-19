@@ -28,33 +28,23 @@
 
                 <div
                   class="dp-runtime-queue-slot"
-                  mist-container="QueueComponent"
+                  mist-container="#(deployer.stateComponentName)"
                   mist-insert-position="beforeend"
                   mist-ssr="true"
                 >
-                  #if(target.queueIsDeploying):
-                    <span
-                      class="dp-supervisor-badge dp-supervisor-badge--queue-locked"
-                      mist-component="QueueComponent"
-                      title="Queue locked — deployment in progress"
-                      aria-label="Queue locked — deployment in progress"
-                    >
-                      Busy
-                    </span>
-                  #else:
-                    <span
-                      class="dp-supervisor-badge dp-supervisor-badge--queue-unlocked"
-                      mist-component="QueueComponent"
-                      title="Queue unlocked — ready"
-                      aria-label="Queue unlocked — ready"
-                    >
-                      Ready
-                    </span>
-                  #endif
+                  #unsafeHTML(deployer.stateInitialHTML)
                 </div>
 
                 <!-- On mobile, sign-out moves inside brand row via CSS order -->
                 <div class="dp-runtime-actions dp-runtime-actions--mobile">
+                  <button type="button" class="dp-update-btn" mist-action="update" mist-actions-for="DeployerStatus" title="Update deployer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="23 4 23 10 17 10"/>
+                      <polyline points="1 20 1 14 7 14"/>
+                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    Update
+                  </button>
                   <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
                     <button type="submit" class="dp-logout-btn" title="Sign out">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -68,33 +58,25 @@
                 </div>
               </div>
 
-              <div class="dp-runtime-items">
-                <div class="dp-context-item dp-context-item--port">
-                  <span class="dp-context-label">Port</span>
-                  <span class="dp-context-value">#(deployer.port)</span>
-                </div>
-                <div class="dp-context-item dp-context-item--deployerdir">
-                  <span class="dp-context-label">Directory</span>
-                  <span class="dp-context-value" title="#(deployer.deployerDirectory)">#(deployer.deployerDirectory)</span>
-                </div>
-                <div class="dp-context-item dp-context-item--version">
-                  <span class="dp-context-label">Version</span>
-                  <span class="dp-context-value">#(deployer.version)</span>
-                </div>
-                #if(deployer.deployerBranch != "main"):
-                  <div class="dp-context-item">
-                    <span class="dp-context-label">Branch</span>
-                    <span class="dp-context-value">#(deployer.deployerBranch)</span>
-                  </div>
-                #endif
-                <div class="dp-context-item dp-context-item--socket">
-                  <span class="dp-context-label">Socket</span>
-                  <span class="dp-context-value">#(deployer.mistSocket)</span>
-                </div>
+              <div
+                class="dp-runtime-items"
+                mist-container="#(deployer.infoComponentName)"
+                mist-insert-position="beforeend"
+                mist-ssr="true"
+              >
+                #unsafeHTML(deployer.infoInitialHTML)
               </div>
 
               <!-- Desktop sign-out (hidden on mobile) -->
               <div class="dp-runtime-actions dp-runtime-actions--desktop">
+                <button type="button" class="dp-update-btn" mist-action="update" mist-actions-for="DeployerStatus" title="Update deployer">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <polyline points="1 20 1 14 7 14"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                  Update
+                </button>
                 <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
                   <button type="submit" class="dp-logout-btn" title="Sign out">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -125,11 +107,11 @@
                 </h2>
                 <div
                   class="dp-status-badge-slot"
-                  mist-container="StatusComponent"
+                  mist-container="TargetStatus"
                   mist-insert-position="beforeend"
                   mist-ssr="true"
                 >
-                  <div class="dp-product-status" mist-component="StatusComponent" mist-delay="1000" mist-ssr="true">
+                  <div class="dp-product-status" mist-component="TargetStatus" mist-delay="1000" mist-ssr="true">
                     #if(target.isRunning):
                       <span class="dp-supervisor-badge dp-supervisor-badge--running">running</span>
                     #else:
@@ -142,33 +124,39 @@
               <!-- Center: Configuration items -->
               <div
                 class="dp-runtime-items"
-                mist-container="#(target.configComponentName)"
+                mist-container="#(target.targetConfigName)"
                 mist-insert-position="beforeend"
                 mist-ssr="true"
               >
-                #unsafeHTML(target.configInitialHTML)
+                #unsafeHTML(target.targetInfoInitialHTML)
               </div>
 
               <!-- Right: stop + restart -->
               <div
                 class="dp-runtime-actions dp-runtime-actions--desktop"
-                mist-container="StatusActionsComponent"
+                mist-container="TargetStatusActions"
                 mist-insert-position="beforeend"
                 mist-ssr="true"
               >
-                <div class="dp-target-actions" mist-component="StatusActionsComponent" mist-delay="1000" mist-ssr="true">
+                <div class="dp-target-actions" mist-component="TargetStatusActions" mist-delay="1000" mist-ssr="true">
                   #if(target.isRunning):
                     <button
                       class="dp-supervisor-btn dp-supervisor-btn--stop"
                       mist-action="stop"
                       title="Stop service"
-                    ><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Stop</button>
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 640 640" fill="currentColor"><path d="M160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160C96 124.7 124.7 96 160 96z"/></svg>
+                        Stop
+                    </button>
                   #endif
                   <button
                     class="dp-supervisor-btn dp-supervisor-btn--restart"
                     mist-action="restart"
                     title="Restart service"
-                  ><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Restart</button>
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 640 640" fill="currentColor"><path d="M187.2 100.9C174.8 94.1 159.8 94.4 147.6 101.6C135.4 108.8 128 121.9 128 136L128 504C128 518.1 135.5 531.2 147.6 538.4C159.7 545.6 174.8 545.9 187.2 539.1L523.2 355.1C536 348.1 544 334.6 544 320C544 305.4 536 291.9 523.2 284.9L187.2 100.9z"/></svg>
+                    Restart
+                  </button>
                 </div>
               </div>
             </div>
@@ -186,7 +174,7 @@
                 >
                   <thead
                     class="dp-thead"
-                    mist-container="RowComponent-#(target.name)"
+                    mist-container="DeploymentRow-#(target.name)"
                     mist-insert-position="afterend"
                   >
                     <tr>
@@ -194,13 +182,14 @@
                       <th class="dp-th dp-th-commit">Commit</th>
                       <th class="dp-th dp-th-sm-hide dp-th-mobile-hide">ID</th>
                       <th class="dp-th dp-th-started">Started</th>
-                      <th class="dp-th dp-th-duration dp-th-mobile-hide">Duration</th>
-                      <th class="dp-th dp-th-action">Actions</th>
+                      <th class="dp-th dp-th-build">Build</th>
+                      <th class="dp-th dp-th-tests dp-th-sm-hide dp-th-mobile-hide">Tests</th>
+                      <th class="dp-th dp-th-action"><span class="dp-visually-hidden">Actions</span></th>
                     </tr>
                   </thead>
 
                   #for(context in target.rows):
-                    #extend("Deployer/RowComponent")
+                    #extend("Deployer/DeploymentRow")
                   #endfor
 
                 </table>
@@ -219,16 +208,20 @@
               <span class="dp-legend-label">pushed</span>
             </span>
             <span class="dp-legend-item">
+              <span class="dp-legend-dot" style="background:var(--c-testing)"></span>
+              <span class="dp-legend-label">testing</span>
+            </span>
+            <span class="dp-legend-item">
+              <span class="dp-legend-dot" style="background:var(--c-building)"></span>
+              <span class="dp-legend-label">building</span>
+            </span>
+            <span class="dp-legend-item">
+              <span class="dp-legend-dot" style="background:var(--c-built)"></span>
+              <span class="dp-legend-label">built</span>
+            </span>
+            <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-running)"></span>
               <span class="dp-legend-label">running</span>
-            </span>
-            <span class="dp-legend-item">
-              <span class="dp-legend-dot" style="background:var(--c-success)"></span>
-              <span class="dp-legend-label">success</span>
-            </span>
-            <span class="dp-legend-item">
-              <span class="dp-legend-dot" style="background:var(--c-deployed)"></span>
-              <span class="dp-legend-label">deployed</span>
             </span>
             <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-failed)"></span>

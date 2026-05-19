@@ -12,6 +12,16 @@ struct UpdateCommand: AsyncCommand {
 
     /// Downloads the latest release, extracts it, and does a stop / swap / start with rollback on failure.
     func run(using context: CommandContext, signature: Signature) async throws {
+        do {
+            try await runPipeline(context: context)
+            UpdateCommand.writeCompletionSentinelIfRequested(error: nil)
+        } catch {
+            UpdateCommand.writeCompletionSentinelIfRequested(error: error)
+            throw error
+        }
+    }
+
+    private func runPipeline(context: CommandContext) async throws {
 
         let executableURL = try Configuration.getExecutableURL()
         let resolvedExecutableURL = executableURL.standardizedFileURL.resolvingSymlinksInPath()
@@ -19,6 +29,9 @@ struct UpdateCommand: AsyncCommand {
         let executableName = resolvedExecutableURL.lastPathComponent
 
         guard !executableName.isEmpty else { throw Error.invalidExecutablePath(resolvedExecutableURL.path) }
+
+        let lock = try UpdateLock.acquire(installDirectory: installDirectory)
+        defer { _ = lock }
 
         let config = try Configuration.load()
 
@@ -75,6 +88,21 @@ struct UpdateCommand: AsyncCommand {
                 throw error
             }
         }
+    }
+
+}
+
+extension UpdateCommand {
+
+    /// Writes a completion sentinel when invoked by the panel-triggered detached child.
+    /// Signals that the update process has exited (with or without an error) so the parent's
+    /// watcher Task can reset the panel state. Cli invocations don't set the env var and skip this path.
+    /// See `Updater.spawnDetachedUpdate`.
+    static func writeCompletionSentinelIfRequested(error: Swift.Error?) {
+        let environment = ProcessInfo.processInfo.environment
+        guard let sentinelPath = environment["DEPLOYER_COMPLETION_SENTINEL"], !sentinelPath.isEmpty else { return }
+        let body = error?.localizedDescription ?? ""
+        try? body.write(toFile: sentinelPath, atomically: true, encoding: .utf8)
     }
 
 }

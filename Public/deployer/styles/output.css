@@ -1,0 +1,137 @@
+/* Must use the same grid as .dp-tr so the detail row matches table width (block/table-row was narrower). */
+.dp-output-row {
+    display: none;
+    width: 100%;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dp-output-row.dp-output-expanded {
+    display: grid !important;
+    grid-template-columns: var(--dp-table-columns);
+    align-items: stretch;
+    width: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+}
+
+.dp-table>.dp-tbody:last-of-type .dp-output-row:last-child {
+    border-bottom: none;
+}
+
+.dp-output-tr {
+    /* No border-top here to avoid double lines with .dp-tr border-bottom */
+}
+
+.dp-output-tr--live {
+    background: rgba(56, 189, 248, 0.045);
+}
+
+.dp-output-tr--failed {
+    background: var(--error-bg);
+}
+
+.dp-output-tr--static {
+    background: var(--bg-surface-inset);
+}
+
+.dp-output-cell {
+    grid-column: 1 / -1;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 !important;
+}
+
+.dp-output-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.dp-copy-log-btn {
+    position: absolute;
+    top: 13px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    opacity: 0;
+    z-index: 10;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-output-wrapper:hover .dp-copy-log-btn {
+        opacity: 1;
+    }
+
+    .dp-copy-log-btn:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+        background: var(--bg-hover);
+    }
+}
+
+/* On touch, the reveal-on-hover affordance doesn't work — keep the copy button visible. */
+@media (hover: none) {
+    .dp-copy-log-btn {
+        opacity: 1;
+    }
+}
+
+.dp-copy-log-btn:active {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+}
+
+.dp-copy-log-btn.copied {
+    color: var(--c-running);
+    border-color: var(--c-running-border);
+    background: var(--c-running-bg);
+}
+
+.dp-output-pre {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 420px;
+    padding: 14px 14px;
+    box-sizing: border-box;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: auto;
+    background: transparent;
+    border: none;
+    line-height: 1.6;
+}
+
+.dp-output-pre--live {
+    color: var(--text-secondary);
+}
+
+.dp-output-pre--live:empty::before {
+    content: "Waiting for output...";
+    opacity: 0.5;
+}
+
+.dp-output-pre--static {
+    color: var(--text-secondary);
+}
+
+.dp-output-pre--failed {
+    color: var(--text-secondary);
+}
+
+.dp-section--error {
+    color: var(--c-failed);
+    -webkit-text-fill-color: var(--c-failed);
+}

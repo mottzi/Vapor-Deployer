@@ -1,0 +1,134 @@
+:root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', ui-monospace, monospace;
+
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --surface-2: #f4f4f5;
+    --surface-3: #e4e4e7;
+
+    --border: #e5e7eb;
+    --border-subtle: #f0f0f2;
+    --border-strong: #d1d5db;
+
+    --text: #111827;
+    --text-secondary: #374151;
+    --text-muted: #6b7280;
+    --text-subtle: #9ca3af;
+
+    --c-building: #38bdf8;
+    --c-restoring: #22d3ee;
+    --c-pushed: #fb923c;
+    --c-built: #a78bfa;
+    --c-running: #34d399;
+    --c-failed: #f87171;
+    --c-canceled: #52525b;
+    --c-stale: #fbbf24;
+    --c-testing: #818cf8;
+
+    --c-tests-pass: #34d399;
+    --c-tests-fail: #f87171;
+
+    --c-building-bg: rgba(56, 189, 248, 0.1);
+    --c-restoring-bg: rgba(34, 211, 238, 0.1);
+    --c-pushed-bg: rgba(251, 146, 60, 0.1);
+    --c-built-bg: rgba(167, 139, 250, 0.1);
+    --c-running-bg: rgba(52, 211, 153, 0.1);
+    --c-failed-bg: rgba(248, 113, 113, 0.1);
+    --c-canceled-bg: rgba(82, 82, 91, 0.1);
+    --c-stale-bg: rgba(251, 191, 36, 0.1);
+    --c-testing-bg: rgba(129, 140, 248, 0.1);
+
+    --c-building-border: rgba(56, 189, 248, 0.3);
+    --c-restoring-border: rgba(34, 211, 238, 0.3);
+    --c-pushed-border: rgba(251, 146, 60, 0.28);
+    --c-built-border: rgba(167, 139, 250, 0.28);
+    --c-running-border: rgba(52, 211, 153, 0.28);
+    --c-failed-border: rgba(248, 113, 113, 0.32);
+    --c-canceled-border: rgba(82, 82, 91, 0.28);
+    --c-stale-border: rgba(251, 191, 36, 0.28);
+    --c-testing-border: rgba(129, 140, 248, 0.3);
+
+    --radius-sm: 4px;
+    --radius: 6px;
+    --radius-lg: 10px;
+    --layout-max: 1060px;
+
+    --bg-base: #fafafa;
+    --bg-surface: #ffffff;
+    --bg-surface-inset: #f6f7f8;
+    --bg-hover: #f4f4f5;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+
+    --hover-bg: var(--bg-hover);
+    --row-border: var(--border-subtle);
+    --error-bg: #fef2f2;
+    --dp-table-columns: 130px minmax(0, 1fr) 95px 85px 80px 56px 56px;
+    --dp-row-min-height: 54px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0a0a0a;
+        --surface: #111111;
+        --surface-2: #1a1a1a;
+        --surface-3: #242424;
+
+        --border: #2a2a2a;
+        --border-subtle: #1e1e1e;
+        --border-strong: #3a3a3a;
+
+        --text: #ededed;
+        --text-secondary: #a1a1aa;
+        --text-muted: #777777;
+        --text-subtle: #555555;
+
+        --c-building: #38bdf8;
+        --c-restoring: #22d3ee;
+        --c-pushed: #fb923c;
+        --c-built: #a78bfa;
+        --c-running: #34d399;
+        --c-failed: #f87171;
+        --c-canceled: #71717a;
+        --c-stale: #fbbf24;
+        --c-testing: #818cf8;
+
+        --c-tests-pass: #34d399;
+        --c-tests-fail: #f87171;
+
+        --c-building-bg: rgba(56, 189, 248, 0.12);
+        --c-restoring-bg: rgba(34, 211, 238, 0.12);
+        --c-pushed-bg: rgba(251, 146, 60, 0.12);
+        --c-built-bg: rgba(167, 139, 250, 0.1);
+        --c-running-bg: rgba(52, 211, 153, 0.12);
+        --c-failed-bg: rgba(248, 113, 113, 0.12);
+        --c-canceled-bg: rgba(113, 113, 122, 0.12);
+        --c-stale-bg: rgba(251, 191, 36, 0.12);
+        --c-testing-bg: rgba(129, 140, 248, 0.12);
+
+        --c-building-border: rgba(56, 189, 248, 0.3);
+        --c-restoring-border: rgba(34, 211, 238, 0.3);
+        --c-pushed-border: rgba(251, 146, 60, 0.28);
+        --c-built-border: rgba(167, 139, 250, 0.28);
+        --c-running-border: rgba(52, 211, 153, 0.28);
+        --c-failed-border: rgba(248, 113, 113, 0.3);
+        --c-canceled-border: rgba(113, 113, 122, 0.28);
+        --c-stale-border: rgba(251, 191, 36, 0.28);
+        --c-testing-border: rgba(129, 140, 248, 0.3);
+
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+        --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+
+        --bg-base: #0a0a0a;
+        --bg-surface: #111111;
+        --bg-surface-inset: #0d0d0d;
+        --bg-hover: #1c1c1c;
+        --hover-bg: var(--bg-hover);
+        --row-border: var(--border-subtle);
+        --error-bg: rgba(255, 0, 0, 0.04);
+    }
+}

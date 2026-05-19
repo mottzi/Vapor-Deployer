@@ -1,0 +1,199 @@
+/* ── Supervisor process/queue status badges ── */
+
+.dp-supervisor-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0 12px;
+    height: 28px;
+    line-height: 1;
+    text-transform: capitalize;
+    border-radius: 9999px;
+    border: 1px solid;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+
+.dp-supervisor-badge--running {
+    color: var(--c-running);
+    background: var(--c-running-bg);
+    border-color: var(--c-running-border);
+}
+
+.dp-supervisor-badge--stopped {
+    color: var(--c-failed);
+    background: var(--c-failed-bg);
+    border-color: var(--c-failed-border);
+}
+
+.dp-supervisor-badge--transitioning {
+    color: var(--c-stale);
+    background: var(--c-stale-bg);
+    border-color: var(--c-stale-border);
+}
+
+.dp-supervisor-badge--fatal {
+    color: var(--c-failed);
+    background: var(--c-failed-bg);
+    border-color: var(--c-failed-border);
+}
+
+.dp-supervisor-badge--queue-locked {
+    color: var(--c-stale);
+    background: var(--c-stale-bg);
+    border-color: var(--c-stale-border);
+}
+
+.dp-supervisor-badge--queue-unlocked {
+    color: var(--c-running);
+    background: var(--c-running-bg);
+    border-color: var(--c-running-border);
+}
+
+.dp-supervisor-badge--queue-updating {
+    color: var(--c-building);
+    background: var(--c-building-bg);
+    border-color: var(--c-building-border);
+}
+
+.dp-supervisor-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    white-space: nowrap;
+}
+
+.dp-supervisor-btn--stop,
+.dp-supervisor-btn--restart {
+    background: transparent;
+    color: var(--text-subtle);
+    border: 1px solid var(--border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-supervisor-btn--stop:hover {
+        background: rgba(248, 113, 113, 0.08);
+        color: var(--c-failed);
+        border-color: rgba(248, 113, 113, 0.3);
+    }
+
+    .dp-supervisor-btn--restart:hover {
+        background: var(--c-building-bg);
+        color: var(--c-building);
+        border-color: var(--c-building-border);
+    }
+}
+
+.dp-supervisor-btn--stop:active {
+    background: rgba(248, 113, 113, 0.08);
+    color: var(--c-failed);
+    border-color: rgba(248, 113, 113, 0.3);
+}
+
+.dp-supervisor-btn--restart:active {
+    background: var(--c-building-bg);
+    color: var(--c-building);
+    border-color: var(--c-building-border);
+}
+
+/* ── Deployment row status pill ── */
+
+.dp-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 0 12px;
+    height: 28px;
+    line-height: 1;
+    text-transform: capitalize;
+    border-radius: 9999px;
+    border: 1px solid;
+    letter-spacing: 0.01em;
+}
+
+.dp-status--detail-btn {
+    appearance: none;
+    cursor: pointer;
+}
+
+.dp-status--pushed {
+    color: var(--c-pushed);
+    background: var(--c-pushed-bg);
+    border-color: var(--c-pushed-border);
+}
+
+.dp-status--building {
+    color: var(--c-building);
+    background: var(--c-building-bg);
+    border-color: var(--c-building-border);
+}
+
+.dp-status--restoring {
+    color: var(--c-restoring);
+    background: var(--c-restoring-bg);
+    border-color: var(--c-restoring-border);
+}
+
+.dp-status--built {
+    color: var(--c-built);
+    background: var(--c-built-bg);
+    border-color: var(--c-built-border);
+}
+
+.dp-status--running {
+    color: var(--c-running);
+    background: var(--c-running-bg);
+    border-color: var(--c-running-border);
+}
+
+.dp-status--failed {
+    color: var(--c-failed);
+    background: var(--c-failed-bg);
+    border-color: var(--c-failed-border);
+}
+
+.dp-status--canceled {
+    color: var(--c-canceled);
+    background: var(--c-canceled-bg);
+    border-color: var(--c-canceled-border);
+}
+
+.dp-status--stale {
+    color: var(--c-stale);
+    background: var(--c-stale-bg);
+    border-color: var(--c-stale-border);
+}
+
+.dp-status--testing {
+    color: var(--c-testing);
+    background: var(--c-testing-bg);
+    border-color: var(--c-testing-border);
+}
+
+.dp-status-chevron {
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.dp-status--detail-btn[aria-expanded="true"] .dp-status-chevron,
+.dp-tr[aria-expanded="true"] .dp-status-chevron {
+    transform: rotate(180deg);
+}

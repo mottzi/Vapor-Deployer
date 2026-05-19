@@ -20,8 +20,10 @@ enum DeployerTemplate {
                 buildMode: context.appBuildMode,
                 pusheventPath: paths.webhookPath,
                 deploymentMode: context.deploymentMode,
+                binaryBehaviour: context.binaryBehaviour,
                 appPort: context.appPort,
-                branch: context.appBranch
+                branch: context.appBranch,
+                testing: context.testing
             ),
             serviceManager: context.serviceManagerKind,
             buildFromSource: context.buildFromSource,

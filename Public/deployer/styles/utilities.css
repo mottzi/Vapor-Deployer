@@ -1,0 +1,93 @@
+.dp-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Touch interaction baseline for all interactive controls.
+
+   - touch-action: manipulation     → removes iOS's ~300ms tap delay so :active
+                                       fires immediately on finger-down
+   - -webkit-tap-highlight-color    → removes the default gray iOS flash that
+                                       would otherwise mask our :active styles
+   ────────────────────────────────────────────────────────────────────────── */
+.dp-update-btn,
+.dp-logout-btn,
+.dp-login-btn,
+.dp-supervisor-btn,
+.dp-action-icon,
+.dp-dropdown-trigger,
+.dp-dropdown-item,
+.dp-copy-log-btn,
+.dp-config-summary-pill,
+.dp-target-toolbar-summary,
+.dp-tr--interactive,
+.dp-id,
+.dp-target-name a,
+.dp-wordmark {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Icons inside buttons must not intercept touches — otherwise iOS doesn't
+   propagate :active to the parent <button> reliably. */
+.dp-update-btn > svg,
+.dp-logout-btn > svg,
+.dp-supervisor-btn > svg,
+.dp-action-icon > svg,
+.dp-dropdown-trigger > svg,
+.dp-dropdown-item > svg,
+.dp-copy-log-btn > svg,
+.dp-config-summary-pill > svg {
+    pointer-events: none;
+}
+
+/* Make :active feedback snap in instantly. Without this, a quick tap finishes
+   before the 150ms color transition has visibly progressed — the user sees
+   nothing. The fade-OUT on release still uses each element's normal transition. */
+.dp-update-btn:active,
+.dp-logout-btn:active,
+.dp-login-btn:active,
+.dp-supervisor-btn:active,
+.dp-action-icon:active,
+.dp-dropdown-trigger:active,
+.dp-dropdown-item:active,
+.dp-copy-log-btn:active,
+.dp-config-summary-pill:active,
+.dp-tr--interactive:active,
+.dp-id:active {
+    transition-duration: 0s;
+}
+
+.dp-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.dp-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.dp-legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dp-legend-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-subtle);
+}

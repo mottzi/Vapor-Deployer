@@ -4,9 +4,9 @@ import Mist
 
 extension Deployer {
     
-    func usePanel(config: Configuration, row: RowComponent, configComponent: ConfigComponent) {
+    func usePanel(config: Configuration, row: DeploymentRow, targetConfig: TargetConfig, deployerConfig: DeployerConfig, deployerStatus: DeployerStatus) {
 
-        let panel = Panel(config: config, row: row, configComponent: configComponent)
+        let panel = Panel(config: config, row: row, targetConfig: targetConfig, deployerConfig: deployerConfig, deployerStatus: deployerStatus)
         let router = app.grouped(config.panelRoute.pathComponents).grouped(app.sessions.middleware)
         
         panel.registerAssetRoutes(on: app.grouped(config.panelRoute.pathComponents))
@@ -23,24 +23,28 @@ extension Deployer {
 }
 
 struct Panel {
-    
+
     let config: Configuration
-    let row: RowComponent
-    let configComponent: ConfigComponent
+    let row: DeploymentRow
+    let targetConfig: TargetConfig
+    let deployerConfig: DeployerConfig
+    let deployerStatus: DeployerStatus
     let panelPath: String
     let loginPath: String
     let authenticator: PanelAuthenticator
-    
-    init(config: Configuration, row: RowComponent, configComponent: ConfigComponent) {
-        
+
+    init(config: Configuration, row: DeploymentRow, targetConfig: TargetConfig, deployerConfig: DeployerConfig, deployerStatus: DeployerStatus) {
+
         self.panelPath = config.panelRoute.displayPath
         self.loginPath = panelPath == "/" ? "/login" : panelPath + "/login"
         self.authenticator = PanelAuthenticator(path: loginPath)
         self.config = config
         self.row = row
-        self.configComponent = configComponent
+        self.targetConfig = targetConfig
+        self.deployerConfig = deployerConfig
+        self.deployerStatus = deployerStatus
     }
-    
+
 }
 
 extension Panel {
@@ -52,6 +56,14 @@ extension Panel {
                 let filePath = request.application.directory.publicDirectory + "deployer/" + asset
                 return try await request.fileio.asyncStreamFile(at: filePath)
             }
+        }
+
+        router.get("styles", ":filename") { request async throws -> Response in
+            guard let filename = request.parameters.get("filename"),
+                  filename.hasSuffix(".css"),
+                  !filename.contains("/") else { throw Abort(.notFound) }
+            let filePath = request.application.directory.publicDirectory + "deployer/styles/" + filename
+            return try await request.fileio.asyncStreamFile(at: filePath)
         }
     }
     
@@ -88,22 +100,30 @@ extension Panel {
     }
 
     func makePanelContext(request: Request) async throws -> PanelContext {
-        
+
+        try await BinaryStore(target: config.target).syncMetadata(product: config.target.name, on: request.db)
+
         async let rows = row.makeContext(ofAll: request.db)
         async let isRunning = request.application.deployer.serviceManager.isRunning(product: config.target.name)
-        async let queueIsDeploying = request.application.deployer.queue.isDeploying
-        async let configRender = configComponent.renderCurrent(app: request.application)
+        async let isDeploying = request.application.deployer.queue.isDeploying
+        async let isUpdating = request.application.deployer.updater.isUpdating
+        async let targetInfoRender = targetConfig.renderCurrent(app: request.application)
+        async let deployerInfoRender = deployerConfig.renderCurrent(app: request.application)
+        async let deployerStateRender = deployerStatus.renderCurrent(app: request.application)
 
-        let deployerVersion = await DeployerVersion.current()
+        let resolvedState: DeployerPhase
+        if await isUpdating { resolvedState = .updating }
+        else if await isDeploying { resolvedState = .deploying }
+        else { resolvedState = .ready }
 
         let deployer = DeployerContext(
-            version: deployerVersion,
-            port: String(config.port),
-            deployerDirectory: config.deployerDirectory,
-            deployerBranch: config.deployerBranch,
-            mistSocket: config.socketPath.displayPath,
             panelRoute: config.panelRoute.displayPath,
-            repositoryWebPageURL: DeployerVersion.repositoryWebPageURL
+            repositoryWebPageURL: DeployerVersion.repositoryWebPageURL,
+            infoComponentName: deployerConfig.name,
+            infoInitialHTML: await deployerInfoRender.html ?? "",
+            stateComponentName: deployerStatus.name,
+            stateInitialHTML: await deployerStateRender.html ?? "",
+            state: resolvedState.rawValue
         )
 
         let target = TargetContext(
@@ -115,11 +135,10 @@ extension Panel {
             pushEvent: config.target.pusheventPath.displayPath,
             rows: try await rows.contexts,
             isRunning: await isRunning,
-            queueIsDeploying: await queueIsDeploying,
-            configComponentName: configComponent.name,
-            configInitialHTML: await configRender.html ?? ""
+            targetConfigName: targetConfig.name,
+            targetInfoInitialHTML: await targetInfoRender.html ?? ""
         )
-        
+
         return PanelContext(deployer: deployer, target: target)
     }
     
@@ -133,13 +152,13 @@ extension Panel {
     }
 
     struct DeployerContext: Encodable {
-        let version: String
-        let port: String
-        let deployerDirectory: String
-        let deployerBranch: String
-        let mistSocket: String
         let panelRoute: String
         let repositoryWebPageURL: String
+        let infoComponentName: String
+        let infoInitialHTML: String
+        let stateComponentName: String
+        let stateInitialHTML: String
+        let state: String
     }
 
     struct TargetContext: Encodable {
@@ -151,9 +170,8 @@ extension Panel {
         let pushEvent: String
         let rows: [ModelContext]
         let isRunning: Bool
-        let queueIsDeploying: Bool
-        let configComponentName: String
-        let configInitialHTML: String
+        let targetConfigName: String
+        let targetInfoInitialHTML: String
     }
 
     struct LoginViewContext: Encodable {

@@ -44,6 +44,7 @@ extension Deployer {
     func configureDatabase(config: Configuration) async throws {
         try createDatabaseDirectory(for: config.dbFile)
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
+        app.databases.middleware.use(DeploymentBinaryCleanupMiddleware(target: config.target))
         app.sessions.use(.fluent)
         app.migrations.add(Deployment.migration, SessionRecord.migration)
         try await app.autoMigrate()
@@ -64,46 +65,55 @@ extension Deployer {
     }
 
     func configurePanel(config: Configuration) async throws {
-        let rowComponent = RowComponent(productName: config.target.name)
-        let configComponent = ConfigComponent(using: config)
-        let queueComponent = QueueComponent()
-        
+        let deploymentRow = DeploymentRow(productName: config.target.name)
+        let targetConfig = TargetConfig(using: config)
+        let deployerConfig = await DeployerConfig(
+            using: config,
+            version: DeployerVersion.current()
+        )
+
+        let deployerPhase = LiveState(of: DeployerPhase.ready)
+        useUpdater(config: config, deployerPhase: deployerPhase)
+        let deployerStatus = DeployerStatus(state: deployerPhase, updater: updater)
+
         let initialStatus = await serviceManager.status(product: config.target.name)
         let badgeState = LiveState(of: StatusState(initialStatus))
         let actionsState = LiveState(of: StatusState(initialStatus))
-        
-        let statusComponent = StatusComponent(
+        let broadcaster = TargetStatusBroadcaster(badge: badgeState, actions: actionsState)
+
+        let targetStatus = TargetStatus(
             product: config.target.name,
-            badgeState: badgeState,
-            actionsState: actionsState
+            state: badgeState
         )
-        let statusActionsComponent = StatusActionsComponent(
+        let targetStatusActions = TargetStatusActions(
             product: config.target.name,
-            badgeState: badgeState,
-            actionsState: actionsState
+            state: actionsState,
+            broadcaster: broadcaster
         )
 
         useQueue(
             config: config,
-            queueState: queueComponent.state,
+            deployerPhase: deployerPhase,
             onStatusChange: { status in
-                await badgeState.set(StatusState(status))
-                await actionsState.set(StatusState(status))
+                await broadcaster.set(StatusState(status))
             }
         )
         useWebhook(config: config)
         usePanel(
             config: config,
-            row: rowComponent,
-            configComponent: configComponent
+            row: deploymentRow,
+            targetConfig: targetConfig,
+            deployerConfig: deployerConfig,
+            deployerStatus: deployerStatus
         )
 
         try await app.mist.use {
-            rowComponent
-            statusComponent
-            statusActionsComponent
-            queueComponent
-            configComponent
+            deploymentRow
+            targetStatus
+            targetStatusActions
+            deployerStatus
+            targetConfig
+            deployerConfig
         }
     }
 
@@ -129,7 +139,7 @@ extension Deployer {
             
             let deployment = Deployment(
                 product: config.target.name,
-                status: .deployed,
+                status: .running,
                 commitMessage: checkout.commitMessage,
                 commitID: checkout.commitID,
                 branch: checkout.branch
@@ -139,6 +149,7 @@ extension Deployer {
             deployment.startedAt = checkout.committedAt
             deployment.finishedAt = checkout.committedAt
             try await deployment.save(on: app.db)
+            try await BinaryStore(target: config.target).storeLiveBinary(for: deployment, app: app, manually: false)
             
         } catch {
             app.logger.warning("Error when seeding initial deployment for '\(config.target.name)': \(error.localizedDescription)")

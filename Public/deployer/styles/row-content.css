@@ -1,0 +1,134 @@
+.dp-msg {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.4;
+    display: block;
+}
+
+.dp-msg--muted {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.dp-id {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.dp-id-copy {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    flex-shrink: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-id:hover {
+        color: var(--text);
+    }
+
+    .dp-id:hover .dp-id-copy {
+        opacity: 0.6;
+    }
+}
+
+.dp-id:active {
+    color: var(--text);
+}
+
+.dp-id:active .dp-id-copy {
+    opacity: 0.6;
+}
+
+.dp-time {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.dp-time-value {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.dp-time-date {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-subtle);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.dp-build {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+
+.dp-duration {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.dp-duration-live {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--c-building);
+    font-variant-numeric: tabular-nums;
+}
+
+.dp-spinner {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid var(--border-strong);
+    border-top-color: var(--c-building);
+    border-radius: 50%;
+    animation: dp-spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes dp-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.dp-duration-dash {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-subtle);
+}
+
+.dp-binary-size {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-subtle);
+    white-space: nowrap;
+}
+
+.dp-binary-dash {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-subtle);
+    white-space: nowrap;
+}
