@@ -10,8 +10,8 @@ extension DeploymentRow {
 
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
-            // Permissive: allowed on every non-actively-transient row including `.running` and rows
-            // that have already been tested. Env can drift; the user owns the re-verification choice.
+            // Permissive: allowed on every non-actively-transient row including `.running`. Tests are
+            // pure audits — they never alter status. Env can drift; the user owns re-verification.
             guard let targetID,
                   let deployment = await loadDeployment(id: targetID, product: productName, app: app),
                   deployment.canTest

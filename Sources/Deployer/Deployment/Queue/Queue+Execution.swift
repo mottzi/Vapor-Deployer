@@ -37,13 +37,24 @@ extension Queue {
         }
     }
 
-    /// Runs `swift test` against the deployment's commit and persists the outcome to `.tested` or `.failed`.
+    /// Runs `swift test` against the deployment's commit as a pure audit — status is never mutated.
+    /// Snapshots the row's lifecycle (status, startedAt, finishedAt) on entry and restores it on exit.
+    /// While the test is in flight, the row is temporarily flipped to `.testing` so the panel can render
+    /// the live stream and timer; the prior values come back on completion regardless of outcome.
     /// Appends a new labeled section onto the row's existing `output` rather than replacing it.
-    /// Updates `lastTestOutcome` regardless of the prior value — manual test runs always record fresh truth.
-    /// Test-vs-build failure distinction lives in `lastTestOutcome` (false ⇒ tests) + transcript, not in status.
+    /// `lastTestOutcome` carries the verdict (true = pass, false = fail) and drives the row's Tests column.
     func runTest(on deployment: Deployment, target: TargetConfiguration) async {
 
+        let priorStatus = deployment.status
+        let priorStartedAt = deployment.startedAt
+        let priorFinishedAt = deployment.finishedAt
         let priorOutput = deployment.output ?? ""
+
+        deployment.status = .testing
+        deployment.startedAt = .now
+        deployment.finishedAt = nil
+        try? await deployment.save(on: app.db)
+
         let stream = BuildOutputStream(app: app, deployment: deployment, priorTranscript: priorOutput)
         let worker = Worker(deployment: deployment, target: target, app: app, stream: stream, onStatusChange: onStatusChange)
 
@@ -52,15 +63,23 @@ extension Queue {
             try await worker.checkout()
             try await worker.test()
             await stream.flush()
-            deployment.status = .tested
+            deployment.status = priorStatus
+            deployment.startedAt = priorStartedAt
+            deployment.finishedAt = priorFinishedAt
             deployment.lastTestOutcome = true
-            deployment.finishedAt = .now
             deployment.output = await stream.transcript
             await stream.close()
-            try await deployment.save(on: app.db)
+            try? await deployment.save(on: app.db)
         } catch {
+            await stream.appendError(error)
+            await stream.flush()
+            deployment.status = priorStatus
+            deployment.startedAt = priorStartedAt
+            deployment.finishedAt = priorFinishedAt
             deployment.lastTestOutcome = false
-            await fail(deployment: deployment, stream: stream, error: error)
+            deployment.output = await stream.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+            await stream.close()
+            try? await deployment.save(on: app.db)
         }
     }
 

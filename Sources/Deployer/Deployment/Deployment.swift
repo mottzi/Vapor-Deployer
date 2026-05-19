@@ -87,7 +87,6 @@ extension Deployment {
         case canceled
         case failed
         case built
-        case tested
         case running
         case stale
     }
@@ -105,6 +104,8 @@ extension Deployment {
         "canBuild": canBuild,
         "canRestoreBinary": canRestoreBinary,
         "canTest": canTest,
+        "testsPassed": testsPassed,
+        "testsFailed": testsFailed,
         "hasSavedBinary": hasSavedBinary,
         "hasDetails": hasDetails,
         "hasLiveOutputStream": hasLiveOutputStream,
@@ -163,6 +164,9 @@ extension Deployment {
             default: true
         }
     }
+
+    var testsPassed: Bool { lastTestOutcome == true }
+    var testsFailed: Bool { lastTestOutcome == false }
 
     var hasDetails: Bool {
         output != nil || hasLiveOutputStream

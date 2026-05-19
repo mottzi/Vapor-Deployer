@@ -175,11 +175,6 @@
     opacity: 1;
 }
 
-.dp-tr.row-tested::before {
-    background: var(--c-tested);
-    opacity: 0.6;
-}
-
 .dp-td {
     padding: 12px 14px;
     min-width: 0;
@@ -200,4 +195,27 @@
 .dp-td-build {
     padding-left: 12px;
     padding-right: 12px;
+}
+
+/* Tests column — audit indicator driven by lastTestOutcome, independent of status. */
+.dp-th-tests,
+.dp-td-tests {
+    text-align: center;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.dp-test-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.dp-test-glyph--pass { color: var(--c-tests-pass); }
+.dp-test-glyph--fail { color: var(--c-tests-fail); }
+
+.dp-test-glyph-dash {
+    color: var(--text-subtle);
+    font-size: 12px;
 }

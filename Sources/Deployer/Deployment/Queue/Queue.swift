@@ -90,27 +90,26 @@ extension Queue {
         isDeploying = true
         await broadcastState()
 
-        deployment.startedAt = .now
-        deployment.status = switch mode {
-            case .restoreBinary: .restoring
-            case .test: .testing
-            default: .building
-        }
-        deployment.finishedAt = nil
+        // Manual test is an audit — runTest snapshots/restores the row's lifecycle state itself.
+        // For every other mode, start() owns the .testing/.building/.restoring flip + save.
+        if mode != .test {
+            deployment.startedAt = .now
+            deployment.status = switch mode {
+                case .restoreBinary: .restoring
+                default: .building
+            }
+            deployment.finishedAt = nil
 
-        // .restoreBinary preserves the prior build transcript; .test appends a new
-        // labeled section onto whatever was already there.
-        switch mode {
-            case .restoreBinary, .test: break
-            default: deployment.output = nil
-        }
+            // .restoreBinary preserves the prior build transcript so the user can compare.
+            if mode != .restoreBinary { deployment.output = nil }
 
-        do {
-            try await deployment.save(on: app.db)
-        } catch {
-            isDeploying = false
-            await broadcastState()
-            return .failure("Failed to start deployment: \(error.localizedDescription)")
+            do {
+                try await deployment.save(on: app.db)
+            } catch {
+                isDeploying = false
+                await broadcastState()
+                return .failure("Failed to start deployment: \(error.localizedDescription)")
+            }
         }
 
         Task { await run(mode: mode, startingWith: deployment, on: target) }

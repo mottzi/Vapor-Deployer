@@ -183,6 +183,7 @@
                       <th class="dp-th dp-th-sm-hide dp-th-mobile-hide">ID</th>
                       <th class="dp-th dp-th-started">Started</th>
                       <th class="dp-th dp-th-build">Build</th>
+                      <th class="dp-th dp-th-tests dp-th-sm-hide dp-th-mobile-hide">Tests</th>
                       <th class="dp-th dp-th-action"><span class="dp-visually-hidden">Actions</span></th>
                     </tr>
                   </thead>
@@ -213,10 +214,6 @@
             <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-building)"></span>
               <span class="dp-legend-label">building</span>
-            </span>
-            <span class="dp-legend-item">
-              <span class="dp-legend-dot" style="background:var(--c-tested)"></span>
-              <span class="dp-legend-label">tested</span>
             </span>
             <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-built)"></span>
