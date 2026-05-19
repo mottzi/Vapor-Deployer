@@ -37,22 +37,18 @@ extension Queue {
         }
     }
 
-    /// Runs `swift test` against the deployment's commit as a pure audit — status is never mutated.
-    /// Snapshots the row's lifecycle (status, startedAt, finishedAt) on entry and restores it on exit.
-    /// While the test is in flight, the row is temporarily flipped to `.testing` so the panel can render
-    /// the live stream and timer; the prior values come back on completion regardless of outcome.
+    /// Runs `swift test` against the deployment's commit as a pure audit — only `status` is touched.
+    /// Snapshots `status` on entry, flips to `.testing` so the panel can render the live stream,
+    /// then restores the original status on exit regardless of outcome. `startedAt`/`finishedAt` are
+    /// never modified, so row sort order is stable throughout the run.
     /// Appends a new labeled section onto the row's existing `output` rather than replacing it.
     /// `lastTestOutcome` carries the verdict (true = pass, false = fail) and drives the row's Tests column.
     func runTest(on deployment: Deployment, target: TargetConfiguration) async {
 
         let priorStatus = deployment.status
-        let priorStartedAt = deployment.startedAt
-        let priorFinishedAt = deployment.finishedAt
         let priorOutput = deployment.output ?? ""
 
         deployment.status = .testing
-        deployment.startedAt = .now
-        deployment.finishedAt = nil
         try? await deployment.save(on: app.db)
 
         let stream = BuildOutputStream(app: app, deployment: deployment, priorTranscript: priorOutput)
@@ -64,8 +60,6 @@ extension Queue {
             try await worker.test()
             await stream.flush()
             deployment.status = priorStatus
-            deployment.startedAt = priorStartedAt
-            deployment.finishedAt = priorFinishedAt
             deployment.lastTestOutcome = true
             deployment.output = await stream.transcript
             await stream.close()
@@ -74,8 +68,6 @@ extension Queue {
             await stream.appendError(error)
             await stream.flush()
             deployment.status = priorStatus
-            deployment.startedAt = priorStartedAt
-            deployment.finishedAt = priorFinishedAt
             deployment.lastTestOutcome = false
             deployment.output = await stream.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             await stream.close()
