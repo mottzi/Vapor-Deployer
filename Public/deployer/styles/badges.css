@@ -193,12 +193,6 @@
     border-color: var(--c-tested-border);
 }
 
-.dp-status--testFailed {
-    color: var(--c-test-failed);
-    background: var(--c-test-failed-bg);
-    border-color: var(--c-test-failed-border);
-}
-
 .dp-status-chevron {
     transition: transform 0.2s ease;
     flex-shrink: 0;

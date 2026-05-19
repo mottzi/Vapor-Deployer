@@ -105,7 +105,6 @@ extension Deployment {
         case restoring
         case canceled
         case failed
-        case testFailed
         case built
         case tested
         case running
@@ -195,7 +194,7 @@ extension Deployment {
     /// HTML-rendered output: escapes user-facing text and, on failure, wraps the failing pipeline section in a red span.
     var outputHTML: String? {
         guard let output, !output.isEmpty else { return nil }
-        return (status == .failed || status == .testFailed)
+        return status == .failed
             ? Self.wrapFailedSection(in: output)
             : Self.htmlEscape(output)
     }

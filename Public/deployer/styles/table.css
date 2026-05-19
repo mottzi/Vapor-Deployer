@@ -180,11 +180,6 @@
     opacity: 0.6;
 }
 
-.dp-tr.row-test-failed::before {
-    background: var(--c-test-failed);
-    opacity: 1;
-}
-
 .dp-td {
     padding: 12px 14px;
     min-width: 0;

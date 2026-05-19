@@ -15,7 +15,6 @@
     #elseif(context.deployment.displayStatus == "tested"):row-tested
     #elseif(context.deployment.displayStatus == "running"):row-running
     #elseif(context.deployment.displayStatus == "failed"):row-failed
-    #elseif(context.deployment.displayStatus == "testFailed"):row-test-failed
     #elseif(context.deployment.displayStatus == "canceled"):row-canceled
     #elseif(context.deployment.displayStatus == "stale"):row-stale
     #endif
@@ -177,14 +176,14 @@
   <!-- ── Output detail row ──────────────────────────────────── -->
   #if(context.deployment.hasDetails):
   <tr
-    class="dp-output-row dp-output-tr #if(context.deployment.hasLiveOutputStream):dp-output-tr--live#elseif(context.deployment.status == "failed" || context.deployment.status == "testFailed"):dp-output-tr--failed#else:dp-output-tr--static#endif #if(state.detailsExpanded):dp-output-expanded#endif"
+    class="dp-output-row dp-output-tr #if(context.deployment.hasLiveOutputStream):dp-output-tr--live#elseif(context.deployment.status == "failed"):dp-output-tr--failed#else:dp-output-tr--static#endif #if(state.detailsExpanded):dp-output-expanded#endif"
   >
     <td colspan="6" class="dp-output-cell">
       <div class="dp-output-wrapper">
         #if(context.deployment.hasLiveOutputStream):
           <pre class="dp-output-pre dp-output-pre--live" mist-stream="deployment-log"></pre>
         #elseif(context.deployment.outputHTML):
-          <pre class="dp-output-pre #if(context.deployment.status == "failed" || context.deployment.status == "testFailed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#unsafeHTML(context.deployment.outputHTML)</pre>
+          <pre class="dp-output-pre #if(context.deployment.status == "failed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#unsafeHTML(context.deployment.outputHTML)</pre>
         #endif
         <button
           class="dp-copy-log-btn"

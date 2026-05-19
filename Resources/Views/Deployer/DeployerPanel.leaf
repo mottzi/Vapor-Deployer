@@ -227,10 +227,6 @@
               <span class="dp-legend-label">running</span>
             </span>
             <span class="dp-legend-item">
-              <span class="dp-legend-dot" style="background:var(--c-test-failed)"></span>
-              <span class="dp-legend-label">testFailed</span>
-            </span>
-            <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-failed)"></span>
               <span class="dp-legend-label">failed</span>
             </span>

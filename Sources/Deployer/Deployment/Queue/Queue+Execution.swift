@@ -37,9 +37,10 @@ extension Queue {
         }
     }
 
-    /// Runs `swift test` against the deployment's commit and persists the outcome to `.tested` or `.testFailed`.
+    /// Runs `swift test` against the deployment's commit and persists the outcome to `.tested` or `.failed`.
     /// Appends a new labeled section onto the row's existing `output` rather than replacing it.
     /// Updates `lastTestOutcome` regardless of the prior value — manual test runs always record fresh truth.
+    /// Test-vs-build failure distinction lives in `lastTestOutcome` (false ⇒ tests) + transcript, not in status.
     func runTest(on deployment: Deployment, target: TargetConfiguration) async {
 
         let priorOutput = deployment.output ?? ""
@@ -59,7 +60,7 @@ extension Queue {
             try await deployment.save(on: app.db)
         } catch {
             deployment.lastTestOutcome = false
-            await fail(deployment: deployment, stream: stream, error: error, status: .testFailed)
+            await fail(deployment: deployment, stream: stream, error: error)
         }
     }
 
@@ -93,9 +94,9 @@ extension Queue {
         while true {
             let stream = BuildOutputStream(app: app, deployment: current)
             let worker = Worker(deployment: current, target: target, app: app, stream: stream, onStatusChange: onStatusChange)
-            // Pre-set to .testFailed before `worker.test()` so that if it throws we already
-            // know the correct terminal status without nested do/catch. Reset to .failed once test passes.
-            var failureStatus: Deployment.Status = .failed
+            // Track which phase is in flight so a thrown error can mark lastTestOutcome correctly
+            // before fail() commits the row. Status is always .failed; phase lives in lastTestOutcome.
+            var inTestPhase = false
 
             do {
                 await stream.start()
@@ -103,14 +104,14 @@ extension Queue {
                 if target.testing && current.lastTestOutcome == true {
                     // Determinism shortcut: tests already passed for this commit, skip swift test.
                     // The user can still force a re-test via the manual Test action.
-                    await stream.appendLabel("swift test (skipped — already passed for this commit)")
+                    await stream.appendLabel("swift test — already passed")
                 } else if target.testing {
                     current.status = .testing
                     try? await current.save(on: app.db)
-                    failureStatus = .testFailed
+                    inTestPhase = true
                     try await worker.test()
                     current.lastTestOutcome = true
-                    failureStatus = .failed
+                    inTestPhase = false
                     current.status = .building
                     try? await current.save(on: app.db)
                 }
@@ -118,8 +119,8 @@ extension Queue {
                 try await worker.move()
                 await stream.flush()
             } catch {
-                if failureStatus == .testFailed { current.lastTestOutcome = false }
-                await fail(deployment: current, stream: stream, error: error, status: failureStatus)
+                if inTestPhase { current.lastTestOutcome = false }
+                await fail(deployment: current, stream: stream, error: error)
                 if let last = lastSuccessful {
                     await finalizeQueue(deployment: last.deployment, priorTranscript: last.transcript)
                 }
@@ -190,15 +191,14 @@ extension Queue {
         }
     }
 
-    /// Marks a deployment with the given terminal status (defaults to `.failed`), appends the error into the
-    /// live stream, and persists the full transcript. Pass `.testFailed` from paths where a `swift test` failure
-    /// is what caused the abort, so the row can be distinguished from build/move/restart failures.
-    func fail(deployment: Deployment, stream: BuildOutputStream, error: Swift.Error, status: Deployment.Status = .failed) async {
+    /// Marks a deployment `.failed`, appends the error into the live stream, and persists the full transcript.
+    /// Phase distinction (test vs build/move/restart) is encoded in `lastTestOutcome` and visible in the transcript.
+    func fail(deployment: Deployment, stream: BuildOutputStream, error: Swift.Error) async {
 
         await stream.appendError(error)
         await stream.flush()
 
-        deployment.status = status
+        deployment.status = .failed
         deployment.finishedAt = .now
         deployment.output = await stream.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
 
