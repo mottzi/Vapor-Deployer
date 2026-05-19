@@ -61,7 +61,7 @@ extension Worker {
 
         let finalStatus = await manager.status(product: deployment.product)
         await onStatusChange(finalStatus)
-        await stream?.append("Restart service.\n")
+        await stream?.append("Restart service\n")
     }
 
     func move() async throws {
