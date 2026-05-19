@@ -1,6 +1,7 @@
 import Vapor
 import Fluent
 import FluentSQLiteDriver
+import SQLKit
 import Mist
 
 final class Deployment: Mist.Model, Content, @unchecked Sendable {
@@ -46,7 +47,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
 
 extension Deployment {
 
-    static var migrations: [Migration] { [Table(), AddLastTestOutcome()] }
+    static var migrations: [Migration] { [Table(), AddLastTestOutcome(), CollapseTestFailedIntoFailed()] }
 
     struct Table: AsyncMigration {
 
@@ -90,6 +91,26 @@ extension Deployment {
             try await database.schema(Deployment.schema)
                 .deleteField("last_test_outcome")
                 .update()
+        }
+
+    }
+
+    /// Rewrites any rows still carrying the retired `testFailed` status to `failed`, and ensures
+    /// `last_test_outcome = false` so the test-vs-build phase distinction is preserved.
+    /// Without this, Fluent's `@Enum` force-unwraps to nil and SIGILLs the panel on first load
+    /// because the enum case no longer exists in the Swift code. Uses raw SQL because Fluent
+    /// can't filter on an enum case that no longer exists in the Swift type.
+    struct CollapseTestFailedIntoFailed: AsyncMigration {
+
+        func prepare(on database: Database) async throws {
+            guard let sql = database as? any SQLDatabase else { return }
+            try await sql.raw(
+                "UPDATE \(raw: Deployment.schema) SET status = 'failed', last_test_outcome = 0 WHERE status = 'testFailed'"
+            ).run()
+        }
+
+        func revert(on database: Database) async throws {
+            // Irreversible: `.testFailed` no longer exists in the Swift Status enum.
         }
 
     }
