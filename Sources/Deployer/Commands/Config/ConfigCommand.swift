@@ -47,6 +47,8 @@ private extension ConfigCommand {
             )
         }
         console.newLine()
+        console.output("  To change a setting, use 'deployerctl config <field> <value>'.".consoleText())
+        console.newLine()
     }
 
     /// Applies a single field edit. Order: resolve key → load raw JSON → parse and apply input → validate
