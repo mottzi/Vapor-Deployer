@@ -17,6 +17,7 @@ extension Deployer {
         app.asyncCommands.use(UpdateCommand(), as: "update")
         app.asyncCommands.use(SetupCommand(), as: "setup")
         app.asyncCommands.use(RemoveCommand(), as: "remove")
+        app.asyncCommands.use(ConfigCommand(), as: "config")
         app.asyncCommands.use(VersionCommand(), as: "version")
     }
 
