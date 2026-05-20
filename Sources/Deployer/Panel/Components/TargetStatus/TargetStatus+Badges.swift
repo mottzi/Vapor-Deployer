@@ -14,25 +14,25 @@ extension TargetStatus {
     }
 
     var runningBadge: some HTML {
-        span(.class("dp-supervisor-badge dp-supervisor-badge--running")) {
+        span(.class("dp-state-badge dp-state-badge--running")) {
             "running"
         }
     }
 
     var fatalBadge: some HTML {
-        span(.class("dp-supervisor-badge dp-supervisor-badge--fatal")) {
+        span(.class("dp-state-badge dp-state-badge--fatal")) {
             "fatal"
         }
     }
 
     func transitioningBadge(_ status: String) -> some HTML {
-        span(.class("dp-supervisor-badge dp-supervisor-badge--transitioning")) {
+        span(.class("dp-state-badge dp-state-badge--transitioning")) {
             status
         }
     }
 
     func stoppedBadge(_ status: String) -> some HTML {
-        span(.class("dp-supervisor-badge dp-supervisor-badge--stopped")) {
+        span(.class("dp-state-badge dp-state-badge--stopped")) {
             status
         }
     }

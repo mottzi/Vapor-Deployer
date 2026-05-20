@@ -106,9 +106,9 @@
                 >
                   <div class="dp-product-status" mist-component="TargetStatus" mist-delay="1000" mist-ssr="true">
                     #if(target.isRunning):
-                      <span class="dp-supervisor-badge dp-supervisor-badge--running">running</span>
+                      <span class="dp-state-badge dp-state-badge--running">running</span>
                     #else:
-                      <span class="dp-supervisor-badge dp-supervisor-badge--stopped">stopped</span>
+                      <span class="dp-state-badge dp-state-badge--stopped">stopped</span>
                     #endif
                   </div>
                 </div>
@@ -134,7 +134,7 @@
                 <div class="dp-target-actions" mist-component="TargetStatusActions" mist-delay="1000" mist-ssr="true">
                   #if(target.isRunning):
                     <button
-                      class="dp-supervisor-btn dp-supervisor-btn--stop"
+                      class="dp-control-btn dp-control-btn--stop"
                       mist-action="stop"
                       title="Stop service"
                     >
@@ -143,7 +143,7 @@
                     </button>
                   #endif
                   <button
-                    class="dp-supervisor-btn dp-supervisor-btn--restart"
+                    class="dp-control-btn dp-control-btn--restart"
                     mist-action="restart"
                     title="Restart service"
                   >

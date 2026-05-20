@@ -4,7 +4,7 @@ extension TargetStatusActions {
 
     var stopButton: some HTML {
         button(
-            .class("dp-supervisor-btn dp-supervisor-btn--stop"),
+            .class("dp-control-btn dp-control-btn--stop"),
             .custom(name: "mist-action", value: "stop"),
             .title("Stop service")
         ) {
@@ -19,7 +19,7 @@ extension TargetStatusActions {
 
     var startButton: some HTML {
         button(
-            .class("dp-supervisor-btn dp-supervisor-btn--restart"),
+            .class("dp-control-btn dp-control-btn--restart"),
             .custom(name: "mist-action", value: "restart"),
             .title("Restart service")
         ) {

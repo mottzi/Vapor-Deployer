@@ -14,7 +14,7 @@ struct DeployerStatus: ManualComponent {
 
     func body(state: DeployerPhase) -> some HTML {
         span(
-            .class("dp-supervisor-badge \(state.badgeClass)"),
+            .class("dp-state-badge \(state.badgeClass)"),
             .mistComponent(self.name),
             .mistMinDuration(ms: 1000),
             .title(state.tooltip),
@@ -42,9 +42,9 @@ enum DeployerPhase: String, ComponentData {
 
     var badgeClass: String {
         switch self {
-            case .ready: "dp-supervisor-badge--queue-unlocked"
-            case .deploying: "dp-supervisor-badge--queue-locked"
-            case .updating: "dp-supervisor-badge--queue-updating"
+            case .ready: "dp-state-badge--queue-unlocked"
+            case .deploying: "dp-state-badge--queue-locked"
+            case .updating: "dp-state-badge--queue-updating"
         }
     }
 
