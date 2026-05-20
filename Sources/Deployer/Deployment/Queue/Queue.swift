@@ -87,6 +87,15 @@ extension Queue {
         let isUpdating = await app.deployer.updater.isUpdating
         guard !isUpdating else { return .queueBusy }
 
+        // Cross-process gap closure (ADR 0005): refuse if any deployer update — including one launched
+        // from a shell — currently holds the update lock. `Updater.isUpdating` above is now derived
+        // from the same source, but we peek directly to defend against a poll-cadence race where a
+        // CLI update started milliseconds ago has not yet been observed by the Updater's watcher.
+        if let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent(),
+           UpdateLock.isHeld(installDirectory: installDirectory) {
+            return .queueBusy
+        }
+
         isDeploying = true
         await broadcastState()
 

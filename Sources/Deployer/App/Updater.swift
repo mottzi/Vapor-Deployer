@@ -4,7 +4,9 @@ import Mist
 extension Deployer {
 
     func useUpdater(config: Configuration, deployerPhase: LiveState<DeployerPhase>) {
-        updater = Updater(app: app, config: config, deployerPhase: deployerPhase)
+        let updater = Updater(app: app, config: config, deployerPhase: deployerPhase)
+        self.updater = updater
+        Task { await updater.startPolling() }
     }
 
     var updater: Updater {
@@ -21,11 +23,28 @@ extension Deployer {
 
 }
 
-/// Owns the self-update lock and spawns the detached `deployer update` child.
-/// Mutual exclusion with `Queue.isDeploying` is best-effort (see CONTEXT.md and docs/adr/0001).
+/// Owns the self-update lifecycle in the server. Spawns the detached update child for panel-initiated
+/// updates and derives `isUpdating` from the cross-process **Update lock** so the panel reflects updates
+/// regardless of who launched them — both panel clicks and user-typed `deployer update` in a shell.
+/// See `docs/adr/0005-cli-server-state-channel.md`.
 actor Updater {
 
-    private(set) var isUpdating: Bool = false
+    /// Set by `startUpdate` when we spawn a child; cleared by the polling Task once it observes the lock
+    /// taken at least once and subsequently released, or after `Self.stickyBitTimeout` if the lock is
+    /// never observed taken (child died before acquiring). Bridges the spawn-to-acquire window so the
+    /// panel does not flicker `.updating → .ready → .updating`.
+    private var stickyBit: Bool = false
+    private var stickyBitSetAt: Date?
+    private var stickyBitSawLockTaken: Bool = false
+
+    /// Mirrors the latest observation from the polling Task.
+    private var lockHeldObserved: Bool = false
+
+    static let pollInterval: Duration = .seconds(2)
+    static let stickyBitTimeout: TimeInterval = 5
+
+    /// Derived: a self-update is in flight iff someone holds the lock OR we're in the spawn-to-acquire window.
+    var isUpdating: Bool { lockHeldObserved || stickyBit }
 
     let app: Application
     let config: Configuration
@@ -37,8 +56,10 @@ actor Updater {
         self.deployerPhase = deployerPhase
     }
 
-    /// Attempts to start a self-update. Refuses if any deploy is in flight or another update is running.
-    /// On success, sets `.updating` state and launches a detached child that survives this process's death.
+    /// Attempts to start a self-update from the panel. Refuses if any deploy is in flight or the update
+    /// lock is already held (CLI-launched updates included). On success, sets the sticky bit and launches
+    /// a detached child that survives this process's death. The child's lock acquisition is observed by
+    /// the polling Task.
     func startUpdate() async -> StartUpdateResult {
 
         guard !isUpdating else { return .busy }
@@ -51,56 +72,92 @@ actor Updater {
         catch { return .failure(error.localizedDescription) }
 
         let installDirectory = executableURL.deletingLastPathComponent()
-        let sentinelURL = installDirectory.appendingPathComponent(".deployer-self-update.sentinel")
-        try? FileManager.default.removeItem(at: sentinelURL)
+        if UpdateLock.isHeld(installDirectory: installDirectory) { return .busy }
 
         do {
-            try spawnDetachedUpdate(executable: executableURL, sentinelURL: sentinelURL)
+            try spawnDetachedUpdate(executable: executableURL)
         } catch {
             return .failure(error.localizedDescription)
         }
 
-        isUpdating = true
+        stickyBit = true
+        stickyBitSetAt = Date()
+        stickyBitSawLockTaken = false
         await deployerPhase.set(.updating)
-
-        Task { await watchForCompletion(sentinelURL: sentinelURL) }
 
         return .started
     }
 
-    /// Polls for the completion sentinel written by the child on every exit (success or failure).
-    /// If the child kills the parent before writing (the late-success / late-failure-rollback paths),
-    /// this Task dies with the process; the new boot starts fresh with `isUpdating = false`.
-    private func watchForCompletion(sentinelURL: URL) async {
-
-        let fileManager = FileManager.default
-
-        while isUpdating {
-            try? await Task.sleep(for: .seconds(2))
-
-            guard fileManager.fileExists(atPath: sentinelURL.path) else { continue }
-
-            try? fileManager.removeItem(at: sentinelURL)
-            isUpdating = false
-            await deployerPhase.set(.ready)
+    /// Continuous polling loop: peeks the update lockfile every `pollInterval` and updates derived state.
+    /// Runs for the lifetime of the process. Replaces the pre-ADR-0005 sentinel-file watcher.
+    func startPolling() async {
+        let installDirectory: URL
+        do { installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent() }
+        catch {
+            app.logger.warning("Updater poll: could not resolve install directory: \(error.localizedDescription)")
             return
         }
+
+        while !Task.isCancelled {
+            try? await Task.sleep(for: Self.pollInterval)
+            await tick(installDirectory: installDirectory)
+        }
+    }
+
+    /// One poll iteration. Folded out for testability and to keep `startPolling`'s loop body trivial.
+    private func tick(installDirectory: URL) async {
+
+        let nowHeld = UpdateLock.isHeld(installDirectory: installDirectory)
+        let wasHeld = lockHeldObserved
+        lockHeldObserved = nowHeld
+
+        if stickyBit {
+            if nowHeld {
+                // Child has acquired — sticky bit no longer needs to lie on our behalf, but keep it set
+                // until the child also releases, so we transition through observation rather than guess.
+                stickyBitSawLockTaken = true
+            } else if stickyBitSawLockTaken {
+                // Child acquired then released — clear the bit, polling state owns truth from here.
+                stickyBit = false
+                stickyBitSetAt = nil
+                stickyBitSawLockTaken = false
+            } else if let setAt = stickyBitSetAt, Date().timeIntervalSince(setAt) > Self.stickyBitTimeout {
+                // Child never acquired within the window — assume it died early, clear the bit.
+                app.logger.warning("Updater poll: spawned child never acquired update lock within \(Self.stickyBitTimeout)s; clearing sticky bit.")
+                stickyBit = false
+                stickyBitSetAt = nil
+                stickyBitSawLockTaken = false
+            }
+        }
+
+        await broadcastPhaseIfChanged(wasHeld: wasHeld)
+    }
+
+    /// Reconciles `DeployerPhase` with derived state. Phase resolution: updating wins over deploying,
+    /// matching `Panel.makePanelContext`'s priority. LiveState.set is a no-op if the value hasn't changed.
+    private func broadcastPhaseIfChanged(wasHeld: Bool) async {
+        let queueIsDeploying = await app.deployer.queue.isDeploying
+        let resolved: DeployerPhase = isUpdating ? .updating
+            : (queueIsDeploying ? .deploying : .ready)
+        await deployerPhase.set(resolved)
+        _ = wasHeld // reserved for future logging if useful
     }
 
     /// Launches the update child via the manager-appropriate cgroup-escape primitive.
     /// systemd: transient service via `systemd-run --user`. supervisor: `setsid` + background.
-    private func spawnDetachedUpdate(executable: URL, sentinelURL: URL) throws {
+    /// The child is marked with `DEPLOYER_INTERNAL_UPDATE=1` so it skips the pre-acquire admin-state
+    /// query (which would otherwise see its own parent's `.updating` phase and refuse).
+    private func spawnDetachedUpdate(executable: URL) throws {
 
         let binaryPath = executable.path.shellQuoted
-        let sentinelPath = sentinelURL.path.shellQuoted
 
         let command: String
         switch config.serviceManager {
             case .systemd:
                 let unitName = "deployer-self-update-\(UUID().uuidString)"
-                command = "systemd-run --user --collect --unit=\(unitName.shellQuoted) --setenv=DEPLOYER_COMPLETION_SENTINEL=\(sentinelPath) -- \(binaryPath) update"
+                command = "systemd-run --user --collect --unit=\(unitName.shellQuoted) --setenv=DEPLOYER_INTERNAL_UPDATE=1 -- \(binaryPath) update"
             case .supervisor:
-                command = "DEPLOYER_COMPLETION_SENTINEL=\(sentinelPath) setsid \(binaryPath) update </dev/null >/dev/null 2>&1 &"
+                command = "DEPLOYER_INTERNAL_UPDATE=1 setsid \(binaryPath) update </dev/null >/dev/null 2>&1 &"
         }
 
         let process = Process()

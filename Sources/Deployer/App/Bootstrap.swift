@@ -30,8 +30,9 @@ extension Deployer {
         app.deployer.configureViews()
         app.deployer.configureMist(config: config)
         try await app.deployer.configurePanel(config: config)
+        try app.deployer.configureAdmin()
     }
-    
+
 }
 
 extension Deployer {

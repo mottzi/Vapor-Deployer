@@ -13,6 +13,8 @@ extension UpdateCommand {
         case rollbackFailed(String, String)
         case anotherUpdateInProgress
         case lockFailed(String, String)
+        case serverBusy(String)
+        case serverUnhealthy(String)
 
         var errorDescription: String? {
             switch self {
@@ -42,6 +44,12 @@ extension UpdateCommand {
 
             case .lockFailed(let path, let reason):
                 "Unable to acquire update lock at '\(path)': \(reason)"
+
+            case .serverBusy(let phase):
+                "Deployer is busy (phase: \(phase)). Wait for the current operation to finish, then retry."
+
+            case .serverUnhealthy(let reason):
+                "Could not confirm the deployer is ready to be updated: \(reason). Stop the deployer service and retry to force the update."
             }
         }
 
