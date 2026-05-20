@@ -150,6 +150,10 @@
     opacity: 0.6;
 }
 
+.dp-tr.row-running {
+    background: var(--bg-surface-inset);
+}
+
 .dp-tr.row-running::before {
     background: var(--c-running);
     opacity: 0.8;
