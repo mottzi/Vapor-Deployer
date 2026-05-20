@@ -11,7 +11,7 @@
     height: 28px;
     line-height: 1;
     text-transform: capitalize;
-    border-radius: 9999px;
+    border-radius: var(--radius);
     border: 1px solid;
     white-space: nowrap;
     letter-spacing: 0.01em;
@@ -123,7 +123,7 @@
     height: 28px;
     line-height: 1;
     text-transform: capitalize;
-    border-radius: 9999px;
+    border-radius: var(--radius);
     border: 1px solid;
     letter-spacing: 0.01em;
 }
