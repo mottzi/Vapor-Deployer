@@ -8,6 +8,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
     static let schema = "deployments"
 
     @ID(key: .id) var id: UUID?
+    @Timestamp(key: "created_at", on: .create) var createdAt: Date?
     @Timestamp(key: "started_at", on: .none) var startedAt: Date?
     @Timestamp(key: "finished_at", on: .none) var finishedAt: Date?
     @Field(key: "product") var product: String
@@ -48,7 +49,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
 
 extension Deployment {
 
-    static var migration: Migration { Table() }
+    static var migrations: [Migration] { [Table(), AddCreatedAt()] }
 
     struct Table: AsyncMigration {
 
@@ -74,6 +75,32 @@ extension Deployment {
 
         func revert(on database: Database) async throws {
             try await database.schema(Deployment.schema).delete()
+        }
+
+    }
+
+    /// Adds `created_at` — the immutable arrival timestamp that drives table order, decoupled from
+    /// `started_at` (which is refreshed each time `start()` actually begins a build/restore). Existing
+    /// rows are backfilled from `started_at` so historical ordering is preserved.
+    struct AddCreatedAt: AsyncMigration {
+
+        func prepare(on database: Database) async throws {
+
+            try await database.schema(Deployment.schema)
+                .field("created_at", .datetime)
+                .update()
+
+            let deployments = try await Deployment.query(on: database).all()
+            for deployment in deployments where deployment.createdAt == nil {
+                deployment.createdAt = deployment.startedAt
+                try await deployment.save(on: database)
+            }
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema(Deployment.schema)
+                .deleteField("created_at")
+                .update()
         }
 
     }

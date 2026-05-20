@@ -48,7 +48,7 @@ extension Deployer {
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
         app.databases.middleware.use(DeploymentBinaryCleanupMiddleware(target: config.target))
         app.sessions.use(.fluent)
-        app.migrations.add(Deployment.migration, SessionRecord.migration)
+        app.migrations.add(Deployment.migrations + [SessionRecord.migration])
         try await app.autoMigrate()
         await seedFirstDeployment(config: config)
     }
@@ -148,6 +148,7 @@ extension Deployer {
             )
             
             deployment.isLive = true
+            deployment.createdAt = checkout.committedAt
             deployment.startedAt = checkout.committedAt
             deployment.finishedAt = checkout.committedAt
             try await deployment.save(on: app.db)
