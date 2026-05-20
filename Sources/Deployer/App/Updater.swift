@@ -81,7 +81,7 @@ actor Updater {
         }
 
         stickyBit = true
-        stickyBitSetAt = Date()
+        stickyBitSetAt = .now
         stickyBitSawLockTaken = false
         await deployerPhase.set(.updating)
 
@@ -93,10 +93,7 @@ actor Updater {
     func startPolling() async {
         let installDirectory: URL
         do { installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent() }
-        catch {
-            app.logger.warning("Updater poll: could not resolve install directory: \(error.localizedDescription)")
-            return
-        }
+        catch { return app.logger.warning("Updater poll: could not resolve install directory: \(error.localizedDescription)") }
 
         while !Task.isCancelled {
             try? await Task.sleep(for: Self.pollInterval)
@@ -121,7 +118,7 @@ actor Updater {
                 stickyBit = false
                 stickyBitSetAt = nil
                 stickyBitSawLockTaken = false
-            } else if let setAt = stickyBitSetAt, Date().timeIntervalSince(setAt) > Self.stickyBitTimeout {
+            } else if let setAt = stickyBitSetAt, Date.now.timeIntervalSince(setAt) > Self.stickyBitTimeout {
                 // Child never acquired within the window — assume it died early, clear the bit.
                 app.logger.warning("Updater poll: spawned child never acquired update lock within \(Self.stickyBitTimeout)s; clearing sticky bit.")
                 stickyBit = false
@@ -136,11 +133,16 @@ actor Updater {
     /// Reconciles `DeployerPhase` with derived state. Phase resolution: updating wins over deploying,
     /// matching `Panel.makePanelContext`'s priority. LiveState.set is a no-op if the value hasn't changed.
     private func broadcastPhaseIfChanged(wasHeld: Bool) async {
+        
         let queueIsDeploying = await app.deployer.queue.isDeploying
-        let resolved: DeployerPhase = isUpdating ? .updating
-            : (queueIsDeploying ? .deploying : .ready)
+        
+        let resolved: DeployerPhase = switch (isUpdating, queueIsDeploying) {
+            case (true, _): .updating
+            case (_, true): .deploying
+            case (false, false): .ready
+        }
+        
         await deployerPhase.set(resolved)
-        _ = wasHeld // reserved for future logging if useful
     }
 
     /// Launches the update child via the manager-appropriate cgroup-escape primitive.

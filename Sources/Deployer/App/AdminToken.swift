@@ -18,8 +18,8 @@ struct AdminToken: Sendable {
         let fileManager = FileManager.default
 
         if fileManager.fileExists(atPath: fileURL.path) {
-            guard let data = try? Data(contentsOf: fileURL),
-                  let raw = String(data: data, encoding: .utf8) else { return nil }
+            guard let data = try? Data(contentsOf: fileURL) else { return nil }
+            guard let raw = String(data: data, encoding: .utf8) else { return nil }
             let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { return nil }
             return AdminToken(value: trimmed)
@@ -27,6 +27,7 @@ struct AdminToken: Sendable {
 
         let token = generateHexToken(byteCount: 32)
         guard let data = token.data(using: .utf8) else { return nil }
+        
         do {
             try data.write(to: fileURL, options: [.atomic])
             try fileManager.setAttributes([.posixPermissions: NSNumber(value: 0o600)], ofItemAtPath: fileURL.path)
@@ -38,6 +39,7 @@ struct AdminToken: Sendable {
     }
 
     private static func generateHexToken(byteCount: Int) -> String {
+        
         var bytes = [UInt8](repeating: 0, count: byteCount)
         for i in 0..<byteCount { bytes[i] = UInt8.random(in: .min ... .max) }
         return bytes.map { String(format: "%02x", $0) }.joined()

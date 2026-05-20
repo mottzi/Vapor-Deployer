@@ -22,9 +22,12 @@ extension Deployer {
         admin.get("state") { request async -> AdminStateResponse in
             let isUpdating = await request.application.deployer.updater.isUpdating
             let isDeploying = await request.application.deployer.queue.isDeploying
-
-            let phase: DeployerPhase = isUpdating ? .updating
-                : (isDeploying ? .deploying : .ready)
+            
+            let phase: DeployerPhase = switch (isUpdating, isDeploying) {
+                case (true, _): .updating
+                case (_, true): .deploying
+                case (false, false): .ready
+            }
 
             return AdminStateResponse(phase: phase.rawValue)
         }
@@ -43,17 +46,18 @@ struct AdminBearerMiddleware: AsyncMiddleware {
     let expected: String
 
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
-        guard let header = request.headers.bearerAuthorization?.token,
-              constantTimeEquals(header, expected) else {
-            throw Abort(.unauthorized)
-        }
+        
+        guard let header = request.headers.bearerAuthorization?.token else { throw Abort(.unauthorized) }
+        guard constantTimeEquals(header, expected) else { throw Abort(.unauthorized) }
         return try await next.respond(to: request)
     }
 
     private func constantTimeEquals(_ a: String, _ b: String) -> Bool {
+        
         let aBytes = Array(a.utf8)
         let bBytes = Array(b.utf8)
         guard aBytes.count == bBytes.count else { return false }
+        
         var diff: UInt8 = 0
         for i in 0..<aBytes.count { diff |= aBytes[i] ^ bBytes[i] }
         return diff == 0

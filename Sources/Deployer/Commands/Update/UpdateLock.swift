@@ -32,6 +32,7 @@ final class UpdateLock {
     /// Tiny race: during the few microseconds we briefly hold the lock to release it, a concurrent acquirer
     /// would see EWOULDBLOCK. Acceptable — `acquire` callers always retry by failing fast to the user.
     static func isHeld(installDirectory: URL) -> Bool {
+        
         let path = lockPath(installDirectory: installDirectory)
 
         let fd = open(path, O_CREAT | O_RDWR | O_CLOEXEC, 0o666)
@@ -43,18 +44,18 @@ final class UpdateLock {
             _ = flock(fd, LOCK_UN)
             return false
         }
+        
         return errno == EWOULDBLOCK
     }
 
     /// Opens (or creates) the lockfile in `installDirectory` and acquires an exclusive non-blocking flock.
     /// Throws `.anotherUpdateInProgress` if another updater holds it, or `.lockFailed` on unexpected I/O errors.
     static func acquire(installDirectory: URL) throws -> UpdateLock {
+        
         let path = lockPath(installDirectory: installDirectory)
 
         let fd = open(path, O_CREAT | O_RDWR | O_CLOEXEC, 0o666)
-        guard fd >= 0 else {
-            throw UpdateCommand.Error.lockFailed(path, String(cString: strerror(errno)))
-        }
+        guard fd >= 0 else { throw UpdateCommand.Error.lockFailed(path, String(cString: strerror(errno))) }
 
         // Lockfile may already exist with restrictive perms from an older root-only run; widen so the panel-spawned
         // child running as the service user can also acquire the lock on subsequent invocations.
