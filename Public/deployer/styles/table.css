@@ -122,8 +122,9 @@
     content: '';
     position: absolute;
     left: 0;
-    top: 10px;
-    bottom: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 28px;
     width: 3px;
     border-radius: 0 2px 2px 0;
     opacity: 0;

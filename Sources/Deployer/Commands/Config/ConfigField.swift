@@ -42,13 +42,13 @@ enum ConfigField: String, CaseIterable, Sendable {
 
     /// Current value of the field as it appears in the on-disk JSON, formatted for human display.
     func currentValue(in config: Configuration) -> String {
-        switch self {
-        case .deployerBranch:        return config.deployerBranch
-        case .targetBranch:          return config.target.branch
-        case .targetBuildMode:       return config.target.buildMode
-        case .targetDeploymentMode:  return config.target.deploymentMode.rawValue
-        case .targetBinaryBehaviour: return config.target.binaryBehaviour.setupValue
-        case .targetTesting:         return String(config.target.testing)
+        return switch self {
+        case .deployerBranch:        config.deployerBranch
+        case .targetBranch:          config.target.branch
+        case .targetBuildMode:       config.target.buildMode
+        case .targetDeploymentMode:  config.target.deploymentMode.rawValue
+        case .targetBinaryBehaviour: config.target.binaryBehaviour.setupValue
+        case .targetTesting:         String(config.target.testing)
         }
     }
 
