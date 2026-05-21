@@ -248,6 +248,7 @@ extension Queue {
     /// Finds the newest non-superseded `.canceled` row at boot and starts the queue with it.
     /// No-ops if nothing is stranded or the candidate is already superseded.
     func drainOnBoot() async {
+        guard config.target.deploymentMode == .automatic else { return }
         guard let seed = try? await bootDrainSeed() else { return }
         await deploy(deployment: seed, target: config.target)
     }
