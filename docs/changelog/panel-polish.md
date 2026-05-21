@@ -9,3 +9,4 @@ The deployer panel got a round of small but meaningful refinements aimed at maki
 - **Status pills are boxier.** The Ready / Running header pills and the per-row status pills (Running, Built, Failed, Stale, …) dropped their fully-rounded pill shape in favour of the same corner radius as the buttons (Update, Sign out, Stop, Restart), so the header reads as a single visual family.
 - **Restart button is green, not blue.** The Restart button's hover and active states now use the running (green) color tokens instead of the building (blue) tokens — restart returns the service to its running state, so the color cue matches the outcome.
 - **Legacy CSS class names cleaned up.** Internal `dp-supervisor-badge` / `dp-supervisor-btn` class names — left over from when the panel was tied to a specific service manager — were renamed to the more accurate `dp-state-badge` / `dp-control-btn`. No user-visible effect; relevant if you have local overrides targeting those classes.
+
