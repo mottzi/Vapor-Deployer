@@ -117,6 +117,8 @@ extension Deployer {
             targetConfig
             deployerConfig
         }
+
+        await queue.drainOnBoot()
     }
 
     func createDatabaseDirectory(for dbFile: String) throws {

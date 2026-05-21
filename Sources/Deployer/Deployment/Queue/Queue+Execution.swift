@@ -245,6 +245,25 @@ extension Queue {
 
 extension Queue {
 
+    /// Finds the newest non-superseded `.canceled` row at boot and starts the queue with it.
+    /// No-ops if nothing is stranded or the candidate is already superseded.
+    func drainOnBoot() async {
+        guard let seed = try? await bootDrainSeed() else { return }
+        await deploy(deployment: seed, target: config.target)
+    }
+
+    /// Returns the newest `.canceled` row for this product that has not been superseded, or nil.
+    private func bootDrainSeed() async throws -> Deployment? {
+        let candidate = try await Deployment.query(on: app.db)
+            .filter(\.$product, .equal, config.target.name)
+            .filter(\.$status, .equal, .canceled)
+            .sort(\.$startedAt, .descending)
+            .first()
+
+        guard let candidate, try await !isSuperseded(candidate) else { return nil }
+        return candidate
+    }
+
     /// Returns the most recent canceled deployment queued after the given one, or nil if none exists or all are superseded.
     func nextQueuedDeployment(after deployment: Deployment) async throws -> Deployment? {
 
