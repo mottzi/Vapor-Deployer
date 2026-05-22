@@ -341,6 +341,14 @@ div.dp-settings-value:empty:before {
     border-color: var(--c-running-border);
 }
 
+/* Dirty state: applied by JS when the form has unsaved edits. Mirrors the :hover
+   visual so the button stays "lit" until the user saves. */
+.dp-settings-save-btn--dirty {
+    background: var(--c-running-bg);
+    color: var(--c-running);
+    border-color: var(--c-running-border);
+}
+
 /* ── Touch baseline (mirrors utilities.css for the new controls) ── */
 .dp-settings-back,
 .dp-settings-reveal,

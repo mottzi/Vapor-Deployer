@@ -209,9 +209,17 @@
       const addBtn = document.getElementById('dp-settings-add');
 
       const tableHead = document.querySelector('.dp-settings-table-head');
+      const saveBtn = document.querySelector('.dp-settings-save-btn');
 
       function updateHeadVisibility() {
         tableHead.style.display = rowsContainer.querySelector('.dp-settings-row') ? '' : 'none';
+      }
+
+      // Mark the form as dirty: the Save button shows its hover state so the user is
+      // reminded there are unsaved edits. The page reload after a successful save clears
+      // this naturally — we don't need to track an exact pristine-vs-edited diff.
+      function markDirty() {
+        if (saveBtn) saveBtn.classList.add('dp-settings-save-btn--dirty');
       }
 
       function appendRow(focus) {
@@ -232,14 +240,18 @@
       // any visually-masked input as a credential field and offer saved-password autofill.
       document.addEventListener('input', function (e) {
         const t = e.target;
-        if (t && t.classList && t.classList.contains('dp-settings-key')) {
+        if (!t || !t.classList) return;
+        if (t.classList.contains('dp-settings-key')) {
           const sel = t.selectionStart;
           t.value = t.value.toUpperCase();
           t.setSelectionRange(sel, sel);
+          markDirty();
+          return;
         }
-        if (!t || !t.classList || !t.classList.contains('dp-settings-value')) return;
+        if (!t.classList.contains('dp-settings-value')) return;
         const hidden = t.parentElement && t.parentElement.querySelector('input[type="hidden"][name="value[]"]');
         if (hidden) hidden.value = t.textContent;
+        markDirty();
       });
 
       document.addEventListener('keydown', function (e) {
@@ -257,8 +269,14 @@
         if (!row) return;
 
         if (action.dataset.action === 'delete') {
+          // Only flag dirty if the deleted row actually carried data — deleting an
+          // empty row that was just added is a no-op and shouldn't nag the user.
+          const key = row.querySelector('.dp-settings-key');
+          const val = row.querySelector('.dp-settings-value');
+          const hadContent = (key && key.value && key.value.trim()) || (val && val.textContent && val.textContent.trim());
           row.remove();
           updateHeadVisibility();
+          if (hadContent) markDirty();
         } else if (action.dataset.action === 'reveal') {
           const input = row.querySelector('.dp-settings-value');
           const closed = action.querySelector('.dp-settings-eye--closed');
