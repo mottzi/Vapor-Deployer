@@ -24,6 +24,10 @@
 }
 
 /* ── Settings page: session bar — back left, sign out right ── */
+.dp-session-bar:has(.dp-settings-back) {
+    justify-content: flex-start;
+}
+
 .dp-logout-form--settings {
     margin-left: auto;
 }
