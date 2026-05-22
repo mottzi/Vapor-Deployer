@@ -214,6 +214,10 @@ div.dp-settings-value {
     cursor: text;
 }
 
+div.dp-settings-value[contenteditable="false"] {
+    cursor: default;
+}
+
 div.dp-settings-value:empty:before {
     content: attr(data-placeholder);
     color: var(--text-subtle);

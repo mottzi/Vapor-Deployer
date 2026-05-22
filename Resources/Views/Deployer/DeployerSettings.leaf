@@ -109,7 +109,7 @@
                           <input type="hidden" name="value[]" value="#(entry.value)">
                           <div
                             class="dp-settings-input dp-settings-value dp-settings-value--masked"
-                            contenteditable="plaintext-only"
+                            contenteditable="false"
                             role="textbox"
                             aria-label="Value"
                             data-placeholder="value"
@@ -278,12 +278,22 @@
           const open = action.querySelector('.dp-settings-eye--open');
           if (input.classList.contains('dp-settings-value--masked')) {
             input.classList.remove('dp-settings-value--masked');
+            input.contentEditable = 'plaintext-only';
+            input.focus();
+            // move caret to end
+            const range = document.createRange();
+            range.selectNodeContents(input);
+            range.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
             closed.style.display = 'none';
             open.style.display = '';
             action.title = 'Hide value';
             action.setAttribute('aria-label', 'Hide value');
           } else {
             input.classList.add('dp-settings-value--masked');
+            input.contentEditable = 'false';
             closed.style.display = '';
             open.style.display = 'none';
             action.title = 'Reveal value';
