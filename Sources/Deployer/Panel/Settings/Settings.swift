@@ -44,7 +44,9 @@ extension Panel {
             return try await view.encodeResponse(for: request)
         }
 
-        let target = panelPath == "/" ? "/settings" : panelPath + "/settings"
+        let defaultTarget = panelPath == "/" ? "/settings" : panelPath + "/settings"
+        let next = try? request.query.get(String.self, at: "next")
+        let target = next.flatMap { $0.isEmpty ? nil : $0 } ?? defaultTarget
         return request.redirect(to: target)
     }
 

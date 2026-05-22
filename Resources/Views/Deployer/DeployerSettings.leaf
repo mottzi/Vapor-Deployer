@@ -289,7 +289,10 @@
               window.location.href = dest;
             } else if (action === 'save') {
               dirty = false;
-              document.getElementById('dp-settings-form').requestSubmit();
+              const form = document.getElementById('dp-settings-form');
+              const base = form.getAttribute('action').split('?')[0];
+              form.action = base + '?next=' + encodeURIComponent(dest);
+              form.requestSubmit();
             }
           });
         });
