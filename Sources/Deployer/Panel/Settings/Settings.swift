@@ -24,7 +24,7 @@ extension Panel {
     /// values and per-row errors so the user does not lose their edits.
     func handleSettingsSave(request: Request) async throws -> Response {
 
-        let form = try request.content.decode(SettingsForm.self)
+        let form = (try? request.content.decode(SettingsForm.self)) ?? SettingsForm(key: nil, value: nil)
         let entries = form.entries
 
         let store = EnvStore(envFilePath: envFilePath)
