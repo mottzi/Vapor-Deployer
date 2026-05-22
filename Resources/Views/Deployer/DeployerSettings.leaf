@@ -113,12 +113,12 @@
                         >
                         <span class="dp-settings-value-wrap">
                           <input
-                            class="dp-settings-input dp-settings-value"
-                            type="password"
+                            class="dp-settings-input dp-settings-value dp-settings-value--masked"
+                            type="text"
                             name="value[]"
                             value="#(entry.value)"
                             placeholder="value"
-                            autocomplete="new-password"
+                            autocomplete="off"
                             spellcheck="false"
                           >
                           <button type="button" class="dp-settings-reveal" title="Reveal value" aria-label="Reveal value" data-action="reveal">
@@ -166,7 +166,7 @@
                   <div class="dp-settings-row">
                     <input class="dp-settings-input dp-settings-key" type="text" name="key[]" value="" placeholder="KEY_NAME" autocomplete="off" autocapitalize="characters" spellcheck="false">
                     <span class="dp-settings-value-wrap">
-                      <input class="dp-settings-input dp-settings-value" type="password" name="value[]" value="" placeholder="value" autocomplete="new-password" spellcheck="false">
+                      <input class="dp-settings-input dp-settings-value dp-settings-value--masked" type="text" name="value[]" value="" placeholder="value" autocomplete="off" spellcheck="false">
                       <button type="button" class="dp-settings-reveal" title="Reveal value" aria-label="Reveal value" data-action="reveal">
                         <svg class="dp-settings-eye dp-settings-eye--closed" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
@@ -236,14 +236,14 @@
           const input = row.querySelector('.dp-settings-value');
           const closed = action.querySelector('.dp-settings-eye--closed');
           const open = action.querySelector('.dp-settings-eye--open');
-          if (input.type === 'password') {
-            input.type = 'text';
+          if (input.classList.contains('dp-settings-value--masked')) {
+            input.classList.remove('dp-settings-value--masked');
             closed.style.display = 'none';
             open.style.display = '';
             action.title = 'Hide value';
             action.setAttribute('aria-label', 'Hide value');
           } else {
-            input.type = 'password';
+            input.classList.add('dp-settings-value--masked');
             closed.style.display = '';
             open.style.display = 'none';
             action.title = 'Reveal value';

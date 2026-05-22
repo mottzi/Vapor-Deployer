@@ -209,6 +209,10 @@
     padding-right: 40px; /* leave room for the reveal button */
 }
 
+.dp-settings-value--masked {
+    -webkit-text-security: disc;
+}
+
 .dp-settings-reveal {
     position: absolute;
     top: 50%;
