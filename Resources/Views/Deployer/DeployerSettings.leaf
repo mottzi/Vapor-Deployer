@@ -298,6 +298,11 @@
         });
       }
 
+      // Clear dirty on any form submission so beforeunload doesn't fire.
+      document.getElementById('dp-settings-form').addEventListener('submit', function () {
+        dirty = false;
+      });
+
       // Browser-level navigation (close/refresh/history) — native dialog only
       window.addEventListener('beforeunload', function (e) {
         if (dirty) e.preventDefault();
