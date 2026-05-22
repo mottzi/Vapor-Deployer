@@ -156,7 +156,12 @@
     padding: 2px 4px 4px;
 }
 
-/* ── Inputs ── */
+/* ── Inputs ──
+   Shared box model for the <input> key field and the contenteditable <div> value field.
+   `appearance: none` and explicit `line-height` are what make the two elements compute the
+   same height (line-height + vertical padding + border) instead of relying on the input's
+   native intrinsic sizing. Do not add `height` here — keep the box driven by content
+   metrics so font/padding changes scale both elements together. */
 .dp-settings-input {
     width: 100%;
     background: var(--surface);
@@ -165,10 +170,13 @@
     padding: 9px 12px;
     font-family: var(--font-mono);
     font-size: 13px;
+    line-height: 20px;
     color: var(--text);
     outline: none;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
 .dp-settings-input::placeholder {
@@ -197,17 +205,14 @@
 }
 
 /* The value field is a contenteditable <div>, not an <input>, so browsers don't classify
-   it as a credential field and offer saved-password autofill. These rules make it look
-   identical to the key input. */
+   it as a credential field and offer saved-password autofill. It inherits the input box
+   model from .dp-settings-input above; these rules only add behavior the div doesn't get
+   by default (single-line scroll, text cursor). */
 div.dp-settings-value {
-    height: 38px;
-    line-height: 18px;
     white-space: pre;
     overflow-x: auto;
     overflow-y: hidden;
     cursor: text;
-    display: flex;
-    align-items: center;
 }
 
 div.dp-settings-value:empty:before {
