@@ -232,6 +232,11 @@
       // any visually-masked input as a credential field and offer saved-password autofill.
       document.addEventListener('input', function (e) {
         const t = e.target;
+        if (t && t.classList && t.classList.contains('dp-settings-key')) {
+          const sel = t.selectionStart;
+          t.value = t.value.toUpperCase();
+          t.setSelectionRange(sel, sel);
+        }
         if (!t || !t.classList || !t.classList.contains('dp-settings-value')) return;
         const hidden = t.parentElement && t.parentElement.querySelector('input[type="hidden"][name="value[]"]');
         if (hidden) hidden.value = t.textContent;

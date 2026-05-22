@@ -112,7 +112,7 @@ extension EnvStore {
             } else if key.count > maxKeyLength {
                 issues.append(.init(rowIndex: index, message: "Key must be \(maxKeyLength) characters or fewer."))
             } else if key.range(of: keyPattern, options: .regularExpression) == nil {
-                issues.append(.init(rowIndex: index, message: "Key must match [A-Z_][A-Z0-9_]* (uppercase, digits, underscores; leading letter or underscore)."))
+                issues.append(.init(rowIndex: index, message: "Key must start with a letter or underscore and contain only uppercase letters, digits, and underscores."))
             } else if reservedKeys.contains(key) {
                 issues.append(.init(rowIndex: index, message: "\(key) is set by the service manager and cannot be overridden here."))
             } else if !seen.insert(key).inserted {
