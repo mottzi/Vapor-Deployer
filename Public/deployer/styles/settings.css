@@ -23,9 +23,9 @@
     background: var(--bg-hover);
 }
 
-/* ── Settings page: toolbar padding override (symmetric, unlike the main panel bar) ── */
-.dp-runtime-bar:has(.dp-settings-save-btn) {
-    padding: 0 10px;
+/* ── Settings page: session bar — back left, sign out right ── */
+.dp-logout-form--settings {
+    margin-left: auto;
 }
 
 /* ── Settings page: back link in the toolbar ── */
