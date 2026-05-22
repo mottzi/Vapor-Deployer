@@ -420,7 +420,7 @@ div.dp-settings-value:empty:before {
     }
 
     .dp-settings-body {
-        padding: 16px;
+        padding: 16px 8px 16px 16px;
     }
 
     /* In the settings toolbar, collapse Settings/Save buttons to icon-only,
