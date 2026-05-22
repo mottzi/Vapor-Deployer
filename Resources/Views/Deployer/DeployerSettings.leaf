@@ -90,7 +90,13 @@
                   Use <strong>Restart</strong> on the panel after saving to apply changes.
                 </p>
 
-                <form id="dp-settings-form" class="dp-settings-form" method="POST" action="#(deployer.panelRoute)/settings">
+                <form id="dp-settings-form" class="dp-settings-form" method="POST" action="#(deployer.panelRoute)/settings" autocomplete="off">
+
+                  <!-- Decoy fields: Chrome ignores autocomplete="off" for credential autofill and
+                       will fill the first username/password pair it finds. These hidden fields
+                       absorb that autofill so the real inputs below are left alone. -->
+                  <input type="text" name="dp-decoy-username" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none">
+                  <input type="password" name="dp-decoy-password" autocomplete="current-password" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none">
 
                   <div class="dp-settings-table-head" aria-hidden="true">
                     <span>Key</span>
