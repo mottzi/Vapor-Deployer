@@ -423,6 +423,10 @@ div.dp-settings-value:empty:before {
         padding: 16px 8px 16px 16px;
     }
 
+    .dp-settings-divider {
+        margin: 0 -8px 0 -16px;
+    }
+
     /* In the settings toolbar, collapse Settings/Save buttons to icon-only,
        same as Stop/Restart on the main panel toolbar. */
     .dp-target-panel .dp-settings-save-btn,
