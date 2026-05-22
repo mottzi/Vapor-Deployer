@@ -124,13 +124,27 @@
                 #unsafeHTML(target.targetInfoInitialHTML)
               </div>
 
-              <!-- Right: stop + restart -->
+              <!-- Right: settings · stop · restart
+                   The Settings link sits inside the mist container but OUTSIDE the mist-managed
+                   component div below, so mist re-renders of TargetStatusActions never replace it.
+                   Mist appends new component HTML at beforeend, after this static <a>. -->
               <div
                 class="dp-runtime-actions dp-runtime-actions--desktop"
                 mist-container="TargetStatusActions"
                 mist-insert-position="beforeend"
                 mist-ssr="true"
               >
+                <a
+                  class="dp-control-btn dp-control-btn--settings"
+                  href="#(deployer.panelRoute)/settings"
+                  title="Environment settings"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                  Settings
+                </a>
                 <div class="dp-target-actions" mist-component="TargetStatusActions" mist-delay="1000" mist-ssr="true">
                   #if(target.isRunning):
                     <button

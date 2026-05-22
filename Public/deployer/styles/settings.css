@@ -1,0 +1,406 @@
+/* ── Gear button in the panel target toolbar ──
+   Reuses .dp-control-btn base; neutral hover (settings is benign navigation,
+   not destructive like Stop or state-changing like Restart). */
+.dp-control-btn--settings {
+    background: transparent;
+    color: var(--text-subtle);
+    border: 1px solid var(--border);
+    text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-control-btn--settings:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+        background: var(--bg-hover);
+    }
+}
+
+.dp-control-btn--settings:active {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+}
+
+/* ── Settings page: back link in the toolbar ── */
+.dp-settings-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-subtle);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-back:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+        background: var(--bg-hover);
+    }
+}
+
+.dp-settings-back:active {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+}
+
+/* ── Settings body: container below the toolbar ── */
+.dp-settings-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dp-settings-hint {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.dp-settings-hint code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface-inset);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+.dp-settings-hint strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* ── Notice banners (saved / error) ── */
+.dp-settings-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.dp-settings-notice-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dp-settings-notice--success {
+    background: var(--c-running-bg);
+    border: 1px solid var(--c-running-border);
+    color: var(--c-running);
+}
+
+.dp-settings-notice--success .dp-settings-notice-dot {
+    background: var(--c-running);
+}
+
+.dp-settings-notice--error {
+    background: var(--c-failed-bg);
+    border: 1px solid var(--c-failed-border);
+    color: var(--c-failed);
+}
+
+.dp-settings-notice--error .dp-settings-notice-dot {
+    background: var(--c-failed);
+}
+
+/* ── Form table ── */
+.dp-settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dp-settings-table-head {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) minmax(220px, 2fr) 32px;
+    gap: 8px;
+    padding: 0 4px;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.dp-settings-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dp-settings-row {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) minmax(220px, 2fr) 32px;
+    gap: 8px;
+    align-items: center;
+}
+
+.dp-settings-row--error .dp-settings-input {
+    border-color: var(--c-failed-border);
+}
+
+.dp-settings-row-error {
+    grid-column: 1 / -1;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--c-failed);
+    padding: 2px 4px 4px;
+}
+
+/* ── Inputs ── */
+.dp-settings-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+.dp-settings-input::placeholder {
+    color: var(--text-subtle);
+    font-family: var(--font-sans);
+}
+
+.dp-settings-input:focus {
+    border-color: var(--c-building);
+    box-shadow: 0 0 0 3px var(--c-building-bg);
+}
+
+.dp-settings-key {
+    text-transform: uppercase;
+}
+
+/* ── Value column with inline reveal toggle ── */
+.dp-settings-value-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.dp-settings-value {
+    padding-right: 40px; /* leave room for the reveal button */
+}
+
+.dp-settings-reveal {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-subtle);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-reveal:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+    }
+}
+
+.dp-settings-reveal:active {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+/* ── Delete row button ── */
+.dp-settings-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: var(--radius);
+    color: var(--text-subtle);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-delete:hover {
+        background: rgba(248, 113, 113, 0.08);
+        color: var(--c-failed);
+        border-color: rgba(248, 113, 113, 0.3);
+    }
+}
+
+.dp-settings-delete:active {
+    background: rgba(248, 113, 113, 0.08);
+    color: var(--c-failed);
+    border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* ── Add-row button ── */
+.dp-settings-actions-row {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 4px;
+}
+
+.dp-settings-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: var(--radius);
+    border: 1px dashed var(--border-strong);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-add-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+        border-color: var(--text-subtle);
+    }
+}
+
+.dp-settings-add-btn:active {
+    background: var(--bg-hover);
+    color: var(--text);
+    border-color: var(--text-subtle);
+}
+
+/* ── Save button in toolbar (uses .dp-update-btn base, overrides hover color) ── */
+.dp-settings-save-btn {
+    color: var(--text-subtle);
+    border-color: var(--border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-save-btn:hover {
+        background: var(--c-running-bg);
+        color: var(--c-running);
+        border-color: var(--c-running-border);
+    }
+}
+
+.dp-settings-save-btn:active {
+    background: var(--c-running-bg);
+    color: var(--c-running);
+    border-color: var(--c-running-border);
+}
+
+/* ── Touch baseline (mirrors utilities.css for the new controls) ── */
+.dp-settings-back,
+.dp-settings-reveal,
+.dp-settings-delete,
+.dp-settings-add-btn,
+.dp-settings-save-btn,
+.dp-control-btn--settings {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dp-settings-back > svg,
+.dp-settings-reveal > svg,
+.dp-settings-delete > svg,
+.dp-settings-add-btn > svg,
+.dp-settings-save-btn > svg,
+.dp-control-btn--settings > svg {
+    pointer-events: none;
+}
+
+.dp-settings-back:active,
+.dp-settings-reveal:active,
+.dp-settings-delete:active,
+.dp-settings-add-btn:active,
+.dp-settings-save-btn:active,
+.dp-control-btn--settings:active {
+    transition-duration: 0s;
+}
+
+/* ── Mobile: collapse to single-column row ── */
+@media (max-width: 640px) {
+    .dp-settings-table-head {
+        display: none;
+    }
+
+    .dp-settings-row {
+        grid-template-columns: 1fr 32px;
+        grid-template-areas:
+            "key delete"
+            "value value";
+        gap: 6px;
+    }
+
+    .dp-settings-row .dp-settings-key {
+        grid-area: key;
+    }
+
+    .dp-settings-row .dp-settings-value-wrap {
+        grid-area: value;
+    }
+
+    .dp-settings-row .dp-settings-delete {
+        grid-area: delete;
+    }
+
+    .dp-settings-body {
+        padding: 16px;
+    }
+
+    /* In the settings toolbar, collapse Settings/Save buttons to icon-only,
+       same as Stop/Restart on the main panel toolbar. */
+    .dp-target-panel .dp-settings-save-btn,
+    .dp-target-panel .dp-settings-back {
+        font-size: 0;
+        gap: 0;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        justify-content: center;
+    }
+
+    .dp-target-panel .dp-settings-save-btn svg,
+    .dp-target-panel .dp-settings-back svg {
+        width: 14px;
+        height: 14px;
+    }
+}

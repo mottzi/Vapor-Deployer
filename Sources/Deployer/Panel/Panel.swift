@@ -16,8 +16,10 @@ extension Deployer {
         router.post("logout") { panel.handleLogout(request: $0) }
         
         let authRouter = router.grouped(panel.authenticator)
-        
-        authRouter.get()      { try await panel.servePanel(request: $0) }
+
+        authRouter.get()             { try await panel.servePanel(request: $0) }
+        authRouter.get("settings")   { try await panel.serveSettings(request: $0) }
+        authRouter.post("settings")  { try await panel.handleSettingsSave(request: $0) }
     }
     
 }
