@@ -387,12 +387,17 @@ div.dp-settings-value:empty:before {
         display: none;
     }
 
+    .dp-settings-rows {
+        gap: 14px;
+    }
+
     .dp-settings-row {
         grid-template-columns: 1fr 32px;
         grid-template-areas:
             "key delete"
             "value value";
-        gap: 6px;
+        row-gap: 3px;
+        column-gap: 6px;
     }
 
     .dp-settings-row .dp-settings-key {
