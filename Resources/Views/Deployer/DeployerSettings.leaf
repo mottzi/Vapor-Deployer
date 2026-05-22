@@ -264,11 +264,10 @@
         if (!row) return;
 
         if (action.dataset.action === 'delete') {
-          // Only flag dirty if the deleted row actually carried data — deleting an
-          // empty row that was just added is a no-op and shouldn't nag the user.
           const key = row.querySelector('.dp-settings-key');
           const val = row.querySelector('.dp-settings-value');
           const hadContent = (key && key.value && key.value.trim()) || (val && val.textContent && val.textContent.trim());
+          if (hadContent && !confirm('Delete "' + (key && key.value.trim() || 'this variable') + '"?')) return;
           row.remove();
           updateHeadVisibility();
           if (hadContent) markDirty();
