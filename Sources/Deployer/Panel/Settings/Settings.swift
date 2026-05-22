@@ -107,7 +107,7 @@ private extension Panel {
         SettingsContext.Target(
             name: config.target.name,
             repositoryURL: config.target.repositoryURL,
-            envFilePath: envFilePath
+            envFilePath: envFilePath.displayPath
         )
     }
 
