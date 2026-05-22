@@ -146,6 +146,8 @@
                     #endfor
                   </div>
 
+                  <input type="hidden" name="next" id="dp-settings-next" value="">
+
                   <div class="dp-settings-actions-row">
                     <button type="button" class="dp-settings-add-btn" id="dp-settings-add" title="Add variable">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -289,10 +291,8 @@
               window.location.href = dest;
             } else if (action === 'save') {
               dirty = false;
-              const form = document.getElementById('dp-settings-form');
-              const base = form.getAttribute('action').split('?')[0];
-              form.action = base + '?next=' + encodeURIComponent(dest);
-              form.requestSubmit();
+              document.getElementById('dp-settings-next').value = dest;
+              document.getElementById('dp-settings-form').requestSubmit();
             }
           });
         });

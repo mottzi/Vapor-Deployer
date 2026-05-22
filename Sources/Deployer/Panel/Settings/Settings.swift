@@ -24,7 +24,7 @@ extension Panel {
     /// values and per-row errors so the user does not lose their edits.
     func handleSettingsSave(request: Request) async throws -> Response {
 
-        let form = (try? request.content.decode(SettingsForm.self)) ?? SettingsForm(key: nil, value: nil)
+        let form = (try? request.content.decode(SettingsForm.self)) ?? SettingsForm(key: nil, value: nil, next: nil)
         let entries = form.entries
 
         let store = EnvStore(envFilePath: envFilePath)
@@ -45,8 +45,7 @@ extension Panel {
         }
 
         let defaultTarget = panelPath == "/" ? "/settings" : panelPath + "/settings"
-        let next = try? request.query.get(String.self, at: "next")
-        let target = next.flatMap { $0.isEmpty ? nil : $0 } ?? defaultTarget
+        let target = form.next.flatMap { $0.isEmpty ? nil : $0 } ?? defaultTarget
         return request.redirect(to: target)
     }
 
@@ -149,6 +148,7 @@ extension Panel {
 
         let key: [String]?
         let value: [String]?
+        let next: String?
 
         struct Entry { let key: String; let value: String }
 
