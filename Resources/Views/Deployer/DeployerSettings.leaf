@@ -85,10 +85,10 @@
                   </div>
                 #endif
 
-                <p class="dp-settings-hint">
-                  These variables are written to <code>#(target.envFilePath)</code> and loaded by the target app at boot.
-                  Use <strong>Restart</strong> on the panel after saving to apply changes.
-                </p>
+                <div class="dp-settings-notice dp-settings-notice--info">
+                  <span class="dp-settings-notice-dot"></span>
+                  Changes to environment variables take effect once the target app has been restarted.
+                </div>
 
                 <form id="dp-settings-form" class="dp-settings-form" method="POST" action="#(deployer.panelRoute)/settings" autocomplete="off">
 

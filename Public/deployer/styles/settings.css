@@ -62,28 +62,6 @@
     gap: 16px;
 }
 
-.dp-settings-hint {
-    margin: 0;
-    font-family: var(--font-sans);
-    font-size: 13px;
-    color: var(--text-muted);
-    line-height: 1.5;
-}
-
-.dp-settings-hint code {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    padding: 1px 6px;
-    border-radius: var(--radius-sm);
-    background: var(--bg-surface-inset);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-}
-
-.dp-settings-hint strong {
-    color: var(--text);
-    font-weight: 600;
-}
 
 /* ── Notice banners (saved / error) ── */
 .dp-settings-notice {
@@ -122,6 +100,16 @@
 
 .dp-settings-notice--error .dp-settings-notice-dot {
     background: var(--c-failed);
+}
+
+.dp-settings-notice--info {
+    background: var(--c-building-bg);
+    border: 1px solid var(--c-building-border);
+    color: var(--c-building);
+}
+
+.dp-settings-notice--info .dp-settings-notice-dot {
+    background: var(--c-building);
 }
 
 /* ── Form table ── */
