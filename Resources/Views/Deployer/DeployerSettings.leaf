@@ -15,6 +15,12 @@
         <section class="dp-target-section">
 
           <div class="dp-session-bar">
+            <a class="dp-settings-back" href="#(deployer.panelRoute)" title="Back to panel">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              Back
+            </a>
             <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
               <button type="submit" class="dp-logout-btn" title="Sign out">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -34,12 +40,6 @@
               <!-- ── Settings toolbar: back · title · app name ── -->
               <div class="dp-runtime-bar">
                 <div class="dp-runtime-brand">
-                  <a class="dp-settings-back" href="#(deployer.panelRoute)" title="Back to panel">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <polyline points="15 18 9 12 15 6"/>
-                    </svg>
-                    Back
-                  </a>
                   <h2 class="dp-target-name">
                     Environment
                   </h2>

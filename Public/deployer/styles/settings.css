@@ -24,7 +24,7 @@
 }
 
 /* ── Settings page: toolbar padding override (symmetric, unlike the main panel bar) ── */
-.dp-runtime-bar:has(.dp-settings-back) {
+.dp-runtime-bar:has(.dp-settings-save-btn) {
     padding: 0 10px;
 }
 
@@ -433,8 +433,7 @@ div.dp-settings-value:empty:before {
 
     /* In the settings toolbar, collapse Settings/Save buttons to icon-only,
        same as Stop/Restart on the main panel toolbar. */
-    .dp-target-panel .dp-settings-save-btn,
-    .dp-target-panel .dp-settings-back {
+    .dp-target-panel .dp-settings-save-btn {
         font-size: 0;
         gap: 0;
         padding: 0;
@@ -443,8 +442,7 @@ div.dp-settings-value:empty:before {
         justify-content: center;
     }
 
-    .dp-target-panel .dp-settings-save-btn svg,
-    .dp-target-panel .dp-settings-back svg {
+    .dp-target-panel .dp-settings-save-btn svg {
         width: 14px;
         height: 14px;
     }
