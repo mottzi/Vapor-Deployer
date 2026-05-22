@@ -28,7 +28,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 10px 5px 8px;
+    padding: 5px 10px 5px 6px;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: transparent;
