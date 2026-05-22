@@ -54,6 +54,10 @@
                     <span class="dp-context-label">File</span>
                     <span class="dp-context-value">#(target.envFilePath)</span>
                   </div>
+                  <div class="dp-context-item">
+                    <span class="dp-context-label">Variables</span>
+                    <span class="dp-context-value">#(variableCount)</span>
+                  </div>
                 </div>
 
                 <div class="dp-runtime-actions dp-runtime-actions--desktop">

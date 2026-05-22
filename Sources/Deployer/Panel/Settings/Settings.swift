@@ -8,10 +8,12 @@ extension Panel {
 
         let store = EnvStore(envFilePath: envFilePath)
         let entries = try store.load()
+        let rows = entries.map { SettingsContext.Row(key: $0.key, value: $0.value, error: nil) }
         let context = SettingsContext(
             deployer: settingsDeployerContext,
             target: settingsTargetContext,
-            entries: entries.map { SettingsContext.Row(key: $0.key, value: $0.value, error: nil) },
+            entries: rows,
+            variableCount: rows.count,
             globalError: nil
         )
         return try await request.view.render("Deployer/DeployerSettings", context)
@@ -87,6 +89,7 @@ private extension Panel {
             deployer: settingsDeployerContext,
             target: settingsTargetContext,
             entries: rows,
+            variableCount: rows.count,
             globalError: globalMessages.isEmpty ? nil : globalMessages.joined(separator: " ")
         )
         return try await request.view.render("Deployer/DeployerSettings", context)
@@ -116,6 +119,7 @@ extension Panel {
         let deployer: Deployer
         let target: Target
         let entries: [Row]
+        let variableCount: Int
         let globalError: String?
 
         struct Deployer: Encodable {
