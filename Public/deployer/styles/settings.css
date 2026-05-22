@@ -64,6 +64,12 @@
 }
 
 
+.dp-settings-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0;
+}
+
 .dp-settings-hint {
     margin: 0;
     font-family: var(--font-sans);
@@ -89,16 +95,6 @@
     height: 7px;
     border-radius: 50%;
     flex-shrink: 0;
-}
-
-.dp-settings-notice--success {
-    background: var(--c-running-bg);
-    border: 1px solid var(--c-running-border);
-    color: var(--c-running);
-}
-
-.dp-settings-notice--success .dp-settings-notice-dot {
-    background: var(--c-running);
 }
 
 .dp-settings-notice--error {

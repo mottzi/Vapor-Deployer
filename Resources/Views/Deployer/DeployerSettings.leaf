@@ -71,13 +71,6 @@
 
               <div class="dp-settings-body">
 
-                #if(saved):
-                  <div class="dp-settings-notice dp-settings-notice--success">
-                    <span class="dp-settings-notice-dot"></span>
-                    Saved. Restart the target on the panel to apply the changes.
-                  </div>
-                #endif
-
                 #if(globalError):
                   <div class="dp-settings-notice dp-settings-notice--error">
                     <span class="dp-settings-notice-dot"></span>
@@ -88,6 +81,8 @@
                 <p class="dp-settings-hint">
                   Changes to environment variables take effect once the target app has been restarted.
                 </p>
+
+                <hr class="dp-settings-divider">
 
                 <form id="dp-settings-form" class="dp-settings-form" method="POST" action="#(deployer.panelRoute)/settings" autocomplete="off">
 

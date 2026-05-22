@@ -6,15 +6,13 @@ extension Panel {
     /// entries, when called from `handleSettingsSave` after a validation failure).
     func serveSettings(request: Request) async throws -> View {
 
-        let saved = request.query[String.self, at: "saved"] == "1"
         let store = EnvStore(envFilePath: envFilePath)
         let entries = try store.load()
         let context = SettingsContext(
             deployer: settingsDeployerContext,
             target: settingsTargetContext,
             entries: entries.map { SettingsContext.Row(key: $0.key, value: $0.value, error: nil) },
-            globalError: nil,
-            saved: saved
+            globalError: nil
         )
         return try await request.view.render("Deployer/DeployerSettings", context)
     }
@@ -44,7 +42,7 @@ extension Panel {
             return try await view.encodeResponse(for: request)
         }
 
-        let target = panelPath == "/" ? "/settings?saved=1" : panelPath + "/settings?saved=1"
+        let target = panelPath == "/" ? "/settings" : panelPath + "/settings"
         return request.redirect(to: target)
     }
 
@@ -89,8 +87,7 @@ private extension Panel {
             deployer: settingsDeployerContext,
             target: settingsTargetContext,
             entries: rows,
-            globalError: globalMessages.isEmpty ? nil : globalMessages.joined(separator: " "),
-            saved: false
+            globalError: globalMessages.isEmpty ? nil : globalMessages.joined(separator: " ")
         )
         return try await request.view.render("Deployer/DeployerSettings", context)
     }
@@ -120,7 +117,6 @@ extension Panel {
         let target: Target
         let entries: [Row]
         let globalError: String?
-        let saved: Bool
 
         struct Deployer: Encodable {
             let panelRoute: String
@@ -142,8 +138,7 @@ extension Panel {
     }
 
     /// Decoded form body from the settings page. Vapor's `URLEncodedFormDecoder` pairs `key[]=foo&value[]=bar`
-    /// into parallel arrays by index. We zip them back into `Entry` pairs and drop fully-empty rows
-    /// (the UI keeps a trailing blank row for "add new" UX).
+    /// into parallel arrays by index. We zip them back into `Entry` pairs and drop fully-empty rows.
     struct SettingsForm: Content {
 
         let key: [String]?
