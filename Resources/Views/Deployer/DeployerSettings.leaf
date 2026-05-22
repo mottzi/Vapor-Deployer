@@ -215,32 +215,48 @@
           <p class="dp-confirm-msg"></p>
           <div class="dp-confirm-actions">
             <button class="dp-confirm-cancel" type="button">Cancel</button>
+            <button class="dp-confirm-discard" type="button" style="display:none">Discard</button>
+            <button class="dp-confirm-save" type="button" style="display:none">Save</button>
             <button class="dp-confirm-ok" type="button">Delete</button>
           </div>
         </div>`;
       document.body.appendChild(overlay);
-      const confirmMsg  = overlay.querySelector('.dp-confirm-msg');
-      const confirmCancel = overlay.querySelector('.dp-confirm-cancel');
-      const confirmOk   = overlay.querySelector('.dp-confirm-ok');
+      const confirmMsg     = overlay.querySelector('.dp-confirm-msg');
+      const confirmCancel  = overlay.querySelector('.dp-confirm-cancel');
+      const confirmDiscard = overlay.querySelector('.dp-confirm-discard');
+      const confirmSave    = overlay.querySelector('.dp-confirm-save');
+      const confirmOk      = overlay.querySelector('.dp-confirm-ok');
       let confirmResolve = null;
+
+      function dismiss(value) {
+        overlay.classList.remove('dp-confirm-overlay--visible');
+        if (confirmResolve) { confirmResolve(value); confirmResolve = null; }
+      }
+
       function showConfirm(msg) {
         confirmMsg.textContent = msg;
+        confirmOk.style.display = '';
+        confirmDiscard.style.display = 'none';
+        confirmSave.style.display = 'none';
         overlay.classList.add('dp-confirm-overlay--visible');
         return new Promise(function (resolve) { confirmResolve = resolve; });
       }
-      confirmOk.addEventListener('click', function () {
-        overlay.classList.remove('dp-confirm-overlay--visible');
-        if (confirmResolve) { confirmResolve(true); confirmResolve = null; }
-      });
-      confirmCancel.addEventListener('click', function () {
-        overlay.classList.remove('dp-confirm-overlay--visible');
-        if (confirmResolve) { confirmResolve(false); confirmResolve = null; }
-      });
+
+      function showUnsavedConfirm() {
+        confirmMsg.textContent = 'You have unsaved changes.';
+        confirmOk.style.display = 'none';
+        confirmDiscard.style.display = '';
+        confirmSave.style.display = '';
+        overlay.classList.add('dp-confirm-overlay--visible');
+        return new Promise(function (resolve) { confirmResolve = resolve; });
+      }
+
+      confirmOk.addEventListener('click',      function () { dismiss(true); });
+      confirmDiscard.addEventListener('click', function () { dismiss('discard'); });
+      confirmSave.addEventListener('click',    function () { dismiss('save'); });
+      confirmCancel.addEventListener('click',  function () { dismiss(false); });
       overlay.addEventListener('click', function (e) {
-        if (e.target === overlay) {
-          overlay.classList.remove('dp-confirm-overlay--visible');
-          if (confirmResolve) { confirmResolve(false); confirmResolve = null; }
-        }
+        if (e.target === overlay) dismiss(false);
       });
       // ────────────────────────────────────────────────────────────────
 
@@ -254,9 +270,35 @@
       // Mark the form as dirty: the Save button shows its hover state so the user is
       // reminded there are unsaved edits. The page reload after a successful save clears
       // this naturally — we don't need to track an exact pristine-vs-edited diff.
+      let dirty = false;
       function markDirty() {
+        dirty = true;
         if (saveBtn) saveBtn.classList.add('dp-settings-save-btn--dirty');
       }
+
+      // Intercept Back button click when dirty
+      const backBtn = document.querySelector('.dp-settings-back');
+      if (backBtn) {
+        backBtn.addEventListener('click', function (e) {
+          if (!dirty) return;
+          e.preventDefault();
+          const dest = backBtn.href;
+          showUnsavedConfirm().then(function (action) {
+            if (action === 'discard') {
+              dirty = false;
+              window.location.href = dest;
+            } else if (action === 'save') {
+              dirty = false;
+              document.getElementById('dp-settings-form').requestSubmit();
+            }
+          });
+        });
+      }
+
+      // Browser-level navigation (close/refresh/history) — native dialog only
+      window.addEventListener('beforeunload', function (e) {
+        if (dirty) e.preventDefault();
+      });
 
       function appendRow(focus) {
         const node = template.content.firstElementChild.cloneNode(true);
