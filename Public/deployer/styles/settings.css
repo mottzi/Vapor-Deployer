@@ -421,6 +421,7 @@ div.dp-settings-value:empty:before {
     .dp-settings-row-label {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
     }
 
     .dp-settings-row-label--key {
