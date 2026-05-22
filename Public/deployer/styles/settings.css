@@ -73,7 +73,7 @@
 .dp-settings-divider {
     border: none;
     border-top: 1px solid var(--border-subtle);
-    margin: 0 -20px;
+    margin: 0 -10px 0 -20px;
 }
 
 .dp-settings-hint {
