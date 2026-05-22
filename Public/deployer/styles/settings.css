@@ -200,12 +200,14 @@
    it as a credential field and offer saved-password autofill. These rules make it look
    identical to the key input. */
 div.dp-settings-value {
-    min-height: 38px;
-    line-height: 20px;
+    height: 38px;
+    line-height: 18px;
     white-space: pre;
     overflow-x: auto;
     overflow-y: hidden;
     cursor: text;
+    display: flex;
+    align-items: center;
 }
 
 div.dp-settings-value:empty:before {
