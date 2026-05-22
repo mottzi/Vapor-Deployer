@@ -385,6 +385,19 @@ div.dp-settings-value:empty:before {
     transition-duration: 0s;
 }
 
+/* Per-row labels. Hidden on desktop because the table head already labels both columns;
+   surfaced on mobile/tablet where the table head is collapsed away. */
+.dp-settings-row-label {
+    display: none;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 0 4px;
+}
+
 /* ── Mobile: collapse to single-column row ── */
 @media (max-width: 640px) {
     .dp-settings-table-head {
@@ -398,24 +411,35 @@ div.dp-settings-value:empty:before {
     .dp-settings-row {
         grid-template-columns: 1fr 32px;
         grid-template-areas:
-            "key    delete"
-            "value  delete";
+            "key-label    delete"
+            "key          delete"
+            "value-label  ."
+            "value        .";
         row-gap: 0;
         column-gap: 6px;
     }
 
+    .dp-settings-row-label {
+        display: block;
+    }
+
+    .dp-settings-row-label--key {
+        grid-area: key-label;
+        padding-bottom: 4px;
+    }
+
+    .dp-settings-row-label--value {
+        grid-area: value-label;
+        padding-top: 10px;
+        padding-bottom: 4px;
+    }
+
     .dp-settings-row .dp-settings-key {
         grid-area: key;
-        border-radius: var(--radius) var(--radius) 0 0;
-        border-bottom-color: transparent;
     }
 
     .dp-settings-row .dp-settings-value-wrap {
         grid-area: value;
-    }
-
-    .dp-settings-row .dp-settings-value-wrap .dp-settings-input {
-        border-radius: 0 0 var(--radius) var(--radius);
     }
 
     .dp-settings-row .dp-settings-delete {

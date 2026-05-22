@@ -99,6 +99,7 @@
                   <div class="dp-settings-rows" id="dp-settings-rows">
                     #for(entry in entries):
                       <div class="dp-settings-row#if(entry.error): dp-settings-row--error#endif">
+                        <span class="dp-settings-row-label dp-settings-row-label--key" aria-hidden="true">Key</span>
                         <input
                           class="dp-settings-input dp-settings-key"
                           type="text"
@@ -109,6 +110,7 @@
                           autocapitalize="characters"
                           spellcheck="false"
                         >
+                        <span class="dp-settings-row-label dp-settings-row-label--value" aria-hidden="true">Value</span>
                         <div class="dp-settings-value-wrap">
                           <input type="hidden" name="value[]" value="#(entry.value)">
                           <div
@@ -165,7 +167,9 @@
                      into #dp-settings-rows on click. -->
                 <template id="dp-settings-row-template">
                   <div class="dp-settings-row">
+                    <span class="dp-settings-row-label dp-settings-row-label--key" aria-hidden="true">Key</span>
                     <input class="dp-settings-input dp-settings-key" type="text" name="key[]" value="" placeholder="key" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                    <span class="dp-settings-row-label dp-settings-row-label--value" aria-hidden="true">Value</span>
                     <div class="dp-settings-value-wrap">
                       <input type="hidden" name="value[]" value="">
                       <div class="dp-settings-input dp-settings-value dp-settings-value--masked" contenteditable="plaintext-only" role="textbox" aria-label="Value" data-placeholder="value" spellcheck="false"></div>
