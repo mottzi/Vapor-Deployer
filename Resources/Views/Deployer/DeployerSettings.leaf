@@ -208,15 +208,16 @@
       const template = document.getElementById('dp-settings-row-template');
       const addBtn = document.getElementById('dp-settings-add');
 
-      function ensureAtLeastOneRow() {
-        if (!rowsContainer.querySelector('.dp-settings-row')) {
-          appendRow(true);
-        }
+      const tableHead = document.querySelector('.dp-settings-table-head');
+
+      function updateHeadVisibility() {
+        tableHead.style.display = rowsContainer.querySelector('.dp-settings-row') ? '' : 'none';
       }
 
       function appendRow(focus) {
         const node = template.content.firstElementChild.cloneNode(true);
         rowsContainer.appendChild(node);
+        updateHeadVisibility();
         if (focus) {
           const keyInput = node.querySelector('.dp-settings-key');
           if (keyInput) keyInput.focus();
@@ -224,6 +225,7 @@
       }
 
       addBtn.addEventListener('click', function () { appendRow(true); });
+      updateHeadVisibility();
 
       // Mirror contenteditable value into the sibling hidden input so the form submits the
       // current text. The value column avoids using a real <input> because browsers classify
@@ -251,6 +253,7 @@
 
         if (action.dataset.action === 'delete') {
           row.remove();
+          updateHeadVisibility();
         } else if (action.dataset.action === 'reveal') {
           const input = row.querySelector('.dp-settings-value');
           const closed = action.querySelector('.dp-settings-eye--closed');

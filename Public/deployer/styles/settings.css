@@ -118,10 +118,6 @@
     gap: 10px;
 }
 
-.dp-settings-table-head:has(~ .dp-settings-rows:not(:has(.dp-settings-row))) {
-    display: none;
-}
-
 .dp-settings-table-head {
     display: grid;
     grid-template-columns: minmax(160px, 1fr) minmax(220px, 2fr) 32px;
