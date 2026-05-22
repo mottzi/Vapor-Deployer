@@ -52,7 +52,7 @@ private extension ConfigCommand {
     }
 
     /// Applies a single field edit. Order: resolve key → load raw JSON → parse and apply input → validate
-    /// via `Configuration.resolved()` round-trip → preflight admin query if user wants restart → write
+    /// via `Configuration.resolved()` round-trip → preflight control query if user wants restart → write
     /// atomically → restart if requested.
     func runSet(key: String, value: String, app: Application, console: any Console) async throws {
 
@@ -90,9 +90,9 @@ private extension ConfigCommand {
 
         if wantsRestart {
             // Preflight before the write: if the server is busy, refuse the whole operation rather
-            // than leave a JSON-disagrees-with-runtime window. Mirrors `UpdateCommand.preflightAdminQuery`.
+            // than leave a JSON-disagrees-with-runtime window. Mirrors `UpdateCommand.preflightControlQuery`.
             // See `docs/adr/0005-cli-server-state-channel.md` and `docs/adr/0006-config-is-an-allowlist.md`.
-            try await preflightAdminQuery(
+            try await preflightControlQuery(
                 app: app,
                 config: oldConfig,
                 installDirectory: installDirectory,
@@ -150,15 +150,15 @@ private extension ConfigCommand {
 
 private extension ConfigCommand {
 
-    /// Same shape as `UpdateCommand.preflightAdminQuery` but with `ConfigCommand.Error` codes. We keep
+    /// Same shape as `UpdateCommand.preflightControlQuery` but with `ConfigCommand.Error` codes. We keep
     /// a duplicate rather than reaching across commands to avoid coupling the two error vocabularies.
-    func preflightAdminQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
+    func preflightControlQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
 
-        guard let token = AdminToken.loadOrGenerate(installDirectory: installDirectory) else {
-            throw Error.serverUnhealthy("admin token unavailable")
+        guard let token = ControlToken.loadOrGenerate(installDirectory: installDirectory) else {
+            throw Error.serverUnhealthy("control token unavailable")
         }
 
-        let uri = URI(string: "http://127.0.0.1:\(config.port)/admin/state")
+        let uri = URI(string: "http://127.0.0.1:\(config.port)/control/state")
 
         let response: ClientResponse
         do {
@@ -174,17 +174,17 @@ private extension ConfigCommand {
 
         switch response.status {
             case .ok:
-                let decoded: AdminStateResponse
-                do { decoded = try response.content.decode(AdminStateResponse.self) }
-                catch { throw Error.serverUnhealthy("admin response could not be decoded: \(error.localizedDescription)") }
+                let decoded: ControlStateResponse
+                do { decoded = try response.content.decode(ControlStateResponse.self) }
+                catch { throw Error.serverUnhealthy("control response could not be decoded: \(error.localizedDescription)") }
                 if decoded.phase == DeployerPhase.ready.rawValue { return }
                 throw Error.serverBusy(decoded.phase)
 
             case .unauthorized, .forbidden:
-                throw Error.serverUnhealthy("admin token rejected (\(response.status.code))")
+                throw Error.serverUnhealthy("control token rejected (\(response.status.code))")
 
             case .notFound:
-                throw Error.serverUnhealthy("admin endpoint missing — server may need restart")
+                throw Error.serverUnhealthy("control endpoint missing — server may need restart")
 
             default:
                 throw Error.serverUnhealthy("server returned \(response.status.code)")

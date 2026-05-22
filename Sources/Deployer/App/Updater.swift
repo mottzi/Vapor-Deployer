@@ -147,7 +147,7 @@ actor Updater {
 
     /// Launches the update child via the manager-appropriate cgroup-escape primitive.
     /// systemd: transient service via `systemd-run --user`. supervisor: `setsid` + background.
-    /// The child is marked with `DEPLOYER_INTERNAL_UPDATE=1` so it skips the pre-acquire admin-state
+    /// The child is marked with `DEPLOYER_INTERNAL_UPDATE=1` so it skips the pre-acquire control-state
     /// query (which would otherwise see its own parent's `.updating` phase and refuse).
     private func spawnDetachedUpdate(executable: URL) throws {
 

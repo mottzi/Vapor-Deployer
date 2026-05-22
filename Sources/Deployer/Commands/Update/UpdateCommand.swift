@@ -31,7 +31,7 @@ struct UpdateCommand: AsyncCommand {
         // already vetted state and is itself the source of `.updating`. Connection-refused is treated
         // as "server not running" → proceed (recovery path). See `docs/adr/0005-cli-server-state-channel.md`.
         if ProcessInfo.processInfo.environment["DEPLOYER_INTERNAL_UPDATE"] != "1" {
-            try await preflightAdminQuery(
+            try await preflightControlQuery(
                 app: context.application,
                 config: config,
                 installDirectory: installDirectory,
@@ -101,20 +101,20 @@ struct UpdateCommand: AsyncCommand {
 
 private extension UpdateCommand {
 
-    /// Queries `GET /admin/state` on the running server before the lock is acquired. Refuses with a
+    /// Queries `GET /control/state` on the running server before the lock is acquired. Refuses with a
     /// phase-named error when the server reports busy, and refuses with `serverUnhealthy` for any
     /// non-200-ready response (401/403/404/5xx, timeout). Connection-refused is interpreted as
     /// "server not running" and proceeds with a printed warning so this command remains a recovery
     /// primitive. See `docs/adr/0005-cli-server-state-channel.md`.
-    func preflightAdminQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
+    func preflightControlQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
 
-        guard let token = AdminToken.loadOrGenerate(installDirectory: installDirectory) else {
+        guard let token = ControlToken.loadOrGenerate(installDirectory: installDirectory) else {
             // No token file and we failed to create one. If a server is running it has the same problem
-            // and won't have mounted /admin — treat as serverUnhealthy rather than silently proceeding.
-            throw Error.serverUnhealthy("admin token unavailable")
+            // and won't have mounted /control — treat as serverUnhealthy rather than silently proceeding.
+            throw Error.serverUnhealthy("control token unavailable")
         }
 
-        let uri = URI(string: "http://127.0.0.1:\(config.port)/admin/state")
+        let uri = URI(string: "http://127.0.0.1:\(config.port)/control/state")
 
         let response: ClientResponse
         do {
@@ -131,17 +131,17 @@ private extension UpdateCommand {
 
         switch response.status {
             case .ok:
-                let decoded: AdminStateResponse
-                do { decoded = try response.content.decode(AdminStateResponse.self) }
-                catch { throw Error.serverUnhealthy("admin response could not be decoded: \(error.localizedDescription)") }
+                let decoded: ControlStateResponse
+                do { decoded = try response.content.decode(ControlStateResponse.self) }
+                catch { throw Error.serverUnhealthy("control response could not be decoded: \(error.localizedDescription)") }
                 if decoded.phase == DeployerPhase.ready.rawValue { return }
                 throw Error.serverBusy(decoded.phase)
 
             case .unauthorized, .forbidden:
-                throw Error.serverUnhealthy("admin token rejected (\(response.status.code))")
+                throw Error.serverUnhealthy("control token rejected (\(response.status.code))")
 
             case .notFound:
-                throw Error.serverUnhealthy("admin endpoint missing — server may need restart")
+                throw Error.serverUnhealthy("control endpoint missing — server may need restart")
 
             default:
                 throw Error.serverUnhealthy("server returned \(response.status.code)")
