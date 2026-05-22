@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 
 /// Reads and writes the target app's `.env` file. The file is the source of truth — the deployer
 /// renders it on save and the running Vapor app reads it at boot via `DotEnvFile.load()` against its
@@ -50,15 +51,13 @@ extension EnvStore {
 
     /// Validates entries, renders the canonical file, and writes it atomically with mode 0600.
     /// Throws `SaveError.validation` with every problem at once so the UI can show them all in one pass.
-    func save(_ entries: [Entry]) throws {
+    func save(_ entries: [Entry], logger: Logger? = nil) throws {
 
         let issues = EnvStore.validate(entries)
         guard issues.isEmpty else { throw SaveError.validation(issues) }
 
         let rendered = EnvStore.render(entries)
-        guard let data = rendered.data(using: .utf8) else {
-            throw SaveError.validation([ValidationIssue(rowIndex: nil, message: "Failed to encode UTF-8")])
-        }
+        let data = Data(rendered.utf8)
         guard data.count <= EnvStore.maxFileBytes else {
             throw SaveError.validation([ValidationIssue(
                 rowIndex: nil,
@@ -75,11 +74,17 @@ extension EnvStore {
 
         // Tighten permissions to 0600. `Data.write(.atomic)` on the first creation respects the
         // process umask, which on a typical service install is 0022 — leaving the file world-readable.
-        // The chmod runs on every save to make the invariant idempotent.
-        try? FileManager.default.setAttributes(
-            [.posixPermissions: NSNumber(value: Int16(0o600))],
-            ofItemAtPath: envFilePath
-        )
+        // The chmod runs on every save to make the invariant idempotent. A failure here is a
+        // security regression (file may remain readable to other users), so it's logged rather
+        // than silently swallowed.
+        do {
+            try FileManager.default.setAttributes(
+                [.posixPermissions: NSNumber(value: Int16(0o600))],
+                ofItemAtPath: envFilePath
+            )
+        } catch {
+            logger?.warning("Failed to set 0600 permissions on \(envFilePath): \(error)")
+        }
     }
 
 }
@@ -126,25 +131,28 @@ extension EnvStore {
             if value.contains("\n") || value.contains("\r") {
                 issues.append(.init(rowIndex: index, message: "Value cannot contain newlines."))
             }
+            // Reject the two-character substring `\n` (backslash + n). Vapor's `DotEnvFile`
+            // unescapes it to a real newline inside double-quoted values when the app boots,
+            // which would corrupt the value on read.
+            if value.contains(#"\n"#) {
+                issues.append(.init(rowIndex: index, message: #"Value cannot contain the literal sequence \n."#))
+            }
         }
 
         return issues
     }
 
-    /// Renders entries as a canonical `.env`. Values are single-quoted with `'\''` escaping — the
-    /// bulletproof POSIX-shell encoding that both Vapor's `DotEnvFile` and `set -a; .` accept.
+    /// Renders entries as a canonical `.env`. Values are wrapped in double quotes — Vapor's
+    /// `DotEnvFile` parser strips a matched outer pair without processing escapes inside (other
+    /// than `\n` → newline, which validation forbids). This survives apostrophes, equals signs,
+    /// whitespace, and embedded double quotes intact.
     static func render(_ entries: [Entry]) -> String {
 
         var lines: [String] = ["# Managed by Vapor Deployer. Edits made by hand may be overwritten."]
         for entry in entries {
-            lines.append("\(entry.key)=\(singleQuoteEscape(entry.value))")
+            lines.append(#"\#(entry.key)="\#(entry.value)""#)
         }
         return lines.joined(separator: "\n") + "\n"
-    }
-
-    /// Wraps a value in single quotes, escaping embedded single quotes as `'\''` (close, escaped-quote, open).
-    private static func singleQuoteEscape(_ value: String) -> String {
-        "'" + value.replacingOccurrences(of: "'", with: #"'\''"#) + "'"
     }
 
     /// Lenient line-oriented parser. Recognizes `KEY=VALUE` with optional surrounding single or double

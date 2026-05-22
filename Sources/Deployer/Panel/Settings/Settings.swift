@@ -24,12 +24,24 @@ extension Panel {
     /// values and per-row errors so the user does not lose their edits.
     func handleSettingsSave(request: Request) async throws -> Response {
 
-        let form = (try? request.content.decode(SettingsForm.self)) ?? SettingsForm(key: nil, value: nil, next: nil)
+        let form: SettingsForm
+        do {
+            form = try request.content.decode(SettingsForm.self)
+        } catch {
+            request.logger.warning("Failed to decode settings form: \(error)")
+            let view = try await renderSettingsWithErrors(
+                request: request,
+                entries: [],
+                issues: [],
+                globalError: "Could not read form data. Please reload and try again."
+            )
+            return try await view.encodeResponse(for: request)
+        }
         let entries = form.entries
 
         let store = EnvStore(envFilePath: envFilePath)
         do {
-            try store.save(entries.map { EnvStore.Entry(key: $0.key, value: $0.value) })
+            try store.save(entries.map { EnvStore.Entry(key: $0.key, value: $0.value) }, logger: request.logger)
         } catch let EnvStore.SaveError.validation(issues) {
             let view = try await renderSettingsWithErrors(request: request, entries: entries, issues: issues, globalError: nil)
             return try await view.encodeResponse(for: request)
