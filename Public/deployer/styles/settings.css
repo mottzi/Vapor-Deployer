@@ -394,8 +394,8 @@ div.dp-settings-value:empty:before {
     .dp-settings-row {
         grid-template-columns: 1fr 32px;
         grid-template-areas:
-            "key delete"
-            "value value";
+            "key    delete"
+            "value  delete";
         row-gap: 0;
         column-gap: 6px;
     }
@@ -416,8 +416,7 @@ div.dp-settings-value:empty:before {
 
     .dp-settings-row .dp-settings-delete {
         grid-area: delete;
-        align-self: start;
-        margin-top: 4px;
+        align-self: center;
     }
 
     .dp-settings-body {
