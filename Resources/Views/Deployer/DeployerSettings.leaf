@@ -203,6 +203,43 @@
       const template = document.getElementById('dp-settings-row-template');
       const addBtn = document.getElementById('dp-settings-add');
 
+      // ── Confirm dialog ──────────────────────────────────────────────
+      const overlay = document.createElement('div');
+      overlay.className = 'dp-confirm-overlay';
+      overlay.innerHTML = `
+        <div class="dp-confirm-box">
+          <p class="dp-confirm-msg"></p>
+          <div class="dp-confirm-actions">
+            <button class="dp-confirm-cancel" type="button">Cancel</button>
+            <button class="dp-confirm-ok" type="button">Delete</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      const confirmMsg  = overlay.querySelector('.dp-confirm-msg');
+      const confirmCancel = overlay.querySelector('.dp-confirm-cancel');
+      const confirmOk   = overlay.querySelector('.dp-confirm-ok');
+      let confirmResolve = null;
+      function showConfirm(msg) {
+        confirmMsg.textContent = msg;
+        overlay.classList.add('dp-confirm-overlay--visible');
+        return new Promise(function (resolve) { confirmResolve = resolve; });
+      }
+      confirmOk.addEventListener('click', function () {
+        overlay.classList.remove('dp-confirm-overlay--visible');
+        if (confirmResolve) { confirmResolve(true); confirmResolve = null; }
+      });
+      confirmCancel.addEventListener('click', function () {
+        overlay.classList.remove('dp-confirm-overlay--visible');
+        if (confirmResolve) { confirmResolve(false); confirmResolve = null; }
+      });
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) {
+          overlay.classList.remove('dp-confirm-overlay--visible');
+          if (confirmResolve) { confirmResolve(false); confirmResolve = null; }
+        }
+      });
+      // ────────────────────────────────────────────────────────────────
+
       const tableHead = document.querySelector('.dp-settings-table-head');
       const saveBtn = document.querySelector('.dp-settings-save-btn');
 
@@ -267,10 +304,18 @@
           const key = row.querySelector('.dp-settings-key');
           const val = row.querySelector('.dp-settings-value');
           const hadContent = (key && key.value && key.value.trim()) || (val && val.textContent && val.textContent.trim());
-          if (hadContent && !confirm('Delete "' + (key && key.value.trim() || 'this variable') + '"?')) return;
+          if (hadContent) {
+            const label = (key && key.value.trim()) || 'this variable';
+            showConfirm('Delete "' + label + '"?').then(function (confirmed) {
+              if (!confirmed) return;
+              row.remove();
+              updateHeadVisibility();
+              markDirty();
+            });
+            return;
+          }
           row.remove();
           updateHeadVisibility();
-          if (hadContent) markDirty();
         } else if (action.dataset.action === 'reveal') {
           const input = row.querySelector('.dp-settings-value');
           const closed = action.querySelector('.dp-settings-eye--closed');
