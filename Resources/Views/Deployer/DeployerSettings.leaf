@@ -256,6 +256,19 @@
 
       function appendRow(focus) {
         const node = template.content.firstElementChild.cloneNode(true);
+        // New rows start revealed — no existing secret to protect
+        const valDiv = node.querySelector('.dp-settings-value');
+        const revealBtn = node.querySelector('.dp-settings-reveal');
+        if (valDiv) {
+          valDiv.classList.remove('dp-settings-value--masked');
+          valDiv.contentEditable = 'plaintext-only';
+        }
+        if (revealBtn) {
+          revealBtn.querySelector('.dp-settings-eye--closed').style.display = 'none';
+          revealBtn.querySelector('.dp-settings-eye--open').style.display = '';
+          revealBtn.title = 'Hide value';
+          revealBtn.setAttribute('aria-label', 'Hide value');
+        }
         rowsContainer.appendChild(node);
         updateHeadVisibility();
         if (focus) {
