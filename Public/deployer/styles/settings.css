@@ -33,7 +33,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 10px 5px 6px;
+    padding: 5px 15px 5px 9px;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: transparent;
@@ -327,6 +327,7 @@ div.dp-settings-value:empty:before {
 .dp-settings-save-btn {
     color: var(--text-subtle);
     border-color: var(--border);
+    padding: 5px 15px;
 }
 
 @media (hover: hover) and (pointer: fine) {
