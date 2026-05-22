@@ -85,10 +85,9 @@
                   </div>
                 #endif
 
-                <div class="dp-settings-notice dp-settings-notice--info">
-                  <span class="dp-settings-notice-dot"></span>
+                <p class="dp-settings-hint">
                   Changes to environment variables take effect once the target app has been restarted.
-                </div>
+                </p>
 
                 <form id="dp-settings-form" class="dp-settings-form" method="POST" action="#(deployer.panelRoute)/settings" autocomplete="off">
 
@@ -112,7 +111,7 @@
                           type="text"
                           name="key[]"
                           value="#(entry.key)"
-                          placeholder="KEY_NAME"
+                          placeholder="key"
                           autocomplete="off"
                           autocapitalize="characters"
                           spellcheck="false"
@@ -172,7 +171,7 @@
                      into #dp-settings-rows on click. -->
                 <template id="dp-settings-row-template">
                   <div class="dp-settings-row">
-                    <input class="dp-settings-input dp-settings-key" type="text" name="key[]" value="" placeholder="KEY_NAME" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                    <input class="dp-settings-input dp-settings-key" type="text" name="key[]" value="" placeholder="key" autocomplete="off" autocapitalize="characters" spellcheck="false">
                     <span class="dp-settings-value-wrap">
                       <input class="dp-settings-input dp-settings-value dp-settings-value--masked" type="text" name="value[]" value="" placeholder="value" autocomplete="off" spellcheck="false" readonly>
                       <button type="button" class="dp-settings-reveal" title="Reveal value" aria-label="Reveal value" data-action="reveal">
