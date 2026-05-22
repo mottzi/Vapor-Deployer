@@ -6,7 +6,7 @@ extension Panel {
     /// entries, when called from `handleSettingsSave` after a validation failure).
     func serveSettings(request: Request) async throws -> View {
 
-        let store = EnvStore(envFilePath: envFilePath)
+        let store = EnvironmentStore(envFilePath: envFilePath)
         let entries = try store.load()
         let rows = entries.map { SettingsContext.Row(key: $0.key, value: $0.value, error: nil) }
         let context = SettingsContext(
@@ -39,13 +39,13 @@ extension Panel {
         }
         let entries = form.entries
 
-        let store = EnvStore(envFilePath: envFilePath)
+        let store = EnvironmentStore(envFilePath: envFilePath)
         do {
-            try store.save(entries.map { EnvStore.Entry(key: $0.key, value: $0.value) }, logger: request.logger)
-        } catch let EnvStore.SaveError.validation(issues) {
+            try store.save(entries.map { EnvironmentStore.Entry(key: $0.key, value: $0.value) }, logger: request.logger)
+        } catch let EnvironmentStore.SaveError.validation(issues) {
             let view = try await renderSettingsWithErrors(request: request, entries: entries, issues: issues, globalError: nil)
             return try await view.encodeResponse(for: request)
-        } catch let EnvStore.SaveError.writeFailed(path, underlying) {
+        } catch let EnvironmentStore.SaveError.writeFailed(path, underlying) {
             request.logger.error("Failed to write env file at \(path): \(underlying)")
             let view = try await renderSettingsWithErrors(
                 request: request,
@@ -79,7 +79,7 @@ private extension Panel {
     func renderSettingsWithErrors(
         request: Request,
         entries: [SettingsForm.Entry],
-        issues: [EnvStore.ValidationIssue],
+        issues: [EnvironmentStore.ValidationIssue],
         globalError: String?
     ) async throws -> View {
 
