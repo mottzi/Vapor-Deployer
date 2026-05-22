@@ -193,6 +193,10 @@
     text-transform: uppercase;
 }
 
+.dp-settings-key::placeholder {
+    text-transform: none;
+}
+
 /* ── Value column with inline reveal toggle ── */
 .dp-settings-value-wrap {
     position: relative;

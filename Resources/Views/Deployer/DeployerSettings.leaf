@@ -251,7 +251,6 @@
 
         if (action.dataset.action === 'delete') {
           row.remove();
-          ensureAtLeastOneRow();
         } else if (action.dataset.action === 'reveal') {
           const input = row.querySelector('.dp-settings-value');
           const closed = action.querySelector('.dp-settings-eye--closed');
@@ -272,7 +271,6 @@
         }
       });
 
-      ensureAtLeastOneRow();
     })();
   </script>
 
