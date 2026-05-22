@@ -167,7 +167,7 @@
 .dp-settings-input {
     width: 100%;
     background: var(--surface);
-    border: 1px solid var(--border-strong);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 9px 12px;
     font-family: var(--font-mono);
@@ -396,20 +396,28 @@ div.dp-settings-value:empty:before {
         grid-template-areas:
             "key delete"
             "value value";
-        row-gap: 3px;
+        row-gap: 0;
         column-gap: 6px;
     }
 
     .dp-settings-row .dp-settings-key {
         grid-area: key;
+        border-radius: var(--radius) var(--radius) 0 0;
+        border-bottom-color: transparent;
     }
 
     .dp-settings-row .dp-settings-value-wrap {
         grid-area: value;
     }
 
+    .dp-settings-row .dp-settings-value-wrap .dp-settings-input {
+        border-radius: 0 0 var(--radius) var(--radius);
+    }
+
     .dp-settings-row .dp-settings-delete {
         grid-area: delete;
+        align-self: start;
+        margin-top: 4px;
     }
 
     .dp-settings-body {
