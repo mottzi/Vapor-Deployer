@@ -24,7 +24,7 @@
 }
 
 /* ── Settings page: toolbar padding override (symmetric, unlike the main panel bar) ── */
-.dp-target-panel .dp-runtime-bar {
+.dp-runtime-bar:has(.dp-settings-back) {
     padding: 0 10px;
 }
 
