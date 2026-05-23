@@ -40,6 +40,18 @@ struct InputStep: SetupStep {
         )
         collectPanelRoute(discovered: jsonConfig?.panelRoute)
         collectServiceManager(discovered: metadata["SERVICE_MANAGER"])
+        collectInstallMode()
+
+        // Depends on serviceUser, appName, and panelRoute being finalized above.
+        context.paths = SystemPaths.derive(
+            serviceUser: context.serviceUser,
+            appName: context.appName,
+            panelRoute: context.panelRoute
+        )
+
+        collectDeploymentMode()
+        collectTestingPolicy()
+        collectBinaryBehaviour()
         try collectPanelAuth()
         try await collectDomain(
             discoveredPrimary: metadata["PRIMARY_DOMAIN"],
@@ -139,47 +151,54 @@ extension InputStep {
     }
 
     private func collectServiceManager(discovered: String?) {
-        
+
         console.section("Service manager")
-        
+
         while true {
             let value = console.askRequired("Service manager", default: discovered ?? "systemd")
-            
+
             guard let kind = ServiceManagerKind(rawValue: value) else {
                 console.warning("Service manager must be 'systemd' or 'supervisor'.")
                 continue
             }
-            
+
             context.serviceManagerKind = kind
             break
         }
+    }
+
+    private func collectInstallMode() {
+
+        console.section("Install mode")
 
         context.buildFromSource = console.confirm("Build deployer from source?", defaultYes: false)
-        
+
         if context.buildFromSource {
             context.deployerRepositoryBranch = console.askRequired(
                 "Deployer branch",
                 default: context.deployerRepositoryBranch
             )
         }
-        
-        context.paths = SystemPaths.derive(
-            serviceUser: context.serviceUser,
-            appName: context.appName,
-            panelRoute: context.panelRoute
-        )
+    }
+
+    private func collectDeploymentMode() {
+
+        console.section("Deployment mode")
 
         context.deploymentMode = console.confirm(
             "Enable automatic deployments on push?",
             defaultYes: false
         ) ? .automatic : .manual
+    }
+
+    private func collectTestingPolicy() {
+
+        console.section("Testing")
 
         context.testing = console.confirm(
             "Run swift test before each build?",
             defaultYes: true
         )
-
-        collectBinaryBehaviour()
     }
 
     private func collectBinaryBehaviour() {
