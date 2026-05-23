@@ -16,18 +16,23 @@
     --text-muted: #6b7280;
     --text-subtle: #9ca3af;
 
-    --c-building: #38bdf8;
-    --c-restoring: #22d3ee;
-    --c-pushed: #fb923c;
-    --c-built: #a78bfa;
-    --c-running: #34d399;
-    --c-failed: #f87171;
-    --c-canceled: #52525b;
-    --c-stale: #fbbf24;
-    --c-testing: #818cf8;
+    /* Icon-bearing buttons (action icons, dropdown trigger, toolbar buttons).
+       Light mode: full `--text` for legibility on white. Dark mode: muted to
+       avoid blowing out against the dark surface. */
+    --btn-icon: var(--text);
 
-    --c-tests-pass: #34d399;
-    --c-tests-fail: #f87171;
+    --c-building: #0284c7;
+    --c-restoring: #0891b2;
+    --c-pushed: #ea580c;
+    --c-built: #7c3aed;
+    --c-running: #059669;
+    --c-failed: #dc2626;
+    --c-canceled: #52525b;
+    --c-stale: #d97706;
+    --c-testing: #4f46e5;
+
+    --c-tests-pass: #059669;
+    --c-tests-fail: #dc2626;
 
     --c-building-bg: rgba(56, 189, 248, 0.1);
     --c-restoring-bg: rgba(34, 211, 238, 0.1);
@@ -85,6 +90,8 @@
         --text-secondary: #a1a1aa;
         --text-muted: #777777;
         --text-subtle: #555555;
+
+        --btn-icon: var(--text-muted);
 
         --c-building: #38bdf8;
         --c-restoring: #22d3ee;

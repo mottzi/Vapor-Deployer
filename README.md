@@ -1,134 +1,221 @@
-<table>
-<tr>
-<td width="320" valign="top">
+<div align="center">
 
-<img width="300" height="300" alt="deployer" src="https://github.com/user-attachments/assets/72e8ddb8-6e7b-4ee6-9fc4-9e057fc71fa6" />
-
-</td>
-<td valign="top">
+<img width="200" alt="deployer" src="https://github.com/user-attachments/assets/72e8ddb8-6e7b-4ee6-9fc4-9e057fc71fa6" />
 
 # Deployer
 
-**A simple CI/CD tool for Swift server applications that deploys automatically when changes are pushed to an app's GitHub repository.**
+**Push a commit and watch it deploy automatically.**
+<br><br>
+[Watch it](https://mottzi.codes/deployer_demo_original.mp4) in action!
+<br><br>
+</div>
 
-With just one setup command, Deployer gets your server ready. It installs Swift, configures Nginx and GitHub webhooks, issues SSL certificates and keeps your app running on the latest commit. A live web panel shows every deployment as it happens. It streams build output, updates in real-time and provides start and stop buttons for your app.
-
-Watch a video demo [here](https://mottzi.codes/deployer_demo_original.mp4)!
-
-</td>
-</tr>
-
-<tr>
-<td colspan="2" align="center">
-
-<img width="854" height="741" alt="Deployer Panel" src="https://github.com/user-attachments/assets/c23b71ba-4833-42f3-ab22-34f25a578d01" />
-
-</td>
-</tr>
-</table>
+Deployer is a lightweight and self-hosted CI/CD tool to manage your Swift server apps. Every commit you push to your app's repository shows up in a live panel in your browser. Deployer can be triggered automatically or manually, streaming build output and status updates to your browser in real time. You can start or stop your app, trigger tests, set environment variables and rollback to past versions right from the panel! Deployer can be installed with a single command and is powered by [Vapor](https://github.com/vapor/vapor) and [Mist](https://github.com/mottzi/Vapor-Mist).
 
 <br>
 
-1. Code change is pushed to remote repository.
-2. Push event is intercepted on server using webhooks.
-3. Deployment pipeline is initiated:
-     - pull changes from remote repository
-     - build executable
-     - move executable
-     - check for queued deployments
-     - re-run latest queued deployment
-     - restart application
+<p align="center">
+  <img width="760" alt="Deployer Panel" src="https://github.com/user-attachments/assets/c23b71ba-4833-42f3-ab22-34f25a578d01" />
+</p>
+
+Deployer is designed to be beginner friendly so anyone can take their first steps in the Swift-on-Server ecosystem without the hastle of complicated terminal sessions.
+
+What happens on a push:
+
+1. GitHub fires a webhook to your server.
+2. Deployer verifies the signature, then queues the commit.
+3. The pipeline checks out the exact SHA, optionally runs tests, and builds.
+4. The new binary is swapped in, with the previous one archived as backup.
+5. The app restarts.
+
+If something goes wrong, the old binary keeps serving.
 
 ## Setup
 
-Before setup, you will need:
+Before you start, you will need:
 
-- Ubuntu server with root access.
-- Domain pointing to the server.
-- Swift app in GitHub repository.
+- An Ubuntu server with root access.
+- A domain pointing at it.
+- A Swift app in a GitHub repository.
 
-SSH into your server and run (as root):
+SSH in and run:
 
 ```bash
 bash <(curl -sSL https://mottzi.codes/deployer/setup.sh)
 ```
 
-Deployer will walk you through the setup interactively, prompting for configuration (Press enter for defaults).
+Setup is interactive. Press enter through the prompts to take the defaults, or override what you want.
 
-- Swift is installed via Swiftly.
-- Nginx with TLS/SSL certificates via Let's encrypt.
-- SSH deploy key is generated for registration with GitHub.
-- GitHub webhook is created to watch for pushes.
+Behind the scenes, it:
 
-Once setup completes, your app is live and Deployer is listening for pushes on main.
+- installs Swift via Swiftly,
+- sets up Nginx with TLS via Let's Encrypt,
+- creates a non-root service user and an SSH GitHub deploy key,
+- registers a GitHub webhook for push detection,
+- hardens SSH and installs `deployerctl` for CLI control.
 
-## Deployer Control
+When setup finishes, your app is live and the panel is listening for the next push.
 
-Setup installs **`deployerctl`** on the server. Example usage:
+## What it does
+
+- **Manual or automatic deployments.**
+
+  Pick the mode that suits the project. **Manual** mode records pushed commits and waits for you to trigger deployment by pressing the `Build` or `Build & Run` buttons. **Automatic** mode deploys every pushed commit the moment it lands.
+
+- **Live build output in the panel.**
+
+  Every step of the deployment pipeline (`git fetch`, `git checkout`, `swift test`, `swift build`, and binary swap) streams their output into the panel in real time. If the build fails, the full transcript stays attached to the deployment so you can read it back later.
+
+- **Start and stop from the browser.**
+
+  The target app's service has buttons next to it on the panel.
+
+- **One-click rollback to a previous build.**
+
+  Successful builds can be configured to be archived so you can roll back without rebuilding. Click `Run` on any archived deployment and the service swaps to that binary. By default the five most recent builds are kept, and the retention policy (`target.binaryBehaviour`) is configurable: keep a fixed count, cap by total disk size, keep everything, or keep nothing.
+
+- **Run `swift test` on demand.**
+
+  Tests can run automatically before every build, or only when you press the `Test` button on a deployment. Result output is live streamed into the panel.
+
+- **Edit the app's environment variables in the panel.**
+
+  Open the settings page, edit your app's `.env`, hit save. The file is validated and written atomically. Hit restart and the change is live.
+
+- **deployerctl for terminal based control.**
+
+  A small wrapper script for the things that belong in a terminal: starting and stopping the deployer and your app, tailing logs, rerunning setup, changing configuration and updating the deployer.
+
+## Under the hood
+
+A few details that matter if you care about how it works.
+
+- **Serialized build queue.**
+
+  A `Queue` actor makes sure only one build runs at a time. While a build is in flight, new pushes are recorded as `canceled`. When the build finishes, the queue jumps to the newest canceled push and skips everything in between, so you always end on the latest commit and never queue up stale work.
+
+- **Atomic binary swap with auto-rollback.**
+
+  Before the new binary moves in, the live one is set aside as `.old`. If the move fails for any reason, the previous binary is restored before the error bubbles up.
+
+- **Boot-drain replay.**
+
+  If the server reboots or the deployer crashes mid-deploy, the next start picks up the most recent stranded push and resumes from there.
+
+- **Signed webhooks only.**
+
+  Every incoming webhook is verified with HMAC-SHA256 against the secret generated at setup. Unsigned or malformed payloads are rejected before they reach the queue.
+
+- **Websocket-driven panel.**
+
+  Real-time updates run on [Mist](https://github.com/mottzi/Mist), which pushes database changes to connected clients. No polling, no page reloads. Status badges, row transitions, and live build streams all share the same channel.
+
+- **Stack.**
+
+  Built on [Vapor](https://github.com/vapor/vapor) with [Fluent](https://github.com/vapor/fluent) on SQLite, served through [Leaf](https://github.com/vapor/leaf) templates.
+
+## deployerctl
+
+After setup, `deployerctl` is on the server's `PATH`. Most actions need `sudo`.
 
 ```bash
-sudo deployerctl start  # starts deployer and app
-sudo deployerctl status app 
-sudo deployerctl stop deployer
-deployerctl version
-deployerctl help
+sudo deployerctl <command> [deployer|app|all]
+```
+
+```bash
+sudo deployerctl status              # show service status for deployer + app
+sudo deployerctl restart app         # restart just the target app
+sudo deployerctl logs deployer       # follow deployer logs (Ctrl-C to exit)
+sudo deployerctl update              # update deployer to the latest release
 ```
 
 | Action |  |
 | --- | --- |
-| status |
-| start |
-| stop |
-| restart |
-| logs | Ctrl-C to exit |
-| version | Print the deployer version |
-| setup | Rerun deployer setup |
-| update | Update deployer |
-| remove | Tear down deployer |
-| help |
+| `status` | Service status (deployer, app, or both) |
+| `start` / `stop` / `restart` | Service lifecycle |
+| `logs` | Tail the on-disk log file (Ctrl-C to exit) |
+| `journal` | Recent systemd journal entries (systemd only) |
+| `update` | Update the deployer, with auto-rollback on failure |
+| `config` | View or change a field in `deployer.json` |
+| `setup` | Rerun setup interactively |
+| `remove` | Tear down the install |
+| `version` | Print the deployer version |
+| `help` | Print usage |
 
-### Configuration
+Targets are `deployer`, `app`, or `all` (default).
 
-Runtime settings live in **`deployer.json`**, in the same directory as the `deployer` executable. For a default install, that is '/home/vapor/deployer/deployer.json'. Setup writes the first version; you can edit it when you need different settings. Restart Deployer after making changes.
+## Configuration
+
+With the default service user `vapor` and an app named `MyApp`, the install looks like:
+
+```
+/home/vapor/
+├── deployer/
+│   ├── deployer            # the deployer binary
+│   ├── deployer.json       # this config file
+│   ├── deployer.db         # SQLite database
+│   └── deployer.log        # service log
+└── apps/
+    └── MyApp/              # your app's git checkout
+        ├── .env            # target app environment variables
+        └── deploy/
+            ├── MyApp       # running app binary
+            ├── MyApp.log   # app log
+            └── binaries/   # archived past builds (rollback targets)
+```
+
+Runtime settings live in `deployer.json`, beside the deployer binary:
 
 ```json
 {
-    "buildFromSource": false,
+    "port": 8081,
+    "panelRoute": "/deployer",
+    "socketPath": "/deployer/ws",
+    "serviceManager": "systemd",
     "dbFile": "deployer.db",
     "deployerDirectory": ".",
-    "panelRoute": "/deployer",
-    "port": 8081,
-    "serviceManager": "systemd",
-    "socketPath": "/deployer/ws",
+    "deployerBranch": "main",
+    "buildFromSource": false,
     "target": {
+        "name": "MyApp",
+        "directory": "../apps/MyApp",
+        "branch": "main",
         "appPort": 8080,
         "buildMode": "release",
         "deploymentMode": "manual",
-        "directory": "../apps/MyProduct",
-        "name": "MyProduct",
-        "pusheventPath": "/pushevent/MyProduct"
+        "testing": true,
+        "pusheventPath": "/pushevent/MyApp",
+        "binaryBehaviour": {
+            "newest": {
+                "count": 5
+            }
+        }
     }
 }
 ```
 
-## Deployment
+Most fields are wired into the live system at setup time (Nginx, systemd unit, clone path, webhook secret). Editing them by hand will drift the config from the install.
 
-The webhook endpoint validates HMAC-SHA256 signature before touching the queue, rejecting unsigned or malformed payloads. Manual deployment mode (default) waits for you to trigger a deployment on the web panel by pressing the play button. Automatic mode deploys a push instantly.
+Six fields are safe to change at runtime and have a CLI for it:
 
-The pipeline runs three stages in sequence:
+```bash
+sudo deployerctl config target.deploymentMode automatic
+sudo deployerctl config target.testing true
+```
 
-1. `git fetch` + detached `HEAD` checkout at the exact SHA.
-2. `swift build -c <release|debug>`, output streamed live to connected clients.
-3. Binary moves from `.build/` to `deploy/<app>`. 
+The runtime-editable set: `deployerBranch`, `target.branch`, `target.buildMode`, `target.deploymentMode`, `target.binaryBehaviour`, `target.testing`. Each edit is validated against the same checks the deployer runs at boot, and you're offered a restart so the change goes live right away.
 
-A successful run marks the deployment `deployed`, demotes the previous live entry back to `success`, restarts the app and persists the full build transcript. The previous binary is backed up; if the move fails, rollback is automatic.
+For anything else, just rerun setup:
 
-The `Queue` actor serializes all deployments so only one build runs at a time. While the queue is locked, the panel shows a live Locked / Unlocked badge. While a build is running, subsequent pushes are recorded as `canceled`. When the current job finishes, the queue drains to the newest canceled entry, skipping everything in between. 
+```bash
+sudo deployerctl setup
+```
 
-Deployments are persisted with [Fluent](https://github.com/vapor/fluent) on SQLite; Deployer itself is built on [Vapor](https://github.com/vapor/vapor). On first launch, Deployer seeds the database with the latest commit in the target repository so the panel doesn't start empty. The `is_live` flag tracks the active deployment currently deployed and running on the server.
+Setup remembers your previous answers and offers them as defaults. Changing one value is a matter of pressing enter through the rest. You can use the setup command to recover corrupted installations.
 
-Deployer's panel uses [Mist](https://github.com/mottzi/Mist) to power real-time database driven UI updates over websockets, reflecting state change without polling or page reloads.
+## Limitations
 
-## Demo Video
+- **One target per install.** A deployer manages one app. If you have two apps, run a second deployer for the other one.
+- **One branch per target.** Pushes on other branches are ignored. No PR previews or per-branch environments today.
 
-https://github.com/user-attachments/assets/7da6465e-a911-441f-8bc1-1e7a45b85abc
+The smaller surface is most of the point. If your needs fit inside it, the whole system is something you can read and understand in an afternoon.

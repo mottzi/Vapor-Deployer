@@ -158,7 +158,13 @@
    ───────────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
     .dp-shell {
-        padding: 16px 12px 24px;
+        padding: 32px 12px 24px;
+    }
+
+    .dp-brand-logo {
+        width: 67px;
+        height: 67px;
+        top: -49px;
     }
 
     /* Two-row bar via flex-wrap. Items strip sits on its own row. */

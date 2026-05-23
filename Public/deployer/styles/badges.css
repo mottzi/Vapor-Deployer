@@ -78,7 +78,7 @@
 .dp-control-btn--stop,
 .dp-control-btn--restart {
     background: transparent;
-    color: var(--text-subtle);
+    color: var(--btn-icon);
     border: 1px solid var(--border);
 }
 

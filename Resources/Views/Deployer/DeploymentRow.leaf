@@ -99,7 +99,7 @@
             <span
               class="dp-duration-live"
               mist-behavior="timer"
-              data-started-at-unix-ms="#(context.deployment.startedAtUnixMs)"
+              data-started-at-unix-ms="#(context.deployment.liveTimerStartedAtUnixMs)"
             >0.0s</span>
           </span>
         #endif

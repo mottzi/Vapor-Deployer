@@ -192,7 +192,7 @@
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: transparent;
-    color: var(--text-subtle);
+    color: var(--btn-icon);
     font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 500;
@@ -223,7 +223,7 @@
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: transparent;
-    color: var(--text-subtle);
+    color: var(--btn-icon);
     font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 500;

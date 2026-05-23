@@ -40,12 +40,25 @@
     gap: 16px;
     width: 100%;
     min-width: 0;
+    position: relative;
 }
 
 .dp-session-bar {
     display: flex;
     justify-content: flex-end;
     width: 100%;
+    margin-bottom: -10px;
+}
+
+.dp-brand-logo {
+    position: absolute;
+    top: -62px;
+    left: 16px;
+    width: 84px;
+    height: 84px;
+    object-fit: contain;
+    z-index: 0;
+    pointer-events: none;
 }
 
 .dp-header-panel,
@@ -60,4 +73,6 @@
 
 .dp-header-panel {
     overflow: clip;
+    position: relative;
+    z-index: 1;
 }
