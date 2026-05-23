@@ -44,8 +44,25 @@
 
 .dp-session-bar {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: flex-end;
     width: 100%;
+    margin-bottom: -28px;
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.dp-session-bar > * {
+    pointer-events: auto;
+}
+
+.dp-brand-logo {
+    display: block;
+    width: 84px;
+    height: 84px;
+    object-fit: contain;
+    margin-left: 8px;
 }
 
 .dp-header-panel,
