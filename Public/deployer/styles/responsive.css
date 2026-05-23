@@ -69,8 +69,7 @@
     }
 
     .dp-tr::before {
-        top: 12px;
-        bottom: 12px;
+        display: none;
     }
 
     .dp-td {
@@ -237,7 +236,7 @@
         gap: 6px;
     }
 
-    .dp-target-panel .dp-supervisor-btn {
+    .dp-target-panel .dp-control-btn {
         width: 30px;
         height: 30px;
         padding: 0;
@@ -246,7 +245,7 @@
         line-height: 0;
     }
 
-    .dp-target-panel .dp-supervisor-btn svg {
+    .dp-target-panel .dp-control-btn svg {
         width: 14px;
         height: 14px;
     }

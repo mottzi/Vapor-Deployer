@@ -12,28 +12,34 @@ struct UpdateCommand: AsyncCommand {
 
     /// Downloads the latest release, extracts it, and does a stop / swap / start with rollback on failure.
     func run(using context: CommandContext, signature: Signature) async throws {
-        do {
-            try await runPipeline(context: context)
-            UpdateCommand.writeCompletionSentinelIfRequested(error: nil)
-        } catch {
-            UpdateCommand.writeCompletionSentinelIfRequested(error: error)
-            throw error
-        }
+        try await runPipeline(context: context)
     }
 
     private func runPipeline(context: CommandContext) async throws {
 
         let executableURL = try Configuration.getExecutableURL()
-        let resolvedExecutableURL = executableURL.standardizedFileURL.resolvingSymlinksInPath()
-        let installDirectory = resolvedExecutableURL.deletingLastPathComponent()
-        let executableName = resolvedExecutableURL.lastPathComponent
+        let installDirectory = executableURL.deletingLastPathComponent()
+        let executableName = executableURL.lastPathComponent
 
-        guard !executableName.isEmpty else { throw Error.invalidExecutablePath(resolvedExecutableURL.path) }
+        guard !executableName.isEmpty else { throw Error.invalidExecutablePath(executableURL.path) }
+
+        let config = try Configuration.load()
+
+        // User-typed shell invocations verify the running server is in `.ready` phase before proceeding.
+        // Panel-spawned children carry `DEPLOYER_INTERNAL_UPDATE=1` and skip the query — their parent
+        // already vetted state and is itself the source of `.updating`. Connection-refused is treated
+        // as "server not running" → proceed (recovery path). See `docs/adr/0005-cli-server-state-channel.md`.
+        if ProcessInfo.processInfo.environment["DEPLOYER_INTERNAL_UPDATE"] != "1" {
+            try await preflightControlQuery(
+                app: context.application,
+                config: config,
+                installDirectory: installDirectory,
+                console: context.console
+            )
+        }
 
         let lock = try UpdateLock.acquire(installDirectory: installDirectory)
         defer { _ = lock }
-
-        let config = try Configuration.load()
 
         let updateContext = UpdateContext(
             installDirectory: installDirectory,
@@ -41,7 +47,7 @@ struct UpdateCommand: AsyncCommand {
             serviceName: "deployer"
         )
         
-        updateContext.serviceUser = await resolveServiceUser(executableURL: resolvedExecutableURL) ?? ""
+        updateContext.serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: executableURL) ?? ""
         updateContext.isSourceInstall = config.buildFromSource
         updateContext.deployerBranch = config.deployerBranch
 
@@ -92,17 +98,17 @@ struct UpdateCommand: AsyncCommand {
 
 }
 
-extension UpdateCommand {
+private extension UpdateCommand {
 
-    /// Writes a completion sentinel when invoked by the panel-triggered detached child.
-    /// Signals that the update process has exited (with or without an error) so the parent's
-    /// watcher Task can reset the panel state. Cli invocations don't set the env var and skip this path.
-    /// See `Updater.spawnDetachedUpdate`.
-    static func writeCompletionSentinelIfRequested(error: Swift.Error?) {
-        let environment = ProcessInfo.processInfo.environment
-        guard let sentinelPath = environment["DEPLOYER_COMPLETION_SENTINEL"], !sentinelPath.isEmpty else { return }
-        let body = error?.localizedDescription ?? ""
-        try? body.write(toFile: sentinelPath, atomically: true, encoding: .utf8)
+    // See `ControlPreflight.query` and `docs/adr/0005-cli-server-state-channel.md`.
+    func preflightControlQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
+        switch await ControlPreflight.query(app: app, port: config.port, installDirectory: installDirectory) {
+            case .ready: return
+            case .busy(let phase): throw Error.serverBusy(phase)
+            case .unhealthy(let reason): throw Error.serverUnhealthy(reason)
+            case .unreachable(let reason):
+                console.print("Warning: deployer server not reachable for state check (\(reason)). Proceeding; flock still enforces update mutual exclusion.")
+        }
     }
 
 }
@@ -166,22 +172,6 @@ extension UpdateCommand {
 }
 
 extension UpdateCommand {
-    
-    /// Resolves the configured service user so systemd user operations can target the right user manager when invoked as root.
-    private func resolveServiceUser(executableURL: URL) async -> String? {
-        let metadata = await ConfigDiscovery.loadDeployerctl()
-        if let discovered = metadata["SERVICE_USER"]?.trimmed, !discovered.isEmpty {
-            return discovered
-        }
-        
-        let attributes = try? FileManager.default.attributesOfItem(atPath: executableURL.path)
-        if let owner = attributes?[.ownerAccountName] as? String {
-            let trimmed = owner.trimmed
-            if !trimmed.isEmpty { return trimmed }
-        }
-        
-        return nil
-    }
     
     /// Reinstates the last known-good executable after a failed update attempt.
     static func restoreBackupBinary(context: UpdateContext, fileManager: FileManager, executableURL: URL) throws {

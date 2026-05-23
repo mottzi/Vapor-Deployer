@@ -1,6 +1,6 @@
-/* ── Supervisor process/queue status badges ── */
+/* ── Service / queue state badges ── */
 
-.dp-supervisor-badge {
+.dp-state-badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -11,55 +11,55 @@
     height: 28px;
     line-height: 1;
     text-transform: capitalize;
-    border-radius: 9999px;
+    border-radius: var(--radius);
     border: 1px solid;
     white-space: nowrap;
     letter-spacing: 0.01em;
 }
 
-.dp-supervisor-badge--running {
+.dp-state-badge--running {
     color: var(--c-running);
     background: var(--c-running-bg);
     border-color: var(--c-running-border);
 }
 
-.dp-supervisor-badge--stopped {
+.dp-state-badge--stopped {
     color: var(--c-failed);
     background: var(--c-failed-bg);
     border-color: var(--c-failed-border);
 }
 
-.dp-supervisor-badge--transitioning {
+.dp-state-badge--transitioning {
     color: var(--c-stale);
     background: var(--c-stale-bg);
     border-color: var(--c-stale-border);
 }
 
-.dp-supervisor-badge--fatal {
+.dp-state-badge--fatal {
     color: var(--c-failed);
     background: var(--c-failed-bg);
     border-color: var(--c-failed-border);
 }
 
-.dp-supervisor-badge--queue-locked {
+.dp-state-badge--queue-locked {
     color: var(--c-stale);
     background: var(--c-stale-bg);
     border-color: var(--c-stale-border);
 }
 
-.dp-supervisor-badge--queue-unlocked {
+.dp-state-badge--queue-unlocked {
     color: var(--c-running);
     background: var(--c-running-bg);
     border-color: var(--c-running-border);
 }
 
-.dp-supervisor-badge--queue-updating {
+.dp-state-badge--queue-updating {
     color: var(--c-building);
     background: var(--c-building-bg);
     border-color: var(--c-building-border);
 }
 
-.dp-supervisor-btn {
+.dp-control-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -75,37 +75,37 @@
     white-space: nowrap;
 }
 
-.dp-supervisor-btn--stop,
-.dp-supervisor-btn--restart {
+.dp-control-btn--stop,
+.dp-control-btn--restart {
     background: transparent;
     color: var(--text-subtle);
     border: 1px solid var(--border);
 }
 
 @media (hover: hover) and (pointer: fine) {
-    .dp-supervisor-btn--stop:hover {
+    .dp-control-btn--stop:hover {
         background: rgba(248, 113, 113, 0.08);
         color: var(--c-failed);
         border-color: rgba(248, 113, 113, 0.3);
     }
 
-    .dp-supervisor-btn--restart:hover {
-        background: var(--c-building-bg);
-        color: var(--c-building);
-        border-color: var(--c-building-border);
+    .dp-control-btn--restart:hover {
+        background: var(--c-running-bg);
+        color: var(--c-running);
+        border-color: var(--c-running-border);
     }
 }
 
-.dp-supervisor-btn--stop:active {
+.dp-control-btn--stop:active {
     background: rgba(248, 113, 113, 0.08);
     color: var(--c-failed);
     border-color: rgba(248, 113, 113, 0.3);
 }
 
-.dp-supervisor-btn--restart:active {
-    background: var(--c-building-bg);
-    color: var(--c-building);
-    border-color: var(--c-building-border);
+.dp-control-btn--restart:active {
+    background: var(--c-running-bg);
+    color: var(--c-running);
+    border-color: var(--c-running-border);
 }
 
 /* ── Deployment row status pill ── */
@@ -123,7 +123,7 @@
     height: 28px;
     line-height: 1;
     text-transform: capitalize;
-    border-radius: 9999px;
+    border-radius: var(--radius);
     border: 1px solid;
     letter-spacing: 0.01em;
 }

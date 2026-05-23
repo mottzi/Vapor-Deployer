@@ -33,7 +33,7 @@ extension Queue {
             await stream.close()
             try await deployment.save(on: app.db)
         } catch {
-            await fail(deployment: deployment, stream: stream, error: error)
+            await fail(deployment: deployment, error: error, stream: stream)
         }
     }
 
@@ -93,10 +93,10 @@ extension Queue {
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
         } catch {
-            await fail(deployment: deployment, error: error)
+            await fail(deployment: deployment, error: error, priorTranscript: "")
         }
     }
-    
+
     /// Builds queued commits in sequence, promoting the most recent successful build to the live service.
     /// Honors a "last good build wins" policy: if a later iteration fails, the previous successful build is still promoted.
     func runQueue(startingWith deployment: Deployment) async {
@@ -108,9 +108,6 @@ extension Queue {
         while true {
             let stream = BuildOutputStream(app: app, deployment: current)
             let worker = Worker(deployment: current, target: target, app: app, stream: stream, onStatusChange: onStatusChange)
-            // Track which phase is in flight so a thrown error can mark lastTestOutcome correctly
-            // before fail() commits the row. Status is always .failed; phase lives in lastTestOutcome.
-            var inTestPhase = false
 
             do {
                 await stream.start()
@@ -120,21 +117,23 @@ extension Queue {
                     // The user can still force a re-test via the manual Test action.
                     await stream.appendLabel("swift test — already passed")
                 } else if target.testing {
-                    current.status = .testing
-                    try? await current.save(on: app.db)
-                    inTestPhase = true
-                    try await worker.test()
-                    current.lastTestOutcome = true
-                    inTestPhase = false
-                    current.status = .building
-                    try? await current.save(on: app.db)
+                    do {
+                        current.status = .testing
+                        try? await current.save(on: app.db)
+                        try await worker.test()
+                        current.lastTestOutcome = true
+                        current.status = .building
+                        try? await current.save(on: app.db)
+                    } catch {
+                        current.lastTestOutcome = false
+                        throw error
+                    }
                 }
                 try await worker.build()
                 try await worker.move()
                 await stream.flush()
             } catch {
-                if inTestPhase { current.lastTestOutcome = false }
-                await fail(deployment: current, stream: stream, error: error)
+                await fail(deployment: current, error: error, stream: stream)
                 if let last = lastSuccessful {
                     await finalizeQueue(deployment: last.deployment, priorTranscript: last.transcript)
                 }
@@ -184,14 +183,14 @@ extension Queue {
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
         } catch {
-            await fail(deployment: deployment, stream: stream, error: error)
+            await fail(deployment: deployment, error: error, stream: stream)
         }
     }
 
     /// Finalizes a previously-successful build whose stream has already closed (last-good-build-wins path).
-    /// On failure, the prior transcript is preserved and the error appended via `failWithoutStream`.
+    /// On failure, the prior transcript is preserved and the error appended via the streamless `fail`.
     func finalizeQueue(deployment: Deployment, priorTranscript: String) async {
-        
+
         let store = BinaryStore(target: config.target)
         let worker = Worker(deployment: deployment, target: config.target, app: app, stream: nil, onStatusChange: onStatusChange)
 
@@ -201,13 +200,13 @@ extension Queue {
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
         } catch {
-            await fail(deployment: deployment, transcript: priorTranscript, error: error)
+            await fail(deployment: deployment, error: error, priorTranscript: priorTranscript)
         }
     }
 
     /// Marks a deployment `.failed`, appends the error into the live stream, and persists the full transcript.
-    /// Phase distinction (test vs build/move/restart) is encoded in `lastTestOutcome` and visible in the transcript.
-    func fail(deployment: Deployment, stream: BuildOutputStream, error: Swift.Error) async {
+    /// Stderr from the failing command is already in the stream, so `appendError` only writes a one-line marker.
+    func fail(deployment: Deployment, error: Swift.Error, stream: BuildOutputStream) async {
 
         await stream.appendError(error)
         await stream.flush()
@@ -220,19 +219,24 @@ extension Queue {
         try? await deployment.save(on: app.db)
     }
 
-    /// Marks a deployment as failed when no live stream is attached (restore jobs and last-good-build-wins finalize).
-    func fail(deployment: Deployment, transcript: String = "", error: Swift.Error) async {
-        
+    /// Marks a deployment failed when no live stream is attached (restore jobs and last-good-build-wins finalize).
+    /// Nothing captured stderr during execution, so the error's display string is inlined into the transcript.
+    func fail(deployment: Deployment, error: Swift.Error, priorTranscript: String) async {
+
         deployment.status = .failed
         deployment.finishedAt = .now
 
-        let errorMessage = (error as? Shell.Error)?.output ?? error.localizedDescription
-        let combined = transcript.isEmpty
+        let errorMessage = displayString(for: error)
+        let combined = priorTranscript.isEmpty
             ? errorMessage
-            : transcript + "\n\n" + errorMessage
+            : priorTranscript + "\n\n" + errorMessage
         deployment.output = combined.trimmingCharacters(in: .whitespacesAndNewlines)
 
         try? await deployment.save(on: app.db)
+    }
+
+    private func displayString(for error: Swift.Error) -> String {
+        (error as? Shell.Error)?.output ?? error.localizedDescription
     }
     
     /// Broadcasts current queue state to connected live panel clients.
@@ -244,6 +248,26 @@ extension Queue {
 }
 
 extension Queue {
+
+    /// Finds the newest non-superseded `.canceled` row at boot and starts the queue with it.
+    /// No-ops if nothing is stranded or the candidate is already superseded.
+    func drainOnBoot() async {
+        guard config.target.deploymentMode == .automatic else { return }
+        guard let seed = try? await bootDrainSeed() else { return }
+        await deploy(deployment: seed, target: config.target)
+    }
+
+    /// Returns the newest `.canceled` row for this product that has not been superseded, or nil.
+    private func bootDrainSeed() async throws -> Deployment? {
+        let candidate = try await Deployment.query(on: app.db)
+            .filter(\.$product, .equal, config.target.name)
+            .filter(\.$status, .equal, .canceled)
+            .sort(\.$startedAt, .descending)
+            .first()
+
+        guard let candidate, try await !isSuperseded(candidate) else { return nil }
+        return candidate
+    }
 
     /// Returns the most recent canceled deployment queued after the given one, or nil if none exists or all are superseded.
     func nextQueuedDeployment(after deployment: Deployment) async throws -> Deployment? {

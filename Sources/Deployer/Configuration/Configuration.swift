@@ -3,16 +3,16 @@ import Vapor
 /// Runtime configuration for the local deployer, decoded from the sibling JSON file.
 struct Configuration: Codable, Sendable {
     
-    let port: Int
-    let dbFile: String
-    let deployerDirectory: String
-    let socketPath: String
-    let panelRoute: String
-    let target: TargetConfiguration
-    let serviceManager: ServiceManagerKind
-    let buildFromSource: Bool
-    let deployerBranch: String
-    let webhookSecret: String?
+    var port: Int
+    var dbFile: String
+    var deployerDirectory: String
+    var socketPath: String
+    var panelRoute: String
+    var target: TargetConfiguration
+    var serviceManager: ServiceManagerKind
+    var buildFromSource: Bool
+    var deployerBranch: String
+    var webhookSecret: String?
     
 }
 
@@ -22,9 +22,8 @@ extension Configuration {
     static func load() throws -> Configuration {
         
         let executableURL = try getExecutableURL()
-        let resolvedExecutableURL = executableURL.standardizedFileURL.resolvingSymlinksInPath()
-        
-        let configURL = try getConfigURL(forExecutableURL: resolvedExecutableURL)
+
+        let configURL = try getConfigURL(forExecutableURL: executableURL)
         let configData: Data
         do { configData = try Data(contentsOf: configURL) }
         catch let error as CocoaError where error.code == .fileReadNoSuchFile { throw Error.configNotFound(configURL.path) }
@@ -34,11 +33,12 @@ extension Configuration {
         do { configuration = try JSONDecoder().decode(Configuration.self, from: configData) }
         catch { throw Error.invalidJSON(configURL.path, error) }
 
-        let executableDirectoryURL = resolvedExecutableURL.deletingLastPathComponent()
+        let executableDirectoryURL = executableURL.deletingLastPathComponent()
         return try configuration.resolved(relativeTo: executableDirectoryURL)
     }
 
     /// Uses the resolved binary path as the config anchor so symlinked installs behave predictably.
+    /// Returns a URL with symlinks resolved; callers can use the result directly without re-resolving.
     static func getExecutableURL() throws -> URL {
         
         let fileManager = FileManager.default

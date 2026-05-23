@@ -14,6 +14,19 @@
       <main class="dp-main">
         <section class="dp-target-section">
 
+          <div class="dp-session-bar">
+            <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
+              <button type="submit" class="dp-logout-btn" title="Sign out">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Sign out
+              </button>
+            </form>
+          </div>
+
           <div class="dp-workspace">
             <header class="dp-header-panel" aria-label="Deployer">
             <!-- ── Runtime bar: logo · metadata strip · sign out ── -->
@@ -35,7 +48,7 @@
                   #unsafeHTML(deployer.stateInitialHTML)
                 </div>
 
-                <!-- On mobile, sign-out moves inside brand row via CSS order -->
+                <!-- On mobile, update moves inside brand row via CSS order -->
                 <div class="dp-runtime-actions dp-runtime-actions--mobile">
                   <button type="button" class="dp-update-btn" mist-action="update" mist-actions-for="DeployerStatus" title="Update deployer">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -45,16 +58,6 @@
                     </svg>
                     Update
                   </button>
-                  <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
-                    <button type="submit" class="dp-logout-btn" title="Sign out">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                        <polyline points="16 17 21 12 16 7"/>
-                        <line x1="21" y1="12" x2="9" y2="12"/>
-                      </svg>
-                      Sign out
-                    </button>
-                  </form>
                 </div>
               </div>
 
@@ -67,7 +70,7 @@
                 #unsafeHTML(deployer.infoInitialHTML)
               </div>
 
-              <!-- Desktop sign-out (hidden on mobile) -->
+              <!-- Desktop update (hidden on mobile) -->
               <div class="dp-runtime-actions dp-runtime-actions--desktop">
                 <button type="button" class="dp-update-btn" mist-action="update" mist-actions-for="DeployerStatus" title="Update deployer">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -77,16 +80,6 @@
                   </svg>
                   Update
                 </button>
-                <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
-                  <button type="submit" class="dp-logout-btn" title="Sign out">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                      <polyline points="16 17 21 12 16 7"/>
-                      <line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
-                    Sign out
-                  </button>
-                </form>
               </div>
 
             </div>
@@ -113,9 +106,9 @@
                 >
                   <div class="dp-product-status" mist-component="TargetStatus" mist-delay="1000" mist-ssr="true">
                     #if(target.isRunning):
-                      <span class="dp-supervisor-badge dp-supervisor-badge--running">running</span>
+                      <span class="dp-state-badge dp-state-badge--running">running</span>
                     #else:
-                      <span class="dp-supervisor-badge dp-supervisor-badge--stopped">stopped</span>
+                      <span class="dp-state-badge dp-state-badge--stopped">stopped</span>
                     #endif
                   </div>
                 </div>
@@ -131,17 +124,31 @@
                 #unsafeHTML(target.targetInfoInitialHTML)
               </div>
 
-              <!-- Right: stop + restart -->
+              <!-- Right: settings · stop · restart
+                   The Settings link sits inside the mist container but OUTSIDE the mist-managed
+                   component div below, so mist re-renders of TargetStatusActions never replace it.
+                   Mist appends new component HTML at beforeend, after this static <a>. -->
               <div
                 class="dp-runtime-actions dp-runtime-actions--desktop"
                 mist-container="TargetStatusActions"
                 mist-insert-position="beforeend"
                 mist-ssr="true"
               >
+                <a
+                  class="dp-control-btn dp-control-btn--settings"
+                  href="#(deployer.panelRoute)/settings"
+                  title="Environment settings"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                  Settings
+                </a>
                 <div class="dp-target-actions" mist-component="TargetStatusActions" mist-delay="1000" mist-ssr="true">
                   #if(target.isRunning):
                     <button
-                      class="dp-supervisor-btn dp-supervisor-btn--stop"
+                      class="dp-control-btn dp-control-btn--stop"
                       mist-action="stop"
                       title="Stop service"
                     >
@@ -150,7 +157,7 @@
                     </button>
                   #endif
                   <button
-                    class="dp-supervisor-btn dp-supervisor-btn--restart"
+                    class="dp-control-btn dp-control-btn--restart"
                     mist-action="restart"
                     title="Restart service"
                   >
@@ -165,13 +172,7 @@
             <!-- ── Deployments Table ── -->
             <div class="dp-deployments">
               <div class="dp-table-wrap">
-                <table
-                  class="dp-table"
-                  mist-behavior="sortable-collection"
-                  data-mist-sort-order="desc"
-                  data-mist-sort-type="number"
-                  data-mist-sort-delay-ms="1000"
-                >
+                <table class="dp-table">
                   <thead
                     class="dp-thead"
                     mist-container="DeploymentRow-#(target.name)"

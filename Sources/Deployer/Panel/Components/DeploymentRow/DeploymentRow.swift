@@ -33,7 +33,7 @@ struct DeploymentRow: InstanceComponent {
     func allModels(on db: Database) async throws -> [any Mist.Model] {
         try await Deployment.query(on: db)
             .filter(\.$product == productName)
-            .sort(\.$startedAt, .descending)
+            .sort(\.$createdAt, .descending)
             .all()
     }
     

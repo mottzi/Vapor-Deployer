@@ -17,6 +17,7 @@ extension Deployer {
         app.asyncCommands.use(UpdateCommand(), as: "update")
         app.asyncCommands.use(SetupCommand(), as: "setup")
         app.asyncCommands.use(RemoveCommand(), as: "remove")
+        app.asyncCommands.use(ConfigCommand(), as: "config")
         app.asyncCommands.use(VersionCommand(), as: "version")
     }
 
@@ -30,8 +31,9 @@ extension Deployer {
         app.deployer.configureViews()
         app.deployer.configureMist(config: config)
         try await app.deployer.configurePanel(config: config)
+        try app.deployer.configureControl()
     }
-    
+
 }
 
 extension Deployer {
@@ -46,7 +48,7 @@ extension Deployer {
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
         app.databases.middleware.use(DeploymentBinaryCleanupMiddleware(target: config.target))
         app.sessions.use(.fluent)
-        app.migrations.add(Deployment.migration, SessionRecord.migration)
+        app.migrations.add(Deployment.migrations + [SessionRecord.migration])
         try await app.autoMigrate()
         await seedFirstDeployment(config: config)
     }
@@ -115,6 +117,8 @@ extension Deployer {
             targetConfig
             deployerConfig
         }
+
+        await queue.drainOnBoot()
     }
 
     func createDatabaseDirectory(for dbFile: String) throws {
@@ -146,6 +150,7 @@ extension Deployer {
             )
             
             deployment.isLive = true
+            deployment.createdAt = checkout.committedAt
             deployment.startedAt = checkout.committedAt
             deployment.finishedAt = checkout.committedAt
             try await deployment.save(on: app.db)

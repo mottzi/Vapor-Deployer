@@ -1,0 +1,609 @@
+/* ── Gear button in the panel target toolbar ──
+   Reuses .dp-control-btn base; neutral hover (settings is benign navigation,
+   not destructive like Stop or state-changing like Restart). */
+.dp-control-btn--settings {
+    background: transparent;
+    color: var(--text-subtle);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    line-height: normal;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-control-btn--settings:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+        background: var(--bg-hover);
+    }
+}
+
+.dp-control-btn--settings:active {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+}
+
+/* ── Settings page: session bar — back left, sign out right ── */
+.dp-session-bar:has(.dp-settings-back) {
+    justify-content: space-between;
+}
+
+/* ── Settings page: back link in the toolbar ── */
+.dp-settings-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 15px 5px 9px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-subtle);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    line-height: normal;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-back:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+        background: var(--bg-hover);
+    }
+}
+
+.dp-settings-back:active {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+}
+
+/* ── Settings body: container below the toolbar ── */
+.dp-settings-body {
+    padding: 20px 10px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+
+.dp-settings-divider {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: 0 -10px 0 -20px;
+}
+
+.dp-settings-hint {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* ── Notice banners (saved / error) ── */
+.dp-settings-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.dp-settings-notice-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dp-settings-notice--error {
+    background: var(--c-failed-bg);
+    border: 1px solid var(--c-failed-border);
+    color: var(--c-failed);
+}
+
+.dp-settings-notice--error .dp-settings-notice-dot {
+    background: var(--c-failed);
+}
+
+/* ── Form table ── */
+.dp-settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dp-settings-table-head {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) minmax(220px, 2fr) 32px;
+    gap: 8px;
+    padding: 0 4px;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.dp-settings-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dp-settings-row {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) minmax(220px, 2fr) 32px;
+    gap: 8px;
+    align-items: center;
+}
+
+.dp-settings-row--error .dp-settings-input {
+    border-color: var(--c-failed-border);
+}
+
+.dp-settings-row-error {
+    grid-column: 1 / -1;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--c-failed);
+    padding: 2px 4px 4px;
+}
+
+/* ── Inputs ──
+   Shared box model for the <input> key field and the contenteditable <div> value field.
+   `appearance: none` and explicit `line-height` are what make the two elements compute the
+   same height (line-height + vertical padding + border) instead of relying on the input's
+   native intrinsic sizing. Do not add `height` here — keep the box driven by content
+   metrics so font/padding changes scale both elements together. */
+.dp-settings-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.dp-settings-input::placeholder {
+    color: var(--text-subtle);
+    font-family: var(--font-sans);
+}
+
+.dp-settings-input:focus {
+    border-color: var(--c-building);
+    box-shadow: 0 0 0 3px var(--c-building-bg);
+}
+
+
+/* ── Value column with inline reveal toggle ── */
+.dp-settings-value-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.dp-settings-value {
+    padding-right: 40px; /* leave room for the reveal button */
+}
+
+/* The value field is a contenteditable <div>, not an <input>, so browsers don't classify
+   it as a credential field and offer saved-password autofill. It inherits the input box
+   model from .dp-settings-input above; these rules only add behavior the div doesn't get
+   by default (single-line scroll, text cursor). */
+div.dp-settings-value {
+    white-space: pre;
+    overflow-x: auto;
+    overflow-y: hidden;
+    cursor: text;
+}
+
+div.dp-settings-value[contenteditable="false"] {
+    cursor: default;
+}
+
+div.dp-settings-value:empty:before {
+    content: attr(data-placeholder);
+    color: var(--text-subtle);
+    font-family: var(--font-sans);
+    pointer-events: none;
+}
+
+.dp-settings-value--masked {
+    -webkit-text-security: disc;
+}
+
+.dp-settings-reveal {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-subtle);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-reveal:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+    }
+}
+
+.dp-settings-reveal:active {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+/* ── Delete row button ── */
+.dp-settings-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: var(--radius);
+    color: var(--text-subtle);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-delete:hover {
+        background: rgba(248, 113, 113, 0.08);
+        color: var(--c-failed);
+        border-color: rgba(248, 113, 113, 0.3);
+    }
+}
+
+.dp-settings-delete:active {
+    background: rgba(248, 113, 113, 0.08);
+    color: var(--c-failed);
+    border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* ── Add-row button ── */
+.dp-settings-actions-row {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 4px;
+}
+
+.dp-settings-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: var(--radius);
+    border: 1px dashed var(--border-strong);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-add-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+        border-color: var(--text-subtle);
+    }
+}
+
+.dp-settings-add-btn:active {
+    background: var(--bg-hover);
+    color: var(--text);
+    border-color: var(--text-subtle);
+}
+
+/* ── Save button in toolbar (uses .dp-update-btn base, overrides hover color) ── */
+.dp-settings-save-btn {
+    color: var(--text-subtle);
+    border-color: var(--border);
+    padding: 5px 15px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-settings-save-btn:hover {
+        background: var(--c-running-bg);
+        color: var(--c-running);
+        border-color: var(--c-running-border);
+    }
+}
+
+.dp-settings-save-btn:active {
+    background: var(--c-running-bg);
+    color: var(--c-running);
+    border-color: var(--c-running-border);
+}
+
+/* Dirty state: applied by JS when the form has unsaved edits. Mirrors the :hover
+   visual so the button stays "lit" until the user saves. */
+.dp-settings-save-btn--dirty {
+    background: var(--c-running-bg);
+    color: var(--c-running);
+    border-color: var(--c-running-border);
+}
+
+/* ── Touch baseline (mirrors utilities.css for the new controls) ── */
+.dp-settings-back,
+.dp-settings-reveal,
+.dp-settings-delete,
+.dp-settings-add-btn,
+.dp-settings-save-btn,
+.dp-control-btn--settings {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dp-settings-back > svg,
+.dp-settings-reveal > svg,
+.dp-settings-delete > svg,
+.dp-settings-add-btn > svg,
+.dp-settings-save-btn > svg,
+.dp-control-btn--settings > svg {
+    pointer-events: none;
+}
+
+.dp-settings-back:active,
+.dp-settings-reveal:active,
+.dp-settings-delete:active,
+.dp-settings-add-btn:active,
+.dp-settings-save-btn:active,
+.dp-control-btn--settings:active {
+    transition-duration: 0s;
+}
+
+/* Per-row labels. Hidden on desktop because the table head already labels both columns;
+   surfaced on mobile/tablet where the table head is collapsed away. */
+.dp-settings-row-label {
+    display: none;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 0 4px;
+}
+
+/* ── Mobile: collapse to two stacked rows with leading labels ── */
+@media (max-width: 640px) {
+    .dp-settings-table-head {
+        display: none;
+    }
+
+    .dp-settings-rows {
+        gap: 14px;
+    }
+
+    .dp-settings-row {
+        grid-template-columns: auto 1fr 32px;
+        grid-template-areas:
+            "key-label   key    delete"
+            "value-label value  delete";
+        row-gap: 0;
+        column-gap: 8px;
+        align-items: stretch;
+    }
+
+    .dp-settings-row-label {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .dp-settings-row-label--key {
+        grid-area: key-label;
+    }
+
+    .dp-settings-row-label--value {
+        grid-area: value-label;
+    }
+
+    .dp-settings-row .dp-settings-key {
+        grid-area: key;
+        border-radius: var(--radius) var(--radius) 0 0;
+        border-bottom-color: transparent;
+    }
+
+    .dp-settings-row .dp-settings-value-wrap {
+        grid-area: value;
+    }
+
+    .dp-settings-row .dp-settings-value-wrap .dp-settings-input {
+        border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    .dp-settings-row .dp-settings-delete {
+        grid-area: delete;
+        align-self: center;
+    }
+
+    .dp-settings-body {
+        padding: 16px 8px 16px 16px;
+    }
+
+    .dp-settings-divider {
+        margin: 0 -8px 0 -16px;
+    }
+
+    /* In the settings toolbar, collapse Settings/Save buttons to icon-only,
+       same as Stop/Restart on the main panel toolbar. */
+    .dp-target-panel .dp-settings-save-btn {
+        font-size: 0;
+        gap: 0;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        justify-content: center;
+    }
+
+    .dp-target-panel .dp-settings-save-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* ── Confirm dialog ── */
+.dp-confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.dp-confirm-overlay--visible {
+    display: flex;
+}
+
+.dp-confirm-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 260px;
+    max-width: 360px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.dp-confirm-msg {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+}
+
+.dp-confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.dp-confirm-cancel {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-subtle);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-confirm-cancel:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+        border-color: var(--border-strong);
+    }
+}
+
+.dp-confirm-ok {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    background: rgba(248, 113, 113, 0.08);
+    color: var(--c-failed);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-confirm-ok:hover {
+        background: rgba(248, 113, 113, 0.15);
+        border-color: rgba(248, 113, 113, 0.5);
+    }
+}
+
+.dp-confirm-discard {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    background: rgba(248, 113, 113, 0.08);
+    color: var(--c-failed);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-confirm-discard:hover {
+        background: rgba(248, 113, 113, 0.15);
+        border-color: rgba(248, 113, 113, 0.5);
+    }
+}
+
+.dp-confirm-save {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--c-running-border);
+    background: var(--c-running-bg);
+    color: var(--c-running);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-confirm-save:hover {
+        background: rgba(52, 211, 153, 0.18);
+        border-color: rgba(52, 211, 153, 0.5);
+    }
+}

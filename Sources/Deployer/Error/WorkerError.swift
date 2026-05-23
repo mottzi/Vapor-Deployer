@@ -19,7 +19,7 @@ extension Worker {
                 "A saved binary already exists at '\(path)'."
 
             case .deploymentIDMissing:
-                "Deployment ID is missing, so a saved binary path cannot be resolved."
+                "Deployment ID is missing."
                 
             case .deploymentFailed(let error):
                 "Deployment failed: \(error). Rollback successful."

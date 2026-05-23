@@ -66,10 +66,12 @@ extension ConfigDiscovery {
     }
     
     private static func parseMetadata(_ output: String) -> [String: String] {
+        
         var metadata: [String: String] = [:]
         let segments = output.split(separator: "\0", omittingEmptySubsequences: false).map(String.init)
         
         var index = 0
+        
         while index + 1 < segments.count {
             let key = segments[index]
             let value = segments[index + 1]
@@ -84,6 +86,29 @@ extension ConfigDiscovery {
         return metadata
     }
     
+}
+
+extension ConfigDiscovery {
+
+    /// Resolves the service user from the deployerctl config, falling back to the executable file owner.
+    static func resolveServiceUser(executableURL: URL) async -> String? {
+        
+        let metadata = await loadDeployerctl()
+        if let discovered = metadata["SERVICE_USER"]?.trimmed, !discovered.isEmpty {
+            return discovered
+        }
+
+        let attributes = try? FileManager.default.attributesOfItem(atPath: executableURL.path)
+        if let owner = attributes?[.ownerAccountName] as? String {
+            let trimmed = owner.trimmed
+            if !trimmed.isEmpty {
+                return trimmed
+            }
+        }
+
+        return nil
+    }
+
 }
 
 extension ConfigDiscovery {

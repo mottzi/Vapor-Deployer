@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Deployer · Settings</title>
+  <link rel="icon" type="image/png" href="#(deployer.panelRoute)/mottzi.png">
+  <link rel="stylesheet" href="#(deployer.panelRoute)/deployer.css">
+</head>
+<body>
+
+  <div class="dp-shell">
+    <div class="dp-page">
+      <main class="dp-main">
+        <section class="dp-target-section">
+
+          <div class="dp-session-bar">
+            <a class="dp-settings-back" href="#(deployer.panelRoute)" title="Back to panel">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              Back
+            </a>
+            <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
+              <button type="submit" class="dp-logout-btn" title="Sign out">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Sign out
+              </button>
+            </form>
+          </div>
+
+          <div class="dp-workspace">
+
+            <div class="dp-target-panel">
+
+              <!-- ── Settings toolbar: back · title · app name ── -->
+              <div class="dp-runtime-bar">
+                <div class="dp-runtime-brand">
+                  <h2 class="dp-target-name">
+                    Environment
+                  </h2>
+                </div>
+
+                <div class="dp-runtime-items">
+                  <div class="dp-context-item">
+                    <span class="dp-context-label">Target</span>
+                    <span class="dp-context-value">#(target.name)</span>
+                  </div>
+                  <div class="dp-context-item">
+                    <span class="dp-context-label">File</span>
+                    <span class="dp-context-value">#(target.envFilePath)</span>
+                  </div>
+                  <div class="dp-context-item">
+                    <span class="dp-context-label">Variables</span>
+                    <span class="dp-context-value">#(variableCount)</span>
+                  </div>
+                </div>
+
+                <div class="dp-runtime-actions dp-runtime-actions--desktop">
+                  <!-- Save button is bound to the form below via the `form` attribute. -->
+                  <button type="submit" form="dp-settings-form" class="dp-update-btn dp-settings-save-btn" title="Save changes">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                      <polyline points="17 21 17 13 7 13 7 21"/>
+                      <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    Save
+                  </button>
+                </div>
+              </div>
+
+              <div class="dp-settings-body">
+
+                #if(globalError):
+                  <div class="dp-settings-notice dp-settings-notice--error">
+                    <span class="dp-settings-notice-dot"></span>
+                    #(globalError)
+                  </div>
+                #endif
+
+                <p class="dp-settings-hint">
+                  Changes to environment variables take effect once the target app has been restarted.
+                </p>
+
+                <hr class="dp-settings-divider">
+
+                <form id="dp-settings-form" class="dp-settings-form" method="POST" action="#(deployer.panelRoute)/settings" autocomplete="off">
+
+                  <div class="dp-settings-table-head" aria-hidden="true">
+                    <span>Key</span>
+                    <span>Value</span>
+                    <span></span>
+                  </div>
+
+                  <div class="dp-settings-rows" id="dp-settings-rows">
+                    #for(entry in entries):
+                      <div class="dp-settings-row#if(entry.error): dp-settings-row--error#endif">
+                        <span class="dp-settings-row-label dp-settings-row-label--key" aria-hidden="true">Key</span>
+                        <input
+                          class="dp-settings-input dp-settings-key"
+                          type="text"
+                          name="key[]"
+                          value="#(entry.key)"
+                          placeholder="key"
+                          autocomplete="off"
+                          autocapitalize="characters"
+                          spellcheck="false"
+                        >
+                        <span class="dp-settings-row-label dp-settings-row-label--value" aria-hidden="true">Value</span>
+                        <div class="dp-settings-value-wrap">
+                          <input type="hidden" name="value[]" value="#(entry.value)">
+                          <div
+                            class="dp-settings-input dp-settings-value dp-settings-value--masked"
+                            contenteditable="false"
+                            role="textbox"
+                            aria-label="Value"
+                            data-placeholder="value"
+                            spellcheck="false"
+                          >#(entry.value)</div>
+                          <button type="button" class="dp-settings-reveal" title="Reveal value" aria-label="Reveal value" data-action="reveal">
+                            <svg class="dp-settings-eye dp-settings-eye--closed" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                              <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                            <svg class="dp-settings-eye dp-settings-eye--open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                              <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                          </button>
+                        </div>
+                        <button type="button" class="dp-settings-delete" title="Remove" aria-label="Remove" data-action="delete">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                            <path d="M10 11v6"/>
+                            <path d="M14 11v6"/>
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                          </svg>
+                        </button>
+                        #if(entry.error):
+                          <div class="dp-settings-row-error">#(entry.error)</div>
+                        #endif
+                      </div>
+                    #endfor
+                  </div>
+
+                  <input type="hidden" name="next" id="dp-settings-next" value="">
+
+                  <div class="dp-settings-actions-row">
+                    <button type="button" class="dp-settings-add-btn" id="dp-settings-add" title="Add variable">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                      </svg>
+                      Add variable
+                    </button>
+                  </div>
+
+                </form>
+
+                <!-- Template for new rows. <template> elements are not rendered and their inputs
+                     are not submitted with the form. JS clones #dp-settings-row-template's content
+                     into #dp-settings-rows on click. -->
+                <template id="dp-settings-row-template">
+                  <div class="dp-settings-row">
+                    <span class="dp-settings-row-label dp-settings-row-label--key" aria-hidden="true">Key</span>
+                    <input class="dp-settings-input dp-settings-key" type="text" name="key[]" value="" placeholder="key" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                    <span class="dp-settings-row-label dp-settings-row-label--value" aria-hidden="true">Value</span>
+                    <div class="dp-settings-value-wrap">
+                      <input type="hidden" name="value[]" value="">
+                      <div class="dp-settings-input dp-settings-value dp-settings-value--masked" contenteditable="plaintext-only" role="textbox" aria-label="Value" data-placeholder="value" spellcheck="false"></div>
+                      <button type="button" class="dp-settings-reveal" title="Reveal value" aria-label="Reveal value" data-action="reveal">
+                        <svg class="dp-settings-eye dp-settings-eye--closed" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                        <svg class="dp-settings-eye dp-settings-eye--open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <button type="button" class="dp-settings-delete" title="Remove" aria-label="Remove" data-action="delete">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6"/>
+                        <path d="M14 11v6"/>
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </template>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const rowsContainer = document.getElementById('dp-settings-rows');
+      const template = document.getElementById('dp-settings-row-template');
+      const addBtn = document.getElementById('dp-settings-add');
+
+      // ── Confirm dialog ──────────────────────────────────────────────
+      const overlay = document.createElement('div');
+      overlay.className = 'dp-confirm-overlay';
+      overlay.innerHTML = `
+        <div class="dp-confirm-box">
+          <p class="dp-confirm-msg"></p>
+          <div class="dp-confirm-actions">
+            <button class="dp-confirm-cancel" type="button">Cancel</button>
+            <button class="dp-confirm-discard" type="button" style="display:none">Discard</button>
+            <button class="dp-confirm-save" type="button" style="display:none">Save</button>
+            <button class="dp-confirm-ok" type="button">Delete</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      const confirmMsg     = overlay.querySelector('.dp-confirm-msg');
+      const confirmCancel  = overlay.querySelector('.dp-confirm-cancel');
+      const confirmDiscard = overlay.querySelector('.dp-confirm-discard');
+      const confirmSave    = overlay.querySelector('.dp-confirm-save');
+      const confirmOk      = overlay.querySelector('.dp-confirm-ok');
+      let confirmResolve = null;
+
+      function dismiss(value) {
+        overlay.classList.remove('dp-confirm-overlay--visible');
+        if (confirmResolve) { confirmResolve(value); confirmResolve = null; }
+      }
+
+      function showConfirm(msg) {
+        confirmMsg.textContent = msg;
+        confirmOk.style.display = '';
+        confirmDiscard.style.display = 'none';
+        confirmSave.style.display = 'none';
+        overlay.classList.add('dp-confirm-overlay--visible');
+        return new Promise(function (resolve) { confirmResolve = resolve; });
+      }
+
+      function showUnsavedConfirm() {
+        confirmMsg.textContent = 'You have unsaved changes.';
+        confirmOk.style.display = 'none';
+        confirmDiscard.style.display = '';
+        confirmSave.style.display = '';
+        overlay.classList.add('dp-confirm-overlay--visible');
+        return new Promise(function (resolve) { confirmResolve = resolve; });
+      }
+
+      confirmOk.addEventListener('click',      function () { dismiss(true); });
+      confirmDiscard.addEventListener('click', function () { dismiss('discard'); });
+      confirmSave.addEventListener('click',    function () { dismiss('save'); });
+      confirmCancel.addEventListener('click',  function () { dismiss(false); });
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) dismiss(false);
+      });
+      // ────────────────────────────────────────────────────────────────
+
+      const tableHead = document.querySelector('.dp-settings-table-head');
+      const saveBtn = document.querySelector('.dp-settings-save-btn');
+
+      function updateHeadVisibility() {
+        tableHead.style.display = rowsContainer.querySelector('.dp-settings-row') ? '' : 'none';
+      }
+
+      // Mark the form as dirty: the Save button shows its hover state so the user is
+      // reminded there are unsaved edits. The page reload after a successful save clears
+      // this naturally — we don't need to track an exact pristine-vs-edited diff.
+      let dirty = false;
+      function markDirty() {
+        dirty = true;
+        if (saveBtn) saveBtn.classList.add('dp-settings-save-btn--dirty');
+      }
+
+      // Intercept Back button click when dirty
+      const backBtn = document.querySelector('.dp-settings-back');
+      if (backBtn) {
+        backBtn.addEventListener('click', function (e) {
+          if (!dirty) return;
+          e.preventDefault();
+          const dest = backBtn.href;
+          showUnsavedConfirm().then(function (action) {
+            if (action === 'discard') {
+              dirty = false;
+              window.location.href = dest;
+            } else if (action === 'save') {
+              dirty = false;
+              document.getElementById('dp-settings-next').value = dest;
+              document.getElementById('dp-settings-form').requestSubmit();
+            }
+          });
+        });
+      }
+
+      // Clear dirty on any form submission so beforeunload doesn't fire.
+      document.getElementById('dp-settings-form').addEventListener('submit', function () {
+        dirty = false;
+      });
+
+      // Browser-level navigation (close/refresh/history) — native dialog only
+      window.addEventListener('beforeunload', function (e) {
+        if (dirty) e.preventDefault();
+      });
+
+      function appendRow(focus) {
+        const node = template.content.firstElementChild.cloneNode(true);
+        // New rows start revealed — no existing secret to protect
+        const valDiv = node.querySelector('.dp-settings-value');
+        const revealBtn = node.querySelector('.dp-settings-reveal');
+        if (valDiv) {
+          valDiv.classList.remove('dp-settings-value--masked');
+          valDiv.contentEditable = 'plaintext-only';
+        }
+        if (revealBtn) {
+          revealBtn.querySelector('.dp-settings-eye--closed').style.display = 'none';
+          revealBtn.querySelector('.dp-settings-eye--open').style.display = '';
+          revealBtn.title = 'Hide value';
+          revealBtn.setAttribute('aria-label', 'Hide value');
+        }
+        rowsContainer.appendChild(node);
+        updateHeadVisibility();
+        if (focus) {
+          const keyInput = node.querySelector('.dp-settings-key');
+          if (keyInput) keyInput.focus();
+        }
+      }
+
+      addBtn.addEventListener('click', function () { appendRow(true); });
+      updateHeadVisibility();
+
+      // Mirror contenteditable value into the sibling hidden input so the form submits the
+      // current text. The value column avoids using a real <input> because browsers classify
+      // any visually-masked input as a credential field and offer saved-password autofill.
+      document.addEventListener('input', function (e) {
+        const t = e.target;
+        if (!t || !t.classList) return;
+        if (t.classList.contains('dp-settings-key')) {
+          const sel = t.selectionStart;
+          t.value = t.value.toUpperCase();
+          t.setSelectionRange(sel, sel);
+          markDirty();
+          return;
+        }
+        if (!t.classList.contains('dp-settings-value')) return;
+        const hidden = t.parentElement && t.parentElement.querySelector('input[type="hidden"][name="value[]"]');
+        if (hidden) hidden.value = t.textContent;
+        markDirty();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        const t = e.target;
+        if (!t || !t.classList || !t.classList.contains('dp-settings-value')) return;
+        e.preventDefault();
+        document.getElementById('dp-settings-form').requestSubmit();
+      });
+
+      rowsContainer.addEventListener('click', function (e) {
+        const action = e.target.closest('[data-action]');
+        if (!action) return;
+        const row = action.closest('.dp-settings-row');
+        if (!row) return;
+
+        if (action.dataset.action === 'delete') {
+          const key = row.querySelector('.dp-settings-key');
+          const val = row.querySelector('.dp-settings-value');
+          const hadContent = (key && key.value && key.value.trim()) || (val && val.textContent && val.textContent.trim());
+          if (hadContent) {
+            const label = (key && key.value.trim()) || 'this variable';
+            showConfirm('Delete "' + label + '"?').then(function (confirmed) {
+              if (!confirmed) return;
+              row.remove();
+              updateHeadVisibility();
+              markDirty();
+            });
+            return;
+          }
+          row.remove();
+          updateHeadVisibility();
+        } else if (action.dataset.action === 'reveal') {
+          const input = row.querySelector('.dp-settings-value');
+          const closed = action.querySelector('.dp-settings-eye--closed');
+          const open = action.querySelector('.dp-settings-eye--open');
+          if (input.classList.contains('dp-settings-value--masked')) {
+            input.classList.remove('dp-settings-value--masked');
+            input.contentEditable = 'plaintext-only';
+            input.focus();
+            // move caret to end
+            const range = document.createRange();
+            range.selectNodeContents(input);
+            range.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            closed.style.display = 'none';
+            open.style.display = '';
+            action.title = 'Hide value';
+            action.setAttribute('aria-label', 'Hide value');
+          } else {
+            input.classList.add('dp-settings-value--masked');
+            input.contentEditable = 'false';
+            closed.style.display = '';
+            open.style.display = 'none';
+            action.title = 'Reveal value';
+            action.setAttribute('aria-label', 'Reveal value');
+          }
+        }
+      });
+
+    })();
+  </script>
+
+</body>
+</html>

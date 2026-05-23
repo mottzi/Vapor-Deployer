@@ -122,8 +122,9 @@
     content: '';
     position: absolute;
     left: 0;
-    top: 10px;
-    bottom: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 28px;
     width: 3px;
     border-radius: 0 2px 2px 0;
     opacity: 0;
@@ -148,6 +149,10 @@
 .dp-tr.row-built::before {
     background: var(--c-built);
     opacity: 0.6;
+}
+
+.dp-tr.row-running {
+    background: var(--bg-surface-inset);
 }
 
 .dp-tr.row-running::before {

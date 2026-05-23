@@ -76,6 +76,7 @@ enum DeployerctlTemplate {
           version       Print the deployer version
           setup         Rerun deployer setup (interactive)
           update        Update the deployer and redeploy the app (interactive)
+          config        View or modify deployer.json (with restart prompt)
           remove        Tear down the entire deployer installation (interactive)
 
         Targets:
@@ -185,6 +186,16 @@ enum DeployerctlTemplate {
           INSTALL_BIN="$(resolve_install_bin)"
 
           exec "$INSTALL_BIN" update
+        fi
+
+        if [[ "${1:-}" == "config" ]]; then
+          if [[ -r "$CONFIG_FILE" ]]; then
+            . "$CONFIG_FILE"
+          fi
+
+          INSTALL_BIN="$(resolve_install_bin)"
+          shift
+          exec "$INSTALL_BIN" config "$@"
         fi
 
         [[ -r "$CONFIG_FILE" ]] || die "config not found: $CONFIG_FILE (reinstall with deployer setup)"
