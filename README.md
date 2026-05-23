@@ -1,3 +1,12 @@
+<table>
+<tr>
+<td width="320" valign="top">
+
+<img width="300" height="300" alt="deployer" src="https://github.com/user-attachments/assets/72e8ddb8-6e7b-4ee6-9fc4-9e057fc71fa6" />
+
+</td>
+<td valign="top">
+
 # Deployer
 
 **A simple CI/CD tool for Swift server applications that deploys automatically when changes are pushed to an app's GitHub repository.**
@@ -6,7 +15,17 @@ With just one setup command, Deployer gets your server ready. It installs Swift,
 
 Watch a video demo [here](https://mottzi.codes/deployer_demo_original.mp4)!
 
-<img width="833" height="952" alt="Deployer Panel" src="https://github.com/user-attachments/assets/32b7fcf6-5d08-4b49-8e45-93d42bb25b76" />
+</td>
+</tr>
+
+<tr>
+<td colspan="2" align="center">
+
+<img width="854" height="741" alt="Deployer Panel" src="https://github.com/user-attachments/assets/c23b71ba-4833-42f3-ab22-34f25a578d01" />
+
+</td>
+</tr>
+</table>
 
 <br>
 
