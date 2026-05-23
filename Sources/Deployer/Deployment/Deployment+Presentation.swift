@@ -8,6 +8,7 @@ extension Deployment {
         "displayStatus": displayStatus.rawValue,
         "shortID": shortID,
         "startedAtUnixMs": startedAtUnixMs,
+        "liveTimerStartedAtUnixMs": liveTimerStartedAtUnixMs,
         "canBeDeployed": canBeDeployed,
         "canBuild": canBuild,
         "canRestoreBinary": canRestoreBinary,
@@ -40,6 +41,14 @@ extension Deployment {
     var shortID: String? { id.map { String($0.uuidString.prefix(8)) } }
 
     var startedAtUnixMs: Int? { startedAt.map { Int($0.timeIntervalSince1970 * 1000) } }
+
+    /// Anchor for the in-row live timer. During `.testing`, ticks against `testStartedAt` so the elapsed
+    /// reflects the current test run rather than the deployment's original push/build time. For
+    /// `.building` / `.restoring`, `startedAt` is the right anchor.
+    var liveTimerStartedAtUnixMs: Int? {
+        let anchor: Date? = status == .testing ? testStartedAt : startedAt
+        return anchor.map { Int($0.timeIntervalSince1970 * 1000) }
+    }
 
     var canBeDeployed: Bool {
         switch displayStatus {
