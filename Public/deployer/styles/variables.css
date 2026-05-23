@@ -16,6 +16,11 @@
     --text-muted: #6b7280;
     --text-subtle: #9ca3af;
 
+    /* Icon-bearing buttons (action icons, dropdown trigger, toolbar buttons).
+       Light mode: full `--text` for legibility on white. Dark mode: muted to
+       avoid blowing out against the dark surface. */
+    --btn-icon: var(--text);
+
     --c-building: #38bdf8;
     --c-restoring: #22d3ee;
     --c-pushed: #fb923c;
@@ -85,6 +90,8 @@
         --text-secondary: #a1a1aa;
         --text-muted: #777777;
         --text-subtle: #555555;
+
+        --btn-icon: var(--text-muted);
 
         --c-building: #38bdf8;
         --c-restoring: #22d3ee;

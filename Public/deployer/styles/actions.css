@@ -34,7 +34,7 @@
     padding: 6px;
     box-sizing: border-box;
     transition: background 0.15s ease, color 0.15s ease;
-    color: var(--text-muted);
+    color: var(--btn-icon);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -101,7 +101,7 @@
     border: none;
     background: transparent;
     cursor: pointer;
-    color: var(--text-muted);
+    color: var(--btn-icon);
     transition: background 0.15s ease, color 0.15s ease;
     padding: 0;
 }
