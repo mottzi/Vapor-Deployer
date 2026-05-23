@@ -15,7 +15,7 @@
         <section class="dp-target-section">
 
           <div class="dp-session-bar">
-            <img class="dp-brand-logo" src="#(deployer.panelRoute)/deployer.png" alt="Deployer logo">
+            <img class="dp-brand-logo" src="#(deployer.panelRoute)/deployer.png" alt="Deployer logo" width="84" height="84">
             <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
               <button type="submit" class="dp-logout-btn" title="Sign out">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
