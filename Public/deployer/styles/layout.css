@@ -29,7 +29,7 @@
 .dp-target-section {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 20px;
     width: 100%;
     min-width: 0;
 }
@@ -47,12 +47,13 @@
     display: flex;
     justify-content: flex-end;
     width: 100%;
+    margin-bottom: -10px;
 }
 
 .dp-brand-logo {
     position: absolute;
     top: -62px;
-    left: 8px;
+    left: 16px;
     width: 84px;
     height: 84px;
     object-fit: contain;
