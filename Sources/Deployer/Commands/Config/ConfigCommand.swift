@@ -121,9 +121,8 @@ private extension ConfigCommand {
     func loadRawConfig() throws -> (Configuration, URL, URL) {
 
         let executableURL = try Configuration.getExecutableURL()
-        let resolvedExecutableURL = executableURL.standardizedFileURL.resolvingSymlinksInPath()
-        let installDirectory = resolvedExecutableURL.deletingLastPathComponent()
-        let configURL = try Configuration.getConfigURL(forExecutableURL: resolvedExecutableURL)
+        let installDirectory = executableURL.deletingLastPathComponent()
+        let configURL = try Configuration.getConfigURL(forExecutableURL: executableURL)
 
         let data = try Data(contentsOf: configURL)
         let config = try JSONDecoder().decode(Configuration.self, from: data)

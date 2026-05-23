@@ -21,8 +21,7 @@ enum DeployerVersion {
             return bundleVersion() ?? unknownVersion
         }
 
-        let resolvedExecutableURL = executableURL.standardizedFileURL.resolvingSymlinksInPath()
-        let executableDirectory = resolvedExecutableURL.deletingLastPathComponent()
+        let executableDirectory = executableURL.deletingLastPathComponent()
 
         if let fileVersion = readVersionFile(in: executableDirectory) {
             return fileVersion

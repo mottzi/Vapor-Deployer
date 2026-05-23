@@ -18,11 +18,10 @@ struct UpdateCommand: AsyncCommand {
     private func runPipeline(context: CommandContext) async throws {
 
         let executableURL = try Configuration.getExecutableURL()
-        let resolvedExecutableURL = executableURL.standardizedFileURL.resolvingSymlinksInPath()
-        let installDirectory = resolvedExecutableURL.deletingLastPathComponent()
-        let executableName = resolvedExecutableURL.lastPathComponent
+        let installDirectory = executableURL.deletingLastPathComponent()
+        let executableName = executableURL.lastPathComponent
 
-        guard !executableName.isEmpty else { throw Error.invalidExecutablePath(resolvedExecutableURL.path) }
+        guard !executableName.isEmpty else { throw Error.invalidExecutablePath(executableURL.path) }
 
         let config = try Configuration.load()
 
@@ -48,7 +47,7 @@ struct UpdateCommand: AsyncCommand {
             serviceName: "deployer"
         )
         
-        updateContext.serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: resolvedExecutableURL) ?? ""
+        updateContext.serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: executableURL) ?? ""
         updateContext.isSourceInstall = config.buildFromSource
         updateContext.deployerBranch = config.deployerBranch
 
