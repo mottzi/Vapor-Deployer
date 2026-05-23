@@ -108,9 +108,6 @@ extension Queue {
         while true {
             let stream = BuildOutputStream(app: app, deployment: current)
             let worker = Worker(deployment: current, target: target, app: app, stream: stream, onStatusChange: onStatusChange)
-            // Track which phase is in flight so a thrown error can mark lastTestOutcome correctly
-            // before fail() commits the row. Status is always .failed; phase lives in lastTestOutcome.
-            var inTestPhase = false
 
             do {
                 await stream.start()
@@ -120,20 +117,22 @@ extension Queue {
                     // The user can still force a re-test via the manual Test action.
                     await stream.appendLabel("swift test — already passed")
                 } else if target.testing {
-                    current.status = .testing
-                    try? await current.save(on: app.db)
-                    inTestPhase = true
-                    try await worker.test()
-                    current.lastTestOutcome = true
-                    inTestPhase = false
-                    current.status = .building
-                    try? await current.save(on: app.db)
+                    do {
+                        current.status = .testing
+                        try? await current.save(on: app.db)
+                        try await worker.test()
+                        current.lastTestOutcome = true
+                        current.status = .building
+                        try? await current.save(on: app.db)
+                    } catch {
+                        current.lastTestOutcome = false
+                        throw error
+                    }
                 }
                 try await worker.build()
                 try await worker.move()
                 await stream.flush()
             } catch {
-                if inTestPhase { current.lastTestOutcome = false }
                 await fail(deployment: current, stream: stream, error: error)
                 if let last = lastSuccessful {
                     await finalizeQueue(deployment: last.deployment, priorTranscript: last.transcript)
