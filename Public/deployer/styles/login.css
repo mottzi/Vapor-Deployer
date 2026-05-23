@@ -22,6 +22,25 @@
     flex-direction: column;
     gap: 20px;
     box-shadow: var(--shadow-lg);
+    position: relative;
+    z-index: 1;
+}
+
+.dp-login-logo {
+    display: block;
+    text-align: center;
+    margin-bottom: -50px;
+    position: relative;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.dp-login-logo img {
+    display: inline-block;
+    width: 84px;
+    height: 84px;
+    object-fit: contain;
+    pointer-events: auto;
 }
 
 .dp-login-title {
@@ -108,17 +127,3 @@
     transform: scale(0.99);
 }
 
-.dp-login-wordmark {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.dp-login-wordmark-title {
-    font-family: var(--font-sans);
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.02em;
-}

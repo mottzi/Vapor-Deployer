@@ -13,9 +13,8 @@
 
     <div class="dp-login-wrap">
 
-      <a class="dp-login-wordmark" href="#(repositoryWebPageURL)" target="_blank" rel="noopener noreferrer">
-        <img class="dp-wordmark-image" src="#(panelRoute)/deployer.png" alt="Deployer" width="28" height="28">
-        <span class="dp-login-wordmark-title">Deployer</span>
+      <a class="dp-login-logo" href="#(repositoryWebPageURL)" target="_blank" rel="noopener noreferrer">
+        <img src="#(panelRoute)/deployer.png" alt="Deployer" width="84" height="84">
       </a>
 
       <div class="dp-login-card">
