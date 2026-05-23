@@ -21,18 +21,18 @@
        avoid blowing out against the dark surface. */
     --btn-icon: var(--text);
 
-    --c-building: #38bdf8;
-    --c-restoring: #22d3ee;
-    --c-pushed: #fb923c;
-    --c-built: #a78bfa;
-    --c-running: #34d399;
-    --c-failed: #f87171;
+    --c-building: #0ea5e9;
+    --c-restoring: #06b6d4;
+    --c-pushed: #f97316;
+    --c-built: #8b5cf6;
+    --c-running: #10b981;
+    --c-failed: #ef4444;
     --c-canceled: #52525b;
-    --c-stale: #fbbf24;
-    --c-testing: #818cf8;
+    --c-stale: #f59e0b;
+    --c-testing: #6366f1;
 
-    --c-tests-pass: #34d399;
-    --c-tests-fail: #f87171;
+    --c-tests-pass: #10b981;
+    --c-tests-fail: #ef4444;
 
     --c-building-bg: rgba(56, 189, 248, 0.1);
     --c-restoring-bg: rgba(34, 211, 238, 0.1);
