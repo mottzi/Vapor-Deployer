@@ -4,6 +4,8 @@
 
 With just one setup command, Deployer gets your server ready. It installs Swift, configures Nginx and GitHub webhooks, issues SSL certificates and keeps your app running on the latest commit. A live web panel shows every deployment as it happens. It streams build output, updates in real-time and provides start and stop buttons for your app.
 
+[Watch a video demo](https://github.com/user-attachments/assets/7da6465e-a911-441f-8bc1-1e7a45b85abc)
+
 <img width="957" height="880" alt="Deployer Panel" src="https://github.com/user-attachments/assets/ab34c33f-d84e-4893-a944-cc2b69401829" />
 
 <br>
@@ -110,4 +112,4 @@ Deployer's panel uses [Mist](https://github.com/mottzi/Mist) to power real-time 
 
 ## Demo Video
 
-https://github.com/user-attachments/assets/fa76fa79-0a0f-4a2b-893b-bee7b3e4cec8
+https://github.com/user-attachments/assets/7da6465e-a911-441f-8bc1-1e7a45b85abc
