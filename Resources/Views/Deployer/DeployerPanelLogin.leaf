@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deployer — Sign in</title>
-  <link rel="icon" type="image/png" href="#(panelRoute)/mottzi.png">
+  <link rel="icon" type="image/png" href="#(panelRoute)/deployer.ico">
   <link rel="stylesheet" href="#(panelRoute)/deployer.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
     <div class="dp-login-wrap">
 
       <a class="dp-login-wordmark" href="#(repositoryWebPageURL)" target="_blank" rel="noopener noreferrer">
-        <img class="dp-wordmark-image" src="#(panelRoute)/mottzi.png" alt="Deployer" width="28" height="28">
+        <img class="dp-wordmark-image" src="#(panelRoute)/deployer.png" alt="Deployer" width="28" height="28">
         <span class="dp-login-wordmark-title">Deployer</span>
       </a>
 

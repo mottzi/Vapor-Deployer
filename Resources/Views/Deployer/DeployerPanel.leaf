@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Deployer</title>
-  <link rel="icon" type="image/png" href="#(deployer.panelRoute)/mottzi.png">
+  <link rel="icon" type="image/png" href="#(deployer.panelRoute)/deployer.ico">
   <link rel="stylesheet" href="#(deployer.panelRoute)/deployer.css">
 </head>
 <body>
