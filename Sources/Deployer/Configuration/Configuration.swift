@@ -3,16 +3,16 @@ import Vapor
 /// Runtime configuration for the local deployer, decoded from the sibling JSON file.
 struct Configuration: Codable, Sendable {
     
-    let port: Int
-    let dbFile: String
-    let deployerDirectory: String
-    let socketPath: String
-    let panelRoute: String
-    let target: TargetConfiguration
-    let serviceManager: ServiceManagerKind
-    let buildFromSource: Bool
-    let deployerBranch: String
-    let webhookSecret: String?
+    var port: Int
+    var dbFile: String
+    var deployerDirectory: String
+    var socketPath: String
+    var panelRoute: String
+    var target: TargetConfiguration
+    var serviceManager: ServiceManagerKind
+    var buildFromSource: Bool
+    var deployerBranch: String
+    var webhookSecret: String?
     
 }
 

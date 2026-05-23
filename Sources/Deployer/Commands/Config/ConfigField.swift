@@ -58,15 +58,17 @@ enum ConfigField: String, CaseIterable, Sendable {
     /// validation before writing.
     func apply(_ input: String, to config: Configuration) throws -> Configuration {
 
+        var copy = config
+
         switch self {
         case .deployerBranch:
-            return config.replacing(deployerBranch: input.trimmed)
+            copy.deployerBranch = input.trimmed
 
         case .targetBranch:
-            return config.replacingTarget(config.target.replacing(branch: input.trimmed))
+            copy.target.branch = input.trimmed
 
         case .targetBuildMode:
-            return config.replacingTarget(config.target.replacing(buildMode: input.trimmed))
+            copy.target.buildMode = input.trimmed
 
         case .targetDeploymentMode:
             let lowered = input.trimmed.lowercased()
@@ -74,134 +76,23 @@ enum ConfigField: String, CaseIterable, Sendable {
                 let legal = ["automatic", "manual"]
                 throw ConfigCommand.Error.invalidDeploymentMode(rawValue, input, legal)
             }
-            return config.replacingTarget(config.target.replacing(deploymentMode: mode))
+            copy.target.deploymentMode = mode
 
         case .targetBinaryBehaviour:
             guard let behaviour = BinaryBehaviour.parse(input) else {
                 throw ConfigCommand.Error.invalidBinaryBehaviour(rawValue, input)
             }
-            return config.replacingTarget(config.target.replacing(binaryBehaviour: behaviour))
+            copy.target.binaryBehaviour = behaviour
 
         case .targetTesting:
             let lowered = input.trimmed.lowercased()
             guard lowered == "true" || lowered == "false" else {
                 throw ConfigCommand.Error.invalidBoolean(rawValue, input)
             }
-            return config.replacingTarget(config.target.replacing(testing: lowered == "true"))
+            copy.target.testing = lowered == "true"
         }
-    }
 
-}
-
-private extension Configuration {
-
-    func replacing(deployerBranch: String) -> Configuration {
-        Configuration(
-            port: self.port,
-            dbFile: self.dbFile,
-            deployerDirectory: self.deployerDirectory,
-            socketPath: self.socketPath,
-            panelRoute: self.panelRoute,
-            target: self.target,
-            serviceManager: self.serviceManager,
-            buildFromSource: self.buildFromSource,
-            deployerBranch: deployerBranch,
-            webhookSecret: self.webhookSecret
-        )
-    }
-
-    func replacingTarget(_ target: TargetConfiguration) -> Configuration {
-        Configuration(
-            port: self.port,
-            dbFile: self.dbFile,
-            deployerDirectory: self.deployerDirectory,
-            socketPath: self.socketPath,
-            panelRoute: self.panelRoute,
-            target: target,
-            serviceManager: self.serviceManager,
-            buildFromSource: self.buildFromSource,
-            deployerBranch: self.deployerBranch,
-            webhookSecret: self.webhookSecret
-        )
-    }
-
-}
-
-private extension TargetConfiguration {
-
-    func replacing(branch: String) -> TargetConfiguration {
-        TargetConfiguration(
-            name: self.name,
-            repositoryURL: self.repositoryURL,
-            directory: self.directory,
-            buildMode: self.buildMode,
-            pusheventPath: self.pusheventPath,
-            deploymentMode: self.deploymentMode,
-            binaryBehaviour: self.binaryBehaviour,
-            appPort: self.appPort,
-            branch: branch,
-            testing: self.testing
-        )
-    }
-
-    func replacing(buildMode: String) -> TargetConfiguration {
-        TargetConfiguration(
-            name: self.name,
-            repositoryURL: self.repositoryURL,
-            directory: self.directory,
-            buildMode: buildMode,
-            pusheventPath: self.pusheventPath,
-            deploymentMode: self.deploymentMode,
-            binaryBehaviour: self.binaryBehaviour,
-            appPort: self.appPort,
-            branch: self.branch,
-            testing: self.testing
-        )
-    }
-
-    func replacing(deploymentMode: DeploymentMode) -> TargetConfiguration {
-        TargetConfiguration(
-            name: self.name,
-            repositoryURL: self.repositoryURL,
-            directory: self.directory,
-            buildMode: self.buildMode,
-            pusheventPath: self.pusheventPath,
-            deploymentMode: deploymentMode,
-            binaryBehaviour: self.binaryBehaviour,
-            appPort: self.appPort,
-            branch: self.branch,
-            testing: self.testing
-        )
-    }
-
-    func replacing(binaryBehaviour: BinaryBehaviour) -> TargetConfiguration {
-        TargetConfiguration(
-            name: self.name,
-            repositoryURL: self.repositoryURL,
-            directory: self.directory,
-            buildMode: self.buildMode,
-            pusheventPath: self.pusheventPath,
-            deploymentMode: self.deploymentMode,
-            binaryBehaviour: binaryBehaviour,
-            appPort: self.appPort,
-            branch: self.branch,
-            testing: self.testing
-        )
-    }
-
-    func replacing(testing: Bool) -> TargetConfiguration {
-        TargetConfiguration(
-            name: self.name,
-            repositoryURL: self.repositoryURL,
-            directory: self.directory,
-            buildMode: self.buildMode,
-            pusheventPath: self.pusheventPath,
-            deploymentMode: self.deploymentMode,
-            binaryBehaviour: self.binaryBehaviour,
-            appPort: self.appPort,
-            branch: self.branch,
-            testing: testing
-        )
+        return copy
     }
 
 }

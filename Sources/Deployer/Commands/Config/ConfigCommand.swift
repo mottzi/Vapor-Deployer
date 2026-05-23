@@ -90,7 +90,7 @@ private extension ConfigCommand {
 
         if wantsRestart {
             // Preflight before the write: if the server is busy, refuse the whole operation rather
-            // than leave a JSON-disagrees-with-runtime window. Mirrors `UpdateCommand.preflightControlQuery`.
+            // than leave a JSON-disagrees-with-runtime window.
             // See `docs/adr/0005-cli-server-state-channel.md` and `docs/adr/0006-config-is-an-allowlist.md`.
             try await preflightControlQuery(
                 app: app,
@@ -150,44 +150,14 @@ private extension ConfigCommand {
 
 private extension ConfigCommand {
 
-    /// Same shape as `UpdateCommand.preflightControlQuery` but with `ConfigCommand.Error` codes. We keep
-    /// a duplicate rather than reaching across commands to avoid coupling the two error vocabularies.
+    // See `ControlPreflight.query` and `docs/adr/0005-cli-server-state-channel.md`.
     func preflightControlQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
-
-        guard let token = ControlToken.loadOrGenerate(installDirectory: installDirectory) else {
-            throw Error.serverUnhealthy("control token unavailable")
-        }
-
-        let uri = URI(string: "http://127.0.0.1:\(config.port)/control/state")
-
-        let response: ClientResponse
-        do {
-            response = try await app.client.get(uri, headers: HTTPHeaders([
-                ("Authorization", "Bearer \(token.value)")
-            ]))
-        } catch {
-            // Transport failure = server not reachable → proceed. Restart of a stopped service is a
-            // no-op-then-start; nothing to interrupt.
-            console.print("Warning: deployer server not reachable for state check (\(error.localizedDescription)). Proceeding with restart.")
-            return
-        }
-
-        switch response.status {
-            case .ok:
-                let decoded: ControlStateResponse
-                do { decoded = try response.content.decode(ControlStateResponse.self) }
-                catch { throw Error.serverUnhealthy("control response could not be decoded: \(error.localizedDescription)") }
-                if decoded.phase == DeployerPhase.ready.rawValue { return }
-                throw Error.serverBusy(decoded.phase)
-
-            case .unauthorized, .forbidden:
-                throw Error.serverUnhealthy("control token rejected (\(response.status.code))")
-
-            case .notFound:
-                throw Error.serverUnhealthy("control endpoint missing — server may need restart")
-
-            default:
-                throw Error.serverUnhealthy("server returned \(response.status.code)")
+        switch await ControlPreflight.query(app: app, port: config.port, installDirectory: installDirectory) {
+            case .ready: return
+            case .busy(let phase): throw Error.serverBusy(phase)
+            case .unhealthy(let reason): throw Error.serverUnhealthy(reason)
+            case .unreachable(let reason):
+                console.print("Warning: deployer server not reachable for state check (\(reason)). Proceeding with restart.")
         }
     }
 
@@ -197,30 +167,13 @@ private extension ConfigCommand {
 
     /// Restarts the deployer service via the configured `ServiceManagerKind`. Same primitive used by
     /// `SetupCommand` rollback and by `UpdateCommand` post-swap. Service user is resolved from
-    /// `/etc/deployer/deployerctl.conf` first, then falls back to the executable file owner — matches
-    /// `UpdateCommand.resolveServiceUser`.
+    /// `/etc/deployer/deployerctl.conf` first, then falls back to the executable file owner.
     func restartDeployer(config: Configuration, installDirectory: URL, console: any Console) async throws {
 
-        let serviceUser = await resolveServiceUser(installDirectory: installDirectory)
+        let executableURL = installDirectory.appendingPathComponent("deployer", isDirectory: false)
+        let serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: executableURL) ?? ""
         let manager = try config.serviceManager.makeManager(serviceUser: serviceUser)
         try await manager.restart(product: "deployer")
-    }
-
-    func resolveServiceUser(installDirectory: URL) async -> String {
-
-        let metadata = await ConfigDiscovery.loadDeployerctl()
-        if let discovered = metadata["SERVICE_USER"]?.trimmed, !discovered.isEmpty {
-            return discovered
-        }
-
-        let executableURL = installDirectory.appendingPathComponent("deployer", isDirectory: false)
-        let attributes = try? FileManager.default.attributesOfItem(atPath: executableURL.path)
-        if let owner = attributes?[.ownerAccountName] as? String {
-            let trimmed = owner.trimmed
-            if !trimmed.isEmpty { return trimmed }
-        }
-
-        return ""
     }
 
 }

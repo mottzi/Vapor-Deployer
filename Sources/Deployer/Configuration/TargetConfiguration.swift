@@ -3,16 +3,16 @@ import Foundation
 /// Runtime configuration for the single deployment target managed by the deployer.
 struct TargetConfiguration: Codable, Sendable {
 
-    let name: String
-    let repositoryURL: String?
-    let directory: String
-    let buildMode: String
-    let pusheventPath: String
-    let deploymentMode: DeploymentMode
-    let binaryBehaviour: BinaryBehaviour
-    let appPort: Int
-    let branch: String
-    let testing: Bool
+    var name: String
+    var repositoryURL: String?
+    var directory: String
+    var buildMode: String
+    var pusheventPath: String
+    var deploymentMode: DeploymentMode
+    var binaryBehaviour: BinaryBehaviour
+    var appPort: Int
+    var branch: String
+    var testing: Bool
 
 }
 

@@ -48,7 +48,7 @@ struct UpdateCommand: AsyncCommand {
             serviceName: "deployer"
         )
         
-        updateContext.serviceUser = await resolveServiceUser(executableURL: resolvedExecutableURL) ?? ""
+        updateContext.serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: resolvedExecutableURL) ?? ""
         updateContext.isSourceInstall = config.buildFromSource
         updateContext.deployerBranch = config.deployerBranch
 
@@ -101,50 +101,14 @@ struct UpdateCommand: AsyncCommand {
 
 private extension UpdateCommand {
 
-    /// Queries `GET /control/state` on the running server before the lock is acquired. Refuses with a
-    /// phase-named error when the server reports busy, and refuses with `serverUnhealthy` for any
-    /// non-200-ready response (401/403/404/5xx, timeout). Connection-refused is interpreted as
-    /// "server not running" and proceeds with a printed warning so this command remains a recovery
-    /// primitive. See `docs/adr/0005-cli-server-state-channel.md`.
+    // See `ControlPreflight.query` and `docs/adr/0005-cli-server-state-channel.md`.
     func preflightControlQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
-
-        guard let token = ControlToken.loadOrGenerate(installDirectory: installDirectory) else {
-            // No token file and we failed to create one. If a server is running it has the same problem
-            // and won't have mounted /control — treat as serverUnhealthy rather than silently proceeding.
-            throw Error.serverUnhealthy("control token unavailable")
-        }
-
-        let uri = URI(string: "http://127.0.0.1:\(config.port)/control/state")
-
-        let response: ClientResponse
-        do {
-            response = try await app.client.get(uri, headers: HTTPHeaders([
-                ("Authorization", "Bearer \(token.value)")
-            ]))
-        } catch {
-            // Vapor's client surfaces connection-refused as a thrown transport error. Any transport
-            // failure is treated as "server not reachable" → proceed. The lockfile still enforces
-            // update↔update and a stopped server has no deploy to interrupt.
-            console.print("Warning: deployer server not reachable for state check (\(error.localizedDescription)). Proceeding; flock still enforces update mutual exclusion.")
-            return
-        }
-
-        switch response.status {
-            case .ok:
-                let decoded: ControlStateResponse
-                do { decoded = try response.content.decode(ControlStateResponse.self) }
-                catch { throw Error.serverUnhealthy("control response could not be decoded: \(error.localizedDescription)") }
-                if decoded.phase == DeployerPhase.ready.rawValue { return }
-                throw Error.serverBusy(decoded.phase)
-
-            case .unauthorized, .forbidden:
-                throw Error.serverUnhealthy("control token rejected (\(response.status.code))")
-
-            case .notFound:
-                throw Error.serverUnhealthy("control endpoint missing — server may need restart")
-
-            default:
-                throw Error.serverUnhealthy("server returned \(response.status.code)")
+        switch await ControlPreflight.query(app: app, port: config.port, installDirectory: installDirectory) {
+            case .ready: return
+            case .busy(let phase): throw Error.serverBusy(phase)
+            case .unhealthy(let reason): throw Error.serverUnhealthy(reason)
+            case .unreachable(let reason):
+                console.print("Warning: deployer server not reachable for state check (\(reason)). Proceeding; flock still enforces update mutual exclusion.")
         }
     }
 
@@ -209,22 +173,6 @@ extension UpdateCommand {
 }
 
 extension UpdateCommand {
-    
-    /// Resolves the configured service user so systemd user operations can target the right user manager when invoked as root.
-    private func resolveServiceUser(executableURL: URL) async -> String? {
-        let metadata = await ConfigDiscovery.loadDeployerctl()
-        if let discovered = metadata["SERVICE_USER"]?.trimmed, !discovered.isEmpty {
-            return discovered
-        }
-        
-        let attributes = try? FileManager.default.attributesOfItem(atPath: executableURL.path)
-        if let owner = attributes?[.ownerAccountName] as? String {
-            let trimmed = owner.trimmed
-            if !trimmed.isEmpty { return trimmed }
-        }
-        
-        return nil
-    }
     
     /// Reinstates the last known-good executable after a failed update attempt.
     static func restoreBackupBinary(context: UpdateContext, fileManager: FileManager, executableURL: URL) throws {
