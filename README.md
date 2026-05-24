@@ -1,6 +1,6 @@
 <div align="center">
 
-<img width="200" alt="deployer" src="https://github.com/user-attachments/assets/72e8ddb8-6e7b-4ee6-9fc4-9e057fc71fa6" />
+<img width="200" alt="deployer" src="docs/github/deployer-logo.png" />
 
 # Deployer
 
@@ -15,7 +15,7 @@ Deployer is a lightweight and self-hosted CI/CD tool to manage your Swift server
 <br>
 
 <p align="center">
-  <img width="760" alt="Deployer Panel" src="https://github.com/user-attachments/assets/c23b71ba-4833-42f3-ab22-34f25a578d01" />
+  <img width="760" alt="Deployer Panel" src="docs/github/deployer-panel.png" />
 </p>
 
 Deployer is designed to be beginner friendly so anyone can take their first steps in the Swift-on-Server ecosystem without the hastle of complicated terminal sessions.
