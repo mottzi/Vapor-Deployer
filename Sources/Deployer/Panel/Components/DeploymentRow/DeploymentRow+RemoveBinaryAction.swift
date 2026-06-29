@@ -19,14 +19,21 @@ extension DeploymentRow {
             let store = BinaryStore(target: target)
             guard store.hasBinary(for: deployment)
             else { return .failure("Saved binary not found on disk") }
-            
+
+            let lock: OperationLock
             do {
-                try store.deleteBinary(for: deployment)
-                deployment.binarySizeMB = nil
-                deployment.isManuallySaved = false
-                deployment.output = nil
-                deployment.status = .pushed
-                try await deployment.save(on: app.db)
+                let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
+                lock = try OperationLock.acquire(installDirectory: installDirectory)
+            } catch OperationError.anotherOperationInProgress {
+                return .failure("A deployment is already running")
+            } catch {
+                return .failure(error.localizedDescription)
+            }
+
+            do {
+                defer { _ = lock }
+                let engine = DeploymentEngine(app: app, config: app.deployer.queue.config)
+                try await engine.run(action: .removeBinary, deployment: deployment)
             }
             catch {
                 let mistError = MistError.databaseFetchFailed(

@@ -7,12 +7,16 @@ extension Deployment {
         "durationString": durationString,
         "displayStatus": displayStatus.rawValue,
         "shortID": shortID,
+        "shortSHA": shortSHA,
+        "fullSHA": fullSHA,
         "startedAtUnixMs": startedAtUnixMs,
         "liveTimerStartedAtUnixMs": liveTimerStartedAtUnixMs,
         "canBeDeployed": canBeDeployed,
         "canBuild": canBuild,
         "canRestoreBinary": canRestoreBinary,
         "canTest": canTest,
+        "canDelete": canDelete,
+        "operationLocked": operationLocked,
         "testsPassed": testsPassed,
         "testsFailed": testsFailed,
         "hasSavedBinary": hasSavedBinary,
@@ -40,6 +44,10 @@ extension Deployment {
 
     var shortID: String? { id.map { String($0.uuidString.prefix(8)) } }
 
+    var fullSHA: String { commitID }
+
+    var shortSHA: String { String(commitID.prefix(7)) }
+
     var startedAtUnixMs: Int? { startedAt.map { Int($0.timeIntervalSince1970 * 1000) } }
 
     /// Anchor for the in-row live timer. During `.testing`, ticks against `testStartedAt` so the elapsed
@@ -51,7 +59,9 @@ extension Deployment {
     }
 
     var canBeDeployed: Bool {
-        switch displayStatus {
+        guard !operationLocked else { return false }
+
+        return switch displayStatus {
             case .building: false
             case .testing: false
             case .restoring: false
@@ -76,10 +86,21 @@ extension Deployment {
     /// `.running` (the live binary is untouched; tests compile into `.build-tests/`). The queue
     /// lock still serializes execution.
     var canTest: Bool {
-        switch displayStatus {
+        guard !operationLocked else { return false }
+
+        return switch displayStatus {
             case .building, .testing, .restoring: false
             default: true
         }
+    }
+
+    var canDelete: Bool {
+        !operationLocked && !isLive
+    }
+
+    var operationLocked: Bool {
+        guard let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent() else { return false }
+        return OperationLock.isHeld(installDirectory: installDirectory)
     }
 
     var testsPassed: Bool { lastTestOutcome == true }
@@ -90,7 +111,7 @@ extension Deployment {
     }
 
     var hasLiveOutputStream: Bool {
-        status == .building || status == .testing
+        status == .building || status == .testing || status == .restoring
     }
 
     /// HTML-rendered output: escapes user-facing text and, on failure, wraps the failing pipeline section in a red span.

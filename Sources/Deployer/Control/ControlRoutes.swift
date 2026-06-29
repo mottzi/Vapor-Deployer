@@ -22,8 +22,9 @@ extension Deployer {
         control.get("state") { request async -> ControlStateResponse in
             let isUpdating = await request.application.deployer.updater.isUpdating
             let isDeploying = await request.application.deployer.queue.isDeploying
+            let operationIsRunning = OperationLock.isHeld(installDirectory: installDirectory)
 
-            let phase: DeployerPhase = switch (isUpdating, isDeploying) {
+            let phase: DeployerPhase = switch (isUpdating, operationIsRunning || isDeploying) {
                 case (true, _): .updating
                 case (_, true): .deploying
                 case (false, false): .ready

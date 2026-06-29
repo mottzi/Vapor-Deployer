@@ -31,8 +31,9 @@ actor Queue {
         guard eventBranch == target.branch else { return }
 
         let isUpdating = await app.deployer.updater.isUpdating
+        let isOperationLocked = globalOperationLockHeld()
         let status: Deployment.Status = switch target.deploymentMode {
-            case .automatic: (isDeploying || isUpdating) ? .canceled : .building
+            case .automatic: (isDeploying || isUpdating || isOperationLocked) ? .canceled : .building
             case .manual: .pushed
         }
         
@@ -45,7 +46,12 @@ actor Queue {
         )
         
         if deployment.status == .building {
-            await deploy(deployment: deployment, target: target)
+            let result = await start(deployment: deployment, target: target, mode: .automaticDeploy)
+            if case .started = result { return }
+
+            deployment.status = .canceled
+            deployment.startedAt = .now
+            try? await deployment.save(on: app.db)
             return
         }
         
@@ -53,6 +59,17 @@ actor Queue {
         try? await deployment.save(on: app.db)
     }
     
+}
+
+private extension Queue {
+
+    /// Treats any cross-process deployer operation as busy when classifying automatic webhook pushes.
+    func globalOperationLockHeld() -> Bool {
+        guard let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent() else { return false }
+        return UpdateLock.isHeld(installDirectory: installDirectory)
+            || OperationLock.isHeld(installDirectory: installDirectory)
+    }
+
 }
 
 extension Queue {
@@ -81,47 +98,27 @@ extension Queue {
 
 extension Queue {
     
-    private func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async -> StartResult {
+    func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async -> StartResult {
 
         guard !isDeploying else { return .queueBusy }
         let isUpdating = await app.deployer.updater.isUpdating
         guard !isUpdating else { return .queueBusy }
 
-        // Cross-process gap closure (ADR 0005): refuse if any deployer update — including one launched
-        // from a shell — currently holds the update lock. `Updater.isUpdating` above is now derived
-        // from the same source, but we peek directly to defend against a poll-cadence race where a
-        // CLI update started milliseconds ago has not yet been observed by the Updater's watcher.
-        if let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent(),
-           UpdateLock.isHeld(installDirectory: installDirectory) {
+        let lock: OperationLock
+        do {
+            let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
+            if UpdateLock.isHeld(installDirectory: installDirectory) { return .queueBusy }
+            lock = try OperationLock.acquire(installDirectory: installDirectory)
+        } catch OperationError.anotherOperationInProgress {
             return .queueBusy
+        } catch {
+            return .failure(error.localizedDescription)
         }
 
         isDeploying = true
         await broadcastState()
 
-        // Manual test is an audit — runTest snapshots/restores the row's lifecycle state itself.
-        // For every other mode, start() owns the .testing/.building/.restoring flip + save.
-        if mode != .test {
-            deployment.startedAt = .now
-            deployment.status = switch mode {
-                case .restoreBinary: .restoring
-                default: .building
-            }
-            deployment.finishedAt = nil
-
-            // .restoreBinary preserves the prior build transcript so the user can compare.
-            if mode != .restoreBinary { deployment.output = nil }
-
-            do {
-                try await deployment.save(on: app.db)
-            } catch {
-                isDeploying = false
-                await broadcastState()
-                return .failure("Failed to start deployment: \(error.localizedDescription)")
-            }
-        }
-
-        Task { await run(mode: mode, startingWith: deployment, on: target) }
+        Task { await run(mode: mode, startingWith: deployment, lock: lock) }
         return .started
     }
 

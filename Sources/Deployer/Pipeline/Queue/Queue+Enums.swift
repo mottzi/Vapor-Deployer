@@ -8,6 +8,9 @@ extension Queue {
         /// Full build-and-deploy pipeline, draining any queued pushes in sequence.
         case deploy
 
+        /// Automatic-mode build-and-deploy pipeline that drains newer queued pushes.
+        case automaticDeploy
+
         /// Build and archive the binary without deploying it live.
         case saveBinary
 

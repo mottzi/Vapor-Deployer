@@ -11,7 +11,18 @@ extension TargetStatus {
 
         func perform(targetID: UUID?, state: inout ComponentState, app: Application) async -> ActionResult {
 
+            let lock: OperationLock
             do {
+                let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
+                lock = try OperationLock.acquire(installDirectory: installDirectory)
+            } catch OperationError.anotherOperationInProgress {
+                return .failure("A deployment is already running")
+            } catch {
+                return .failure(error.localizedDescription)
+            }
+
+            do {
+                defer { _ = lock }
                 let manager = app.deployer.serviceManager
                 let status = await manager.status(product: productName)
                 await broadcaster.setBadge(StatusState(status.isRunning ? .stopping : .starting))

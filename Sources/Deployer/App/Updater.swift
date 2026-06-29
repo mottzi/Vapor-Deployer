@@ -73,6 +73,7 @@ actor Updater {
 
         let installDirectory = executableURL.deletingLastPathComponent()
         if UpdateLock.isHeld(installDirectory: installDirectory) { return .busy }
+        if OperationLock.isHeld(installDirectory: installDirectory) { return .busy }
 
         do {
             try spawnDetachedUpdate(executable: executableURL)
@@ -135,8 +136,14 @@ actor Updater {
     private func broadcastPhaseIfChanged(wasHeld: Bool) async {
         
         let queueIsDeploying = await app.deployer.queue.isDeploying
+        let operationIsRunning: Bool
+        if let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent() {
+            operationIsRunning = OperationLock.isHeld(installDirectory: installDirectory)
+        } else {
+            operationIsRunning = false
+        }
         
-        let resolved: DeployerPhase = switch (isUpdating, queueIsDeploying) {
+        let resolved: DeployerPhase = switch (isUpdating, operationIsRunning || queueIsDeploying) {
             case (true, _): .updating
             case (_, true): .deploying
             case (false, false): .ready

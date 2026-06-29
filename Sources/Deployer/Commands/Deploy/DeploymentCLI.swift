@@ -1,0 +1,159 @@
+import Vapor
+import Fluent
+
+/// Shared helpers for top-level deployment CLI commands.
+enum DeploymentCLI {
+
+    static let defaultListLimit = 20
+
+    /// Loads the headless runtime and returns the config plus shared engine.
+    static func runtime(from context: CommandContext) async throws -> (Configuration, DeploymentEngine) {
+        let config = try await context.application.deployer.useHeadlessRuntime()
+        let engine = DeploymentEngine(app: context.application, config: config, origin: .cli)
+        return (config, engine)
+    }
+
+    /// Runs a mutating CLI operation under the global operation lock.
+    static func runLocked<T>(
+        context: CommandContext,
+        operation: () async throws -> T
+    ) async throws -> T {
+        let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
+        let lock = try OperationLock.acquire(installDirectory: installDirectory)
+        defer { _ = lock }
+        return try await operation()
+    }
+
+    /// Parses positional arguments and simple boolean flags.
+    static func parse(_ arguments: [String]) throws -> ParsedArguments {
+        var positionals: [String] = []
+        var flags: Set<String> = []
+
+        for argument in arguments {
+            if argument.hasPrefix("-") {
+                flags.insert(argument)
+            } else {
+                positionals.append(argument)
+            }
+        }
+
+        return ParsedArguments(positionals: positionals, flags: flags)
+    }
+
+    /// Ensures only the expected flags were supplied.
+    static func validateFlags(_ parsed: ParsedArguments, allowed: Set<String>) throws {
+        let unknown = parsed.flags.subtracting(allowed)
+        guard unknown.isEmpty else { throw CLIError.unknownFlags(Array(unknown).sorted()) }
+    }
+
+    /// Renders the deployment list as the compact operator table.
+    static func printDeploymentList(config: Configuration, app: Application, console: any Console) async throws {
+
+        let deployments = try await Deployment.query(on: app.db)
+            .filter(\.$product, .equal, config.target.name)
+            .sort(\.$createdAt, .descending)
+            .limit(defaultListLimit)
+            .all()
+
+        guard !deployments.isEmpty else {
+            console.output("No deployments found.")
+            return
+        }
+
+        let width = TerminalWidth.current()
+        let commitWidth = max(width - 74, 12)
+
+        console.output("L  STATUS     SHA      TESTS  BINARY    STARTED           DUR    COMMIT".consoleText(isBold: true))
+        for deployment in deployments {
+            let live = deployment.isLive ? "*" : " "
+            let status = deployment.displayStatus.rawValue.padding(toLength: 10, withPad: " ", startingAt: 0)
+            let sha = deployment.shortSHA.padding(toLength: 8, withPad: " ", startingAt: 0)
+            let tests = testLabel(for: deployment).padding(toLength: 6, withPad: " ", startingAt: 0)
+            let binary = binaryLabel(for: deployment).padding(toLength: 9, withPad: " ", startingAt: 0)
+            let started = startedLabel(for: deployment).padding(toLength: 17, withPad: " ", startingAt: 0)
+            let duration = (deployment.durationString ?? "-").padding(toLength: 6, withPad: " ", startingAt: 0)
+            let message = truncate(deployment.commitMessage, to: commitWidth)
+            console.output("\(live)  \(status) \(sha) \(tests) \(binary) \(started) \(duration) \(message)")
+        }
+    }
+
+    static func testPolicy(parsed: ParsedArguments, target: TargetConfiguration) throws -> DeploymentEngine.TestPolicy {
+        if parsed.flags.contains("--testing") || parsed.flags.contains("-t") {
+            return .forceEnabled
+        }
+
+        if parsed.flags.contains("--skip-tests") {
+            guard parsed.flags.contains("--yes") else { throw OperationError.skipTestsRequiresConfirmation }
+            return .forceDisabled
+        }
+
+        return .configured
+    }
+
+    static func consoleSink(parsed: ParsedArguments, console: any Console) -> ConsoleLogSink? {
+        parsed.flags.contains("--no-logs") ? nil : ConsoleLogSink(console: console)
+    }
+
+    static func confirmIfNeeded(_ message: String, parsed: ParsedArguments, console: any Console) throws {
+        guard !parsed.flags.contains("--yes") else { return }
+        guard console.confirm(message, defaultYes: false) else { throw CLIError.aborted }
+    }
+
+}
+
+extension DeploymentCLI {
+
+    struct ParsedArguments {
+        let positionals: [String]
+        let flags: Set<String>
+    }
+
+    enum CLIError: DescribedError {
+        case usage(String)
+        case unknownFlags([String])
+        case aborted
+
+        var errorDescription: String? {
+            switch self {
+            case .usage(let usage):
+                usage
+
+            case .unknownFlags(let flags):
+                "Unknown flag(s): \(flags.joined(separator: ", "))"
+
+            case .aborted:
+                "Aborted."
+            }
+        }
+    }
+
+}
+
+private extension DeploymentCLI {
+
+    static func testLabel(for deployment: Deployment) -> String {
+        if deployment.testsPassed { return "ok" }
+        if deployment.testsFailed { return "fail" }
+        return "-"
+    }
+
+    static func binaryLabel(for deployment: Deployment) -> String {
+        guard let mb = deployment.binarySizeMB else { return "-" }
+        return "\(mb) MB"
+    }
+
+    static func startedLabel(for deployment: Deployment) -> String {
+        guard let date = deployment.startedAt else { return "-" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yy-MM-dd HH:mm"
+        return formatter.string(from: date)
+    }
+
+    static func truncate(_ text: String, to maxLength: Int) -> String {
+        guard text.count > maxLength else { return text }
+        guard maxLength > 1 else { return String(text.prefix(maxLength)) }
+        guard maxLength > 3 else { return String(text.prefix(maxLength)) }
+        return String(text.prefix(maxLength - 3)) + "..."
+    }
+
+}

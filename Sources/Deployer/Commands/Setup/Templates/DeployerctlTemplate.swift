@@ -77,6 +77,13 @@ enum DeployerctlTemplate {
           setup         Rerun deployer setup (interactive)
           update        Update the deployer and redeploy the app (interactive)
           config        View or modify deployer.json (with restart prompt)
+          deploy        List deployments or deploy a commit SHA
+          build         Build and save a deployment binary
+          run           Run a saved deployment binary
+          test          Run deployment tests
+          output        Show or follow deployment output
+          delete        Delete a non-live deployment
+          remove-binary Remove a saved deployment binary
           remove        Tear down the entire deployer installation (interactive)
 
         Targets:
@@ -210,6 +217,18 @@ enum DeployerctlTemplate {
         resolve_service_identity
 
         action="$1"; shift
+
+        case "$action" in
+          deploy|build|run|test|output|delete|remove-binary)
+            INSTALL_BIN="$(resolve_install_bin)"
+            if [[ "$SERVICE_MANAGER" == "systemd" ]]; then
+              ensure_user_manager
+            fi
+            as_service_user "$INSTALL_BIN" "$action" "$@"
+            exit $?
+            ;;
+        esac
+
         target="${1:-all}"
         case "$target" in
           deployer|app|all) ;;

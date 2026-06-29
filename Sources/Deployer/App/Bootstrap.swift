@@ -19,6 +19,13 @@ extension Deployer {
         app.asyncCommands.use(RemoveCommand(), as: "remove")
         app.asyncCommands.use(ConfigCommand(), as: "config")
         app.asyncCommands.use(VersionCommand(), as: "version")
+        app.asyncCommands.use(DeployCommand(), as: "deploy")
+        app.asyncCommands.use(BuildCommand(), as: "build")
+        app.asyncCommands.use(RunCommand(), as: "run")
+        app.asyncCommands.use(TestCommand(), as: "test")
+        app.asyncCommands.use(OutputCommand(), as: "output")
+        app.asyncCommands.use(DeleteDeploymentCommand(), as: "delete")
+        app.asyncCommands.use(RemoveBinaryCommand(), as: "remove-binary")
     }
 
     func useServer() async throws {
@@ -28,10 +35,20 @@ extension Deployer {
         app.deployer.serviceManager = try config.serviceManager.makeManager(serviceUser: UserAccount.currentName())
         app.deployer.configureHTTP(config: config)
         try await app.deployer.configureDatabase(config: config)
+        await OperationRecovery.repairAbandonedOperations(app: app, config: config)
         app.deployer.configureViews()
         app.deployer.configureMist(config: config)
         try await app.deployer.configurePanel(config: config)
         try app.deployer.configureControl()
+    }
+
+    func useHeadlessRuntime() async throws -> Configuration {
+
+        let config = try Configuration.load()
+        app.deployer.serviceManager = try config.serviceManager.makeManager(serviceUser: UserAccount.currentName())
+        try await app.deployer.configureHeadlessDatabase(config: config)
+        await OperationRecovery.repairAbandonedOperations(app: app, config: config)
+        return config
     }
 
 }
@@ -48,7 +65,16 @@ extension Deployer {
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
         app.databases.middleware.use(DeploymentBinaryCleanupMiddleware(target: config.target))
         app.sessions.use(.fluent)
-        app.migrations.add(Deployment.migrations + [SessionRecord.migration])
+        app.migrations.add(Deployment.migrations + Operation.migrations + OperationEvent.migrations + [SessionRecord.migration])
+        try await app.autoMigrate()
+        await seedFirstDeployment(config: config)
+    }
+
+    func configureHeadlessDatabase(config: Configuration) async throws {
+        try createDatabaseDirectory(for: config.dbFile)
+        app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
+        app.databases.middleware.use(DeploymentBinaryCleanupMiddleware(target: config.target))
+        app.migrations.add(Deployment.migrations + Operation.migrations + OperationEvent.migrations)
         try await app.autoMigrate()
         await seedFirstDeployment(config: config)
     }
@@ -117,6 +143,14 @@ extension Deployer {
             targetConfig
             deployerConfig
         }
+
+        useOperationEventBridge(
+            config: config,
+            deployerPhase: deployerPhase,
+            onStatusChange: { status in
+                await broadcaster.set(StatusState(status))
+            }
+        )
 
         await queue.drainOnBoot()
     }

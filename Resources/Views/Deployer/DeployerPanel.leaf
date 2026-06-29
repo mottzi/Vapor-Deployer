@@ -182,7 +182,7 @@
                     <tr>
                       <th class="dp-th dp-th-status">Status</th>
                       <th class="dp-th dp-th-commit">Commit</th>
-                      <th class="dp-th dp-th-sm-hide dp-th-mobile-hide">ID</th>
+                      <th class="dp-th dp-th-sm-hide dp-th-mobile-hide">SHA</th>
                       <th class="dp-th dp-th-started">Started</th>
                       <th class="dp-th dp-th-build">Build</th>
                       <th class="dp-th dp-th-tests dp-th-sm-hide dp-th-mobile-hide">Tests</th>

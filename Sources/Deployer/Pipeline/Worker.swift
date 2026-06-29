@@ -5,7 +5,7 @@ struct Worker: Sendable {
     let deployment: Deployment
     let target: TargetConfiguration
     let app: Application
-    let stream: BuildOutputStream?
+    let stream: DeploymentOutput?
     let onStatusChange: @Sendable (ServiceStatus) async -> Void
     
 }
@@ -74,6 +74,9 @@ extension Worker {
     }
 
     func restore(from store: BinaryStore) async throws {
+        await stream?.appendLabel("deployer")
+        await stream?.append("Restore binary\n")
+
         let binaryPath = try store.binaryPath(for: deployment)
         try await replaceLiveBinary(from: binaryPath, to: store.liveBinaryPath, transfer: .copy)
     }

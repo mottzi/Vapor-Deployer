@@ -17,9 +17,21 @@ extension DeploymentRow {
             guard !deployment.isLive else {
                 return .failure("Cannot delete the active live deployment")
             }
-            
+
+            let lock: OperationLock
             do {
-                try await deployment.delete(on: app.db)
+                let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
+                lock = try OperationLock.acquire(installDirectory: installDirectory)
+            } catch OperationError.anotherOperationInProgress {
+                return .failure("A deployment is already running")
+            } catch {
+                return .failure(error.localizedDescription)
+            }
+
+            do {
+                defer { _ = lock }
+                let engine = DeploymentEngine(app: app, config: app.deployer.queue.config)
+                try await engine.run(action: .delete, deployment: deployment)
             }
             catch {
                 let error = MistError.databaseFetchFailed(
