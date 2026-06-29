@@ -470,6 +470,7 @@ private extension DeploymentEngine {
             target: config.target,
             app: app,
             stream: output,
+            environment: config.deploymentEnvironment,
             onStatusChange: { status in
                 try? await eventLog.record(.serviceStatus, deploymentID: deployment.id, payload: status.rawValue)
                 await onStatusChange(status)

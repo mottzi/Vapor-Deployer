@@ -13,6 +13,8 @@ enum DeployerTemplate {
             deployerDirectory: ".",
             socketPath: "\(context.panelRoute)/ws",
             panelRoute: context.panelRoute,
+            serviceHome: paths.serviceHome,
+            swiftPath: paths.swiftPath,
             target: TargetConfiguration(
                 name: context.productName,
                 repositoryURL: context.appRepositoryWebURL.isEmpty ? nil : context.appRepositoryWebURL,

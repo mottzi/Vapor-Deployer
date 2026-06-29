@@ -22,6 +22,8 @@ enum ConfigField: String, CaseIterable, Sendable {
         "deployerDirectory",
         "socketPath",
         "panelRoute",
+        "serviceHome",
+        "swiftPath",
         "serviceManager",
         "buildFromSource",
         "webhookSecret",

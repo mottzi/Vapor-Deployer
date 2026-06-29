@@ -6,6 +6,7 @@ struct Worker: Sendable {
     let target: TargetConfiguration
     let app: Application
     let stream: DeploymentOutput?
+    let environment: [String: String]
     let onStatusChange: @Sendable (ServiceStatus) async -> Void
     
 }
@@ -17,6 +18,7 @@ extension Worker {
         try await Shell.runStreaming(
             "git", ["fetch", "origin", deployment.branch],
             directory: target.directory,
+            environment: environment,
             onOutput: { chunk in await stream?.append(chunk) }
         )
 
@@ -24,6 +26,7 @@ extension Worker {
         try await Shell.runStreaming(
             "git", ["checkout", "--detach", "-f", deployment.commitID],
             directory: target.directory,
+            environment: environment,
             onOutput: { chunk in await stream?.append(chunk) }
         )
     }
@@ -34,6 +37,7 @@ extension Worker {
         return try await Shell.runStreaming(
             "swift", ["build", "-c", target.buildMode],
             directory: target.directory,
+            environment: environment,
             onOutput: { chunk in await stream?.append(chunk) }
         )
     }
@@ -47,6 +51,7 @@ extension Worker {
         return try await Shell.runStreaming(
             "swift", ["test", "-c", target.buildMode, "--scratch-path", ".build-tests"],
             directory: target.directory,
+            environment: environment,
             onOutput: { chunk in await stream?.append(chunk) }
         )
     }

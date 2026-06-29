@@ -8,6 +8,8 @@ struct Configuration: Codable, Sendable {
     var deployerDirectory: String
     var socketPath: String
     var panelRoute: String
+    var serviceHome: String
+    var swiftPath: String
     var target: TargetConfiguration
     var serviceManager: ServiceManagerKind
     var buildFromSource: Bool
@@ -102,12 +104,27 @@ extension Configuration {
             deployerDirectory: Configuration.trimmedFileSystemPath(deployerDirectory, field: "deployerDirectory", relativeTo: baseDirectoryURL),
             socketPath: Configuration.trimmedValue(socketPath, field: "socketPath"),
             panelRoute: Configuration.trimmedValue(panelRoute, field: "panelRoute"),
+            serviceHome: Configuration.trimmedFileSystemPath(serviceHome, field: "serviceHome", relativeTo: baseDirectoryURL),
+            swiftPath: Configuration.trimmedValue(swiftPath, field: "swiftPath"),
             target: try target.resolved(relativeTo: baseDirectoryURL),
             serviceManager: serviceManager,
             buildFromSource: buildFromSource,
             deployerBranch: try Configuration.trimmedValue(deployerBranch, field: "deployerBranch"),
             webhookSecret: webhookSecret
         )
+    }
+
+}
+
+extension Configuration {
+
+    /// Process environment used for deployment subprocesses so CLI and panel builds see the same toolchain.
+    var deploymentEnvironment: [String: String] {
+        [
+            "HOME": serviceHome,
+            "USER": URL(fileURLWithPath: serviceHome, isDirectory: true).lastPathComponent,
+            "PATH": swiftPath
+        ]
     }
 
 }
