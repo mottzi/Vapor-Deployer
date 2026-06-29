@@ -260,6 +260,7 @@ private extension DeploymentEngine {
     /// Removes a saved binary and returns the row to the pushed state.
     func runRemoveBinary(deployment: Deployment, eventLog: OperationEventLog) async throws {
 
+        guard !deployment.isLive else { throw OperationError.liveDeploymentBinaryCannotBeRemoved }
         guard deployment.hasSavedBinary else { throw OperationError.savedBinaryMissing }
 
         let store = BinaryStore(target: config.target)
@@ -290,12 +291,12 @@ private extension Deployment {
 
     /// Engine-level build eligibility for an operation that already owns the global lock.
     var canStartBuildOperation: Bool {
-        canStartPipelineOperation && !hasSavedBinary
+        !isLive && canStartPipelineOperation && !hasSavedBinary
     }
 
     /// Engine-level restore eligibility for an operation that already owns the global lock.
     var canStartRestoreOperation: Bool {
-        canStartPipelineOperation && hasSavedBinary
+        !isLive && canStartPipelineOperation && hasSavedBinary
     }
 
     /// Engine-level test eligibility for an operation that already owns the global lock.

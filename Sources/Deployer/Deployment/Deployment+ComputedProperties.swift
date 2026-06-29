@@ -75,7 +75,7 @@ extension Deployment {
     }
 
     var canBuild: Bool {
-        canBeDeployed && !hasSavedBinary
+        !isLive && canBeDeployed && !hasSavedBinary
     }
 
     var hasSavedBinary: Bool {
@@ -83,7 +83,7 @@ extension Deployment {
     }
 
     var canRestoreBinary: Bool {
-        canBeDeployed && hasSavedBinary
+        !isLive && canBeDeployed && hasSavedBinary
     }
 
     /// Test eligibility — permissive. Allowed on every non-actively-transient state, including

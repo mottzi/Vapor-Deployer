@@ -14,6 +14,10 @@ extension DeploymentRow {
                   let deployment = await loadDeployment(id: targetID, product: productName, app: app),
                   deployment.hasSavedBinary
             else { return .failure("Deployment not found or doesn't have a saved binary.") }
+
+            guard !deployment.isLive else {
+                return .failure("Cannot remove the saved binary for the active live deployment")
+            }
             
             let target = app.deployer.queue.config.target
             let store = BinaryStore(target: target)

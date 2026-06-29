@@ -30,9 +30,9 @@ The v1 CLI favors interactive operator UX over automation breadth: mutating comm
 
 The v1 command surface uses top-level deployment verbs: `deploy` lists deployments, `deploy <sha>` promotes a commit, `build <sha>` builds and saves a binary, `run <sha>` restores a saved binary, `test <sha>` runs the manual test audit, `output <sha>` shows deployment output, `delete <sha>` deletes a deployment row, and `remove-binary <sha>` removes a saved binary. `deploy` list output does not include a target summary header; operators can use `config` for configuration details.
 
-Promoting the live deployment exits successfully with an "already live" message and makes no change. `build <sha>` refuses when the selected deployment already has a saved binary, matching the panel.
+Promoting the live deployment exits successfully with an "already live" message and makes no change. `build <sha>` refuses the live deployment and deployments that already have a saved binary, matching the panel.
 
-The top-level row actions keep panel parity: `run <sha>` refuses if the saved binary is missing on disk, `remove-binary <sha>` resets the row to `pushed`, `delete <sha>` refuses the live deployment, and `test <sha>` is allowed on the live deployment because tests are audits. `output <sha>` follows live CLI-origin output until completion and otherwise prints stored output when available.
+The top-level row actions keep panel parity: `run <sha>` refuses the live deployment or if the saved binary is missing on disk, `remove-binary <sha>` refuses the live deployment and otherwise resets the row to `pushed`, `delete <sha>` refuses the live deployment, and `test <sha>` is allowed on the live deployment because tests are audits. `output <sha>` follows live CLI-origin output until completion and otherwise prints stored output when available.
 
 `deploy` lists the same newest-first deployment rows as the panel, defaulting to 20 rows. Human-facing deployment identifiers are short Git SHAs everywhere in the panel and v1 CLI; deployment UUIDs remain internal identifiers for Mist, persistence, and diagnostics.
 

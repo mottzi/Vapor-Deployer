@@ -11,6 +11,7 @@ enum OperationError: DescribedError {
     case deploymentCannotRunSavedBinary
     case deploymentCannotTest
     case liveDeploymentCannotBeDeleted
+    case liveDeploymentBinaryCannotBeRemoved
     case savedBinaryAlreadyExists
     case savedBinaryMissing
     case testingSavedBinaryUnsupported
@@ -43,6 +44,9 @@ enum OperationError: DescribedError {
 
         case .liveDeploymentCannotBeDeleted:
             return "Cannot delete the active live deployment."
+
+        case .liveDeploymentBinaryCannotBeRemoved:
+            return "Cannot remove the saved binary for the active live deployment."
 
         case .savedBinaryAlreadyExists:
             return "This deployment already has a saved binary."
