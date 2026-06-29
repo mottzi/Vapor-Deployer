@@ -10,7 +10,7 @@ import Darwin
 /// Cross-process advisory lock that serializes mutating deployer operations across the panel and CLI.
 final class OperationLock: @unchecked Sendable {
 
-    private let fd: Int32
+    private var fd: Int32?
 
     static func lockPath(installDirectory: URL) -> String {
         installDirectory.appendingPathComponent(".deployer-operation.lock").path
@@ -60,8 +60,16 @@ final class OperationLock: @unchecked Sendable {
         return OperationLock(fd: fd)
     }
 
-    deinit {
+    /// Releases the held advisory lock before the lock object leaves scope.
+    func release() {
+        guard let fd else { return }
+        _ = flock(fd, LOCK_UN)
         close(fd)
+        self.fd = nil
+    }
+
+    deinit {
+        release()
     }
 
 }

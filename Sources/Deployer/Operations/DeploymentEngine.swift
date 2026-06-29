@@ -144,7 +144,7 @@ private extension DeploymentEngine {
     /// Builds and archives a deployment without making it live.
     func runBuild(deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
 
-        guard deployment.canBuild else { throw OperationError.deploymentCannotBuild }
+        guard deployment.canStartBuildOperation else { throw OperationError.deploymentCannotBuild }
 
         let store = BinaryStore(target: config.target)
         guard !store.hasBinary(for: deployment) else { throw OperationError.savedBinaryAlreadyExists }
@@ -176,7 +176,7 @@ private extension DeploymentEngine {
     /// Restores an archived binary and makes that deployment live.
     func runSavedBinary(deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
 
-        guard deployment.canRestoreBinary || deployment.hasSavedBinary else { throw OperationError.deploymentCannotRunSavedBinary }
+        guard deployment.canStartRestoreOperation else { throw OperationError.deploymentCannotRunSavedBinary }
 
         let store = BinaryStore(target: config.target)
         guard store.hasBinary(for: deployment) else { throw OperationError.savedBinaryMissing }
@@ -208,7 +208,7 @@ private extension DeploymentEngine {
     /// Runs `swift test` as an audit and restores the deployment lifecycle status afterwards.
     func runTest(deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
 
-        guard deployment.canTest else { throw OperationError.deploymentCannotTest }
+        guard deployment.canStartTestOperation else { throw OperationError.deploymentCannotTest }
 
         let priorStatus = deployment.status
         let priorOutput = deployment.output ?? ""
@@ -272,6 +272,40 @@ private extension DeploymentEngine {
         deployment.status = .pushed
         try await deployment.save(on: app.db)
         await eventLog.recordRowUpdated(deploymentID: deployment.id)
+    }
+
+}
+
+private extension Deployment {
+
+    /// Engine-level deployability excludes UI-only global lock state because callers already hold the lock.
+    var canStartPipelineOperation: Bool {
+        switch displayStatus {
+        case .building, .testing, .restoring, .running:
+            false
+        default:
+            true
+        }
+    }
+
+    /// Engine-level build eligibility for an operation that already owns the global lock.
+    var canStartBuildOperation: Bool {
+        canStartPipelineOperation && !hasSavedBinary
+    }
+
+    /// Engine-level restore eligibility for an operation that already owns the global lock.
+    var canStartRestoreOperation: Bool {
+        canStartPipelineOperation && hasSavedBinary
+    }
+
+    /// Engine-level test eligibility for an operation that already owns the global lock.
+    var canStartTestOperation: Bool {
+        switch displayStatus {
+        case .building, .testing, .restoring:
+            false
+        default:
+            true
+        }
     }
 
 }

@@ -1,16 +1,10 @@
 import Vapor
+import Mist
 
 extension Queue {
 
     /// Delegates accepted work to the shared engine, then clears the in-process busy flag.
     func run(mode: JobMode, startingWith deployment: Deployment, lock: OperationLock) async {
-
-        defer { _ = lock }
-        defer {
-            Task {
-                await self.finish()
-            }
-        }
 
         let engine = DeploymentEngine(
             app: app,
@@ -31,6 +25,9 @@ extension Queue {
         } catch {
             app.logger.error("Deployment operation failed: \(error.localizedDescription)")
         }
+
+        lock.release()
+        await finish()
     }
 
     /// Broadcasts current operation state to connected live panel clients.
@@ -60,6 +57,23 @@ extension Queue {
     private func finish() async {
         isDeploying = false
         await broadcastState()
+        await refreshProductRows()
+    }
+
+    /// Re-renders deployment rows after global lock state changes.
+    private func refreshProductRows() async {
+        do {
+            let deployments = try await Deployment.query(on: app.db)
+                .filter(\.$product, .equal, config.target.name)
+                .all()
+
+            for deployment in deployments {
+                guard let id = deployment.id else { continue }
+                await app.mist.models.sync(Deployment.self, id: id)
+            }
+        } catch {
+            app.logger.error("Failed to refresh deployment rows after queue completion: \(error.localizedDescription)")
+        }
     }
 
 }
