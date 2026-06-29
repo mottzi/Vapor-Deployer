@@ -84,6 +84,7 @@ final class OperationEvent: Model, @unchecked Sendable {
 extension OperationEvent {
 
     enum EventType: String, Codable, Sendable {
+
         case started
         case rowUpdated = "row-updated"
         case rowDeleted = "row-deleted"
@@ -91,6 +92,7 @@ extension OperationEvent {
         case serviceStatus = "service-status"
         case completed
         case failed
+
     }
 
 }

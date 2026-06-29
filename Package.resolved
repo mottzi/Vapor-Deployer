@@ -1,5 +1,5 @@
 {
-  "originHash" : "23d478606a8449cbf2a96f0694c5ba55c4e0bec000348d7c47b5d0b99b981df9",
+  "originHash" : "069e34356b61bb069216bdd4592e0e174703b5873ac7f6fae0e3c690d692a96d",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -349,7 +349,7 @@
       "location" : "https://github.com/mottzi/Vapor-Mist.git",
       "state" : {
         "branch" : "dev",
-        "revision" : "2b481ef14e4541d699402e80b58e0502a76d6e65"
+        "revision" : "8285dc2ff022ec975e67cbd7421459660aa3cb71"
       }
     },
     {

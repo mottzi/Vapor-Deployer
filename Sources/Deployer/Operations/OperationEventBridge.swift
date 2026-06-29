@@ -173,36 +173,18 @@ actor OperationEventBridge {
         }
     }
 
-    /// Triggers Mist's model middleware from the server process for CLI-origin row updates.
+    /// Synchronizes CLI-origin row changes into the server's live Mist instance registry.
     private func refreshRow(id: UUID?) async {
         guard let id else { return }
 
-        do {
-            guard let deployment = try await Deployment.find(id, on: app.db) else { return }
-            try await deployment.save(on: app.db)
-        } catch {
-            app.logger.error("Failed to refresh deployment row \(id): \(error.localizedDescription)")
-        }
+        await app.mist.models.sync(Deployment.self, id: id)
     }
 
-    /// Emits a server-process model deletion event for rows deleted by an offline-capable CLI process.
+    /// Synchronizes CLI-origin row deletion into the server's live Mist instance registry.
     private func deleteRow(id: UUID?) async {
         guard let id else { return }
 
-        let tombstone = Deployment(
-            product: config.target.name,
-            status: .pushed,
-            commitMessage: "",
-            commitID: "",
-            branch: config.target.branch
-        )
-        tombstone.id = id
-
-        do {
-            try await tombstone.delete(on: app.db)
-        } catch {
-            app.logger.error("Failed to refresh deleted deployment row \(id): \(error.localizedDescription)")
-        }
+        await app.mist.models.delete(Deployment.self, id: id)
     }
 
     /// Keeps the runtime badge in sync with globally-held operation locks.

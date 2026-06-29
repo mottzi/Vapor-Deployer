@@ -36,6 +36,12 @@ struct DeploymentRow: InstanceComponent {
             .sort(\.$createdAt, .descending)
             .all()
     }
+
+    /// Refreshes only deployment rows that belong to this panel's configured target.
+    func shouldUpdate<M: Mist.Model>(for model: M) -> Bool {
+        guard let deployment = model as? Deployment else { return false }
+        return deployment.product == productName
+    }
     
     static func loadDeployment(id: UUID, product: String, app: Application) async -> Deployment? {
         do {
@@ -50,5 +56,4 @@ struct DeploymentRow: InstanceComponent {
     }
     
 }
-
 

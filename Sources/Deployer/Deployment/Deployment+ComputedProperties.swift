@@ -2,7 +2,7 @@ import Vapor
 import Mist
 
 extension Deployment {
-
+    
     var computedProperties: [String: any SendableEncodable] { [
         "durationString": durationString,
         "displayStatus": displayStatus.rawValue,
@@ -24,6 +24,10 @@ extension Deployment {
         "hasLiveOutputStream": hasLiveOutputStream,
         "outputHTML": outputHTML,
     ] }
+    
+}
+
+extension Deployment {
 
     var durationString: String? {
         guard let finishedAt, let startedAt else { return nil }

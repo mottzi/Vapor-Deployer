@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "Vapor-Deployer",
     platforms: [
-        .macOS(.v14),
+        .macOS(.v14)
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.110.1"),
@@ -26,7 +26,7 @@ let package = Package(
                 .product(name: "Mist", package: "Vapor-Mist"),
                 .product(name: "Elementary", package: "elementary"),
             ],
-        ),
+        )
     ],
     swiftLanguageModes: [
         .v6
