@@ -9,6 +9,8 @@ extension UpdateCommand {
         case binarySwapFailed(String)
         case restartVerificationFailed(String)
         case rollbackVerificationFailed(String)
+        case versionMarkerCaptureFailed(String, String)
+        case versionMarkerRollbackFailed(String, String)
         case rollbackSucceeded(String)
         case rollbackFailed(String, String)
         case anotherUpdateInProgress
@@ -32,6 +34,12 @@ extension UpdateCommand {
 
             case .rollbackVerificationFailed(let status):
                 "Rollback restart did not recover the deployer. Final status: \(status)."
+
+            case .versionMarkerCaptureFailed(let path, let reason):
+                "Failed to capture deployer version marker at '\(path)' before update: \(reason)"
+
+            case .versionMarkerRollbackFailed(let path, let reason):
+                "Failed to restore deployer version marker at '\(path)': \(reason)"
 
             case .rollbackSucceeded(let error):
                 "Update failed, but rollback restored the previous deployer binary. Original error: \(error)"

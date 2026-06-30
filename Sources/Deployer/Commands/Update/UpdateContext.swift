@@ -20,6 +20,9 @@ final class UpdateContext {
     var releaseAssets: DeployerReleaseAssetDirectories?
     var assetBackup: ReleaseAssetBackup?
     var currentVersion: String?
+    var previousVersionFileExisted = false
+    var previousVersionFileData: Data?
+    var versionMarkerAdvanced = false
     var isUpToDate = false
     var isSourceInstall = false
 

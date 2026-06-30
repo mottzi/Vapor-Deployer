@@ -73,6 +73,7 @@ struct UpdateCommand: AsyncCommand {
         stepTypes += [
             StopServiceStep.self,
             ActivateReleaseStep.self,
+            PersistVersionStep.self,
             StartServiceStep.self,
             RefreshDeployerctlStep.self,
             UpdateSummaryStep.self,
@@ -90,7 +91,7 @@ struct UpdateCommand: AsyncCommand {
             do {
                 try await step.run()
             } catch {
-                if step is ActivateReleaseStep || step is StartServiceStep {
+                if step is ActivateReleaseStep || step is PersistVersionStep || step is StartServiceStep {
                     context.console.print("Update failed after service stop. Attempting rollback.")
                     try await rollback(context: updateContext, originalError: error)
                 }
@@ -158,6 +159,12 @@ extension UpdateCommand {
             } catch {
                 restoreError = restoreError ?? error
             }
+
+            do {
+                try restoreVersionMarkerIfNeeded(context: context, fileManager: fileManager)
+            } catch {
+                restoreError = restoreError ?? error
+            }
             
             if let restoreError { throw restoreError }
             
@@ -193,6 +200,33 @@ extension UpdateCommand {
 
             guard let source = backup.directory(named: name) else { continue }
             try fileManager.copyItem(at: source, to: destination)
+        }
+    }
+
+    /// Restores the version marker captured before the candidate version was written.
+    private func restoreVersionMarkerIfNeeded(context: UpdateContext, fileManager: FileManager) throws {
+        guard context.versionMarkerAdvanced else { return }
+
+        if context.previousVersionFileExisted {
+            guard let data = context.previousVersionFileData else {
+                throw Error.versionMarkerRollbackFailed(context.versionFileURL.path, "previous marker contents were not captured")
+            }
+
+            do {
+                try data.write(to: context.versionFileURL, options: .atomic)
+            } catch {
+                throw Error.versionMarkerRollbackFailed(context.versionFileURL.path, error.localizedDescription)
+            }
+
+            return
+        }
+
+        do {
+            if fileManager.fileExists(atPath: context.versionFileURL.path) {
+                try fileManager.removeItem(at: context.versionFileURL)
+            }
+        } catch {
+            throw Error.versionMarkerRollbackFailed(context.versionFileURL.path, error.localizedDescription)
         }
     }
 
