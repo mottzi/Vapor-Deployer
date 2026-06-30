@@ -1,5 +1,6 @@
 ## Unreleased
 
+- Reorganize `deployerctl` and operation execution/event files into clearer feature folders, including the shared `OperationEngine` and `OperationEvent` output pipeline.
 - Add `deployerctl` deployment controls: list deployments by short SHA, deploy, build, run saved binaries, test, inspect output, delete rows, and remove saved binaries.
 - Share one deployment engine between the panel and CLI, with cross-process operation locking so panel and CLI actions cannot run concurrently.
 - Stream CLI-origin deployment progress back into the live panel through Mist-backed operation events, while keeping CLI deploys usable when the server is offline.
