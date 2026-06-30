@@ -2,6 +2,7 @@
 
 Status: fixed.
 
+
 ## Resolution
 
 `deployer update` now invokes the newly activated deployer binary's `refresh-deployerctl` command after the deployer service restarts successfully and before the update summary is written. Root CLI updates refresh `/usr/local/sbin/deployerctl`, `/etc/deployer/deployerctl.conf`, and the panel-update helper directly. New setup/root refreshes also install a narrow sudoers-backed helper so future panel-triggered updates running as the service user can refresh only the deployerctl wrapper/config.

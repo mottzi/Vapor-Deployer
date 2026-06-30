@@ -2,6 +2,7 @@
 
 Status: fixed.
 
+
 ## Summary
 
 `deployer setup` no longer treats the managed target app's health check as a hard setup gate. If the target app crashes because it expects environment variables that are not present yet, setup continues through the later control-plane steps. This prevents the awkward partial-install state where the Deployer service may be healthy, but `deployerctl` is not installed and the GitHub webhook is not created.
