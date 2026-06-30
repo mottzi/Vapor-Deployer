@@ -6,6 +6,9 @@ extension Deployer {
     func useUpdater(config: Configuration, deployerPhase: LiveState<DeployerPhase>) {
         let updater = Updater(app: app, config: config, deployerPhase: deployerPhase)
         self.updater = updater
+    }
+
+    func startUpdaterPolling() {
         Task { await updater.startPolling() }
     }
 

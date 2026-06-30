@@ -145,6 +145,7 @@ extension Deployer {
             targetConfig
             deployerConfig
         }
+        startUpdaterPolling()
 
         useOperationEventBridge(
             config: config,
