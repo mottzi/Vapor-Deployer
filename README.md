@@ -205,6 +205,8 @@ sudo deployerctl config target.testing true
 
 The runtime-editable set: `deployerBranch`, `target.branch`, `target.buildMode`, `target.deploymentMode`, `target.binaryBehaviour`, `target.testing`. Each edit is validated against the same checks the deployer runs at boot, and you're offered a restart so the change goes live right away.
 
+`buildFromSource` controls how the deployer updates itself. When `buildFromSource` is `false`, updates download the latest GitHub release asset and `deployerBranch` is ignored. When `buildFromSource` is `true`, updates fetch and rebuild `origin/<deployerBranch>` from the Deployer repository. Switching between release and source installs is a setup-time change, so rerun setup for that.
+
 For anything else, just rerun setup:
 
 ```bash

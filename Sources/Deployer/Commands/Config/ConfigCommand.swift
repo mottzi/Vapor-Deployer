@@ -43,7 +43,7 @@ private extension ConfigCommand {
             console.output(
                 "  \(label)".consoleText(color: .cyan)
                 + " = ".consoleText()
-                + field.currentValue(in: config).consoleText(isBold: true)
+                + field.displayValue(in: config).consoleText(isBold: true)
             )
         }
         console.newLine()

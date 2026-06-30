@@ -171,7 +171,10 @@ extension InputStep {
 
         console.section("Install mode")
 
-        context.buildFromSource = console.confirm("Build deployer from source?", defaultYes: false)
+        context.buildFromSource = console.confirm(
+            "Build deployer from source?",
+            defaultYes: context.previousBuildFromSource ?? false
+        )
 
         if context.buildFromSource {
             context.deployerRepositoryBranch = console.askRequired(

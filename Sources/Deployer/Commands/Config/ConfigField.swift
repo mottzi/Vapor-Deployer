@@ -54,6 +54,16 @@ enum ConfigField: String, CaseIterable, Sendable {
         }
     }
 
+    /// Human-facing value for list output. Keeps `currentValue(in:)` raw so no-op detection and write
+    /// reporting compare the actual serialized configuration value.
+    func displayValue(in config: Configuration) -> String {
+        if self == .deployerBranch && !config.buildFromSource {
+            return "\(config.deployerBranch) (ignored; buildFromSource is false)"
+        }
+
+        return currentValue(in: config)
+    }
+
     /// Parses the raw input string for this field's type and returns a new `Configuration` with the
     /// change applied. Throws `ConfigCommand.Error` on parse failure. The returned value has not yet
     /// been run through `Configuration.resolved()` — the caller does that round-trip for invariant
