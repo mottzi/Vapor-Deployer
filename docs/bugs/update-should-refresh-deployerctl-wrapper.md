@@ -1,14 +1,26 @@
 # Update Should Refresh The Deployerctl Wrapper
 
-Status: open.
+Status: fixed.
+
+## Resolution
+
+`deployer update` now invokes the newly activated deployer binary's `refresh-deployerctl` command after the deployer service restarts successfully and before the update summary is written. Root CLI updates refresh `/usr/local/sbin/deployerctl`, `/etc/deployer/deployerctl.conf`, and the panel-update helper directly. New setup/root refreshes also install a narrow sudoers-backed helper so future panel-triggered updates running as the service user can refresh only the deployerctl wrapper/config.
+
+Existing installations that predate the helper need one root bootstrap after receiving this code:
+
+```sh
+sudo /home/vapor/deployer/deployer refresh-deployerctl
+```
+
+After that, panel updates can refresh wrapper-only changes without rerunning full setup.
 
 ## Summary
 
-`deployer update` updates the installed Deployer executable and release/source assets, but it does not refresh the root-owned `deployerctl` wrapper installed at `/usr/local/sbin/deployerctl`.
+`deployer update` previously updated the installed Deployer executable and release/source assets, but did not refresh the root-owned `deployerctl` wrapper installed at `/usr/local/sbin/deployerctl`.
 
-This means changes to `DeployerctlTemplate.wrapperScript()` do not reach existing hosts through the normal panel Update flow. The only current way to apply wrapper changes is to rerun `deployerctl setup`, which is much broader than a self-update and re-executes host provisioning steps that are unrelated to refreshing the operator wrapper.
+This meant changes to `DeployerctlTemplate.wrapperScript()` did not reach existing hosts through the normal panel Update flow. The only way to apply wrapper changes was to rerun `deployerctl setup`, which is much broader than a self-update and re-executed host provisioning steps that are unrelated to refreshing the operator wrapper.
 
-This is a product/update bug. The panel Update button should be enough to make an existing installation run the latest control-plane code and the latest generated operator wrapper.
+This was a product/update bug. The panel Update button should be enough to make an existing installation run the latest control-plane code and the latest generated operator wrapper.
 
 ## Incident
 

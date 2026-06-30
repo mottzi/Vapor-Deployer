@@ -18,9 +18,7 @@ struct DeployerctlStep: SetupStep {
 extension DeployerctlStep {
 
     private func installDeployerctl() async throws {
-        try await SystemFileSystem.installDirectory(paths.deployerctlConfigDirectory, owner: "root", group: "root")
-        try await SystemFileSystem.writeFile(try DeployerctlTemplate.wrapperConfig(context: context), to: paths.deployerctlConfig)
-        try await SystemFileSystem.writeFile(DeployerctlTemplate.wrapperScript(), to: paths.deployerctlBinary, mode: "0755")
+        try await DeployerctlInstaller.installRoot(context: DeployerctlInstallContext(setup: context))
     }
 
 }

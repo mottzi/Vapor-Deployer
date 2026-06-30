@@ -22,6 +22,9 @@ struct SystemPaths {
     let deployerctlBinary: String
     let deployerctlConfigDirectory: String
     let deployerctlConfig: String
+    let deployerctlHelperDirectory: String
+    let deployerctlRefreshHelper: String
+    let deployerctlRefreshSudoers: String
 
     var deployerBinary: String { "\(installDirectory)/deployer" }
     var deployerConfig: String { "\(installDirectory)/deployer.json" }
@@ -58,7 +61,10 @@ struct SystemPaths {
             appPublicDirectory: "\(appDirectory)/Public",
             deployerctlBinary: "/usr/local/sbin/deployerctl",
             deployerctlConfigDirectory: "/etc/deployer",
-            deployerctlConfig: "/etc/deployer/deployerctl.conf"
+            deployerctlConfig: "/etc/deployer/deployerctl.conf",
+            deployerctlHelperDirectory: "/usr/local/libexec/deployer",
+            deployerctlRefreshHelper: "/usr/local/libexec/deployer/deployerctl-refresh",
+            deployerctlRefreshSudoers: "/etc/sudoers.d/deployerctl-refresh"
         )
     }
 

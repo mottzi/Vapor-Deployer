@@ -74,6 +74,7 @@ struct UpdateCommand: AsyncCommand {
             StopServiceStep.self,
             ActivateReleaseStep.self,
             StartServiceStep.self,
+            RefreshDeployerctlStep.self,
             UpdateSummaryStep.self,
         ]
 

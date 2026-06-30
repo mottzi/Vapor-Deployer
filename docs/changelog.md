@@ -7,4 +7,6 @@
 - Persist setup toolchain paths in `deployer.json` so panel and CLI builds/tests use the same Swift environment.
 - Track a known setup issue where target-app health failures can abort setup before `deployerctl` and webhook installation.
 - Preserve existing install mode, deployment mode, and testing defaults when rerunning setup, and clarify when `deployerBranch` is ignored on binary installs.
-- Track a known update issue where `deployerctl` wrapper template changes are not refreshed by the self-update flow.
+- Refresh the root-owned `deployerctl` wrapper during successful self-updates by invoking the newly activated binary's embedded templates after the deployer service restarts.
+- Install a narrow root helper and sudoers rule during setup/root refresh so panel-triggered updates from the service user can refresh only `/usr/local/sbin/deployerctl` and `/etc/deployer/deployerctl.conf`.
+- Preserve existing deployerctl metadata while refreshing operational values from `deployer.json`, and keep existing installations safe by warning when a one-time root refresh is still needed to bootstrap the panel update helper.

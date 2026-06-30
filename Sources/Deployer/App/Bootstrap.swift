@@ -15,6 +15,7 @@ extension Deployer {
     
     func useCommands() {
         app.asyncCommands.use(UpdateCommand(), as: "update")
+        app.asyncCommands.use(RefreshDeployerctlCommand(), as: "refresh-deployerctl")
         app.asyncCommands.use(SetupCommand(), as: "setup")
         app.asyncCommands.use(RemoveCommand(), as: "remove")
         app.asyncCommands.use(ConfigCommand(), as: "config")

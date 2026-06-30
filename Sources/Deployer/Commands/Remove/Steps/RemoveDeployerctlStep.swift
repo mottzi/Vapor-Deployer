@@ -22,6 +22,17 @@ struct RemoveDeployerctlStep: RemoveStep {
             removedAny = true
         }
 
+        if removeFile(paths.deployerctlRefreshSudoers) {
+            console.print("Removed \(paths.deployerctlRefreshSudoers).")
+            removedAny = true
+        }
+
+        if removeFile(paths.deployerctlRefreshHelper) {
+            console.print("Removed \(paths.deployerctlRefreshHelper).")
+            removedAny = true
+        }
+
+        removeEmptyDirectory(paths.deployerctlHelperDirectory)
         removeEmptyDirectory(paths.deployerctlConfigDirectory)
 
         if !removedAny {
