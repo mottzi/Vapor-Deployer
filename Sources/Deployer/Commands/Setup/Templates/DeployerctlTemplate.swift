@@ -103,6 +103,10 @@ enum DeployerctlTemplate {
     warn() { printf '%s: %s\\n'        "$PROG" "$*" >&2; }
 
     usage() {
+      if [[ -r "$CONFIG_FILE" ]]; then
+        # shellcheck disable=SC1090
+        . "$CONFIG_FILE"
+      fi
       cat <<USAGE
     $PROG - control the deployer and its managed app
 
@@ -110,15 +114,15 @@ enum DeployerctlTemplate {
       sudo $PROG <action> [target]
 
     Actions:
-      status        Show service status
-      start         Start services
-      stop          Stop services
-      restart       Restart services
-      reload        Reload services where supported
-      enable        Enable services at boot
-      disable       Disable services at boot
+      status        Show servic status
+      start         Start service
+      stop          Stop service
+      restart       Restart service
+      reload        Reload service where supported
+      enable        Enable service at boot
+      disable       Disable service at boot
 
-      logs          Follow on-disk service log file(s) (Ctrl-C to exit)
+      logs          Follow on-disk service log file (Ctrl-C to exit)
       journal       Show recent systemd journal entries (systemd only)
 
       deploy        List deployments or deploy a commit SHA
@@ -130,11 +134,11 @@ enum DeployerctlTemplate {
       remove-binary Remove a saved deployment binary
 
       version       Print the deployer version
-      setup         Rerun deployer setup (interactive)
-      update        Update the deployer and redeploy the app (interactive)
-      config        View or modify deployer.json (with restart prompt)
+      setup         Rerun deployer setup
+      update        Update the deployer and redeploy the app
+      config        View or modify deployer.json
       help          Show this help message
-      remove        Tear down the entire deployer installation (interactive)
+      remove        Tear down the entire deployer installation
 
     Targets:
       deployer      Just the deployer service
