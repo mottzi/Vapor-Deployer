@@ -96,6 +96,8 @@ actor Updater {
         do { installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent() }
         catch { return app.logger.warning("Updater poll: could not resolve install directory: \(error.localizedDescription)") }
 
+        await tick(installDirectory: installDirectory)
+
         while !Task.isCancelled {
             try? await Task.sleep(for: Self.pollInterval)
             await tick(installDirectory: installDirectory)
@@ -136,18 +138,12 @@ actor Updater {
     private func broadcastPhaseIfChanged(wasHeld: Bool) async {
         
         let queueIsDeploying = await app.deployer.queue.isDeploying
-        let operationIsRunning: Bool
-        if let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent() {
-            operationIsRunning = OperationLock.isHeld(installDirectory: installDirectory)
-        } else {
-            operationIsRunning = false
-        }
-        
-        let resolved: DeployerPhase = switch (isUpdating, operationIsRunning || queueIsDeploying) {
-            case (true, _): .updating
-            case (_, true): .deploying
-            case (false, false): .ready
-        }
+        let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
+        let resolved = DeployerPhase.resolve(
+            installDirectory: installDirectory,
+            updaterIsUpdating: isUpdating,
+            queueIsDeploying: queueIsDeploying
+        )
         
         await deployerPhase.set(resolved)
     }

@@ -32,6 +32,24 @@ enum DeployerPhase: String, ComponentData {
     case deploying
     case updating
 
+    static func resolve(
+        installDirectory: URL?,
+        updaterIsUpdating: Bool = false,
+        queueIsDeploying: Bool = false
+    ) -> DeployerPhase {
+
+        if updaterIsUpdating { return .updating }
+
+        guard let installDirectory else {
+            return queueIsDeploying ? .deploying : .ready
+        }
+
+        if UpdateLock.isHeld(installDirectory: installDirectory) { return .updating }
+        if OperationLock.isHeld(installDirectory: installDirectory) || queueIsDeploying { return .deploying }
+
+        return .ready
+    }
+
     var label: String {
         switch self {
             case .ready: "Ready"

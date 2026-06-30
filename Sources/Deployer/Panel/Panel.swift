@@ -109,17 +109,17 @@ extension Panel {
         async let isRunning = request.application.deployer.serviceManager.isRunning(product: config.target.name)
         async let isDeploying = request.application.deployer.queue.isDeploying
         async let isUpdating = request.application.deployer.updater.isUpdating
-        let operationIsRunning = (try? Configuration.getExecutableURL().deletingLastPathComponent())
-            .map { OperationLock.isHeld(installDirectory: $0) } ?? false
+        let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
         async let targetInfoRender = targetConfig.renderCurrent(app: request.application)
         async let deployerInfoRender = deployerConfig.renderCurrent(app: request.application)
-        async let deployerStateRender = deployerStatus.renderCurrent(app: request.application)
 
-        let resolvedState: DeployerPhase
-        let queueIsDeploying = await isDeploying
-        if await isUpdating { resolvedState = .updating }
-        else if operationIsRunning || queueIsDeploying { resolvedState = .deploying }
-        else { resolvedState = .ready }
+        let resolvedState = await DeployerPhase.resolve(
+            installDirectory: installDirectory,
+            updaterIsUpdating: isUpdating,
+            queueIsDeploying: isDeploying
+        )
+        await deployerStatus.state.set(resolvedState)
+        async let deployerStateRender = deployerStatus.renderCurrent(app: request.application)
 
         let deployer = DeployerContext(
             panelRoute: config.panelRoute.displayPath,

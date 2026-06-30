@@ -101,7 +101,8 @@ extension Deployer {
             version: DeployerVersion.current()
         )
 
-        let deployerPhase = LiveState(of: DeployerPhase.ready)
+        let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
+        let deployerPhase = LiveState(of: DeployerPhase.resolve(installDirectory: installDirectory))
         useUpdater(config: config, deployerPhase: deployerPhase)
         let deployerStatus = DeployerStatus(state: deployerPhase, updater: updater)
 
