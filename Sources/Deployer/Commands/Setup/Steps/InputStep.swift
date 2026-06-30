@@ -26,6 +26,10 @@ struct InputStep: SetupStep {
             context.testing = existingTesting
         }
 
+        if let existingDeploymentMode = jsonConfig?.target.deploymentMode {
+            context.deploymentMode = existingDeploymentMode
+        }
+
         if let existingBranch = jsonConfig?.deployerBranch {
             context.deployerRepositoryBranch = existingBranch
         }
@@ -190,7 +194,7 @@ extension InputStep {
 
         context.deploymentMode = console.confirm(
             "Enable automatic deployments on push?",
-            defaultYes: false
+            defaultYes: context.deploymentMode == .automatic
         ) ? .automatic : .manual
     }
 
@@ -200,7 +204,7 @@ extension InputStep {
 
         context.testing = console.confirm(
             "Run swift test before each build?",
-            defaultYes: true
+            defaultYes: context.testing
         )
     }
 
