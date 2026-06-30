@@ -1,12 +1,12 @@
 # Setup Should Not Abort Control-Plane Installation When Target App Env Is Missing
 
-Status: open.
+Status: fixed.
 
 ## Summary
 
-`deployer setup` currently treats the managed target app's health check as a hard setup gate. If the target app crashes because it expects environment variables that are not present yet, setup aborts before later control-plane steps run. This leaves the host in an awkward partial-install state: the Deployer service may be healthy, but `deployerctl` is not installed and the GitHub webhook is not created.
+`deployer setup` no longer treats the managed target app's health check as a hard setup gate. If the target app crashes because it expects environment variables that are not present yet, setup continues through the later control-plane steps. This prevents the awkward partial-install state where the Deployer service may be healthy, but `deployerctl` is not installed and the GitHub webhook is not created.
 
-This is a product bug. A target app can legitimately require `.env` values before it can boot. That should not prevent Deployer's operator surface from being installed.
+This was a product bug. A target app can legitimately require `.env` values before it can boot. That should not prevent Deployer's operator surface from being installed.
 
 ## Incident
 
@@ -29,14 +29,14 @@ The confusing result was that Deployer itself was running, but `/usr/local/sbin/
 
 ## Root Cause
 
-`SetupCommand` orders `HealthStep` before installation of the operator wrapper and webhook provisioning, and `HealthStep` treats both Deployer health and target-app health as equally fatal.
+`SetupCommand` previously ordered `HealthStep` before installation of the operator wrapper and webhook provisioning, and `HealthStep` treated both Deployer health and target-app health as equally fatal.
 
-That is the wrong boundary. Deployer health is a control-plane requirement. Target-app health is a managed-workload state. A failed workload should be surfaced clearly, but it should not prevent installing the tools needed to inspect, restart, or repair it.
+That was the wrong boundary. Deployer health is a control-plane requirement. Target-app health is a managed-workload state. A failed workload should be surfaced clearly, but it should not prevent installing the tools needed to inspect, restart, or repair it.
 
-## Desired Behavior
+## Implemented Behavior
 
 - Deployer service health remains a hard setup requirement.
-- Target app service/port health becomes a warning or degraded setup outcome.
+- Target app service/port health is checked near the end as a warning/degraded setup outcome.
 - Setup continues to install `deployerctl`, configure Nginx/TLS where possible, and sync/create the webhook when Deployer itself is healthy.
 - The final summary must explicitly report target-app health failure and next commands, for example:
 
@@ -46,6 +46,7 @@ Managed app did not pass health checks.
 Fix /home/<service-user>/apps/<app>/.env or app configuration, then run:
   sudo deployerctl restart app
   sudo deployerctl status app
+  sudo deployerctl logs app
 ```
 
 ## Design Notes
@@ -63,4 +64,3 @@ Fix /home/<service-user>/apps/<app>/.env or app configuration, then run:
 - Setup exits successfully or with a distinct degraded outcome only after the control plane is usable.
 - Final setup output names the failed target-app health check and gives exact remediation commands.
 - Deployer health failures still abort setup.
-

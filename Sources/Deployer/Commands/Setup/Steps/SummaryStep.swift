@@ -11,6 +11,10 @@ struct SummaryStep: SetupStep {
     func run() async throws {
 
         printSummaryCard()
+
+        if !context.managedAppHealthFailures.isEmpty {
+            printManagedAppHealthWarning()
+        }
         
         if context.usingStagingCertificates {
             printStagingWarning()
@@ -22,22 +26,45 @@ struct SummaryStep: SetupStep {
 extension SummaryStep {
 
     private func printSummaryCard() {
+
+        var rows = [
+            ("Deployer panel", "\(context.publicBaseURL)\(context.panelRoute)"),
+            ("Webhook endpoint", context.webhookURL),
+            ("Canonical domain", context.primaryDomain),
+            ("Alias redirect", "https://\(context.aliasDomain) -> https://\(context.primaryDomain)"),
+            ("Certificate", "/etc/letsencrypt/live/\(context.certName)"),
+            ("Nginx site", paths.nginxSiteAvailable),
+            ("Install dir", paths.installDirectory),
+            ("App checkout", paths.appDirectory),
+            ("Service user", context.serviceUser),
+            ("Service manager", context.serviceManagerKind.rawValue),
+            ("Check services", "sudo deployerctl status"),
+            ("Follow logs", "sudo deployerctl logs [deployer|app|all]")
+        ]
+
+        if !context.managedAppHealthFailures.isEmpty {
+            rows.append(("Managed app health", "degraded - repair required"))
+        }
         
         console.card(
             "Setup complete",
-            keyedValues: [
-                ("Deployer panel", "\(context.publicBaseURL)\(context.panelRoute)"),
-                ("Webhook endpoint", context.webhookURL),
-                ("Canonical domain", context.primaryDomain),
-                ("Alias redirect", "https://\(context.aliasDomain) -> https://\(context.primaryDomain)"),
-                ("Certificate", "/etc/letsencrypt/live/\(context.certName)"),
-                ("Nginx site", paths.nginxSiteAvailable),
-                ("Install dir", paths.installDirectory),
-                ("App checkout", paths.appDirectory),
-                ("Service user", context.serviceUser),
-                ("Service manager", context.serviceManagerKind.rawValue),
-                ("Check services", "sudo deployerctl status"),
-                ("Follow logs", "sudo deployerctl logs [deployer|app|all]")
+            keyedValues: rows
+        )
+    }
+
+    private func printManagedAppHealthWarning() {
+
+        let failureLines = context.managedAppHealthFailures.map { "Health check: \($0)" }
+
+        console.lines(
+            "Managed app health warning",
+            lines: failureLines + [
+                "Deployer installed successfully, but the managed app did not pass health checks.",
+                "Fix \(paths.appDirectory)/.env or the app configuration, then run:",
+                "sudo deployerctl restart app",
+                "sudo deployerctl status app",
+                "sudo deployerctl logs app",
+                "Until the app starts, the public app route may return upstream errors."
             ]
         )
     }

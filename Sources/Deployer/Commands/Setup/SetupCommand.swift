@@ -35,6 +35,7 @@ struct SetupCommand: AsyncCommand {
             DeployerctlStep.self,
             WebhookStep.self,
             SSHHardeningStep.self,
+            ManagedAppHealthStep.self,
             SummaryStep.self,
         ]
 

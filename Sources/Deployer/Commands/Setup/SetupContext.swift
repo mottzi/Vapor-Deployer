@@ -45,6 +45,7 @@ final class SetupContext: SystemContext {
     var orphanedPrimaryDomain: String?
     var orphanedCertNameToDelete: String?
     var releaseVersion: String?
+    var managedAppHealthFailures: [String] = []
 
     var webhookURL: String { publicBaseURL + (paths?.webhookPath ?? "") }
 
