@@ -202,7 +202,7 @@
     <td colspan="7" class="dp-output-cell">
       <div class="dp-output-wrapper">
         #if(context.deployment.hasLiveOutputStream):
-          <pre class="dp-output-pre dp-output-pre--live" mist-stream="deployment-log"></pre>
+          <pre class="dp-output-pre dp-output-pre--live" mist-stream="operation-log"></pre>
         #elseif(context.deployment.outputHTML):
           <pre class="dp-output-pre #if(context.deployment.status == "failed"):dp-output-pre--failed#else:dp-output-pre--static#endif">#unsafeHTML(context.deployment.outputHTML)</pre>
         #endif

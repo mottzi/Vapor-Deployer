@@ -7,9 +7,9 @@ enum DeploymentCLI {
     static let defaultListLimit = 20
 
     /// Loads the headless runtime and returns the config plus shared engine.
-    static func runtime(from context: CommandContext) async throws -> (Configuration, DeploymentEngine) {
+    static func runtime(from context: CommandContext) async throws -> (Configuration, OperationEngine) {
         let config = try await context.application.deployer.useHeadlessRuntime()
-        let engine = DeploymentEngine(app: context.application, config: config, origin: .cli)
+        let engine = OperationEngine(app: context.application, config: config, origin: .cli)
         return (config, engine)
     }
 
@@ -77,7 +77,7 @@ enum DeploymentCLI {
         }
     }
 
-    static func testPolicy(parsed: ParsedArguments, target: TargetConfiguration) throws -> DeploymentEngine.TestPolicy {
+    static func testPolicy(parsed: ParsedArguments, target: TargetConfiguration) throws -> OperationEngine.TestPolicy {
         if parsed.flags.contains("--testing") || parsed.flags.contains("-t") {
             return .forceEnabled
         }
@@ -90,8 +90,8 @@ enum DeploymentCLI {
         return .configured
     }
 
-    static func consoleSink(parsed: ParsedArguments, console: any Console) -> ConsoleLogSink? {
-        parsed.flags.contains("--no-logs") ? nil : ConsoleLogSink(console: console)
+    static func consoleSink(parsed: ParsedArguments, console: any Console) -> OperationEventConsoleOutputSink? {
+        parsed.flags.contains("--no-logs") ? nil : OperationEventConsoleOutputSink(console: console)
     }
 
     static func confirmIfNeeded(_ message: String, parsed: ParsedArguments, console: any Console) throws {

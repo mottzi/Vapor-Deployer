@@ -18,7 +18,7 @@ struct BuildCommand: AnyAsyncCommand {
 
         let (config, engine) = try await DeploymentCLI.runtime(from: context)
         let selector = parsed.positionals[0]
-        let options = DeploymentEngine.Options(consoleSink: DeploymentCLI.consoleSink(parsed: parsed, console: context.console))
+        let options = OperationEngine.Options(consoleSink: DeploymentCLI.consoleSink(parsed: parsed, console: context.console))
 
         try await DeploymentCLI.runLocked(context: context) {
             let deployment = try await DeploymentSelector.resolve(selector, config: config, app: context.application, allowCreate: true)

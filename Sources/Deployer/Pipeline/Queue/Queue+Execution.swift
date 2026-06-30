@@ -6,13 +6,13 @@ extension Queue {
     /// Delegates accepted work to the shared engine, then clears the in-process busy flag.
     func run(mode: JobMode, startingWith deployment: Deployment, lock: OperationLock) async {
 
-        let engine = DeploymentEngine(
+        let engine = OperationEngine(
             app: app,
             config: config,
             onStatusChange: onStatusChange
         )
 
-        let action: DeploymentEngine.Action = switch mode {
+        let action: OperationEngine.Action = switch mode {
         case .deploy: .deploy
         case .automaticDeploy: .automaticDeploy
         case .saveBinary: .build

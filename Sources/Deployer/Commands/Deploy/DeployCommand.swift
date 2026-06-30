@@ -28,7 +28,7 @@ struct DeployCommand: AnyAsyncCommand {
             }
 
             let policy = try DeploymentCLI.testPolicy(parsed: parsed, target: config.target)
-            let options = DeploymentEngine.Options(
+            let options = OperationEngine.Options(
                 testPolicy: policy,
                 consoleSink: DeploymentCLI.consoleSink(parsed: parsed, console: context.console)
             )

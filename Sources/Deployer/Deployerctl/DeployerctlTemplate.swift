@@ -4,11 +4,6 @@ import Foundation
 enum DeployerctlTemplate {
 
   /// Emits a shell-safe key/value config consumed by `deployerctl` so runtime commands stay decoupled from setup internals.
-  static func wrapperConfig(context: SetupContext) throws -> String {
-    try wrapperConfig(context: DeployerctlInstallContext(setup: context))
-  }
-
-  /// Emits a shell-safe key/value config consumed by `deployerctl` so runtime commands stay decoupled from setup internals.
   static func wrapperConfig(context: DeployerctlInstallContext) -> String {
 
     func q(_ value: String) -> String { value.shellQuoted }

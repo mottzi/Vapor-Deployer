@@ -5,7 +5,7 @@ struct Worker: Sendable {
     let deployment: Deployment
     let target: TargetConfiguration
     let app: Application
-    let stream: DeploymentOutput?
+    let stream: OperationEventOutput?
     let environment: [String: String]
     let onStatusChange: @Sendable (ServiceStatus) async -> Void
     

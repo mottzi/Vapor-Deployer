@@ -2,17 +2,17 @@ import Vapor
 import Mist
 
 /// Operation output stream that fans out to the active delivery sinks while accumulating the final transcript.
-actor DeploymentOutput {
+actor OperationEventOutput {
 
-    static let streamName = "deployment-log"
+    static let streamName = "operation-log"
 
     private static let ansiRegex = try! NSRegularExpression(pattern: "\u{001B}\\[[0-9;?]*[a-zA-Z]")
 
     private let app: Application
     private let eventLog: OperationEventLog
     private let deploymentID: UUID?
-    private let mistSink: MistOutputSink?
-    private let consoleSink: ConsoleLogSink?
+    private let mistSink: OperationEventMistOutputSink?
+    private let consoleSink: OperationEventConsoleOutputSink?
 
     private(set) var transcript: String
 
@@ -21,8 +21,8 @@ actor DeploymentOutput {
         eventLog: OperationEventLog,
         deployment: Deployment,
         priorTranscript: String = "",
-        mistSink: MistOutputSink? = nil,
-        consoleSink: ConsoleLogSink? = nil
+        mistSink: OperationEventMistOutputSink? = nil,
+        consoleSink: OperationEventConsoleOutputSink? = nil
     ) {
         self.app = app
         self.eventLog = eventLog
@@ -81,7 +81,7 @@ actor DeploymentOutput {
 }
 
 /// Direct in-process Mist stream used by server-origin operations.
-final class MistOutputSink: @unchecked Sendable {
+final class OperationEventMistOutputSink: @unchecked Sendable {
 
     private let app: Application
     private let component: String
@@ -98,7 +98,7 @@ final class MistOutputSink: @unchecked Sendable {
         await app.mist.streams.replace(
             component: component,
             modelID: modelID,
-            stream: DeploymentOutput.streamName,
+            stream: OperationEventOutput.streamName,
             text: text
         )
     }
@@ -108,7 +108,7 @@ final class MistOutputSink: @unchecked Sendable {
         await app.mist.streams.append(
             component: component,
             modelID: modelID,
-            stream: DeploymentOutput.streamName,
+            stream: OperationEventOutput.streamName,
             text: text
         )
     }
@@ -118,14 +118,14 @@ final class MistOutputSink: @unchecked Sendable {
         await app.mist.streams.close(
             component: component,
             modelID: modelID,
-            stream: DeploymentOutput.streamName
+            stream: OperationEventOutput.streamName
         )
     }
 
 }
 
 /// Non-Sendable Console wrapper used from streaming callbacks without spreading unchecked conformance.
-final class ConsoleLogSink: @unchecked Sendable {
+final class OperationEventConsoleOutputSink: @unchecked Sendable {
 
     private let console: any Console
 

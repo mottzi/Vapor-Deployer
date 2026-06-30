@@ -1,8 +1,8 @@
 import Vapor
 import Fluent
 
-/// Shared deployment-row execution engine used by both the browser panel and deployment CLI.
-struct DeploymentEngine: Sendable {
+/// Shared executor for mutating deployment operations across the panel, queue, and CLI.
+struct OperationEngine: Sendable {
 
     let app: Application
     let config: Configuration
@@ -23,9 +23,10 @@ struct DeploymentEngine: Sendable {
 
 }
 
-extension DeploymentEngine {
+extension OperationEngine {
 
     enum Action: Sendable {
+        
         case deploy
         case automaticDeploy
         case build
@@ -36,14 +37,15 @@ extension DeploymentEngine {
 
         var kind: Operation.Kind {
             switch self {
-            case .deploy, .automaticDeploy: .deploy
-            case .build: .build
-            case .runSavedBinary: .run
-            case .test: .test
-            case .delete: .delete
-            case .removeBinary: .removeBinary
+                case .deploy, .automaticDeploy: .deploy
+                case .build: .build
+                case .runSavedBinary: .run
+                case .test: .test
+                case .delete: .delete
+                case .removeBinary: .removeBinary
             }
         }
+        
     }
 
     enum TestPolicy: Sendable {
@@ -54,12 +56,12 @@ extension DeploymentEngine {
 
     struct Options: Sendable {
         var testPolicy: TestPolicy = .configured
-        var consoleSink: ConsoleLogSink?
+        var consoleSink: OperationEventConsoleOutputSink?
     }
 
 }
 
-extension DeploymentEngine {
+extension OperationEngine {
 
     /// Runs one operation while the caller retains the cross-process operation lock.
     func run(action: Action, deployment: Deployment, options: Options = Options()) async throws {
@@ -70,22 +72,14 @@ extension DeploymentEngine {
         let eventLog = try await OperationEventLog(app: app, operation: operation)
         do {
             switch action {
-            case .deploy:
-                try await runPromote(deployment: deployment, options: options, eventLog: eventLog)
-            case .automaticDeploy:
-                try await runAutomaticQueue(startingWith: deployment, options: options, eventLog: eventLog)
-            case .build:
-                try await runBuild(deployment: deployment, options: options, eventLog: eventLog)
-            case .runSavedBinary:
-                try await runSavedBinary(deployment: deployment, options: options, eventLog: eventLog)
-            case .test:
-                try await runTest(deployment: deployment, options: options, eventLog: eventLog)
-            case .delete:
-                try await runDelete(deployment: deployment, eventLog: eventLog)
-            case .removeBinary:
-                try await runRemoveBinary(deployment: deployment, eventLog: eventLog)
+                case .deploy: try await runPromote(deployment: deployment, options: options, eventLog: eventLog)
+                case .automaticDeploy: try await runAutomaticQueue(startingWith: deployment, options: options, eventLog: eventLog)
+                case .build: try await runBuild(deployment: deployment, options: options, eventLog: eventLog)
+                case .runSavedBinary: try await runSavedBinary(deployment: deployment, options: options, eventLog: eventLog)
+                case .test: try await runTest(deployment: deployment, options: options, eventLog: eventLog)
+                case .delete: try await runDelete(deployment: deployment, eventLog: eventLog)
+                case .removeBinary: try await runRemoveBinary(deployment: deployment, eventLog: eventLog)
             }
-
             await eventLog.finish(.completed, deploymentID: deployment.id)
             await cleanupServerOperation(operation)
         } catch {
@@ -97,7 +91,7 @@ extension DeploymentEngine {
 
 }
 
-private extension DeploymentEngine {
+private extension OperationEngine {
 
     /// Promotes exactly the selected deployment without draining newer queued pushes.
     func runPromote(deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
@@ -161,10 +155,11 @@ private extension DeploymentEngine {
             try await worker.save(to: store)
             await output.flush()
 
-            deployment.status = .built
             deployment.finishedAt = .now
+            deployment.status = .built
             deployment.output = await output.transcript
             await output.close()
+            
             try await deployment.save(on: app.db)
             await eventLog.recordRowUpdated(deploymentID: deployment.id)
         } catch {
@@ -232,17 +227,18 @@ private extension DeploymentEngine {
             deployment.lastTestOutcome = true
             deployment.output = await output.transcript
             await output.close()
+            
             try await deployment.save(on: app.db)
             await eventLog.recordRowUpdated(deploymentID: deployment.id)
         } catch {
             await output.appendError(error)
             await output.flush()
-
+            deployment.output = await output.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             deployment.status = priorStatus
             deployment.testStartedAt = nil
             deployment.lastTestOutcome = false
-            deployment.output = await output.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             await output.close()
+            
             try? await deployment.save(on: app.db)
             await eventLog.recordRowUpdated(deploymentID: deployment.id)
             throw error
@@ -282,10 +278,8 @@ private extension Deployment {
     /// Engine-level deployability excludes UI-only global lock state because callers already hold the lock.
     var canStartPipelineOperation: Bool {
         switch displayStatus {
-        case .building, .testing, .restoring, .running:
-            false
-        default:
-            true
+            case .building, .testing, .restoring, .running: false
+            default: true
         }
     }
 
@@ -302,16 +296,14 @@ private extension Deployment {
     /// Engine-level test eligibility for an operation that already owns the global lock.
     var canStartTestOperation: Bool {
         switch displayStatus {
-        case .building, .testing, .restoring:
-            false
-        default:
-            true
+            case .building, .testing, .restoring: false
+            default: true
         }
     }
 
 }
 
-private extension DeploymentEngine {
+private extension OperationEngine {
 
     /// Preserves automatic-mode drain semantics from webhook and boot-triggered deployment.
     func runAutomaticQueue(startingWith deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
@@ -346,8 +338,8 @@ private extension DeploymentEngine {
                 return
             }
 
-            current.status = .built
             current.finishedAt = .now
+            current.status = .built
             current.output = await output.transcript
             try await current.save(on: app.db)
             await eventLog.recordRowUpdated(deploymentID: current.id)
@@ -361,7 +353,7 @@ private extension DeploymentEngine {
     }
 
     /// Restarts onto a built deployment whose output stream is still open.
-    func finalizeBuilt(_ deployment: Deployment, output: DeploymentOutput, store: BinaryStore, eventLog: OperationEventLog) async throws {
+    func finalizeBuilt(_ deployment: Deployment, output: OperationEventOutput, store: BinaryStore, eventLog: OperationEventLog) async throws {
 
         let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
 
@@ -386,16 +378,18 @@ private extension DeploymentEngine {
     /// Restarts onto an earlier successful build after a later automatic candidate failed.
     func finalizePreviouslyBuilt(_ deployment: Deployment, priorTranscript: String, store: BinaryStore, eventLog: OperationEventLog) async throws {
 
-            let output = makeOutput(deployment: deployment, eventLog: eventLog, options: Options(), priorTranscript: priorTranscript)
+        let output = makeOutput(deployment: deployment, eventLog: eventLog, options: Options(), priorTranscript: priorTranscript)
         let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
 
         do {
             await output.start()
             try await worker.restart()
             try await worker.deploy(to: store)
-            deployment.output = await output.transcript
+            
             deployment.finishedAt = .now
+            deployment.output = await output.transcript
             await output.close()
+            
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
             await eventLog.recordProductRowsUpdated(product: deployment.product)
@@ -407,7 +401,7 @@ private extension DeploymentEngine {
 
 }
 
-private extension DeploymentEngine {
+private extension OperationEngine {
 
     /// Applies the transient status used while a mutating pipeline action runs.
     func preparePipelineRow(_ deployment: Deployment, status: Deployment.Status, clearOutput: Bool, eventLog: OperationEventLog) async throws {
@@ -422,19 +416,13 @@ private extension DeploymentEngine {
     }
 
     /// Creates the caller-appropriate output fanout without splitting the deployment engine.
-    func makeOutput(
-        deployment: Deployment,
-        eventLog: OperationEventLog,
-        options: Options,
-        priorTranscript: String = ""
-    ) -> DeploymentOutput {
-
-        DeploymentOutput(
+    func makeOutput(deployment: Deployment, eventLog: OperationEventLog, options: Options, priorTranscript: String = "") -> OperationEventOutput {
+        OperationEventOutput(
             app: app,
             eventLog: eventLog,
             deployment: deployment,
             priorTranscript: priorTranscript,
-            mistSink: origin == .server ? MistOutputSink(app: app, deployment: deployment) : nil,
+            mistSink: origin == .server ? OperationEventMistOutputSink(app: app, deployment: deployment) : nil,
             consoleSink: options.consoleSink
         )
     }
@@ -446,17 +434,12 @@ private extension DeploymentEngine {
     }
 
     /// Runs inline tests according to the target default and per-job override.
-    func runInlineTestIfNeeded(
-        deployment: Deployment,
-        worker: Worker,
-        eventLog: OperationEventLog,
-        policy: TestPolicy
-    ) async throws {
+    func runInlineTestIfNeeded(deployment: Deployment, worker: Worker, eventLog: OperationEventLog, policy: TestPolicy) async throws {
 
         let shouldRun = switch policy {
-        case .configured: config.target.testing
-        case .forceEnabled: true
-        case .forceDisabled: false
+            case .configured: config.target.testing
+            case .forceEnabled: true
+            case .forceDisabled: false
         }
 
         guard shouldRun else { return }
@@ -470,7 +453,9 @@ private extension DeploymentEngine {
             deployment.status = .testing
             try await deployment.save(on: app.db)
             await eventLog.recordRowUpdated(deploymentID: deployment.id)
+            
             try await worker.test()
+            
             deployment.lastTestOutcome = true
             deployment.status = .building
             try await deployment.save(on: app.db)
@@ -484,7 +469,7 @@ private extension DeploymentEngine {
     }
 
     /// Marks the row failed and persists the transcript after a streaming operation throws.
-    func fail(deployment: Deployment, error: Swift.Error, output: DeploymentOutput, eventLog: OperationEventLog) async {
+    func fail(deployment: Deployment, error: Swift.Error, output: OperationEventOutput, eventLog: OperationEventLog) async {
 
         await output.appendError(error)
         await output.flush()
@@ -499,7 +484,7 @@ private extension DeploymentEngine {
     }
 
     /// Creates a worker whose service-status changes are visible to both event stream and panel state.
-    func makeWorker(deployment: Deployment, output: DeploymentOutput?, eventLog: OperationEventLog) -> Worker {
+    func makeWorker(deployment: Deployment, output: OperationEventOutput?, eventLog: OperationEventLog) -> Worker {
         Worker(
             deployment: deployment,
             target: config.target,
@@ -515,7 +500,7 @@ private extension DeploymentEngine {
 
 }
 
-private extension DeploymentEngine {
+private extension OperationEngine {
 
     /// Returns the most recent canceled deployment queued after the given one, preserving automatic drain semantics.
     func nextQueuedDeployment(after deployment: Deployment) async throws -> Deployment? {
