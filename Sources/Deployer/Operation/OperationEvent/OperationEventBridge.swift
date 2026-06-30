@@ -176,7 +176,6 @@ actor OperationEventBridge {
     /// Synchronizes CLI-origin row changes into the server's live Mist instance registry.
     private func refreshRow(id: UUID?) async {
         guard let id else { return }
-
         await app.mist.models.sync(Deployment.self, id: id)
     }
 
