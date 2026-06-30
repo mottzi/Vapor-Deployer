@@ -119,12 +119,10 @@ enum DeployerctlTemplate {
           reload        Reload services where supported
           enable        Enable services at boot
           disable       Disable services at boot
+
           logs          Follow on-disk service log file(s) (Ctrl-C to exit)
           journal       Show recent systemd journal entries (systemd only)
-          version       Print the deployer version
-          setup         Rerun deployer setup (interactive)
-          update        Update the deployer and redeploy the app (interactive)
-          config        View or modify deployer.json (with restart prompt)
+
           deploy        List deployments or deploy a commit SHA
           build         Build and save a deployment binary
           run           Run a saved deployment binary
@@ -132,6 +130,11 @@ enum DeployerctlTemplate {
           output        Show or follow deployment output
           delete        Delete a non-live deployment
           remove-binary Remove a saved deployment binary
+
+          version       Print the deployer version
+          setup         Rerun deployer setup (interactive)
+          update        Update the deployer and redeploy the app (interactive)
+          config        View or modify deployer.json (with restart prompt)
           remove        Tear down the entire deployer installation (interactive)
 
         Targets:
