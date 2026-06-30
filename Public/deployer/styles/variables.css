@@ -24,7 +24,7 @@
     --c-building: #0284c7;
     --c-restoring: #0891b2;
     --c-pushed: #ea580c;
-    --c-built: #7c3aed;
+    --c-built: #4169e1;
     --c-running: #059669;
     --c-failed: #dc2626;
     --c-canceled: #52525b;
@@ -37,7 +37,7 @@
     --c-building-bg: rgba(56, 189, 248, 0.1);
     --c-restoring-bg: rgba(34, 211, 238, 0.1);
     --c-pushed-bg: rgba(251, 146, 60, 0.1);
-    --c-built-bg: rgba(167, 139, 250, 0.1);
+    --c-built-bg: rgba(65, 105, 225, 0.1);
     --c-running-bg: rgba(52, 211, 153, 0.1);
     --c-failed-bg: rgba(248, 113, 113, 0.1);
     --c-canceled-bg: rgba(82, 82, 91, 0.1);
@@ -47,7 +47,7 @@
     --c-building-border: rgba(56, 189, 248, 0.3);
     --c-restoring-border: rgba(34, 211, 238, 0.3);
     --c-pushed-border: rgba(251, 146, 60, 0.28);
-    --c-built-border: rgba(167, 139, 250, 0.28);
+    --c-built-border: rgba(65, 105, 225, 0.28);
     --c-running-border: rgba(52, 211, 153, 0.28);
     --c-failed-border: rgba(248, 113, 113, 0.32);
     --c-canceled-border: rgba(82, 82, 91, 0.28);
@@ -96,7 +96,7 @@
         --c-building: #38bdf8;
         --c-restoring: #22d3ee;
         --c-pushed: #fb923c;
-        --c-built: #a78bfa;
+        --c-built: #4169e1;
         --c-running: #34d399;
         --c-failed: #f87171;
         --c-canceled: #71717a;
@@ -109,7 +109,7 @@
         --c-building-bg: rgba(56, 189, 248, 0.12);
         --c-restoring-bg: rgba(34, 211, 238, 0.12);
         --c-pushed-bg: rgba(251, 146, 60, 0.12);
-        --c-built-bg: rgba(167, 139, 250, 0.1);
+        --c-built-bg: rgba(65, 105, 225, 0.12);
         --c-running-bg: rgba(52, 211, 153, 0.12);
         --c-failed-bg: rgba(248, 113, 113, 0.12);
         --c-canceled-bg: rgba(113, 113, 122, 0.12);
@@ -119,7 +119,7 @@
         --c-building-border: rgba(56, 189, 248, 0.3);
         --c-restoring-border: rgba(34, 211, 238, 0.3);
         --c-pushed-border: rgba(251, 146, 60, 0.28);
-        --c-built-border: rgba(167, 139, 250, 0.28);
+        --c-built-border: rgba(65, 105, 225, 0.3);
         --c-running-border: rgba(52, 211, 153, 0.28);
         --c-failed-border: rgba(248, 113, 113, 0.3);
         --c-canceled-border: rgba(113, 113, 122, 0.28);
