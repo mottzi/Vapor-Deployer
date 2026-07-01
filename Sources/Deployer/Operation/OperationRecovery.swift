@@ -47,6 +47,7 @@ enum OperationRecovery {
         status == .building || status == .testing || status == .restoring
     }
 
+    /// Transitions an abandoned operation and its transient deployment to a failed state and purges terminal event logs.
     private static func repair(operation: Operation, app: Application) async throws {
 
         if let deploymentID = operation.deploymentID,

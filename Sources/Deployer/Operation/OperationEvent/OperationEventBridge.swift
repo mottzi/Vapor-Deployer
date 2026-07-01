@@ -4,7 +4,7 @@ import Mist
 
 extension Deployer {
 
-    ///
+    /// Instantiates and registers the background event-polling bridge to sync CLI activity with the web panel.
     func useOperationEventBridge(
         config: Configuration,
         deployerPhase: LiveState<DeployerPhase>,
@@ -20,6 +20,7 @@ extension Deployer {
         Task { await bridge.start() }
     }
 
+    /// Accesses the application's shared event bridge, crashing if the bridge was not properly registered.
     var operationEventBridge: OperationEventBridge {
         get {
             if let bridge = app.storage[OperationEventBridgeKey.self] { return bridge }
@@ -67,7 +68,7 @@ actor OperationEventBridge {
         }
     }
 
-    ///
+    /// Polls database operations for CLI-origin changes, consuming sequential events and updating the server's lifecycle status.
     private func tick() async {
         do {
             let operations = try await Operation.query(on: app.db)

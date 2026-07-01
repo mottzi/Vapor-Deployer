@@ -25,7 +25,7 @@ struct OperationEngine: Sendable {
 
 extension OperationEngine {
 
-    ///
+    /// The specific user-initiated deployment, compilation, or target cleanup command.
     enum Action: Sendable {
         
         case deploy
@@ -49,14 +49,14 @@ extension OperationEngine {
         
     }
 
-    ///
+    /// Rules determining whether target-specific test suites must be executed during operation pipelines.
     enum TestPolicy: Sendable {
         case configured
         case forceEnabled
         case forceDisabled
     }
 
-    ///
+    /// Configuration settings tailoring test execution behavior and output routing for an engine run.
     struct Options: Sendable {
         var testPolicy: TestPolicy = .configured
         var consoleSink: OperationEventConsoleOutputSink?

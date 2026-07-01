@@ -12,12 +12,13 @@ final class OperationLock: @unchecked Sendable {
 
     private var fd: Int32?
 
-    static func lockPath(installDirectory: URL) -> String {
-        installDirectory.appendingPathComponent(".deployer-operation.lock").path
-    }
-
     private init(fd: Int32) {
         self.fd = fd
+    }
+    
+    /// Computes the filesystem path of the lock file within the deployment installation directory.
+    static func lockPath(installDirectory: URL) -> String {
+        installDirectory.appendingPathComponent(".deployer-operation.lock").path
     }
 
     /// Non-destructive lock peek used for status rendering and race-aware busy checks.

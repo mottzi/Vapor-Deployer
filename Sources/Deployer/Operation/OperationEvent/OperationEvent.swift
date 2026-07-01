@@ -28,6 +28,7 @@ final class OperationEvent: Model, @unchecked Sendable {
 
 extension OperationEvent {
 
+    /// The specific database change or real-time progress update emitted by an active operation.
     enum EventType: String, Codable, Sendable {
 
         case started

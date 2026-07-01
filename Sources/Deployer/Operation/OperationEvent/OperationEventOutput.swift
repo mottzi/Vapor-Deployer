@@ -39,7 +39,7 @@ actor OperationEventOutput {
         catch { app.logger.error("Failed to start operation output: \(error.localizedDescription)") }
     }
 
-    ///
+    /// Appends formatted, ANSI-stripped text to the log transcript, broadcasting it to console, web streams, and database records.
     func append(_ text: String) async {
         
         guard !text.isEmpty else { return }
@@ -54,13 +54,13 @@ actor OperationEventOutput {
         catch { app.logger.error("Failed to record operation output: \(error.localizedDescription)") }
     }
 
-    ///
+    /// Appends a structured header separator to visually divide distinct phases in the output transcript.
     func appendLabel(_ label: String) async {
         let prefix = transcript.isEmpty ? "" : "\n"
         await append("\(prefix)──── \(label) ────\n")
     }
 
-    ///
+    /// Formats and logs a command execution failure or application error message directly to the transcript.
     func appendError(_ error: Swift.Error) async {
         if let shellError = error as? Shell.Error {
             await append("\nError: '\(shellError.command)' failed.\n")
@@ -69,8 +69,10 @@ actor OperationEventOutput {
         }
     }
 
+    /// Forces any buffered output to write to downstream sinks immediately.
     func flush() async { }
 
+    /// Closes streaming delivery sinks to signal the completion of operational logging.
     func close() async {
         await mistSink?.close()
     }
@@ -96,7 +98,7 @@ final class OperationEventMistOutputSink: @unchecked Sendable {
         self.modelID = deployment.id
     }
 
-    ///
+    /// Overwrites the entire contents of the active real-time web stream with new content.
     func replace(_ text: String) async {
         guard let modelID else { return }
         await app.mist.streams.replace(
@@ -107,7 +109,7 @@ final class OperationEventMistOutputSink: @unchecked Sendable {
         )
     }
 
-    ///
+    /// Pushes a text segment to the real-time web stream for incremental display.
     func append(_ text: String) async {
         guard let modelID else { return }
         await app.mist.streams.append(
@@ -118,7 +120,7 @@ final class OperationEventMistOutputSink: @unchecked Sendable {
         )
     }
 
-    ///
+    /// Terminates the real-time web stream, preventing further client-side appending.
     func close() async {
         guard let modelID else { return }
         await app.mist.streams.close(
@@ -139,7 +141,7 @@ final class OperationEventConsoleOutputSink: @unchecked Sendable {
         self.console = console
     }
 
-    ///
+    /// Writes a raw text snippet directly to the terminal stdout without adding a newline.
     func write(_ text: String) {
         console.output(text.consoleText(), newLine: false)
     }

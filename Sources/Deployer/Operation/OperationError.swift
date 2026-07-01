@@ -20,7 +20,7 @@ enum OperationError: DescribedError {
     case ambiguousSHA(String, [Deployment])
 
     var errorDescription: String? {
-        return switch self {
+        switch self {
             case .anotherOperationInProgress: "Another deployer operation is already running. Wait for it to finish, then retry."
             case .lockFailed(let path, let reason): "Unable to acquire operation lock at '\(path)': \(reason)"
             case .deploymentIDMissing: "Deployment ID is missing."
