@@ -188,16 +188,14 @@ actor OperationEventBridge {
 
     /// Keeps the runtime badge in sync with globally-held operation locks.
     private func updatePhase() async {
-        guard let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent() else { return }
-
-        let phase: DeployerPhase
-        if UpdateLock.isHeld(installDirectory: installDirectory) {
-            phase = .updating
-        } else if OperationLock.isHeld(installDirectory: installDirectory) {
-            phase = .deploying
-        } else {
-            phase = await app.deployer.queue.isDeploying ? .deploying : .ready
-        }
+        let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
+        let isUpdating = await app.deployer.updater.isUpdating
+        let isDeploying = await app.deployer.queue.isDeploying
+        let phase = DeployerPhase.resolve(
+            installDirectory: installDirectory,
+            updaterIsUpdating: isUpdating,
+            queueIsDeploying: isDeploying
+        )
 
         await deployerPhase.set(phase)
     }

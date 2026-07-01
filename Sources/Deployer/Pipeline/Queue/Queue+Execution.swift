@@ -38,19 +38,13 @@ extension Queue {
 
     /// Resolves display phase from global locks first, then the server-local queue flag.
     func resolvedPhase() async -> DeployerPhase {
-        guard let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent() else {
-            return isDeploying ? .deploying : .ready
-        }
-
-        if UpdateLock.isHeld(installDirectory: installDirectory) {
-            return .updating
-        }
-
-        if OperationLock.isHeld(installDirectory: installDirectory) || isDeploying {
-            return .deploying
-        }
-
-        return .ready
+        let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
+        let isUpdating = await app.deployer.updater.isUpdating
+        return DeployerPhase.resolve(
+            installDirectory: installDirectory,
+            updaterIsUpdating: isUpdating,
+            queueIsDeploying: isDeploying
+        )
     }
 
     /// Clears the server-local busy bit after a detached operation completes.
