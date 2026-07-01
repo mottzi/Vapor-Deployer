@@ -124,7 +124,6 @@ private extension OperationEngine {
             try await worker.move()
             try await worker.restart()
             try await worker.deploy(to: store)
-            await output.flush()
 
             deployment.finishedAt = .now
             deployment.output = await output.transcript
@@ -157,7 +156,6 @@ private extension OperationEngine {
             try await worker.checkout()
             try await worker.build()
             try await worker.save(to: store)
-            await output.flush()
 
             deployment.finishedAt = .now
             deployment.status = .built
@@ -224,7 +222,6 @@ private extension OperationEngine {
             await output.start()
             try await worker.checkout()
             try await worker.test()
-            await output.flush()
 
             deployment.status = priorStatus
             deployment.testStartedAt = nil
@@ -236,7 +233,6 @@ private extension OperationEngine {
             await eventLog.recordRowUpdated(deploymentID: deployment.id)
         } catch {
             await output.appendError(error)
-            await output.flush()
             deployment.output = await output.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             deployment.status = priorStatus
             deployment.testStartedAt = nil
@@ -332,7 +328,6 @@ private extension OperationEngine {
                 try await runInlineTestIfNeeded(deployment: current, worker: worker, eventLog: eventLog, policy: options.testPolicy)
                 try await worker.build()
                 try await worker.move()
-                await output.flush()
             } catch {
                 await fail(deployment: current, error: error, output: output, eventLog: eventLog)
                 if let last = lastSuccessful {
@@ -373,7 +368,6 @@ private extension OperationEngine {
         do {
             try await worker.restart()
             try await worker.deploy(to: store)
-            await output.flush()
 
             deployment.finishedAt = .now
             deployment.output = await output.transcript
@@ -510,7 +504,6 @@ private extension OperationEngine {
     ) async {
 
         await output.appendError(error)
-        await output.flush()
 
         deployment.status = .failed
         deployment.finishedAt = .now

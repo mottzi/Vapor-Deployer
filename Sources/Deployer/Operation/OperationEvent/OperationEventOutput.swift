@@ -69,9 +69,6 @@ actor OperationEventOutput {
         }
     }
 
-    /// Forces any buffered output to write to downstream sinks immediately.
-    func flush() async { }
-
     /// Closes streaming delivery sinks to signal the completion of operational logging.
     func close() async {
         await mistSink?.close()
