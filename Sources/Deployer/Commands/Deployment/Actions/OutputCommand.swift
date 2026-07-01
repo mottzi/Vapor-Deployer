@@ -6,6 +6,7 @@ struct OutputCommand: AnyAsyncCommand {
 
     var help: String { "Show deployment output." }
 
+    /// Attaches to the active operation event stream if running, otherwise prints the final output transcript.
     func run(using context: inout CommandContext) async throws {
 
         let args = context.input.arguments

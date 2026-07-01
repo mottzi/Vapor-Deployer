@@ -39,9 +39,10 @@ struct UpdateCommand: AsyncCommand {
         }
 
         let operationLock = try OperationLock.acquire(installDirectory: installDirectory)
-        let lock = try UpdateLock.acquire(installDirectory: installDirectory)
-        defer { _ = operationLock }
-        defer { _ = lock }
+        defer { operationLock.release() }
+        
+        let updateLock = try UpdateLock.acquire(installDirectory: installDirectory)
+        defer { updateLock.release() }
 
         let updateContext = UpdateContext(
             installDirectory: installDirectory,

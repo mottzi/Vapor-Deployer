@@ -22,7 +22,7 @@ extension TargetStatus {
             }
 
             do {
-                defer { _ = lock }
+                defer { lock.release() }
                 let manager = app.deployer.serviceManager
                 let status = await manager.status(product: productName)
                 await broadcaster.setBadge(StatusState(status.isRunning ? .stopping : .starting))

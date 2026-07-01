@@ -14,7 +14,7 @@ import Darwin
 /// `Queue.start` (deploy preflight) peek it via `isHeld(installDirectory:)`.
 final class UpdateLock {
 
-    private let fd: Int32
+    private var fd: Int32?
     private let path: String
 
     static func lockPath(installDirectory: URL) -> String {
@@ -71,8 +71,15 @@ final class UpdateLock {
         return UpdateLock(fd: fd, path: path)
     }
 
-    deinit {
+    /// Releases the held advisory lock before the lock object leaves scope.
+    func release() {
+        guard let fd else { return }
         close(fd)
+        self.fd = nil
+    }
+
+    deinit {
+        release()
     }
 
 }

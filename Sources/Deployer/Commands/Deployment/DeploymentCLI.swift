@@ -8,24 +8,26 @@ enum DeploymentCLI {
 
     /// Loads the headless runtime and returns the config plus shared engine.
     static func runtime(from context: CommandContext) async throws -> (Configuration, OperationEngine) {
+        
         let config = try await context.application.deployer.useHeadlessRuntime()
         let engine = OperationEngine(app: context.application, config: config, origin: .cli)
+        
         return (config, engine)
     }
 
     /// Runs a mutating CLI operation under the global operation lock.
-    static func runLocked<T>(
-        context: CommandContext,
-        operation: () async throws -> T
-    ) async throws -> T {
+    static func runLocked<T>(context: CommandContext, operation: () async throws -> T) async throws -> T {
+        
         let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
         let lock = try OperationLock.acquire(installDirectory: installDirectory)
-        defer { _ = lock }
+        defer { lock.release() }
+        
         return try await operation()
     }
 
     /// Parses positional arguments and simple boolean flags.
     static func parse(_ arguments: [String]) throws -> ParsedArguments {
+        
         var positionals: [String] = []
         var flags: Set<String> = []
 
@@ -77,7 +79,9 @@ enum DeploymentCLI {
         }
     }
 
+    /// Parses testing flags into an explicit test policy, requiring confirmation if tests are being skipped.
     static func testPolicy(parsed: ParsedArguments, target: TargetConfiguration) throws -> OperationEngine.TestPolicy {
+        
         if parsed.flags.contains("--testing") || parsed.flags.contains("-t") {
             return .forceEnabled
         }
@@ -90,10 +94,12 @@ enum DeploymentCLI {
         return .configured
     }
 
+    /// Returns an event sink that streams operation logs to the terminal unless the --no-logs flag is present.
     static func consoleSink(parsed: ParsedArguments, console: any Console) -> OperationEventConsoleOutputSink? {
         parsed.flags.contains("--no-logs") ? nil : OperationEventConsoleOutputSink(console: console)
     }
-
+    
+    /// Prompts the operator for interactive confirmation unless the non-interactive --yes flag was provided.
     static func confirmIfNeeded(_ message: String, parsed: ParsedArguments, console: any Console) throws {
         guard !parsed.flags.contains("--yes") else { return }
         guard console.confirm(message, defaultYes: false) else { throw CLIError.aborted }
@@ -109,22 +115,19 @@ extension DeploymentCLI {
     }
 
     enum CLIError: DescribedError {
+        
         case usage(String)
         case unknownFlags([String])
         case aborted
 
         var errorDescription: String? {
             switch self {
-            case .usage(let usage):
-                usage
-
-            case .unknownFlags(let flags):
-                "Unknown flag(s): \(flags.joined(separator: ", "))"
-
-            case .aborted:
-                "Aborted."
+                case .usage(let usage): usage
+                case .unknownFlags(let flags): "Unknown flag(s): \(flags.joined(separator: ", "))"
+                case .aborted: "Aborted."
             }
         }
+        
     }
 
 }

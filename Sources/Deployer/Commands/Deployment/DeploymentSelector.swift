@@ -60,6 +60,7 @@ private extension DeploymentSelector {
             ["merge-base", "--is-ancestor", resolved, "origin/\(target.branch)"],
             directory: target.directory
         )
+        
         guard reachable.exitCode == 0 else { throw OperationError.unreachableSHA(selector) }
 
         let message = (try? await Shell.runThrowing(
@@ -75,6 +76,7 @@ private extension DeploymentSelector {
             commitID: resolved,
             branch: target.branch
         )
+        
         try await deployment.save(on: app.db)
         return deployment
     }

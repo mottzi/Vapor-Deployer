@@ -29,7 +29,7 @@ extension DeploymentRow {
             }
 
             do {
-                defer { _ = lock }
+                defer { lock.release() }
                 let engine = OperationEngine(app: app, config: app.deployer.queue.config)
                 try await engine.run(action: .delete, deployment: deployment)
             }

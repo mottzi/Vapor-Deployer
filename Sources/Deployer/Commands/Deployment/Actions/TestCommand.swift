@@ -5,6 +5,7 @@ struct TestCommand: AnyAsyncCommand {
 
     var help: String { "Run tests for a selected deployment." }
 
+    /// Resolves or creates the deployment and instructs the engine to run an isolated test audit under the global lock.
     func run(using context: inout CommandContext) async throws {
 
         let args = context.input.arguments

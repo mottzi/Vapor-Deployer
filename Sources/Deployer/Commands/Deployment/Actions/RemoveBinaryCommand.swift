@@ -5,6 +5,7 @@ struct RemoveBinaryCommand: AnyAsyncCommand {
 
     var help: String { "Remove a saved deployment binary." }
 
+    /// Confirms intent and runs the binary removal under the global lock to return the row to a pushed state.
     func run(using context: inout CommandContext) async throws {
 
         let args = context.input.arguments

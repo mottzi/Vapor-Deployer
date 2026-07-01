@@ -22,7 +22,7 @@ extension TargetStatus {
             }
 
             do {
-                defer { _ = lock }
+                defer { lock.release() }
                 let manager = app.deployer.serviceManager
                 await broadcaster.setBadge(StatusState(.stopping))
                 async let minHold: Void = Task.sleep(for: .seconds(1))

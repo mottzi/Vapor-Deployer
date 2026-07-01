@@ -5,6 +5,7 @@ struct BuildCommand: AnyAsyncCommand {
 
     var help: String { "Build and save a selected deployment binary." }
 
+    /// Resolves the SHA, acquires the lock, and executes a build without promoting to the live environment.
     func run(using context: inout CommandContext) async throws {
 
         let args = context.input.arguments
