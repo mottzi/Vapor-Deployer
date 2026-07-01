@@ -12,3 +12,4 @@
 - Persist the new deployer version marker before restarting during self-update, while restoring the previous marker on rollback so the panel metadata strip boots with the correct SHA.
 - Install a narrow root helper and sudoers rule during setup/root refresh so panel-triggered updates from the service user can refresh only `/usr/local/sbin/deployerctl` and `/etc/deployer/deployerctl.conf`.
 - Preserve existing deployerctl metadata while refreshing operational values from `deployer.json`, and keep existing installations safe by warning when a one-time root refresh is still needed to bootstrap the panel update helper.
+- Fix the deployer status badge cycling Ready→Updating→Ready multiple times when clicking the panel update button, caused by two phase publishers bypassing the centralized resolver and ignoring the updater sticky bit. Defer updater polling to after Mist component registration to prevent a startup-order crash on the freshly updated binary.
