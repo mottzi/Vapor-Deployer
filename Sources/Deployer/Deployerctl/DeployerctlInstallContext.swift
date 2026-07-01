@@ -37,6 +37,7 @@ struct DeployerctlInstallContext {
 extension DeployerctlInstallContext {
 
     init(setup context: SetupContext) throws {
+        
         let paths = try context.requirePaths()
         self.init(
             serviceUser: context.serviceUser,
@@ -70,7 +71,13 @@ extension DeployerctlInstallContext {
         )
     }
 
-    init(configuration config: Configuration, metadata: [String: String], executableURL: URL, serviceUser discoveredServiceUser: String?) throws {
+    init(
+        configuration config: Configuration,
+        metadata: [String: String],
+        executableURL: URL,
+        serviceUser discoveredServiceUser: String?
+    ) throws {
+        
         let installDirectory = executableURL.deletingLastPathComponent().path
         let serviceUser = try Self.resolveServiceUser(config: config, discovered: discoveredServiceUser)
         let productName = config.target.name
@@ -111,14 +118,22 @@ extension DeployerctlInstallContext {
         )
     }
 
+    ///
     private static func resolveServiceUser(config: Configuration, discovered: String?) throws -> String {
-        if let discovered = discovered?.trimmed, !discovered.isEmpty { return discovered }
+        
+        if let discovered = discovered?.trimmed,
+           !discovered.isEmpty {
+            
+            return discovered
+        }
 
         let user = URL(fileURLWithPath: config.serviceHome, isDirectory: true).lastPathComponent.trimmed
         guard !user.isEmpty else { throw SystemError.missingValue("serviceUser") }
+        
         return user
     }
 
+    ///
     private static func first(_ candidates: String?...) -> String {
         candidates.compactMap { $0?.trimmed }.first { !$0.isEmpty } ?? ""
     }

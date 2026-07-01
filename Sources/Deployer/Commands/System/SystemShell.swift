@@ -1,6 +1,6 @@
 import Foundation
 
-// Shell facade for setup and remove steps; instance methods use SystemContext, static members provide lower-level commands.
+/// Shell facade for setup and remove steps; instance methods use SystemContext, static members provide lower-level commands.
 struct SystemShell {
     
     let context: any SystemContext
@@ -61,7 +61,7 @@ struct SystemShell {
         in directory: String? = nil,
         environment: [String: String]? = nil
     ) async throws -> String {
-
+        
         let scope = directory.map { ["-C", $0] } ?? []
         return try await runAsServiceUser("git", scope + [subcommand] + arguments, environment: environment)
     }

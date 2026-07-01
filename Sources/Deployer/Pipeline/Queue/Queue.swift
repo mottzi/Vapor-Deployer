@@ -1,6 +1,7 @@
 import Vapor
 import Mist
 
+///
 actor Queue {
     
     var isDeploying: Bool = false
@@ -22,6 +23,7 @@ actor Queue {
         self.onStatusChange = onStatusChange
     }
 
+    ///
     func recordPush(event: PushEvent, target: TargetConfiguration) async {
 
         let eventBranch = event.branch.hasPrefix("refs/heads/")
@@ -65,9 +67,14 @@ private extension Queue {
 
     /// Treats any cross-process deployer operation as busy when classifying automatic webhook pushes.
     func globalOperationLockHeld() -> Bool {
-        guard let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent() else { return false }
-        return UpdateLock.isHeld(installDirectory: installDirectory)
-            || OperationLock.isHeld(installDirectory: installDirectory)
+        
+        let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
+        guard let installDirectory else { return false }
+
+        let updateLockHeld = UpdateLock.isHeld(installDirectory: installDirectory)
+        let operationLockHeld = OperationLock.isHeld(installDirectory: installDirectory)
+
+        return updateLockHeld || operationLockHeld
     }
 
 }
@@ -98,6 +105,7 @@ extension Queue {
 
 extension Queue {
     
+    ///
     func start(deployment: Deployment, target: TargetConfiguration, mode: JobMode) async -> StartResult {
 
         guard !isDeploying else { return .queueBusy }
@@ -105,6 +113,7 @@ extension Queue {
         guard !isUpdating else { return .queueBusy }
 
         let lock: OperationLock
+        
         do {
             let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
             if UpdateLock.isHeld(installDirectory: installDirectory) { return .queueBusy }
@@ -117,8 +126,8 @@ extension Queue {
 
         isDeploying = true
         await broadcastState()
-
         Task { await run(mode: mode, startingWith: deployment, lock: lock) }
+        
         return .started
     }
 

@@ -39,9 +39,10 @@ actor OperationEventOutput {
         catch { app.logger.error("Failed to start operation output: \(error.localizedDescription)") }
     }
 
+    ///
     func append(_ text: String) async {
+        
         guard !text.isEmpty else { return }
-
         let cleaned = Self.stripAnsi(text)
         guard !cleaned.isEmpty else { return }
 
@@ -53,11 +54,13 @@ actor OperationEventOutput {
         catch { app.logger.error("Failed to record operation output: \(error.localizedDescription)") }
     }
 
+    ///
     func appendLabel(_ label: String) async {
         let prefix = transcript.isEmpty ? "" : "\n"
         await append("\(prefix)──── \(label) ────\n")
     }
 
+    ///
     func appendError(_ error: Swift.Error) async {
         if let shellError = error as? Shell.Error {
             await append("\nError: '\(shellError.command)' failed.\n")
@@ -93,6 +96,7 @@ final class OperationEventMistOutputSink: @unchecked Sendable {
         self.modelID = deployment.id
     }
 
+    ///
     func replace(_ text: String) async {
         guard let modelID else { return }
         await app.mist.streams.replace(
@@ -103,6 +107,7 @@ final class OperationEventMistOutputSink: @unchecked Sendable {
         )
     }
 
+    ///
     func append(_ text: String) async {
         guard let modelID else { return }
         await app.mist.streams.append(
@@ -113,6 +118,7 @@ final class OperationEventMistOutputSink: @unchecked Sendable {
         )
     }
 
+    ///
     func close() async {
         guard let modelID else { return }
         await app.mist.streams.close(
@@ -133,6 +139,7 @@ final class OperationEventConsoleOutputSink: @unchecked Sendable {
         self.console = console
     }
 
+    ///
     func write(_ text: String) {
         console.output(text.consoleText(), newLine: false)
     }

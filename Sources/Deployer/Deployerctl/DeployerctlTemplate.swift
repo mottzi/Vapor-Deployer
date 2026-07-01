@@ -38,6 +38,7 @@ enum DeployerctlTemplate {
 
   /// Emits the root helper used by panel-spawned updates to refresh only the deployerctl artifacts.
   static func refreshHelperScript(context: DeployerctlInstallContext) -> String {
+      
     func q(_ value: String) -> String { value.shellQuoted }
 
     return """

@@ -25,13 +25,7 @@ final class Deployment: Mist.Model, Content, @unchecked Sendable {
 
     init() { }
 
-    init(
-        product: String,
-        status: Status,
-        commitMessage: String,
-        commitID: String,
-        branch: String
-    ) {
+    init(product: String, status: Status, commitMessage: String, commitID: String, branch: String) {
         self.product = product
         self.status = status
         self.commitMessage = commitMessage

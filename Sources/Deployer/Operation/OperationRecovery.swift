@@ -26,6 +26,7 @@ enum OperationRecovery {
 
     /// Deletes terminal operation event rows after the server has had a chance to consume them.
     static func cleanupTerminalOperation(_ operation: Operation, on database: Database) async {
+        
         guard let operationID = operation.id else { return }
 
         do {

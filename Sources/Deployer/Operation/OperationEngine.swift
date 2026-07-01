@@ -25,6 +25,7 @@ struct OperationEngine: Sendable {
 
 extension OperationEngine {
 
+    ///
     enum Action: Sendable {
         
         case deploy
@@ -48,12 +49,14 @@ extension OperationEngine {
         
     }
 
+    ///
     enum TestPolicy: Sendable {
         case configured
         case forceEnabled
         case forceDisabled
     }
 
+    ///
     struct Options: Sendable {
         var testPolicy: TestPolicy = .configured
         var consoleSink: OperationEventConsoleOutputSink?
@@ -70,6 +73,7 @@ extension OperationEngine {
         try await operation.save(on: app.db)
 
         let eventLog = try await OperationEventLog(app: app, operation: operation)
+        
         do {
             switch action {
                 case .deploy: try await runPromote(deployment: deployment, options: options, eventLog: eventLog)
@@ -306,7 +310,11 @@ private extension Deployment {
 private extension OperationEngine {
 
     /// Preserves automatic-mode drain semantics from webhook and boot-triggered deployment.
-    func runAutomaticQueue(startingWith deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
+    func runAutomaticQueue(
+        startingWith deployment: Deployment,
+        options: Options,
+        eventLog: OperationEventLog
+    ) async throws {
 
         var current = deployment
         var lastSuccessful: (deployment: Deployment, transcript: String)?
@@ -353,7 +361,12 @@ private extension OperationEngine {
     }
 
     /// Restarts onto a built deployment whose output stream is still open.
-    func finalizeBuilt(_ deployment: Deployment, output: OperationEventOutput, store: BinaryStore, eventLog: OperationEventLog) async throws {
+    func finalizeBuilt(
+        _ deployment: Deployment,
+        output: OperationEventOutput,
+        store: BinaryStore,
+        eventLog: OperationEventLog
+    ) async throws {
 
         let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
 
@@ -376,7 +389,12 @@ private extension OperationEngine {
     }
 
     /// Restarts onto an earlier successful build after a later automatic candidate failed.
-    func finalizePreviouslyBuilt(_ deployment: Deployment, priorTranscript: String, store: BinaryStore, eventLog: OperationEventLog) async throws {
+    func finalizePreviouslyBuilt(
+        _ deployment: Deployment,
+        priorTranscript: String,
+        store: BinaryStore,
+        eventLog: OperationEventLog
+    ) async throws {
 
         let output = makeOutput(deployment: deployment, eventLog: eventLog, options: Options(), priorTranscript: priorTranscript)
         let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
@@ -404,7 +422,12 @@ private extension OperationEngine {
 private extension OperationEngine {
 
     /// Applies the transient status used while a mutating pipeline action runs.
-    func preparePipelineRow(_ deployment: Deployment, status: Deployment.Status, clearOutput: Bool, eventLog: OperationEventLog) async throws {
+    func preparePipelineRow(
+        _ deployment: Deployment,
+        status: Deployment.Status,
+        clearOutput: Bool,
+        eventLog: OperationEventLog
+    ) async throws {
 
         deployment.startedAt = .now
         deployment.status = status
@@ -416,8 +439,13 @@ private extension OperationEngine {
     }
 
     /// Creates the caller-appropriate output fanout without splitting the deployment engine.
-    func makeOutput(deployment: Deployment, eventLog: OperationEventLog, options: Options, priorTranscript: String = "") -> OperationEventOutput {
-        OperationEventOutput(
+    func makeOutput(
+        deployment: Deployment,
+        eventLog: OperationEventLog,
+        options: Options,
+        priorTranscript: String = ""
+    ) -> OperationEventOutput {
+        .init(
             app: app,
             eventLog: eventLog,
             deployment: deployment,
@@ -434,7 +462,12 @@ private extension OperationEngine {
     }
 
     /// Runs inline tests according to the target default and per-job override.
-    func runInlineTestIfNeeded(deployment: Deployment, worker: Worker, eventLog: OperationEventLog, policy: TestPolicy) async throws {
+    func runInlineTestIfNeeded(
+        deployment: Deployment,
+        worker: Worker,
+        eventLog: OperationEventLog,
+        policy: TestPolicy
+    ) async throws {
 
         let shouldRun = switch policy {
             case .configured: config.target.testing
@@ -469,7 +502,12 @@ private extension OperationEngine {
     }
 
     /// Marks the row failed and persists the transcript after a streaming operation throws.
-    func fail(deployment: Deployment, error: Swift.Error, output: OperationEventOutput, eventLog: OperationEventLog) async {
+    func fail(
+        deployment: Deployment,
+        error: Swift.Error,
+        output: OperationEventOutput,
+        eventLog: OperationEventLog
+    ) async {
 
         await output.appendError(error)
         await output.flush()
@@ -484,8 +522,12 @@ private extension OperationEngine {
     }
 
     /// Creates a worker whose service-status changes are visible to both event stream and panel state.
-    func makeWorker(deployment: Deployment, output: OperationEventOutput?, eventLog: OperationEventLog) -> Worker {
-        Worker(
+    func makeWorker(
+        deployment: Deployment,
+        output: OperationEventOutput?,
+        eventLog: OperationEventLog
+    ) -> Worker {
+        .init(
             deployment: deployment,
             target: config.target,
             app: app,

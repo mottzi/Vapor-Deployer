@@ -13,11 +13,11 @@ extension Queue {
         )
 
         let action: OperationEngine.Action = switch mode {
-        case .deploy: .deploy
-        case .automaticDeploy: .automaticDeploy
-        case .saveBinary: .build
-        case .restoreBinary: .runSavedBinary
-        case .test: .test
+            case .deploy: .deploy
+            case .automaticDeploy: .automaticDeploy
+            case .saveBinary: .build
+            case .restoreBinary: .runSavedBinary
+            case .test: .test
         }
 
         do {
@@ -38,8 +38,10 @@ extension Queue {
 
     /// Resolves display phase from global locks first, then the server-local queue flag.
     func resolvedPhase() async -> DeployerPhase {
+        
         let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
         let isUpdating = await app.deployer.updater.isUpdating
+        
         return DeployerPhase.resolve(
             installDirectory: installDirectory,
             updaterIsUpdating: isUpdating,
@@ -83,6 +85,7 @@ extension Queue {
 
     /// Returns the newest `.canceled` row for this product that has not been superseded, or nil.
     private func bootDrainSeed() async throws -> Deployment? {
+        
         let candidate = try await Deployment.query(on: app.db)
             .filter(\.$product, .equal, config.target.name)
             .filter(\.$status, .equal, .canceled)

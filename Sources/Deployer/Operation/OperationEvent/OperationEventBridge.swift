@@ -4,6 +4,7 @@ import Mist
 
 extension Deployer {
 
+    ///
     func useOperationEventBridge(
         config: Configuration,
         deployerPhase: LiveState<DeployerPhase>,
@@ -66,6 +67,7 @@ actor OperationEventBridge {
         }
     }
 
+    ///
     private func tick() async {
         do {
             let operations = try await Operation.query(on: app.db)
@@ -182,15 +184,16 @@ actor OperationEventBridge {
     /// Synchronizes CLI-origin row deletion into the server's live Mist instance registry.
     private func deleteRow(id: UUID?) async {
         guard let id else { return }
-
         await app.mist.models.delete(Deployment.self, id: id)
     }
 
     /// Keeps the runtime badge in sync with globally-held operation locks.
     private func updatePhase() async {
+        
         let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
         let isUpdating = await app.deployer.updater.isUpdating
         let isDeploying = await app.deployer.queue.isDeploying
+        
         let phase = DeployerPhase.resolve(
             installDirectory: installDirectory,
             updaterIsUpdating: isUpdating,

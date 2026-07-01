@@ -31,6 +31,7 @@ final class Operation: Model, @unchecked Sendable {
 
 extension Operation {
 
+    ///
     enum Kind: String, Codable, Sendable {
         case deploy
         case build
@@ -43,11 +44,13 @@ extension Operation {
         case targetRestart = "target-restart"
     }
 
+    ///
     enum Origin: String, Codable, Sendable {
         case server
         case cli
     }
 
+    ///
     enum Status: String, Codable, Sendable {
         case running
         case completed

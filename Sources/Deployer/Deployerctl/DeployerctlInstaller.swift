@@ -6,26 +6,9 @@ enum DeployerctlInstaller {
     static let stagedWrapperName = ".deployerctl.wrapper.new"
     static let stagedConfigName = ".deployerctl.conf.new"
 
-    enum RefreshResult {
-        case refreshedDirectly
-        case refreshedWithHelper
-        case helperUnavailable
-    }
-
-    enum Error: DescribedError {
-        case refreshFailed(String)
-
-        var errorDescription: String? {
-            switch self {
-            case .refreshFailed(let output):
-                let trimmed = output.trimmed
-                guard !trimmed.isEmpty else { return "Failed to refresh deployerctl wrapper." }
-                return "Failed to refresh deployerctl wrapper.\n\(trimmed)"
-            }
-        }
-    }
-
+    ///
     static func installRoot(context: DeployerctlInstallContext) async throws {
+        
         try await SystemFileSystem.installDirectory(context.deployerctlConfigDirectory, owner: "root", group: "root")
         try await SystemFileSystem.writeFile(DeployerctlTemplate.wrapperConfig(context: context), to: context.deployerctlConfig)
         try await SystemFileSystem.writeFile(DeployerctlTemplate.wrapperScript(), to: context.deployerctlBinary, mode: "0755")
@@ -36,7 +19,9 @@ enum DeployerctlInstaller {
         try await SystemFileSystem.writeFile(DeployerctlTemplate.refreshSudoers(context: context), to: context.deployerctlRefreshSudoers, mode: "0440")
     }
 
+    ///
     static func refresh(context: DeployerctlInstallContext) async throws -> RefreshResult {
+        
         if UserAccount.currentUID() == 0 {
             try await installRoot(context: context)
             return .refreshedDirectly
@@ -52,7 +37,13 @@ enum DeployerctlInstaller {
         return .refreshedWithHelper
     }
 
+}
+
+extension DeployerctlInstaller {
+    
+    ///
     private static func writeStagedFiles(context: DeployerctlInstallContext) throws {
+        
         let installDirectoryURL = URL(fileURLWithPath: context.installDirectory, isDirectory: true)
         let wrapperURL = installDirectoryURL.appendingPathComponent(stagedWrapperName, isDirectory: false)
         let configURL = installDirectoryURL.appendingPathComponent(stagedConfigName, isDirectory: false)
@@ -62,5 +53,40 @@ enum DeployerctlInstaller {
         try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: Int16(0o600))], ofItemAtPath: wrapperURL.path)
         try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: Int16(0o600))], ofItemAtPath: configURL.path)
     }
+    
+}
 
+extension DeployerctlInstaller {
+    
+    ///
+    enum RefreshResult {
+        
+        ///
+        case refreshedDirectly
+        
+        ///
+        case refreshedWithHelper
+        
+        ///
+        case helperUnavailable
+        
+    }
+
+    ///
+    enum Error: DescribedError {
+        
+        ///
+        case refreshFailed(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .refreshFailed(let output):
+                let trimmed = output.trimmed
+                guard !trimmed.isEmpty else { return "Failed to refresh deployerctl wrapper." }
+                return "Failed to refresh deployerctl wrapper.\n\(trimmed)"
+            }
+        }
+        
+    }
+    
 }

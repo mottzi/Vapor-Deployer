@@ -10,10 +10,12 @@ actor OperationEventLog {
     private var nextSequence: Int
 
     init(app: Application, operation: Operation) async throws {
+        
         self.app = app
         self.operation = operation
 
         guard let operationID = operation.id else { throw OperationError.deploymentIDMissing }
+        
         let last = try await OperationEvent.query(on: app.db)
             .filter(\.$operationID, .equal, operationID)
             .sort(\.$sequence, .descending)
@@ -35,6 +37,7 @@ actor OperationEventLog {
             deploymentID: deploymentID,
             payload: payload
         )
+        
         nextSequence += 1
 
         try await event.save(on: app.db)

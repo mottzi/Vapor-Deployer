@@ -3,27 +3,29 @@ import Mist
 
 extension Deployment {
     
-    var computedProperties: [String: any SendableEncodable] { [
-        "durationString": durationString,
-        "displayStatus": displayStatus.rawValue,
-        "shortID": shortID,
-        "shortSHA": shortSHA,
-        "fullSHA": fullSHA,
-        "startedAtUnixMs": startedAtUnixMs,
-        "liveTimerStartedAtUnixMs": liveTimerStartedAtUnixMs,
-        "canBeDeployed": canBeDeployed,
-        "canBuild": canBuild,
-        "canRestoreBinary": canRestoreBinary,
-        "canTest": canTest,
-        "canDelete": canDelete,
-        "operationLocked": operationLocked,
-        "testsPassed": testsPassed,
-        "testsFailed": testsFailed,
-        "hasSavedBinary": hasSavedBinary,
-        "hasDetails": hasDetails,
-        "hasLiveOutputStream": hasLiveOutputStream,
-        "outputHTML": outputHTML,
-    ] }
+    var computedProperties: [String: any SendableEncodable] {
+        [
+            "durationString": durationString,
+            "displayStatus": displayStatus.rawValue,
+            "shortID": shortID,
+            "shortSHA": shortSHA,
+            "fullSHA": fullSHA,
+            "startedAtUnixMs": startedAtUnixMs,
+            "liveTimerStartedAtUnixMs": liveTimerStartedAtUnixMs,
+            "canBeDeployed": canBeDeployed,
+            "canBuild": canBuild,
+            "canRestoreBinary": canRestoreBinary,
+            "canTest": canTest,
+            "canDelete": canDelete,
+            "operationLocked": operationLocked,
+            "testsPassed": testsPassed,
+            "testsFailed": testsFailed,
+            "hasSavedBinary": hasSavedBinary,
+            "hasDetails": hasDetails,
+            "hasLiveOutputStream": hasLiveOutputStream,
+            "outputHTML": outputHTML,
+        ]
+    }
     
 }
 
