@@ -14,9 +14,16 @@ The Operation lock lives in the install directory as `.deployer-operation.lock`.
 
 CLI promotion targets exactly the selected commit. It does not drain newer queued webhook pushes.
 
-CLI-origin operations publish status and log output to a durable Operation event stream. When the server is online, it consumes that stream and rebroadcasts row updates and log output through Mist; if the server starts or restarts during a CLI deploy, it must attach to the active operation and replay enough stream state for the panel to catch up. Server-origin operations stream directly to Mist in-process and do not use SQLite as their live UI transport.
+CLI-origin operations publish status and log output to a durable Operation event stream. When the server is online, it consumes that stream and rebroadcasts row updates and log output through Mist; if the server starts or restarts during a CLI deploy, it must attach to the active operation and replay enough stream state for the panel to catch up.
+
+The live-output transport is intentionally asymmetric. Server-origin operations already run inside the process that owns Mist, so they stream directly to Mist in-process and do not persist live `OperationEvent` chunks to SQLite. CLI-origin operations run in a separate process, so they pay the SQLite write cost only to cross that process boundary and to buffer output across transient server restarts. `deployerctl output <sha>` therefore follows only active CLI-origin operations; for server-origin work, the CLI can read the final `Deployment.output` transcript after it is persisted, but it is not a live panel-to-CLI tail.
 
 The Operation event stream is stored in the existing SQLite database using `operations` and `operation_events` tables for CLI-origin bridge delivery. Its v1 event vocabulary is `started`, `row-updated`, `row-deleted`, `log-appended`, `service-status`, `completed`, and `failed`. Log events store stripped plain text only. Final deployment transcripts continue to be persisted to `Deployment.output` at the end of the operation; operation events are deleted once the deployment reaches a terminal state and the final output has been persisted.
+
+Rejected alternatives:
+
+- **CLI streams directly to the server over HTTP, sockets, or WebSocket.** Rejected because the CLI would need retry, reconnect, and local buffering logic to avoid losing log chunks while the server restarts. Without that buffering, the panel could not catch up after a transient server failure; with it, the direct channel has recreated the SQLite bridge with more moving parts.
+- **Persist server-origin live output to SQLite too.** Rejected because it duplicates the hot server-to-Mist path and adds disk I/O to the common panel-started deployment path only to support a niche reverse tail from `deployerctl output`. The final transcript remains persisted in `Deployment.output`, which preserves the durable audit surface without making SQLite a general bidirectional live-output bus.
 
 Unknown SHAs are allowed only when they can be resolved from the configured branch. The CLI creates the missing Deployment row automatically in that case; otherwise it refuses.
 
