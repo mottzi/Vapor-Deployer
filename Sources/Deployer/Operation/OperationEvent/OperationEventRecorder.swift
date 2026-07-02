@@ -1,11 +1,11 @@
 import Vapor
 import Fluent
 
-/// Ordered event logger for a single operation.
-actor OperationEventLogger {
+/// Ordered event recorder for a single operation.
+actor OperationEventRecorder {
     
-    let app: Application
-    let operation: Operation
+    private let app: Application
+    private let origin: Operation.Origin
     private let operationID: UUID
     
     private var nextSequence: Int
@@ -13,7 +13,7 @@ actor OperationEventLogger {
     init(app: Application, operation: Operation) async throws {
         
         self.app = app
-        self.operation = operation
+        self.origin = operation.origin
         
         guard let operationID = operation.id else { throw OperationError.operationIDMissing }
         self.operationID = operationID
@@ -35,7 +35,7 @@ actor OperationEventLogger {
         payload: String? = nil
     ) async throws {
         
-        guard operation.origin == .cli else { return }
+        guard origin == .cli else { return }
         
         let event = OperationEvent(
             operationID: operationID,
@@ -52,7 +52,7 @@ actor OperationEventLogger {
     
 }
 
-extension OperationEventLogger {
+extension OperationEventRecorder {
 
     /// Emits a row refresh for the operation's deployment when one is known.
     func recordRowUpdated(deploymentID: UUID?) async {
@@ -78,18 +78,6 @@ extension OperationEventLogger {
             }
         } catch {
             app.logger.error("Failed to record product row updates: \(error.localizedDescription)")
-        }
-    }
-
-    /// Marks the operation terminal and records its terminal event.
-    func finishOperation(_ status: Operation.Status, deploymentID: UUID?) async {
-        do {
-            try await record(status == .completed ? .completed : .failed, deploymentID: deploymentID)
-            operation.status = status
-            operation.finishedAt = .now
-            try await operation.save(on: app.db)
-        } catch {
-            app.logger.error("Failed to finish operation: \(error.localizedDescription)")
         }
     }
 
