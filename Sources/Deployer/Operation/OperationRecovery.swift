@@ -15,7 +15,6 @@ enum OperationRecovery {
                 .filter(\.$product, .equal, config.target.name)
                 .filter(\.$status, .equal, .running)
                 .all()
-            
             for operation in operations {
                 try await repair(operation: operation, app: app)
             }

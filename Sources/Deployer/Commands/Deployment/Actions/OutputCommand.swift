@@ -66,7 +66,7 @@ private extension OutputCommand {
             for event in events {
                 lastSequence = event.sequence
                 switch event.type {
-                case .started:
+                case .outputOpened:
                     if let payload = event.payload, !payload.isEmpty {
                         printed.append(payload)
                         console.output(payload.consoleText(), newLine: false)

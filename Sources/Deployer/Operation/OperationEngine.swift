@@ -72,22 +72,22 @@ extension OperationEngine {
         let operation = Operation(kind: action.kind, origin: origin, product: config.target.name, deploymentID: deployment.id)
         try await operation.save(on: app.db)
 
-        let eventLog = try await OperationEventLog(app: app, operation: operation)
+        let eventLogger = try await OperationEventLogger(app: app, operation: operation)
         
         do {
             switch action {
-                case .deploy: try await runPromote(deployment: deployment, options: options, eventLog: eventLog)
-                case .automaticDeploy: try await runAutomaticQueue(startingWith: deployment, options: options, eventLog: eventLog)
-                case .build: try await runBuild(deployment: deployment, options: options, eventLog: eventLog)
-                case .runSavedBinary: try await runSavedBinary(deployment: deployment, options: options, eventLog: eventLog)
-                case .test: try await runTest(deployment: deployment, options: options, eventLog: eventLog)
-                case .delete: try await runDelete(deployment: deployment, eventLog: eventLog)
-                case .removeBinary: try await runRemoveBinary(deployment: deployment, eventLog: eventLog)
+                case .deploy: try await runPromote(deployment: deployment, options: options, eventLogger: eventLogger)
+                case .automaticDeploy: try await runAutomaticQueue(startingWith: deployment, options: options, eventLogger: eventLogger)
+                case .build: try await runBuild(deployment: deployment, options: options, eventLogger: eventLogger)
+                case .runSavedBinary: try await runSavedBinary(deployment: deployment, options: options, eventLogger: eventLogger)
+                case .test: try await runTest(deployment: deployment, options: options, eventLogger: eventLogger)
+                case .delete: try await runDelete(deployment: deployment, eventLogger: eventLogger)
+                case .removeBinary: try await runRemoveBinary(deployment: deployment, eventLogger: eventLogger)
             }
-            await eventLog.finish(.completed, deploymentID: deployment.id)
+            await eventLogger.finishOperation(.completed, deploymentID: deployment.id)
             await cleanupServerOperation(operation)
         } catch {
-            await eventLog.finish(.failed, deploymentID: deployment.id)
+            await eventLogger.finishOperation(.failed, deploymentID: deployment.id)
             await cleanupServerOperation(operation)
             throw error
         }
@@ -98,7 +98,7 @@ extension OperationEngine {
 private extension OperationEngine {
 
     /// Promotes exactly the selected deployment without draining newer queued pushes.
-    func runPromote(deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
+    func runPromote(deployment: Deployment, options: Options, eventLogger: OperationEventLogger) async throws {
 
         if deployment.isLive { return }
 
@@ -107,19 +107,19 @@ private extension OperationEngine {
 
         if hasSavedBinary {
             guard options.testPolicy != .forceEnabled else { throw OperationError.testingSavedBinaryUnsupported }
-            try await runSavedBinary(deployment: deployment, options: options, eventLog: eventLog)
+            try await runSavedBinary(deployment: deployment, options: options, eventLogger: eventLogger)
             return
         }
 
-        try await preparePipelineRow(deployment, status: .building, clearOutput: true, eventLog: eventLog)
+        try await preparePipelineRow(deployment, status: .building, clearOutput: true, eventLogger: eventLogger)
 
-        let output = makeOutput(deployment: deployment, eventLog: eventLog, options: options)
-        let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
+        let output = makeOutput(deployment: deployment, eventLogger: eventLogger, options: options)
+        let worker = makeWorker(deployment: deployment, output: output, eventLogger: eventLogger)
 
         do {
-            await output.start()
+            await output.open()
             try await worker.checkout()
-            try await runInlineTestIfNeeded(deployment: deployment, worker: worker, eventLog: eventLog, policy: options.testPolicy)
+            try await runInlineTestIfNeeded(deployment: deployment, worker: worker, eventLogger: eventLogger, policy: options.testPolicy)
             try await worker.build()
             try await worker.move()
             try await worker.restart()
@@ -131,28 +131,28 @@ private extension OperationEngine {
 
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
-            await eventLog.recordProductRowsUpdated(product: deployment.product)
+            await eventLogger.recordProductRowsUpdated(product: deployment.product)
         } catch {
-            await fail(deployment: deployment, error: error, output: output, eventLog: eventLog)
+            await fail(deployment: deployment, error: error, output: output, eventLogger: eventLogger)
             throw error
         }
     }
 
     /// Builds and archives a deployment without making it live.
-    func runBuild(deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
+    func runBuild(deployment: Deployment, options: Options, eventLogger: OperationEventLogger) async throws {
 
         guard deployment.canStartBuildOperation else { throw OperationError.deploymentCannotBuild }
 
         let store = BinaryStore(target: config.target)
         guard !store.hasBinary(for: deployment) else { throw OperationError.savedBinaryAlreadyExists }
 
-        try await preparePipelineRow(deployment, status: .building, clearOutput: true, eventLog: eventLog)
+        try await preparePipelineRow(deployment, status: .building, clearOutput: true, eventLogger: eventLogger)
 
-        let output = makeOutput(deployment: deployment, eventLog: eventLog, options: options)
-        let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
+        let output = makeOutput(deployment: deployment, eventLogger: eventLogger, options: options)
+        let worker = makeWorker(deployment: deployment, output: output, eventLogger: eventLogger)
 
         do {
-            await output.start()
+            await output.open()
             try await worker.checkout()
             try await worker.build()
             try await worker.save(to: store)
@@ -163,29 +163,29 @@ private extension OperationEngine {
             await output.close()
             
             try await deployment.save(on: app.db)
-            await eventLog.recordRowUpdated(deploymentID: deployment.id)
+            await eventLogger.recordRowUpdated(deploymentID: deployment.id)
         } catch {
-            await fail(deployment: deployment, error: error, output: output, eventLog: eventLog)
+            await fail(deployment: deployment, error: error, output: output, eventLogger: eventLogger)
             throw error
         }
     }
 
     /// Restores an archived binary and makes that deployment live.
-    func runSavedBinary(deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
+    func runSavedBinary(deployment: Deployment, options: Options, eventLogger: OperationEventLogger) async throws {
 
         guard deployment.canStartRestoreOperation else { throw OperationError.deploymentCannotRunSavedBinary }
 
         let store = BinaryStore(target: config.target)
         guard store.hasBinary(for: deployment) else { throw OperationError.savedBinaryMissing }
 
-        try await preparePipelineRow(deployment, status: .restoring, clearOutput: false, eventLog: eventLog)
+        try await preparePipelineRow(deployment, status: .restoring, clearOutput: false, eventLogger: eventLogger)
 
         let priorOutput = deployment.output ?? ""
-        let output = makeOutput(deployment: deployment, eventLog: eventLog, options: options, priorTranscript: priorOutput)
-        let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
+        let output = makeOutput(deployment: deployment, eventLogger: eventLogger, options: options, priorTranscript: priorOutput)
+        let worker = makeWorker(deployment: deployment, output: output, eventLogger: eventLogger)
 
         do {
-            await output.start()
+            await output.open()
             try await worker.restore(from: store)
             try await worker.restart()
             deployment.finishedAt = .now
@@ -195,15 +195,15 @@ private extension OperationEngine {
             try await store.syncMetadata(for: deployment, on: app.db)
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
-            await eventLog.recordProductRowsUpdated(product: deployment.product)
+            await eventLogger.recordProductRowsUpdated(product: deployment.product)
         } catch {
-            await fail(deployment: deployment, error: error, output: output, eventLog: eventLog)
+            await fail(deployment: deployment, error: error, output: output, eventLogger: eventLogger)
             throw error
         }
     }
 
     /// Runs `swift test` as an audit and restores the deployment lifecycle status afterwards.
-    func runTest(deployment: Deployment, options: Options, eventLog: OperationEventLog) async throws {
+    func runTest(deployment: Deployment, options: Options, eventLogger: OperationEventLogger) async throws {
 
         guard deployment.canStartTestOperation else { throw OperationError.deploymentCannotTest }
 
@@ -213,13 +213,13 @@ private extension OperationEngine {
         deployment.status = .testing
         deployment.testStartedAt = .now
         try await deployment.save(on: app.db)
-        await eventLog.recordRowUpdated(deploymentID: deployment.id)
+        await eventLogger.recordRowUpdated(deploymentID: deployment.id)
 
-        let output = makeOutput(deployment: deployment, eventLog: eventLog, options: options, priorTranscript: priorOutput)
-        let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
+        let output = makeOutput(deployment: deployment, eventLogger: eventLogger, options: options, priorTranscript: priorOutput)
+        let worker = makeWorker(deployment: deployment, output: output, eventLogger: eventLogger)
 
         do {
-            await output.start()
+            await output.open()
             try await worker.checkout()
             try await worker.test()
 
@@ -230,7 +230,7 @@ private extension OperationEngine {
             await output.close()
             
             try await deployment.save(on: app.db)
-            await eventLog.recordRowUpdated(deploymentID: deployment.id)
+            await eventLogger.recordRowUpdated(deploymentID: deployment.id)
         } catch {
             await output.appendError(error)
             deployment.output = await output.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -240,21 +240,21 @@ private extension OperationEngine {
             await output.close()
             
             try? await deployment.save(on: app.db)
-            await eventLog.recordRowUpdated(deploymentID: deployment.id)
+            await eventLogger.recordRowUpdated(deploymentID: deployment.id)
             throw error
         }
     }
 
     /// Deletes a deployment row after enforcing live-row protection.
-    func runDelete(deployment: Deployment, eventLog: OperationEventLog) async throws {
+    func runDelete(deployment: Deployment, eventLogger: OperationEventLogger) async throws {
 
         guard !deployment.isLive else { throw OperationError.liveDeploymentCannotBeDeleted }
         try await deployment.delete(on: app.db)
-        await eventLog.recordRowDeleted(deploymentID: deployment.id)
+        await eventLogger.recordRowDeleted(deploymentID: deployment.id)
     }
 
     /// Removes a saved binary and returns the row to the pushed state.
-    func runRemoveBinary(deployment: Deployment, eventLog: OperationEventLog) async throws {
+    func runRemoveBinary(deployment: Deployment, eventLogger: OperationEventLogger) async throws {
 
         guard !deployment.isLive else { throw OperationError.liveDeploymentBinaryCannotBeRemoved }
         guard deployment.hasSavedBinary else { throw OperationError.savedBinaryMissing }
@@ -268,7 +268,7 @@ private extension OperationEngine {
         deployment.output = nil
         deployment.status = .pushed
         try await deployment.save(on: app.db)
-        await eventLog.recordRowUpdated(deploymentID: deployment.id)
+        await eventLogger.recordRowUpdated(deploymentID: deployment.id)
     }
 
 }
@@ -309,7 +309,7 @@ private extension OperationEngine {
     func runAutomaticQueue(
         startingWith deployment: Deployment,
         options: Options,
-        eventLog: OperationEventLog
+        eventLogger: OperationEventLogger
     ) async throws {
 
         var current = deployment
@@ -317,27 +317,27 @@ private extension OperationEngine {
         let store = BinaryStore(target: config.target)
 
         while true {
-            try await preparePipelineRow(current, status: .building, clearOutput: true, eventLog: eventLog)
+            try await preparePipelineRow(current, status: .building, clearOutput: true, eventLogger: eventLogger)
 
-            let output = makeOutput(deployment: current, eventLog: eventLog, options: options)
-            let worker = makeWorker(deployment: current, output: output, eventLog: eventLog)
+            let output = makeOutput(deployment: current, eventLogger: eventLogger, options: options)
+            let worker = makeWorker(deployment: current, output: output, eventLogger: eventLogger)
 
             do {
-                await output.start()
+                await output.open()
                 try await worker.checkout()
-                try await runInlineTestIfNeeded(deployment: current, worker: worker, eventLog: eventLog, policy: options.testPolicy)
+                try await runInlineTestIfNeeded(deployment: current, worker: worker, eventLogger: eventLogger, policy: options.testPolicy)
                 try await worker.build()
                 try await worker.move()
             } catch {
-                await fail(deployment: current, error: error, output: output, eventLog: eventLog)
+                await fail(deployment: current, error: error, output: output, eventLogger: eventLogger)
                 if let last = lastSuccessful {
-                    try await finalizePreviouslyBuilt(last.deployment, priorTranscript: last.transcript, store: store, eventLog: eventLog)
+                    try await finalizePreviouslyBuilt(last.deployment, priorTranscript: last.transcript, store: store, eventLogger: eventLogger)
                 }
                 throw error
             }
 
             guard let next = try await nextQueuedDeployment(after: current) else {
-                try await finalizeBuilt(current, output: output, store: store, eventLog: eventLog)
+                try await finalizeBuilt(current, output: output, store: store, eventLogger: eventLogger)
                 return
             }
 
@@ -345,7 +345,7 @@ private extension OperationEngine {
             current.status = .built
             current.output = await output.transcript
             try await current.save(on: app.db)
-            await eventLog.recordRowUpdated(deploymentID: current.id)
+            await eventLogger.recordRowUpdated(deploymentID: current.id)
 
             let transcript = await output.transcript
             await output.close()
@@ -360,10 +360,10 @@ private extension OperationEngine {
         _ deployment: Deployment,
         output: OperationEventOutput,
         store: BinaryStore,
-        eventLog: OperationEventLog
+        eventLogger: OperationEventLogger
     ) async throws {
 
-        let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
+        let worker = makeWorker(deployment: deployment, output: output, eventLogger: eventLogger)
 
         do {
             try await worker.restart()
@@ -375,9 +375,9 @@ private extension OperationEngine {
 
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
-            await eventLog.recordProductRowsUpdated(product: deployment.product)
+            await eventLogger.recordProductRowsUpdated(product: deployment.product)
         } catch {
-            await fail(deployment: deployment, error: error, output: output, eventLog: eventLog)
+            await fail(deployment: deployment, error: error, output: output, eventLogger: eventLogger)
             throw error
         }
     }
@@ -387,14 +387,14 @@ private extension OperationEngine {
         _ deployment: Deployment,
         priorTranscript: String,
         store: BinaryStore,
-        eventLog: OperationEventLog
+        eventLogger: OperationEventLogger
     ) async throws {
 
-        let output = makeOutput(deployment: deployment, eventLog: eventLog, options: Options(), priorTranscript: priorTranscript)
-        let worker = makeWorker(deployment: deployment, output: output, eventLog: eventLog)
+        let output = makeOutput(deployment: deployment, eventLogger: eventLogger, options: Options(), priorTranscript: priorTranscript)
+        let worker = makeWorker(deployment: deployment, output: output, eventLogger: eventLogger)
 
         do {
-            await output.start()
+            await output.open()
             try await worker.restart()
             try await worker.deploy(to: store)
             
@@ -404,9 +404,9 @@ private extension OperationEngine {
             
             try await deployment.setCurrent(on: app.db)
             try await store.evict(on: app.db)
-            await eventLog.recordProductRowsUpdated(product: deployment.product)
+            await eventLogger.recordProductRowsUpdated(product: deployment.product)
         } catch {
-            await fail(deployment: deployment, error: error, output: output, eventLog: eventLog)
+            await fail(deployment: deployment, error: error, output: output, eventLogger: eventLogger)
             throw error
         }
     }
@@ -420,7 +420,7 @@ private extension OperationEngine {
         _ deployment: Deployment,
         status: Deployment.Status,
         clearOutput: Bool,
-        eventLog: OperationEventLog
+        eventLogger: OperationEventLogger
     ) async throws {
 
         deployment.startedAt = .now
@@ -429,19 +429,19 @@ private extension OperationEngine {
         if clearOutput { deployment.output = nil }
 
         try await deployment.save(on: app.db)
-        await eventLog.recordRowUpdated(deploymentID: deployment.id)
+        await eventLogger.recordRowUpdated(deploymentID: deployment.id)
     }
 
     /// Creates the caller-appropriate output fanout without splitting the deployment engine.
     func makeOutput(
         deployment: Deployment,
-        eventLog: OperationEventLog,
+        eventLogger: OperationEventLogger,
         options: Options,
         priorTranscript: String = ""
     ) -> OperationEventOutput {
         .init(
             app: app,
-            eventLog: eventLog,
+            eventLogger: eventLogger,
             deployment: deployment,
             priorTranscript: priorTranscript,
             mistSink: origin == .server ? OperationEventMistOutputSink(app: app, deployment: deployment) : nil,
@@ -459,7 +459,7 @@ private extension OperationEngine {
     func runInlineTestIfNeeded(
         deployment: Deployment,
         worker: Worker,
-        eventLog: OperationEventLog,
+        eventLogger: OperationEventLogger,
         policy: TestPolicy
     ) async throws {
 
@@ -479,18 +479,18 @@ private extension OperationEngine {
         do {
             deployment.status = .testing
             try await deployment.save(on: app.db)
-            await eventLog.recordRowUpdated(deploymentID: deployment.id)
+            await eventLogger.recordRowUpdated(deploymentID: deployment.id)
             
             try await worker.test()
             
             deployment.lastTestOutcome = true
             deployment.status = .building
             try await deployment.save(on: app.db)
-            await eventLog.recordRowUpdated(deploymentID: deployment.id)
+            await eventLogger.recordRowUpdated(deploymentID: deployment.id)
         } catch {
             deployment.lastTestOutcome = false
             try? await deployment.save(on: app.db)
-            await eventLog.recordRowUpdated(deploymentID: deployment.id)
+            await eventLogger.recordRowUpdated(deploymentID: deployment.id)
             throw error
         }
     }
@@ -500,7 +500,7 @@ private extension OperationEngine {
         deployment: Deployment,
         error: Swift.Error,
         output: OperationEventOutput,
-        eventLog: OperationEventLog
+        eventLogger: OperationEventLogger
     ) async {
 
         await output.appendError(error)
@@ -511,14 +511,14 @@ private extension OperationEngine {
 
         await output.close()
         try? await deployment.save(on: app.db)
-        await eventLog.recordRowUpdated(deploymentID: deployment.id)
+        await eventLogger.recordRowUpdated(deploymentID: deployment.id)
     }
 
     /// Creates a worker whose service-status changes are visible to both event stream and panel state.
     func makeWorker(
         deployment: Deployment,
         output: OperationEventOutput?,
-        eventLog: OperationEventLog
+        eventLogger: OperationEventLogger
     ) -> Worker {
         .init(
             deployment: deployment,
@@ -527,7 +527,7 @@ private extension OperationEngine {
             stream: output,
             environment: config.deploymentEnvironment,
             onStatusChange: { status in
-                try? await eventLog.record(.serviceStatus, deploymentID: deployment.id, payload: status.rawValue)
+                try? await eventLogger.record(.serviceStatus, deploymentID: deployment.id, payload: status.rawValue)
                 await onStatusChange(status)
             }
         )

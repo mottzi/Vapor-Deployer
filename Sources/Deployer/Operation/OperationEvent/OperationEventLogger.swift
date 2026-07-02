@@ -1,35 +1,42 @@
 import Vapor
 import Fluent
 
-/// Ordered event writer for a single operation.
-actor OperationEventLog {
-
+/// Ordered event logger for a single operation.
+actor OperationEventLogger {
+    
     let app: Application
     let operation: Operation
-
+    private let operationID: UUID
+    
     private var nextSequence: Int
-
+    
     init(app: Application, operation: Operation) async throws {
         
         self.app = app
         self.operation = operation
-
-        guard let operationID = operation.id else { throw OperationError.deploymentIDMissing }
         
-        let last = try await OperationEvent.query(on: app.db)
+        guard let operationID = operation.id else { throw OperationError.operationIDMissing }
+        self.operationID = operationID
+        
+        let lastSequence = try await OperationEvent.query(on: app.db)
             .filter(\.$operationID, .equal, operationID)
             .sort(\.$sequence, .descending)
-            .first()
-
-        self.nextSequence = (last?.sequence ?? 0) + 1
+            .first()?
+            .sequence
+        ?? 0
+        
+        self.nextSequence = lastSequence + 1
     }
-
+    
     /// Persists the next CLI-origin event in sequence for server-side Mist replay.
-    func record(_ type: OperationEvent.EventType, deploymentID: UUID? = nil, payload: String? = nil) async throws {
-
+    func record(
+        _ type: OperationEvent.EventType,
+        deploymentID: UUID? = nil,
+        payload: String? = nil
+    ) async throws {
+        
         guard operation.origin == .cli else { return }
-        guard let operationID = operation.id else { throw OperationError.deploymentIDMissing }
-
+        
         let event = OperationEvent(
             operationID: operationID,
             sequence: nextSequence,
@@ -39,9 +46,13 @@ actor OperationEventLog {
         )
         
         nextSequence += 1
-
+        
         try await event.save(on: app.db)
     }
+    
+}
+
+extension OperationEventLogger {
 
     /// Emits a row refresh for the operation's deployment when one is known.
     func recordRowUpdated(deploymentID: UUID?) async {
@@ -71,14 +82,14 @@ actor OperationEventLog {
     }
 
     /// Marks the operation terminal and records its terminal event.
-    func finish(_ status: Operation.Status, deploymentID: UUID?) async {
+    func finishOperation(_ status: Operation.Status, deploymentID: UUID?) async {
         do {
             try await record(status == .completed ? .completed : .failed, deploymentID: deploymentID)
             operation.status = status
             operation.finishedAt = .now
             try await operation.save(on: app.db)
         } catch {
-            app.logger.error("Failed to finish operation event log: \(error.localizedDescription)")
+            app.logger.error("Failed to finish operation: \(error.localizedDescription)")
         }
     }
 

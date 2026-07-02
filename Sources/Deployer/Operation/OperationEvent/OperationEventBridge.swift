@@ -135,7 +135,7 @@ actor OperationEventBridge {
     private func apply(_ event: OperationEvent) async {
 
         switch event.type {
-        case .started:
+        case .outputOpened:
             guard let deploymentID = event.deploymentID else { return }
             await app.mist.streams.replace(
                 component: DeploymentRow.name(for: config.target.name),

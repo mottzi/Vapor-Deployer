@@ -5,6 +5,7 @@ enum OperationError: DescribedError {
 
     case anotherOperationInProgress
     case lockFailed(String, String)
+    case operationIDMissing
     case deploymentIDMissing
     case deploymentNotFound(String)
     case deploymentCannotBuild
@@ -23,6 +24,7 @@ enum OperationError: DescribedError {
         switch self {
             case .anotherOperationInProgress: "Another deployer operation is already running. Wait for it to finish, then retry."
             case .lockFailed(let path, let reason): "Unable to acquire operation lock at '\(path)': \(reason)"
+            case .operationIDMissing: "Operation ID is missing."
             case .deploymentIDMissing: "Deployment ID is missing."
             case .deploymentNotFound(let selector): "No deployment found for '\(selector)'."
             case .deploymentCannotBuild: "Deployment not found or can't be built."

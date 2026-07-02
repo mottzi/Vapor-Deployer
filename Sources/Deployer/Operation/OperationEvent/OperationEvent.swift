@@ -31,7 +31,7 @@ extension OperationEvent {
     /// The specific database change or real-time progress update emitted by an active operation.
     enum EventType: String, Codable, Sendable {
 
-        case started
+        case outputOpened = "output-opened"
         case rowUpdated = "row-updated"
         case rowDeleted = "row-deleted"
         case logAppended = "log-appended"

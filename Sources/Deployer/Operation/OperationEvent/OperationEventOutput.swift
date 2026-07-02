@@ -9,7 +9,7 @@ actor OperationEventOutput {
     private static let ansiRegex = try! NSRegularExpression(pattern: "\u{001B}\\[[0-9;?]*[a-zA-Z]")
 
     private let app: Application
-    private let eventLog: OperationEventLog
+    private let eventLogger: OperationEventLogger
     private let deploymentID: UUID?
     private let mistSink: OperationEventMistOutputSink?
     private let consoleSink: OperationEventConsoleOutputSink?
@@ -18,14 +18,14 @@ actor OperationEventOutput {
 
     init(
         app: Application,
-        eventLog: OperationEventLog,
+        eventLogger: OperationEventLogger,
         deployment: Deployment,
         priorTranscript: String = "",
         mistSink: OperationEventMistOutputSink? = nil,
         consoleSink: OperationEventConsoleOutputSink? = nil
     ) {
         self.app = app
-        self.eventLog = eventLog
+        self.eventLogger = eventLogger
         self.deploymentID = deployment.id
         self.transcript = priorTranscript
         self.mistSink = mistSink
@@ -33,10 +33,10 @@ actor OperationEventOutput {
     }
 
     /// Seeds the live stream with any prior transcript before new output begins.
-    func start() async {
+    func open() async {
         await mistSink?.replace(transcript)
-        do { try await eventLog.record(.started, deploymentID: deploymentID, payload: transcript) }
-        catch { app.logger.error("Failed to start operation output: \(error.localizedDescription)") }
+        do { try await eventLogger.record(.outputOpened, deploymentID: deploymentID, payload: transcript) }
+        catch { app.logger.error("Failed to open operation output: \(error.localizedDescription)") }
     }
 
     /// Appends formatted, ANSI-stripped text to the log transcript, broadcasting it to console, web streams, and database records.
@@ -50,7 +50,7 @@ actor OperationEventOutput {
         await mistSink?.append(cleaned)
         consoleSink?.write(cleaned)
 
-        do { try await eventLog.record(.logAppended, deploymentID: deploymentID, payload: cleaned) }
+        do { try await eventLogger.record(.logAppended, deploymentID: deploymentID, payload: cleaned) }
         catch { app.logger.error("Failed to record operation output: \(error.localizedDescription)") }
     }
 
