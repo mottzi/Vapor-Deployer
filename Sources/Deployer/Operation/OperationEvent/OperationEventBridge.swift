@@ -140,7 +140,7 @@ actor OperationEventBridge {
             await app.mist.streams.replace(
                 component: DeploymentRow.name(for: config.target.name),
                 modelID: deploymentID,
-                stream: OperationEventOutput.streamName,
+                stream: OperationOutputStream.streamName,
                 text: event.payload ?? ""
             )
 
@@ -149,7 +149,7 @@ actor OperationEventBridge {
             await app.mist.streams.append(
                 component: DeploymentRow.name(for: config.target.name),
                 modelID: deploymentID,
-                stream: OperationEventOutput.streamName,
+                stream: OperationOutputStream.streamName,
                 text: event.payload ?? ""
             )
 
@@ -170,7 +170,7 @@ actor OperationEventBridge {
                 await app.mist.streams.close(
                     component: DeploymentRow.name(for: config.target.name),
                     modelID: deploymentID,
-                    stream: OperationEventOutput.streamName
+                    stream: OperationOutputStream.streamName
                 )
             }
         }

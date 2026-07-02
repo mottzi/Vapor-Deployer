@@ -8,7 +8,11 @@ actor OperationSession {
     private let operation: Operation
     let recorder: OperationEventRecorder
     
-    private init(app: Application, operation: Operation, recorder: OperationEventRecorder) {
+    private init(
+        app: Application,
+        operation: Operation,
+        recorder: OperationEventRecorder
+    ) {
         self.app = app
         self.operation = operation
         self.recorder = recorder
@@ -46,6 +50,11 @@ actor OperationSession {
         await OperationRecovery.cleanupTerminalOperation(operation, on: app.db)
     }
     
+}
+
+extension OperationSession {
+    
+    /// Records the terminal event before marking the parent operation terminal.
     private func finish(_ status: Operation.Status, deploymentID: UUID?) async {
         do {
             try await recorder.record(status == .completed ? .completed : .failed, deploymentID: deploymentID)

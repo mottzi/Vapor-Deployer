@@ -59,7 +59,7 @@ extension OperationEngine {
     /// Configuration settings tailoring test execution behavior and output routing for an engine run.
     struct Options: Sendable {
         var testPolicy: TestPolicy = .configured
-        var consoleSink: OperationEventConsoleOutputSink?
+        var consoleSink: OperationOutputConsoleSink?
     }
 
 }
@@ -363,7 +363,7 @@ private extension OperationEngine {
     /// Restarts onto a built deployment whose output stream is still open.
     func finalizeBuilt(
         _ deployment: Deployment,
-        output: OperationEventOutput,
+        output: OperationOutputStream,
         store: BinaryStore,
         recorder: OperationEventRecorder
     ) async throws {
@@ -443,13 +443,13 @@ private extension OperationEngine {
         recorder: OperationEventRecorder,
         options: Options,
         priorTranscript: String = ""
-    ) -> OperationEventOutput {
+    ) -> OperationOutputStream {
         .init(
             app: app,
             recorder: recorder,
             deployment: deployment,
             priorTranscript: priorTranscript,
-            mistSink: origin == .server ? OperationEventMistOutputSink(app: app, deployment: deployment) : nil,
+            mistSink: origin == .server ? OperationOutputMistSink(app: app, deployment: deployment) : nil,
             consoleSink: options.consoleSink
         )
     }
@@ -498,7 +498,7 @@ private extension OperationEngine {
     func fail(
         deployment: Deployment,
         error: Swift.Error,
-        output: OperationEventOutput,
+        output: OperationOutputStream,
         recorder: OperationEventRecorder
     ) async {
 
@@ -516,7 +516,7 @@ private extension OperationEngine {
     /// Creates a worker whose service-status changes are visible to both event stream and panel state.
     func makeWorker(
         deployment: Deployment,
-        output: OperationEventOutput?,
+        output: OperationOutputStream?,
         recorder: OperationEventRecorder
     ) -> Worker {
         .init(

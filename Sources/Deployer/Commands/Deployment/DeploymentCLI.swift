@@ -94,8 +94,8 @@ enum DeploymentCLI {
     }
 
     /// Returns an event sink that streams operation logs to the terminal unless the --no-logs flag is present.
-    static func consoleSink(parsed: ParsedArguments, console: any Console) -> OperationEventConsoleOutputSink? {
-        parsed.flags.contains("--no-logs") ? nil : OperationEventConsoleOutputSink(console: console)
+    static func consoleSink(parsed: ParsedArguments, console: any Console) -> OperationOutputConsoleSink? {
+        parsed.flags.contains("--no-logs") ? nil : OperationOutputConsoleSink(console: console)
     }
     
     /// Prompts the operator for interactive confirmation unless the non-interactive --yes flag was provided.
