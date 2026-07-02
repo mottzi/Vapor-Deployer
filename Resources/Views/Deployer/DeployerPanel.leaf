@@ -41,7 +41,7 @@
                 </h1>
 
                 <div
-                  class="dp-runtime-queue-slot"
+                  class="dp-runtime-operation-slot"
                   mist-container="#(deployer.stateComponentName)"
                   mist-insert-position="beforeend"
                   mist-ssr="true"

@@ -15,19 +15,19 @@ extension DeploymentRow {
                   deployment.canBuild
             else { return .failure("Deployment not found or can't be built.") }
             
-            let target = app.deployer.queue.config.target
-            let store = BinaryStore(target: target)
+            let target = app.deployer.operations.config.target
+            let store = DeploymentBinaryStore(target: target)
             guard !store.hasBinary(for: deployment)
             else { return .failure("This deployment already has a saved binary") }
             
-            let result = await app.deployer.queue.saveBinary(
+            let result = await app.deployer.operations.saveBinary(
                 deployment: deployment,
                 target: target
             )
             
             return switch result {
             case .started: .success("Binary save started")
-            case .queueBusy: .failure("A deployment is already running")
+            case .operationBusy: .failure("A deployment is already running")
             case .failure(let message): .failure(message)
             }
         }

@@ -15,19 +15,19 @@ extension DeploymentRow {
                   deployment.canRestoreBinary
             else { return .failure("Deployment not found or can't restore its binary.") }
             
-            let target = app.deployer.queue.config.target
-            let store = BinaryStore(target: target)
+            let target = app.deployer.operations.config.target
+            let store = DeploymentBinaryStore(target: target)
             guard store.hasBinary(for: deployment)
             else { return .failure("Saved binary not found on disk") }
             
-            let result = await app.deployer.queue.restoreBinary(
+            let result = await app.deployer.operations.restoreBinary(
                 deployment: deployment,
                 target: target
             )
             
             return switch result {
             case .started: .success("Binary restore started")
-            case .queueBusy: .failure("A deployment is already running")
+            case .operationBusy: .failure("A deployment is already running")
             case .failure(let message): .failure(message)
             }
         }

@@ -19,8 +19,8 @@ extension DeploymentRow {
                 return .failure("Cannot remove the saved binary for the active live deployment")
             }
             
-            let target = app.deployer.queue.config.target
-            let store = BinaryStore(target: target)
+            let target = app.deployer.operations.config.target
+            let store = DeploymentBinaryStore(target: target)
             guard store.hasBinary(for: deployment)
             else { return .failure("Saved binary not found on disk") }
 
@@ -35,7 +35,7 @@ extension DeploymentRow {
 
             do {
                 defer { lock.release() }
-                let engine = OperationEngine(app: app, config: app.deployer.queue.config)
+                let engine = OperationEngine(app: app, config: app.deployer.operations.config)
                 try await engine.run(action: .removeBinary, deployment: deployment)
             }
             catch {

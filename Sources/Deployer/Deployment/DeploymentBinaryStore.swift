@@ -1,7 +1,7 @@
 import Vapor
 import Fluent
 
-struct BinaryStore: Sendable {
+struct DeploymentBinaryStore: Sendable {
 
     let target: TargetConfiguration
 
@@ -15,7 +15,7 @@ struct BinaryStore: Sendable {
     var liveBinaryPath: String { "\(deployPath)/\(target.name)" }
 
     func binaryPath(for deployment: Deployment) throws -> String {
-        guard let id = deployment.id else { throw Worker.Error.deploymentIDMissing }
+        guard let id = deployment.id else { throw OperationWorker.Error.deploymentIDMissing }
         return "\(binariesPath)/\(id.uuidString)"
     }
 
@@ -38,8 +38,8 @@ struct BinaryStore: Sendable {
         let size = try await app.threadPool.runIfActive(eventLoop: app.eventLoopGroup.any()) {
             let fileManager = FileManager.default
             try fileManager.createDirectory(atPath: binariesPath, withIntermediateDirectories: true)
-            guard fileManager.fileExists(atPath: sourcePath) else { throw Worker.Error.binaryNotFound(sourcePath) }
-            guard !fileManager.fileExists(atPath: destinationPath) else { throw Worker.Error.binaryAlreadyExists(destinationPath) }
+            guard fileManager.fileExists(atPath: sourcePath) else { throw OperationWorker.Error.binaryNotFound(sourcePath) }
+            guard !fileManager.fileExists(atPath: destinationPath) else { throw OperationWorker.Error.binaryAlreadyExists(destinationPath) }
             try fileManager.moveItem(atPath: sourcePath, toPath: destinationPath)
             return try Self.roundedMegabytes(atPath: destinationPath)
         }.get()
@@ -55,7 +55,7 @@ struct BinaryStore: Sendable {
         let size = try await app.threadPool.runIfActive(eventLoop: app.eventLoopGroup.any()) {
             let fileManager = FileManager.default
             try fileManager.createDirectory(atPath: binariesPath, withIntermediateDirectories: true)
-            guard fileManager.fileExists(atPath: liveBinaryPath) else { throw Worker.Error.binaryNotFound(liveBinaryPath) }
+            guard fileManager.fileExists(atPath: liveBinaryPath) else { throw OperationWorker.Error.binaryNotFound(liveBinaryPath) }
             if fileManager.fileExists(atPath: destinationPath) {
                 try fileManager.removeItem(atPath: destinationPath)
             }
@@ -130,7 +130,7 @@ struct BinaryStore: Sendable {
 
 }
 
-extension BinaryStore {
+extension DeploymentBinaryStore {
 
     private func markStored(_ deployment: Deployment, sizeMB: Int, manually: Bool, on database: Database) async throws {
         deployment.binarySizeMB = sizeMB
@@ -190,7 +190,7 @@ struct DeploymentBinaryCleanupMiddleware: AsyncModelMiddleware {
     ) async throws {
         try await next.delete(model, force: force, on: db)
         guard model.product == target.name else { return }
-        try BinaryStore(target: target).deleteBinary(for: model)
+        try DeploymentBinaryStore(target: target).deleteBinary(for: model)
     }
 
 }

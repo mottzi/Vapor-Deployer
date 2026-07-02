@@ -1,4 +1,4 @@
-/* ── Service / queue state badges ── */
+/* ── Service / operation state badges ── */
 
 .dp-state-badge {
     display: inline-flex;
@@ -41,19 +41,19 @@
     border-color: var(--c-failed-border);
 }
 
-.dp-state-badge--queue-locked {
+.dp-state-badge--operation-locked {
     color: var(--c-stale);
     background: var(--c-stale-bg);
     border-color: var(--c-stale-border);
 }
 
-.dp-state-badge--queue-unlocked {
+.dp-state-badge--operation-unlocked {
     color: var(--c-running);
     background: var(--c-running-bg);
     border-color: var(--c-running-border);
 }
 
-.dp-state-badge--queue-updating {
+.dp-state-badge--operation-updating {
     color: var(--c-building);
     background: var(--c-building-bg);
     border-color: var(--c-building-border);

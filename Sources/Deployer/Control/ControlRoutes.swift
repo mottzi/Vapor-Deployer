@@ -21,10 +21,10 @@ extension Deployer {
 
         control.get("state") { request async -> ControlStateResponse in
             let isUpdating = await request.application.deployer.updater.isUpdating
-            let isDeploying = await request.application.deployer.queue.isDeploying
+            let isDeploying = await request.application.deployer.operations.isDeploying
             let phase = DeployerPhase.resolve(
                 updaterIsUpdating: isUpdating,
-                queueIsDeploying: isDeploying
+                operationIsDeploying: isDeploying
             )
 
             return ControlStateResponse(phase: phase.rawValue)

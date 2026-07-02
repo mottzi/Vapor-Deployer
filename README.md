@@ -90,9 +90,9 @@ When setup finishes, your app is live and the panel is listening for the next pu
 
 A few details that matter if you care about how it works.
 
-- **Serialized build queue.**
+- **Serialized operations.**
 
-  A `Queue` actor makes sure only one build runs at a time. While a build is in flight, new pushes are recorded as `canceled`. When the build finishes, the queue jumps to the newest canceled push and skips everything in between, so you always end on the latest commit and never queue up stale work.
+  An `OperationCoordinator` actor makes sure only one build runs at a time. While a build is in flight, new pushes are recorded as `canceled`. When the build finishes, the automatic drain jumps to the newest canceled push and skips everything in between, so you always end on the latest commit and never build stale work.
 
 - **Atomic binary swap with auto-rollback.**
 
@@ -104,7 +104,7 @@ A few details that matter if you care about how it works.
 
 - **Signed webhooks only.**
 
-  Every incoming webhook is verified with HMAC-SHA256 against the secret generated at setup. Unsigned or malformed payloads are rejected before they reach the queue.
+  Every incoming webhook is verified with HMAC-SHA256 against the secret generated at setup. Unsigned or malformed payloads are rejected before they reach operation coordination.
 
 - **Websocket-driven panel.**
 

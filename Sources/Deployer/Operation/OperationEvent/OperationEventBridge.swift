@@ -196,11 +196,11 @@ extension OperationEventBridge {
     private func updatePhase() async {
         
         let isUpdating = await app.deployer.updater.isUpdating
-        let isDeploying = await app.deployer.queue.isDeploying
+        let isDeploying = await app.deployer.operations.isDeploying
         
         let phase = DeployerPhase.resolve(
             updaterIsUpdating: isUpdating,
-            queueIsDeploying: isDeploying
+            operationIsDeploying: isDeploying
         )
 
         await deployerPhase.set(phase)

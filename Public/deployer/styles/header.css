@@ -17,7 +17,7 @@
     gap: 20px;
 }
 
-.dp-runtime-queue-slot {
+.dp-runtime-operation-slot {
     display: flex;
     align-items: center;
     flex: 0 0 auto;

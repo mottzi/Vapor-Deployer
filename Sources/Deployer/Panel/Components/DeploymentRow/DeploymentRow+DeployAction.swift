@@ -15,14 +15,14 @@ extension DeploymentRow {
                   deployment.canBuild
             else { return .failure("Deployment not found or can't be built.") }
             
-            let result = await app.deployer.queue.deploy(
+            let result = await app.deployer.operations.deploy(
                 deployment: deployment,
-                target: app.deployer.queue.config.target
+                target: app.deployer.operations.config.target
             )
             
             return switch result {
             case .started: .success("Deployment started")
-            case .queueBusy: .failure("A deployment is already running")
+            case .operationBusy: .failure("A deployment is already running")
             case .failure(let message): .failure(message)
             }
         }

@@ -67,8 +67,8 @@ actor Updater {
 
         guard !isUpdating else { return .busy }
 
-        let queueIsDeploying = await app.deployer.queue.isDeploying
-        guard !queueIsDeploying else { return .busy }
+        let operationIsDeploying = await app.deployer.operations.isDeploying
+        guard !operationIsDeploying else { return .busy }
 
         let executableURL: URL
         do { executableURL = try Configuration.getExecutableURL() }
@@ -138,10 +138,10 @@ actor Updater {
     /// matching `Panel.makePanelContext`'s priority. LiveState.set is a no-op if the value hasn't changed.
     private func broadcastPhaseIfChanged(wasHeld: Bool) async {
         
-        let queueIsDeploying = await app.deployer.queue.isDeploying
+        let operationIsDeploying = await app.deployer.operations.isDeploying
         let resolved = DeployerPhase.resolve(
             updaterIsUpdating: isUpdating,
-            queueIsDeploying: queueIsDeploying
+            operationIsDeploying: operationIsDeploying
         )
         
         await deployerPhase.set(resolved)

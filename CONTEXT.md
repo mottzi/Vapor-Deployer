@@ -3,7 +3,7 @@
 ## Domain Terms
 
 - **Target app**: The user's Vapor application that the deployer builds, deploys, and supervises. Distinct from the deployer itself.
-- **Deployment**: A repo snapshot (commit) that the deployer can test, build, and run. Persisted as a `Deployment` row. Operations against it are driven by the `Queue` actor.
+- **Deployment**: A repo snapshot (commit) that the deployer can test, build, and run. Persisted as a `Deployment` row. Operations against it are driven by the `OperationCoordinator` actor.
 - **Promotion**: Making a selected Deployment live. Promotion may build the commit or restore an existing saved binary for that same commit.
 - **Saved binary**: Archived build artifact for a Deployment. A saved binary can be restored to make that Deployment live without rebuilding.
 - **Build action**: Operator action that builds a Deployment and saves its binary without making it live. It is exposed as `Build` in the panel and `build <sha>` in the CLI.
@@ -11,7 +11,7 @@
 - **Recovery deploy**: A CLI-initiated target-app deployment that remains available even when the Deployer server or browser panel is offline.
 - **Operator deployment**: A user-selected Deployment started from the panel or CLI. It targets exactly the selected commit and does not drain newer queued pushes.
 - **Automatic deployment**: A webhook- or boot-triggered Deployment in automatic mode. It may drain newer queued pushes so the newest eligible push becomes live.
-- **Queue**: Server-process actor that serializes target-app work started from the panel or webhook. It is not the cross-process serialization boundary for CLI work.
+- **OperationCoordinator**: Server-process actor that serializes target-app work started from the panel or webhook. It is not the cross-process serialization boundary for CLI work.
 - **Operation lock**: `flock(2)`-based advisory lock that serializes mutating Deployer operations across panel and CLI processes. Mutations fail fast when the lock is already held; read-only commands do not acquire it.
 - **Operation event stream**: Durable stream of operation status, row, and log events emitted by CLI-origin operations. The panel server consumes it to mirror CLI-origin operations into Mist live updates; server-origin operations stream directly to Mist in-process.
 - **Abandoned operation**: Operation whose process no longer holds the Operation lock while its Deployment is still in a transient lifecycle state. Abandoned operations are repaired as failed before new work starts.
@@ -26,7 +26,7 @@
 - **Self-update**: Replacing the deployer's own binary (and, for source installs, its checkout) with the latest release, then restarting the deployer service. Distinct from a target-app deployment.
 - **Update lock**: `flock(2)`-based advisory lock on `.deployer-update.lock` in the install directory. The cross-process source of truth for "a self-update is in flight," regardless of whether it was launched from the panel or a shell. Kernel-released on process exit, including crashes. See [ADR 0005](docs/adr/0005-cli-server-state-channel.md). The broader **Operation lock** serializes self-update against other mutating operations.
 - **Updater**: The primitive that owns the self-update lifecycle in the server. Spawns the detached update child for panel-initiated updates, polls the **Update lock** to derive `isUpdating` for both panel- and CLI-initiated updates, and broadcasts the **DeployerPhase** to Mist clients.
-- **DeployerPhase**: Derived display state computed from `Queue.isDeploying` and the **Update lock**. One of `ready`, `deploying`, `updating`. Used by the panel to render the runtime badge.
+- **DeployerPhase**: Derived display state computed from `OperationCoordinator.isDeploying` and the **Update lock**. One of `ready`, `deploying`, `updating`. Used by the panel to render the runtime badge.
 - **Control endpoint**: `GET /control/state` on the deployer's HTTP listener, Bearer-token authenticated against `<installDir>/.deployer-control.token`. Returns the current **DeployerPhase**. Pure query, not a claim — the **Update lock** is the only mutex. Used by CLI commands to refuse-start when the server is busy. Named `control` (as in control plane), not `admin`, because the caller is always the local CLI process — there is no user, role, or panel surface here. See [ADR 0005](docs/adr/0005-cli-server-state-channel.md).
-- **DeployerStatus**: The Mist fragment component that renders the runtime-bar badge and owns the self-update action. Backed by a `LiveState<DeployerPhase>` shared between `Queue` and `Updater`.
+- **DeployerStatus**: The Mist fragment component that renders the runtime-bar badge and owns the self-update action. Backed by a `LiveState<DeployerPhase>` shared between `OperationCoordinator` and `Updater`.
 - **Panel**: The web dashboard served by the deployer service, rendered with Leaf and updated live via Mist.

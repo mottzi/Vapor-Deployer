@@ -120,14 +120,14 @@ extension Deployer {
             broadcaster: broadcaster
         )
 
-        useQueue(
+        useOperations(
             config: config,
             deployerPhase: deployerPhase,
             onStatusChange: { status in
                 await broadcaster.set(StatusState(status))
             }
         )
-        useWebhook(config: config)
+        useGitHubWebhook(config: config)
         usePanel(
             config: config,
             row: deploymentRow,
@@ -154,7 +154,7 @@ extension Deployer {
             }
         )
 
-        await queue.drainOnBoot()
+        await operations.drainOnBoot()
     }
 
     func createDatabaseDirectory(for dbFile: String) throws {
@@ -190,7 +190,7 @@ extension Deployer {
             deployment.startedAt = checkout.committedAt
             deployment.finishedAt = checkout.committedAt
             try await deployment.save(on: app.db)
-            try await BinaryStore(target: config.target).storeLiveBinary(for: deployment, app: app, manually: false)
+            try await DeploymentBinaryStore(target: config.target).storeLiveBinary(for: deployment, app: app, manually: false)
             
         } catch {
             app.logger.warning("Error when seeding initial deployment for '\(config.target.name)': \(error.localizedDescription)")

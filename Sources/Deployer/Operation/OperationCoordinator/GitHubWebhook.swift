@@ -2,15 +2,15 @@ import Vapor
 
 extension Deployer {
     
-    func useWebhook(config: Configuration) {
-        Webhook.register(using: config.target, on: app) { event, target async in
-            await app.deployer.queue.recordPush(event: event, target: target)
+    func useGitHubWebhook(config: Configuration) {
+        GitHubWebhook.register(using: config.target, on: app) { event, target async in
+            await app.deployer.operations.recordPush(event: event, target: target)
         }
     }
     
 }
 
-struct Webhook {
+struct GitHubWebhook {
     
     static func register(
         using config: TargetConfiguration,

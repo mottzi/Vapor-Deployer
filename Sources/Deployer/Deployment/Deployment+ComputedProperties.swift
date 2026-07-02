@@ -89,7 +89,7 @@ extension Deployment {
     }
 
     /// Test eligibility — permissive. Allowed on every non-actively-transient state, including
-    /// `.running` (the live binary is untouched; tests compile into `.build-tests/`). The queue
+    /// `.running` (the live binary is untouched; tests compile into `.build-tests/`). The operation
     /// lock still serializes execution.
     var canTest: Bool {
         guard !operationLocked else { return false }

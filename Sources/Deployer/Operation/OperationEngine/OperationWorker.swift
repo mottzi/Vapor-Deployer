@@ -1,6 +1,6 @@
 import Vapor
 
-struct Worker: Sendable {
+struct OperationWorker: Sendable {
     
     let deployment: Deployment
     let target: TargetConfiguration
@@ -11,7 +11,7 @@ struct Worker: Sendable {
     
 }
 
-extension Worker {
+extension OperationWorker {
 
     func checkout() async throws {
         await stream?.appendLabel("git fetch origin \(deployment.branch)")
@@ -78,7 +78,7 @@ extension Worker {
         try await replaceLiveBinary(from: buildPath, to: deployPath, transfer: .move)
     }
 
-    func restore(from store: BinaryStore) async throws {
+    func restore(from store: DeploymentBinaryStore) async throws {
         await stream?.appendLabel("deployer")
         await stream?.append("Restore binary\n")
 
@@ -86,20 +86,20 @@ extension Worker {
         try await replaceLiveBinary(from: binaryPath, to: store.liveBinaryPath, transfer: .copy)
     }
 
-    func save(to store: BinaryStore) async throws {
+    func save(to store: DeploymentBinaryStore) async throws {
         await stream?.appendLabel("deployer")
         try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
         await stream?.append("Archive binary\n")
     }
 
-    func deploy(to store: BinaryStore) async throws {
+    func deploy(to store: DeploymentBinaryStore) async throws {
         try await store.storeLiveBinary(for: deployment, app: app, manually: false)
         await stream?.append("Archive binary\n")
     }
 
 }
 
-extension Worker {
+extension OperationWorker {
 
     private enum BinaryTransfer: Sendable {
         case copy

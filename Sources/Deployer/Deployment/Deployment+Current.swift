@@ -9,7 +9,7 @@ extension Deployment {
         self.status = .running
         try await self.save(on: database)
 
-        guard let selfID = self.id else { throw Worker.Error.deploymentIDMissing }
+        guard let selfID = self.id else { throw OperationWorker.Error.deploymentIDMissing }
 
         let oldCurrentDeployments = try await Deployment.query(on: database)
             .filter(\.$isLive, .equal, true)

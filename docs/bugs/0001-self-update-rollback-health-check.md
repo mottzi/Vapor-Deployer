@@ -16,7 +16,7 @@ Open...
 
 ## Evidence
 
-Observed during the updater polling startup-order regression: the update reached `StartServiceStep`, systemd reported `running`, and the command completed. Shortly afterward the new process crashed with `Queue not initialized`, leaving nginx unable to reach the panel until a manual `deployerctl update` installed the follow-up fix.
+Observed during the updater polling startup-order regression: the update reached `StartServiceStep`, systemd reported `running`, and the command completed. Shortly afterward the new process crashed with `OperationCoordinator not initialized`, leaving nginx unable to reach the panel until a manual `deployerctl update` installed the follow-up fix.
 
 The current rollback path only runs when `ActivateReleaseStep`, `PersistVersionStep`, or `StartServiceStep` throws. `StartServiceStep` calls `waitForStableStatus`, but `waitForStableStatus` returns as soon as it observes `.running`, so it does not catch crashes that occur just after the first successful status read.
 

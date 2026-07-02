@@ -1,113 +1,13 @@
 import Vapor
-import Fluent
-
-/// Shared executor for mutating deployment operations across the panel, queue, and CLI.
-struct OperationEngine: Sendable {
-
-    let app: Application
-    let config: Configuration
-    let origin: Operation.Origin
-    let onStatusChange: @Sendable (ServiceStatus) async -> Void
-
-    init(
-        app: Application,
-        config: Configuration,
-        origin: Operation.Origin = .server,
-        onStatusChange: @escaping @Sendable (ServiceStatus) async -> Void = { _ in }
-    ) {
-        self.app = app
-        self.config = config
-        self.origin = origin
-        self.onStatusChange = onStatusChange
-    }
-
-}
 
 extension OperationEngine {
-
-    /// The specific user-initiated deployment, compilation, or target cleanup command.
-    enum Action: Sendable {
-        
-        case deploy
-        case automaticDeploy
-        case build
-        case runSavedBinary
-        case test
-        case delete
-        case removeBinary
-
-        var kind: Operation.Kind {
-            switch self {
-                case .deploy, .automaticDeploy: .deploy
-                case .build: .build
-                case .runSavedBinary: .run
-                case .test: .test
-                case .delete: .delete
-                case .removeBinary: .removeBinary
-            }
-        }
-        
-    }
-
-    /// Rules determining whether target-specific test suites must be executed during operation pipelines.
-    enum TestPolicy: Sendable {
-        case configured
-        case forceEnabled
-        case forceDisabled
-    }
-
-    /// Configuration settings tailoring test execution behavior and output routing for an engine run.
-    struct Options: Sendable {
-        var testPolicy: TestPolicy = .configured
-        var consoleSink: OperationOutputConsoleSink?
-    }
-
-}
-
-extension OperationEngine {
-
-    /// Runs one operation while the caller retains the cross-process operation lock.
-    func run(action: Action, deployment: Deployment, options: Options = Options()) async throws {
-
-        let session = try await OperationSession.begin(
-            app: app,
-            kind: action.kind,
-            origin: origin,
-            product: config.target.name,
-            deploymentID: deployment.id
-        )
-        
-        let recorder = session.recorder
-        
-        do {
-            switch action {
-                case .deploy: try await runPromote(deployment: deployment, options: options, recorder: recorder)
-                case .automaticDeploy: try await runAutomaticQueue(startingWith: deployment, options: options, recorder: recorder)
-                case .build: try await runBuild(deployment: deployment, options: options, recorder: recorder)
-                case .runSavedBinary: try await runSavedBinary(deployment: deployment, options: options, recorder: recorder)
-                case .test: try await runTest(deployment: deployment, options: options, recorder: recorder)
-                case .delete: try await runDelete(deployment: deployment, recorder: recorder)
-                case .removeBinary: try await runRemoveBinary(deployment: deployment, recorder: recorder)
-            }
-            await session.complete(deploymentID: deployment.id)
-            await session.cleanupIfServerOrigin()
-        } catch {
-            await session.fail(deploymentID: deployment.id)
-            await session.cleanupIfServerOrigin()
-            throw error
-        }
-    }
-
-}
-
-private extension OperationEngine {
 
     /// Promotes exactly the selected deployment without draining newer queued pushes.
     func runPromote(deployment: Deployment, options: Options, recorder: OperationEventRecorder) async throws {
 
         if deployment.isLive { return }
 
-        let store = BinaryStore(target: config.target)
+        let store = DeploymentBinaryStore(target: config.target)
         let hasSavedBinary = deployment.hasSavedBinary || store.hasBinary(for: deployment)
 
         if hasSavedBinary {
@@ -148,7 +48,7 @@ private extension OperationEngine {
 
         guard deployment.canStartBuildOperation else { throw OperationError.deploymentCannotBuild }
 
-        let store = BinaryStore(target: config.target)
+        let store = DeploymentBinaryStore(target: config.target)
         guard !store.hasBinary(for: deployment) else { throw OperationError.savedBinaryAlreadyExists }
 
         try await preparePipelineRow(deployment, status: .building, clearOutput: true, recorder: recorder)
@@ -180,7 +80,7 @@ private extension OperationEngine {
 
         guard deployment.canStartRestoreOperation else { throw OperationError.deploymentCannotRunSavedBinary }
 
-        let store = BinaryStore(target: config.target)
+        let store = DeploymentBinaryStore(target: config.target)
         guard store.hasBinary(for: deployment) else { throw OperationError.savedBinaryMissing }
 
         try await preparePipelineRow(deployment, status: .restoring, clearOutput: false, recorder: recorder)
@@ -264,7 +164,7 @@ private extension OperationEngine {
         guard !deployment.isLive else { throw OperationError.liveDeploymentBinaryCannotBeRemoved }
         guard deployment.hasSavedBinary else { throw OperationError.savedBinaryMissing }
 
-        let store = BinaryStore(target: config.target)
+        let store = DeploymentBinaryStore(target: config.target)
         guard store.hasBinary(for: deployment) else { throw OperationError.savedBinaryMissing }
 
         try store.deleteBinary(for: deployment)
@@ -308,117 +208,7 @@ private extension Deployment {
 
 }
 
-private extension OperationEngine {
-
-    /// Preserves automatic-mode drain semantics from webhook and boot-triggered deployment.
-    func runAutomaticQueue(
-        startingWith deployment: Deployment,
-        options: Options,
-        recorder: OperationEventRecorder
-    ) async throws {
-
-        var current = deployment
-        var lastSuccessful: (deployment: Deployment, transcript: String)?
-        let store = BinaryStore(target: config.target)
-
-        while true {
-            try await preparePipelineRow(current, status: .building, clearOutput: true, recorder: recorder)
-
-            let output = makeOutput(deployment: current, recorder: recorder, options: options)
-            let worker = makeWorker(deployment: current, output: output, recorder: recorder)
-
-            do {
-                await output.open()
-                try await worker.checkout()
-                try await runInlineTestIfNeeded(deployment: current, worker: worker, recorder: recorder, policy: options.testPolicy)
-                try await worker.build()
-                try await worker.move()
-            } catch {
-                await fail(deployment: current, error: error, output: output, recorder: recorder)
-                if let last = lastSuccessful {
-                    try await finalizePreviouslyBuilt(last.deployment, priorTranscript: last.transcript, store: store, recorder: recorder)
-                }
-                throw error
-            }
-
-            guard let next = try await nextQueuedDeployment(after: current) else {
-                try await finalizeBuilt(current, output: output, store: store, recorder: recorder)
-                return
-            }
-
-            current.finishedAt = .now
-            current.status = .built
-            current.output = await output.transcript
-            try await current.save(on: app.db)
-            await recorder.recordRowUpdated(deploymentID: current.id)
-
-            let transcript = await output.transcript
-            await output.close()
-
-            lastSuccessful = (current, transcript)
-            current = next
-        }
-    }
-
-    /// Restarts onto a built deployment whose output stream is still open.
-    func finalizeBuilt(
-        _ deployment: Deployment,
-        output: OperationOutputStream,
-        store: BinaryStore,
-        recorder: OperationEventRecorder
-    ) async throws {
-
-        let worker = makeWorker(deployment: deployment, output: output, recorder: recorder)
-
-        do {
-            try await worker.restart()
-            try await worker.deploy(to: store)
-
-            deployment.finishedAt = .now
-            deployment.output = await output.transcript
-            await output.close()
-
-            try await deployment.setCurrent(on: app.db)
-            try await store.evict(on: app.db)
-            await recorder.recordProductRowsUpdated(product: deployment.product)
-        } catch {
-            await fail(deployment: deployment, error: error, output: output, recorder: recorder)
-            throw error
-        }
-    }
-
-    /// Restarts onto an earlier successful build after a later automatic candidate failed.
-    func finalizePreviouslyBuilt(
-        _ deployment: Deployment,
-        priorTranscript: String,
-        store: BinaryStore,
-        recorder: OperationEventRecorder
-    ) async throws {
-
-        let output = makeOutput(deployment: deployment, recorder: recorder, options: Options(), priorTranscript: priorTranscript)
-        let worker = makeWorker(deployment: deployment, output: output, recorder: recorder)
-
-        do {
-            await output.open()
-            try await worker.restart()
-            try await worker.deploy(to: store)
-            
-            deployment.finishedAt = .now
-            deployment.output = await output.transcript
-            await output.close()
-            
-            try await deployment.setCurrent(on: app.db)
-            try await store.evict(on: app.db)
-            await recorder.recordProductRowsUpdated(product: deployment.product)
-        } catch {
-            await fail(deployment: deployment, error: error, output: output, recorder: recorder)
-            throw error
-        }
-    }
-
-}
-
-private extension OperationEngine {
+extension OperationEngine {
 
     /// Applies the transient status used while a mutating pipeline action runs.
     func preparePipelineRow(
@@ -427,7 +217,7 @@ private extension OperationEngine {
         clearOutput: Bool,
         recorder: OperationEventRecorder
     ) async throws {
-
+        
         deployment.startedAt = .now
         deployment.status = status
         deployment.finishedAt = nil
@@ -444,7 +234,8 @@ private extension OperationEngine {
         options: Options,
         priorTranscript: String = ""
     ) -> OperationOutputStream {
-        .init(
+        
+        OperationOutputStream(
             app: app,
             recorder: recorder,
             deployment: deployment,
@@ -457,7 +248,7 @@ private extension OperationEngine {
     /// Runs inline tests according to the target default and per-job override.
     func runInlineTestIfNeeded(
         deployment: Deployment,
-        worker: Worker,
+        worker: OperationWorker,
         recorder: OperationEventRecorder,
         policy: TestPolicy
     ) async throws {
@@ -518,8 +309,9 @@ private extension OperationEngine {
         deployment: Deployment,
         output: OperationOutputStream?,
         recorder: OperationEventRecorder
-    ) -> Worker {
-        .init(
+    ) -> OperationWorker {
+        
+        OperationWorker(
             deployment: deployment,
             target: config.target,
             app: app,
@@ -530,51 +322,6 @@ private extension OperationEngine {
                 await onStatusChange(status)
             }
         )
-    }
-
-}
-
-private extension OperationEngine {
-
-    /// Returns the most recent canceled deployment queued after the given one, preserving automatic drain semantics.
-    func nextQueuedDeployment(after deployment: Deployment) async throws -> Deployment? {
-
-        guard let currentTime = deployment.startedAt else { return nil }
-
-        let candidate = try await Deployment.query(on: app.db)
-            .filter(\.$product, .equal, deployment.product)
-            .filter(\.$status, .equal, .canceled)
-            .filter(\.$startedAt, .greaterThan, currentTime)
-            .sort(\.$startedAt, .descending)
-            .first()
-
-        guard let candidate, try await !isSuperseded(candidate) else { return nil }
-        return candidate
-    }
-
-    /// Returns true if newer successful work already made an automatic candidate stale.
-    func isSuperseded(_ deployment: Deployment) async throws -> Bool {
-
-        guard let startedAt = deployment.startedAt else { return false }
-
-        if let currentDeployment = try await Deployment.getCurrent(named: deployment.product, on: app.db),
-           let currentStartedAt = currentDeployment.startedAt,
-           currentStartedAt >= startedAt {
-
-            return true
-        }
-
-        let isSuperseded = try await Deployment.query(on: app.db)
-            .filter(\.$product, .equal, deployment.product)
-            .filter(\.$startedAt, .greaterThan, startedAt)
-            .group(.or) {
-                $0
-                    .filter(\.$status, .equal, .built)
-                    .filter(\.$status, .equal, .running)
-            }
-            .first() != nil
-
-        return isSuperseded
     }
 
 }

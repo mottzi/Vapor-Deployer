@@ -1,6 +1,6 @@
 # `swift test` uses an isolated scratch path
 
-`Worker.test()` invokes `swift test -c <buildMode> --scratch-path .build-tests` against the target's working directory, instead of letting it default to the same `.build/` directory used by `swift build`. This applies to both the inline pipeline test step (when `target.testing` is true) and the manual Test action.
+`OperationWorker.test()` invokes `swift test -c <buildMode> --scratch-path .build-tests` against the target's working directory, instead of letting it default to the same `.build/` directory used by `swift build`. This applies to both the inline pipeline test step (when `target.testing` is true) and the manual Test action.
 
 The reason is [SwiftPM bug #8031](https://github.com/swiftlang/swift-package-manager/issues/8031), open since October 2024 and still unfixed in Swift 6.3. `swift test` globally sets `buildParameters.enableTestability = true`, which adds `-enable-testing` to **every module in the dependency graph** — not just test targets. SwiftPM doesn't fingerprint the flag-set when keying its object-file outputs, so `swift test` and `swift build` write to the same paths (e.g. `.build/x86_64-unknown-linux-gnu/release/NIOPosix.build/BaseSocket.swift.o`) but with incompatible flags. Alternating between the two commands — which is exactly what the deploy pipeline does on every push — clobbers each other's cache and forces a full rebuild every iteration. Observed cost on a real target: ~20s incremental builds became ~900s.
 

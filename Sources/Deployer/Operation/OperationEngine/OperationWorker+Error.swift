@@ -1,6 +1,6 @@
 import Foundation
 
-extension Worker {
+extension OperationWorker {
     
     enum Error: DescribedError {
         

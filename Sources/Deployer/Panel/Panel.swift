@@ -103,18 +103,18 @@ extension Panel {
 
     func makePanelContext(request: Request) async throws -> PanelContext {
 
-        try await BinaryStore(target: config.target).syncMetadata(product: config.target.name, on: request.db)
+        try await DeploymentBinaryStore(target: config.target).syncMetadata(product: config.target.name, on: request.db)
 
         async let rows = row.makeContext(ofAll: request.db)
         async let isRunning = request.application.deployer.serviceManager.isRunning(product: config.target.name)
-        async let isDeploying = request.application.deployer.queue.isDeploying
+        async let isDeploying = request.application.deployer.operations.isDeploying
         async let isUpdating = request.application.deployer.updater.isUpdating
         async let targetInfoRender = targetConfig.renderCurrent(app: request.application)
         async let deployerInfoRender = deployerConfig.renderCurrent(app: request.application)
 
         let resolvedState = await DeployerPhase.resolve(
             updaterIsUpdating: isUpdating,
-            queueIsDeploying: isDeploying
+            operationIsDeploying: isDeploying
         )
         await deployerStatus.state.set(resolvedState)
         async let deployerStateRender = deployerStatus.renderCurrent(app: request.application)

@@ -34,13 +34,13 @@ enum DeployerPhase: String, ComponentData {
 
     static func resolve(
         updaterIsUpdating: Bool = false,
-        queueIsDeploying: Bool = false
+        operationIsDeploying: Bool = false
     ) -> DeployerPhase {
 
         if updaterIsUpdating { return .updating }
 
         if UpdateLock.isHeld() { return .updating }
-        if OperationLock.isHeld() || queueIsDeploying { return .deploying }
+        if OperationLock.isHeld() || operationIsDeploying { return .deploying }
 
         return .ready
     }
@@ -55,16 +55,16 @@ enum DeployerPhase: String, ComponentData {
 
     var badgeClass: String {
         switch self {
-            case .ready: "dp-state-badge--queue-unlocked"
-            case .deploying: "dp-state-badge--queue-locked"
-            case .updating: "dp-state-badge--queue-updating"
+            case .ready: "dp-state-badge--operation-unlocked"
+            case .deploying: "dp-state-badge--operation-locked"
+            case .updating: "dp-state-badge--operation-updating"
         }
     }
 
     var tooltip: String {
         switch self {
-            case .ready: "Queue unlocked — ready"
-            case .deploying: "Queue locked — deployment in progress"
+            case .ready: "Operations ready"
+            case .deploying: "Operation in progress"
             case .updating: "Deployer is self-updating"
         }
     }

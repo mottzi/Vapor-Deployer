@@ -17,14 +17,14 @@ extension DeploymentRow {
                   deployment.canTest
             else { return .failure("Deployment not found or can't be tested.") }
 
-            let result = await app.deployer.queue.test(
+            let result = await app.deployer.operations.test(
                 deployment: deployment,
-                target: app.deployer.queue.config.target
+                target: app.deployer.operations.config.target
             )
 
             return switch result {
                 case .started: .success("Test run started")
-                case .queueBusy: .failure("A deployment is already running")
+                case .operationBusy: .failure("A deployment is already running")
                 case .failure(let message): .failure(message)
             }
         }

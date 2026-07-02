@@ -10,7 +10,7 @@ The human selector for CLI deployment is the Git commit SHA, including unambiguo
 
 Mutating panel and CLI operations are serialized by a shared cross-process Operation lock. Mutations fail fast when another operation is running; read-only commands such as listing deployments and reading logs remain available while the lock is held.
 
-The Operation lock lives in the install directory as `.deployer-operation.lock`. The runtime badge treats a held operation lock as `deploying`, even when the server's in-memory queue is idle, and panel actions are disabled while the lock is held with conflict handling as the race-safe fallback.
+The Operation lock lives in the install directory as `.deployer-operation.lock`. The runtime badge treats a held operation lock as `deploying`, even when the server's in-memory operation coordinator is idle, and panel actions are disabled while the lock is held with conflict handling as the race-safe fallback.
 
 CLI promotion targets exactly the selected commit. It does not drain newer queued webhook pushes.
 
