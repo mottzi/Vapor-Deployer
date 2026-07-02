@@ -3,6 +3,8 @@
 - Reorganize `deployerctl` and operation execution/event files into clearer feature folders, including the shared `OperationEngine` and `OperationEvent` output pipeline.
 - Add `deployerctl` deployment controls: list deployments by short SHA, deploy, build, run saved binaries, test, inspect output, delete rows, and remove saved binaries.
 - Share one deployment engine between the panel and CLI, with cross-process operation locking so panel and CLI actions cannot run concurrently.
+- Simplify operation and update lock APIs so callers no longer pass install directories, while sharing the underlying file-lock implementation between deployment mutations and self-updates.
+- Recover stranded/abandoned operations on server boot or CLI startup when the owning process no longer holds the operation lock, transitioning stuck deployments to `.failed` and purging temporary events.
 - Stream CLI-origin deployment progress back into the live panel through Mist-backed operation events, while keeping CLI deploys usable when the server is offline.
 - Show short commit SHAs consistently in deployment rows and protect live rows from unsafe build, run, delete, and saved-binary removal actions.
 - Persist setup toolchain paths in `deployer.json` so panel and CLI builds/tests use the same Swift environment.
