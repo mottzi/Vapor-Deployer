@@ -9,7 +9,7 @@ actor OperationEventOutput {
     private static let ansiRegex = try! NSRegularExpression(pattern: "\u{001B}\\[[0-9;?]*[a-zA-Z]")
 
     private let app: Application
-    private let events: OperationEventRecorder
+    private let recorder: OperationEventRecorder
     private let deploymentID: UUID?
     private let mistSink: OperationEventMistOutputSink?
     private let consoleSink: OperationEventConsoleOutputSink?
@@ -18,14 +18,14 @@ actor OperationEventOutput {
 
     init(
         app: Application,
-        events: OperationEventRecorder,
+        recorder: OperationEventRecorder,
         deployment: Deployment,
         priorTranscript: String = "",
         mistSink: OperationEventMistOutputSink? = nil,
         consoleSink: OperationEventConsoleOutputSink? = nil
     ) {
         self.app = app
-        self.events = events
+        self.recorder = recorder
         self.deploymentID = deployment.id
         self.transcript = priorTranscript
         self.mistSink = mistSink
@@ -35,7 +35,7 @@ actor OperationEventOutput {
     /// Seeds the live stream with any prior transcript before new output begins.
     func open() async {
         await mistSink?.replace(transcript)
-        do { try await events.record(.outputOpened, deploymentID: deploymentID, payload: transcript) }
+        do { try await recorder.record(.outputOpened, deploymentID: deploymentID, payload: transcript) }
         catch { app.logger.error("Failed to open operation output: \(error.localizedDescription)") }
     }
 
@@ -50,7 +50,7 @@ actor OperationEventOutput {
         await mistSink?.append(cleaned)
         consoleSink?.write(cleaned)
 
-        do { try await events.record(.logAppended, deploymentID: deploymentID, payload: cleaned) }
+        do { try await recorder.record(.logAppended, deploymentID: deploymentID, payload: cleaned) }
         catch { app.logger.error("Failed to record operation output: \(error.localizedDescription)") }
     }
 

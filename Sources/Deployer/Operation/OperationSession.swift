@@ -6,12 +6,12 @@ actor OperationSession {
     
     private let app: Application
     private let operation: Operation
-    let events: OperationEventRecorder
+    let recorder: OperationEventRecorder
     
-    private init(app: Application, operation: Operation, events: OperationEventRecorder) {
+    private init(app: Application, operation: Operation, recorder: OperationEventRecorder) {
         self.app = app
         self.operation = operation
-        self.events = events
+        self.recorder = recorder
     }
     
     /// Creates the running operation row and its event recorder.
@@ -26,8 +26,8 @@ actor OperationSession {
         let operation = Operation(kind: kind, origin: origin, product: product, deploymentID: deploymentID)
         try await operation.save(on: app.db)
         
-        let events = try await OperationEventRecorder(app: app, operation: operation)
-        return OperationSession(app: app, operation: operation, events: events)
+        let recorder = try await OperationEventRecorder(app: app, operation: operation)
+        return OperationSession(app: app, operation: operation, recorder: recorder)
     }
     
     /// Marks the operation completed and records its terminal event.
@@ -48,7 +48,7 @@ actor OperationSession {
     
     private func finish(_ status: Operation.Status, deploymentID: UUID?) async {
         do {
-            try await events.record(status == .completed ? .completed : .failed, deploymentID: deploymentID)
+            try await recorder.record(status == .completed ? .completed : .failed, deploymentID: deploymentID)
             operation.status = status
             operation.finishedAt = .now
             try await operation.save(on: app.db)
