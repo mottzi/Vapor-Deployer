@@ -18,7 +18,7 @@ Deployer is a lightweight and self-hosted CI/CD tool to manage your Swift server
   <img width="760" alt="Deployer Panel" src="docs/github/deployer-panel.png" />
 </p>
 
-Deployer is designed to be beginner friendly so anyone can take their first steps in the Swift-on-Server ecosystem without the hastle of complicated terminal sessions.
+Deployer is designed to be beginner friendly so anyone can take their first steps in the Swift-on-Server ecosystem without the hassle of complicated terminal sessions.
 
 What happens on a push:
 
@@ -54,7 +54,7 @@ Behind the scenes, it:
 - registers a GitHub webhook for push detection,
 - hardens SSH and installs `deployerctl` for CLI control.
 
-When setup finishes, your app is live and the panel is listening for the next push.
+When setup finishes, the panel is listening for the next push. If the managed app fails its health check, setup still completes and prints the commands you need to inspect and restart it.
 
 ## What it does
 
@@ -82,9 +82,9 @@ When setup finishes, your app is live and the panel is listening for the next pu
 
   Open the settings page, edit your app's `.env`, hit save. The file is validated and written atomically. Hit restart and the change is live.
 
-- **deployerctl for terminal based control.**
+- **deployerctl for terminal-based service and deployment control.**
 
-  A small wrapper script for the things that belong in a terminal: starting and stopping the deployer and your app, tailing logs, rerunning setup, changing configuration and updating the deployer.
+  A small wrapper script for the things that belong in a terminal: starting and stopping the deployer and your app, listing and deploying commits, tailing logs, rerunning setup, changing configuration and updating the deployer.
 
 ## Under the hood
 
@@ -180,29 +180,33 @@ Runtime settings live in `deployer.json`, beside the deployer binary:
 
 ```json
 {
-    "port": 8081,
-    "panelRoute": "/deployer",
-    "socketPath": "/deployer/ws",
-    "serviceManager": "systemd",
-    "dbFile": "deployer.db",
-    "deployerDirectory": ".",
-    "deployerBranch": "main",
     "buildFromSource": false,
+    "dbFile": "deployer.db",
+    "deployerBranch": "main",
+    "deployerDirectory": ".",
+    "panelRoute": "/deployer",
+    "port": 8081,
+    "serviceHome": "/home/vapor",
+    "serviceManager": "systemd",
+    "socketPath": "/deployer/ws",
+    "swiftPath": "/home/vapor/.local/share/swiftly/bin:/usr/local/bin:/usr/bin:/bin",
     "target": {
-        "name": "MyApp",
-        "directory": "../apps/MyApp",
-        "branch": "main",
         "appPort": 8080,
-        "buildMode": "release",
-        "deploymentMode": "manual",
-        "testing": true,
-        "pusheventPath": "/pushevent/MyApp",
         "binaryBehaviour": {
             "newest": {
                 "count": 5
             }
-        }
-    }
+        },
+        "branch": "main",
+        "buildMode": "release",
+        "directory": "../apps/MyApp",
+        "deploymentMode": "manual",
+        "name": "MyApp",
+        "pusheventPath": "/pushevent/MyApp",
+        "repositoryURL": "https://github.com/example/MyApp",
+        "testing": true
+    },
+    "webhookSecret": "generated-secret"
 }
 ```
 
