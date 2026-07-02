@@ -37,17 +37,17 @@ extension Deployer {
 
 /// Mirrors durable operation events into the online Mist runtime.
 actor OperationEventBridge {
-
+    
     static let pollInterval: Duration = .milliseconds(250)
-
+    
     let app: Application
     let config: Configuration
     let deployerPhase: LiveState<DeployerPhase>
     let onStatusChange: @Sendable (ServiceStatus) async -> Void
-
+    
     private var lastSequences: [UUID: Int] = [:]
     private var terminalObserved: Set<UUID> = []
-
+    
     init(
         app: Application,
         config: Configuration,
@@ -59,7 +59,7 @@ actor OperationEventBridge {
         self.deployerPhase = deployerPhase
         self.onStatusChange = onStatusChange
     }
-
+    
     /// Polls operation events for the lifetime of the server process.
     func start() async {
         while !Task.isCancelled {
@@ -67,7 +67,11 @@ actor OperationEventBridge {
             try? await Task.sleep(for: Self.pollInterval)
         }
     }
+    
+}
 
+extension OperationEventBridge {
+    
     /// Polls database operations for CLI-origin changes, consuming sequential events and updating the server's lifecycle status.
     private func tick() async {
         do {
