@@ -119,24 +119,36 @@ A few details that matter if you care about how it works.
 After setup, `deployerctl` is on the server's `PATH`. Most actions need `sudo`.
 
 ```bash
-sudo deployerctl <command> [deployer|app|all]
+sudo deployerctl <action> [target]
 ```
 
 ```bash
 sudo deployerctl status              # show service status for deployer + app
 sudo deployerctl restart app         # restart just the target app
+sudo deployerctl list                # show recent deployments
+sudo deployerctl deploy <sha>        # deploy a selected commit
 sudo deployerctl logs deployer       # follow deployer logs (Ctrl-C to exit)
 sudo deployerctl update              # update deployer to the latest release
 ```
 
-| Action |  |
+| Action | Description |
 | --- | --- |
-| `status` | Service status (deployer, app, or both) |
-| `start` / `stop` / `restart` | Service lifecycle |
-| `logs` | Tail the on-disk log file (Ctrl-C to exit) |
-| `journal` | Recent systemd journal entries (systemd only) |
+| `status [target]` | Service status for the deployer, app, or both |
+| `start [target]` / `stop [target]` / `restart [target]` | Service lifecycle |
+| `reload [target]` | Reload services where supported |
+| `enable [target]` / `disable [target]` | Enable or disable services at boot |
+| `logs [target]` | Tail the on-disk log file (Ctrl-C to exit) |
+| `journal [target]` | Recent systemd journal entries (systemd only) |
+| `list [max]` | List recent deployments, defaulting to 20 rows |
+| `deploy <sha> [--testing\|-t] [--skip-tests --yes] [--no-logs]` | Build and deploy a selected commit |
+| `build <sha> [--no-logs]` | Build and save a deployment binary without making it live |
+| `run <sha>` | Run a saved deployment binary |
+| `test <sha> [--no-logs]` | Run deployment tests |
+| `output <sha>` | Show or follow deployment output |
+| `delete <sha> [--yes]` | Delete a non-live deployment row |
+| `remove-binary <sha> [--yes]` | Remove a saved deployment binary |
+| `config [<field> <value>]` | View editable fields or change a field in `deployer.json` |
 | `update` | Update the deployer, with auto-rollback on failure |
-| `config` | View or change a field in `deployer.json` |
 | `setup` | Rerun setup interactively |
 | `remove` | Tear down the install |
 | `version` | Print the deployer version |

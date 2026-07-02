@@ -1,11 +1,11 @@
 import Vapor
 
-/// Lists deployment rows or promotes an exact SHA when a selector is provided.
+/// Deploys a selected commit SHA.
 struct DeployCommand: AnyAsyncCommand {
 
-    var help: String { "List deployments or deploy a selected commit." }
+    var help: String { "Deploy a selected commit." }
 
-    /// Parses CLI arguments, initializes the headless environment, and routes execution based on whether a target SHA was provided.
+    /// Parses CLI arguments, initializes the headless environment, and executes the deployment.
     func run(using context: inout CommandContext) async throws {
 
         let args = context.input.arguments
@@ -14,38 +14,25 @@ struct DeployCommand: AnyAsyncCommand {
         let parsed = try DeploymentCLI.parse(args)
         try DeploymentCLI.validateFlags(parsed, allowed: ["--testing", "-t", "--skip-tests", "--yes", "--no-logs"])
 
-        let (config, engine) = try await DeploymentCLI.runtime(from: context)
-
-        switch parsed.positionals.count {
-            case 0: try await listDeployments(
-                context: context,
-                config: config
-            )
-            case 1: try await deployCommit(
-                parsed.positionals[0],
-                parsed: parsed,
-                context: context,
-                config: config,
-                engine: engine
-            )
-            default: throw DeploymentCLI.CLIError.usage(
-                "Usage: deployerctl deploy [sha] [--testing|-t] [--skip-tests --yes] [--no-logs]"
+        guard parsed.positionals.count == 1 else {
+            throw DeploymentCLI.CLIError.usage(
+                "Usage: deployerctl deploy <sha> [--testing|-t] [--skip-tests --yes] [--no-logs]"
             )
         }
+
+        let (config, engine) = try await DeploymentCLI.runtime(from: context)
+
+        try await deployCommit(
+            parsed.positionals[0],
+            parsed: parsed,
+            context: context,
+            config: config,
+            engine: engine
+        )
     }
 }
 
 extension DeployCommand {
-
-    /// Fetches and prints a tabular, reverse-chronological list of known deployments.
-    private func listDeployments(context: CommandContext, config: Configuration) async throws {
-        
-        try await DeploymentCLI.printDeploymentList(
-            config: config,
-            app: context.application,
-            console: context.console
-        )
-    }
 
     /// Evaluates the target commit against the live environment and executes the promotion within the global cross-process lock if the commit is eligible.
     private func deployCommit(

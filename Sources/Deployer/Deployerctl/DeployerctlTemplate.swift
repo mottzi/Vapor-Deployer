@@ -121,7 +121,8 @@ enum DeployerctlTemplate {
       logs          Follow on-disk service log file (Ctrl-C to exit)
       journal       Show recent systemd journal entries (systemd only)
 
-      deploy        List deployments or deploy a commit SHA
+      deploy        Deploy a commit SHA
+      list          List deployments (default: 20)
       build         Build and save a deployment binary
       run           Run a saved deployment binary
       test          Run deployment tests
@@ -269,7 +270,7 @@ enum DeployerctlTemplate {
     action="$1"; shift
 
     case "$action" in
-      deploy|build|run|test|output|delete|remove-binary)
+      deploy|list|build|run|test|output|delete|remove-binary)
         INSTALL_BIN="$(resolve_install_bin)"
         if [[ "$SERVICE_MANAGER" == "systemd" ]]; then
           ensure_user_manager

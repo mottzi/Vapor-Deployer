@@ -48,12 +48,17 @@ enum DeploymentCLI {
     }
 
     /// Renders the deployment list as the compact operator table.
-    static func printDeploymentList(config: Configuration, app: Application, console: any Console) async throws {
+    static func printDeploymentList(
+        config: Configuration,
+        app: Application,
+        console: any Console,
+        limit: Int? = nil
+    ) async throws {
 
         let deployments = try await Deployment.query(on: app.db)
             .filter(\.$product, .equal, config.target.name)
             .sort(\.$createdAt, .descending)
-            .limit(defaultListLimit)
+            .limit(limit ?? defaultListLimit)
             .all()
 
         guard !deployments.isEmpty else {

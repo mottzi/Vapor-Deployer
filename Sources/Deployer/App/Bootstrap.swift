@@ -21,6 +21,7 @@ extension Deployer {
         app.asyncCommands.use(ConfigCommand(), as: "config")
         app.asyncCommands.use(VersionCommand(), as: "version")
         app.asyncCommands.use(DeployCommand(), as: "deploy")
+        app.asyncCommands.use(ListCommand(), as: "list")
         app.asyncCommands.use(BuildCommand(), as: "build")
         app.asyncCommands.use(RunCommand(), as: "run")
         app.asyncCommands.use(TestCommand(), as: "test")
