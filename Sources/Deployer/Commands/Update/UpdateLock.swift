@@ -11,14 +11,17 @@ import Darwin
 /// Held for the lifetime of the lock value; the kernel releases the underlying `flock(2)` automatically on
 /// process exit, so a crashed updater never leaves a stale lock behind. After ADR 0005 the lock also serves
 /// as the cross-process source of truth for "an update is in flight" — both the `Updater` (panel) and
-/// `Queue.start` (deploy preflight) peek it via `isHeld(installDirectory:)`.
+/// `Queue.start` (deploy preflight) peek it via `isHeld()`.
 final class UpdateLock {
 
     private var fd: Int32?
     private let path: String
 
-    static func lockPath(installDirectory: URL) -> String {
-        installDirectory.appendingPathComponent(".deployer-update.lock").path
+    private static func lockPath() throws -> String {
+        try Configuration.getExecutableURL()
+            .deletingLastPathComponent()
+            .appendingPathComponent(".deployer-update.lock")
+            .path
     }
 
     private init(fd: Int32, path: String) {
@@ -31,9 +34,9 @@ final class UpdateLock {
     /// even open the file, which is treated as "not held" since the absence of a lockfile means no updater).
     /// Tiny race: during the few microseconds we briefly hold the lock to release it, a concurrent acquirer
     /// would see EWOULDBLOCK. Acceptable — `acquire` callers always retry by failing fast to the user.
-    static func isHeld(installDirectory: URL) -> Bool {
+    static func isHeld() -> Bool {
         
-        let path = lockPath(installDirectory: installDirectory)
+        guard let path = try? lockPath() else { return false }
 
         let fd = open(path, O_CREAT | O_RDWR | O_CLOEXEC, 0o666)
         guard fd >= 0 else { return false }
@@ -48,11 +51,11 @@ final class UpdateLock {
         return errno == EWOULDBLOCK
     }
 
-    /// Opens (or creates) the lockfile in `installDirectory` and acquires an exclusive non-blocking flock.
+    /// Opens (or creates) the lockfile for the current installation and acquires an exclusive non-blocking flock.
     /// Throws `.anotherUpdateInProgress` if another updater holds it, or `.lockFailed` on unexpected I/O errors.
-    static func acquire(installDirectory: URL) throws -> UpdateLock {
+    static func acquire() throws -> UpdateLock {
         
-        let path = lockPath(installDirectory: installDirectory)
+        let path = try lockPath()
 
         let fd = open(path, O_CREAT | O_RDWR | O_CLOEXEC, 0o666)
         guard fd >= 0 else { throw UpdateCommand.Error.lockFailed(path, String(cString: strerror(errno))) }

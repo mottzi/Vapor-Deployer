@@ -18,8 +18,7 @@ enum DeploymentCLI {
     /// Runs a mutating CLI operation under the global operation lock.
     static func runLocked<T>(context: CommandContext, operation: () async throws -> T) async throws -> T {
         
-        let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
-        let lock = try OperationLock.acquire(installDirectory: installDirectory)
+        let lock = try OperationLock.acquire()
         defer { lock.release() }
         
         return try await operation()

@@ -7,8 +7,8 @@ enum OperationRecovery {
     /// Repairs abandoned transient rows unless an operation is actively holding the lock.
     static func repairAbandonedOperations(app: Application, config: Configuration) async {
 
-        guard let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent() else { return }
-        guard !OperationLock.isHeld(installDirectory: installDirectory) else { return }
+        guard (try? Configuration.getExecutableURL().deletingLastPathComponent()) != nil else { return }
+        guard !OperationLock.isHeld() else { return }
 
         do {
             let operations = try await Operation.query(on: app.db)

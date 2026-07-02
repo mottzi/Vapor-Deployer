@@ -26,8 +26,7 @@ extension DeploymentRow {
 
             let lock: OperationLock
             do {
-                let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
-                lock = try OperationLock.acquire(installDirectory: installDirectory)
+                lock = try OperationLock.acquire()
             } catch OperationError.anotherOperationInProgress {
                 return .failure("A deployment is already running")
             } catch {

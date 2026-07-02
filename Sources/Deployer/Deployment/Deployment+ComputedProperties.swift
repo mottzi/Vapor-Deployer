@@ -105,8 +105,7 @@ extension Deployment {
     }
 
     var operationLocked: Bool {
-        guard let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent() else { return false }
-        return OperationLock.isHeld(installDirectory: installDirectory)
+        OperationLock.isHeld()
     }
 
     var testsPassed: Bool { lastTestOutcome == true }

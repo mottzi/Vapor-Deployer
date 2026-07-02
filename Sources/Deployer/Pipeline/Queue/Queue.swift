@@ -67,12 +67,9 @@ private extension Queue {
 
     /// Treats any cross-process deployer operation as busy when classifying automatic webhook pushes.
     func globalOperationLockHeld() -> Bool {
-        
-        let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
-        guard let installDirectory else { return false }
 
-        let updateLockHeld = UpdateLock.isHeld(installDirectory: installDirectory)
-        let operationLockHeld = OperationLock.isHeld(installDirectory: installDirectory)
+        let updateLockHeld = UpdateLock.isHeld()
+        let operationLockHeld = OperationLock.isHeld()
 
         return updateLockHeld || operationLockHeld
     }
@@ -115,9 +112,8 @@ extension Queue {
         let lock: OperationLock
         
         do {
-            let installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent()
-            if UpdateLock.isHeld(installDirectory: installDirectory) { return .queueBusy }
-            lock = try OperationLock.acquire(installDirectory: installDirectory)
+            if UpdateLock.isHeld() { return .queueBusy }
+            lock = try OperationLock.acquire()
         } catch OperationError.anotherOperationInProgress {
             return .queueBusy
         } catch {

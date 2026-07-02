@@ -21,16 +21,19 @@ final class OperationLock: @unchecked Sendable {
         self.fd = fd
     }
     
-    /// Computes the filesystem path of the lock file within the deployment installation directory.
-    static func lockPath(installDirectory: URL) -> String {
-        installDirectory.appendingPathComponent(".deployer-operation.lock").path
+    /// Computes the filesystem path of the lock file for the current deployer installation.
+    private static func lockPath() throws -> String {
+        try Configuration.getExecutableURL()
+            .deletingLastPathComponent()
+            .appendingPathComponent(".deployer-operation.lock")
+            .path
     }
 
     /// Non-destructive lock peek used for status rendering and race-aware busy checks.
-    static func isHeld(installDirectory: URL) -> Bool {
+    static func isHeld() -> Bool {
 
         // resolve lockfile path
-        let path = lockPath(installDirectory: installDirectory)
+        guard let path = try? lockPath() else { return false }
         // open or create file descriptor
         let fd = open(path, O_CREAT | O_RDWR | O_CLOEXEC, 0o666)
         // assume not held if file can't be opened
@@ -52,9 +55,9 @@ final class OperationLock: @unchecked Sendable {
     }
 
     /// Acquires the operation lock without waiting so conflicting operator actions fail fast.
-    static func acquire(installDirectory: URL) throws -> OperationLock {
+    static func acquire() throws -> OperationLock {
 
-        let path = lockPath(installDirectory: installDirectory)
+        let path = try lockPath()
         let fd = open(path, O_CREAT | O_RDWR | O_CLOEXEC, 0o666)
         guard fd >= 0 else { throw OperationError.lockFailed(path, String(cString: strerror(errno))) }
         _ = fchmod(fd, 0o666)

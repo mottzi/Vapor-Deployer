@@ -74,9 +74,8 @@ actor Updater {
         do { executableURL = try Configuration.getExecutableURL() }
         catch { return .failure(error.localizedDescription) }
 
-        let installDirectory = executableURL.deletingLastPathComponent()
-        if UpdateLock.isHeld(installDirectory: installDirectory) { return .busy }
-        if OperationLock.isHeld(installDirectory: installDirectory) { return .busy }
+        if UpdateLock.isHeld() { return .busy }
+        if OperationLock.isHeld() { return .busy }
 
         do {
             try spawnDetachedUpdate(executable: executableURL)
@@ -95,22 +94,21 @@ actor Updater {
     /// Continuous polling loop: peeks the update lockfile every `pollInterval` and updates derived state.
     /// Runs for the lifetime of the process. Replaces the pre-ADR-0005 sentinel-file watcher.
     func startPolling() async {
-        let installDirectory: URL
-        do { installDirectory = try Configuration.getExecutableURL().deletingLastPathComponent() }
+        do { _ = try Configuration.getExecutableURL().deletingLastPathComponent() }
         catch { return app.logger.warning("Updater poll: could not resolve install directory: \(error.localizedDescription)") }
 
-        await tick(installDirectory: installDirectory)
+        await tick()
 
         while !Task.isCancelled {
             try? await Task.sleep(for: Self.pollInterval)
-            await tick(installDirectory: installDirectory)
+            await tick()
         }
     }
 
     /// One poll iteration. Folded out for testability and to keep `startPolling`'s loop body trivial.
-    private func tick(installDirectory: URL) async {
+    private func tick() async {
 
-        let nowHeld = UpdateLock.isHeld(installDirectory: installDirectory)
+        let nowHeld = UpdateLock.isHeld()
         let wasHeld = lockHeldObserved
         lockHeldObserved = nowHeld
 
@@ -141,9 +139,7 @@ actor Updater {
     private func broadcastPhaseIfChanged(wasHeld: Bool) async {
         
         let queueIsDeploying = await app.deployer.queue.isDeploying
-        let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
         let resolved = DeployerPhase.resolve(
-            installDirectory: installDirectory,
             updaterIsUpdating: isUpdating,
             queueIsDeploying: queueIsDeploying
         )

@@ -23,7 +23,6 @@ extension Deployer {
             let isUpdating = await request.application.deployer.updater.isUpdating
             let isDeploying = await request.application.deployer.queue.isDeploying
             let phase = DeployerPhase.resolve(
-                installDirectory: installDirectory,
                 updaterIsUpdating: isUpdating,
                 queueIsDeploying: isDeploying
             )

@@ -39,11 +39,9 @@ extension Queue {
     /// Resolves display phase from global locks first, then the server-local queue flag.
     func resolvedPhase() async -> DeployerPhase {
         
-        let installDirectory = try? Configuration.getExecutableURL().deletingLastPathComponent()
         let isUpdating = await app.deployer.updater.isUpdating
         
         return DeployerPhase.resolve(
-            installDirectory: installDirectory,
             updaterIsUpdating: isUpdating,
             queueIsDeploying: isDeploying
         )
