@@ -1,7 +1,8 @@
 /* ── Gear button in the panel target toolbar ──
    Reuses .dp-control-btn base; neutral hover (settings is benign navigation,
    not destructive like Stop or state-changing like Restart). */
-.dp-control-btn--settings {
+.dp-control-btn--settings,
+.dp-control-btn--logs {
     background: transparent;
     color: var(--btn-icon);
     border: 1px solid var(--border);
@@ -10,14 +11,16 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-    .dp-control-btn--settings:hover {
+    .dp-control-btn--settings:hover,
+    .dp-control-btn--logs:hover {
         color: var(--text);
         border-color: var(--border-strong);
         background: var(--bg-hover);
     }
 }
 
-.dp-control-btn--settings:active {
+.dp-control-btn--settings:active,
+.dp-control-btn--logs:active {
     color: var(--text);
     border-color: var(--border-strong);
     background: var(--bg-hover);
@@ -82,6 +85,33 @@
     font-size: 12px;
     color: var(--text-muted);
     line-height: 1.5;
+}
+
+/* ── Target app logs page ── */
+.dp-app-log-body {
+    padding: 0;
+    gap: 0;
+}
+
+.dp-app-log-stream {
+    width: 100%;
+    min-width: 0;
+}
+
+.dp-app-log-console {
+    min-height: min(58vh, 620px);
+    max-height: min(58vh, 620px);
+    padding: 16px 20px;
+}
+
+.dp-app-log-console.dp-output-pre--live:empty::before {
+    content: "Waiting for logs...";
+}
+
+.dp-log-copy-btn--copied {
+    color: var(--c-running);
+    border-color: var(--c-running-border);
+    background: var(--c-running-bg);
 }
 
 /* ── Notice banners (saved / error) ── */
@@ -362,7 +392,10 @@ div.dp-settings-value:empty:before {
 .dp-settings-delete,
 .dp-settings-add-btn,
 .dp-settings-save-btn,
-.dp-control-btn--settings {
+.dp-log-clear-btn,
+.dp-log-copy-btn,
+.dp-control-btn--settings,
+.dp-control-btn--logs {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
@@ -372,7 +405,10 @@ div.dp-settings-value:empty:before {
 .dp-settings-delete > svg,
 .dp-settings-add-btn > svg,
 .dp-settings-save-btn > svg,
-.dp-control-btn--settings > svg {
+.dp-log-clear-btn > svg,
+.dp-log-copy-btn > svg,
+.dp-control-btn--settings > svg,
+.dp-control-btn--logs > svg {
     pointer-events: none;
 }
 
@@ -381,7 +417,10 @@ div.dp-settings-value:empty:before {
 .dp-settings-delete:active,
 .dp-settings-add-btn:active,
 .dp-settings-save-btn:active,
-.dp-control-btn--settings:active {
+.dp-log-clear-btn:active,
+.dp-log-copy-btn:active,
+.dp-control-btn--settings:active,
+.dp-control-btn--logs:active {
     transition-duration: 0s;
 }
 

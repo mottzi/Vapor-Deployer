@@ -6,8 +6,6 @@ actor OperationOutputStream {
     
     static let streamName = "operation-log"
     
-    private static let ansiRegex = try! NSRegularExpression(pattern: "\u{001B}\\[[0-9;?]*[a-zA-Z]")
-    
     private let app: Application
     private let recorder: OperationEventRecorder
     private let deploymentID: UUID?
@@ -48,7 +46,7 @@ actor OperationOutputStream {
     func append(_ text: String) async {
         
         guard !text.isEmpty else { return }
-        let cleaned = Self.stripAnsi(text)
+        let cleaned = LogSanitizer.sanitize(text)
         guard !cleaned.isEmpty else { return }
         
         transcript.append(cleaned)
@@ -74,16 +72,6 @@ actor OperationOutputStream {
         }
     }
     
-}
-
-extension OperationOutputStream {
-
-    /// Strips terminal control sequences before logs reach browser or persisted transcript output.
-    private static func stripAnsi(_ text: String) -> String {
-        let range = NSRange(text.startIndex..., in: text)
-        return ansiRegex.stringByReplacingMatches(in: text, range: range, withTemplate: "")
-    }
-
 }
 
 /// Direct in-process Mist stream used by server-origin operations.

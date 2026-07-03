@@ -18,6 +18,8 @@ struct TargetConfiguration: Codable, Sendable {
 
 extension TargetConfiguration {
 
+    var logFilePath: String { "\(directory)/deploy/\(name).log" }
+
     /// Validates and normalizes decoded target values using the executable directory as the base path.
     func resolved(relativeTo baseDirectoryURL: URL) throws -> TargetConfiguration {
         
