@@ -34,12 +34,12 @@ extension RuntimeConfigStep {
 
     private func setupServiceManager() async throws {
 
-        let otherKind: ServiceManagerKind = context.serviceManagerKind == .systemd ? .supervisor : .systemd
-        let other = otherKind.makeConfigurator(shell: shell, paths: paths)
+        let otherBackend: ServiceBackend = context.serviceBackend == .systemd ? .supervisor : .systemd
+        let other = otherBackend.makeConfigurator(shell: shell, paths: paths)
         await other.disable(["deployer", context.productName])
         await other.removeConfigs(for: ["deployer", context.productName])
 
-        switch context.serviceManagerKind {
+        switch context.serviceBackend {
         case .systemd:
             try await writeSystemdUnits()
             console.print("Wrote systemd user units.")

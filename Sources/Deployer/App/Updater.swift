@@ -156,7 +156,7 @@ actor Updater {
         let binaryPath = executable.path.shellQuoted
 
         let command: String
-        switch config.serviceManager {
+        switch config.serviceBackend {
             case .systemd:
                 let unitName = "deployer-self-update-\(UUID().uuidString)"
                 command = "systemd-run --user --collect --unit=\(unitName.shellQuoted) --setenv=DEPLOYER_INTERNAL_UPDATE=1 -- \(binaryPath) update"

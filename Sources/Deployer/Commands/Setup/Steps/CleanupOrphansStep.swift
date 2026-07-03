@@ -24,9 +24,9 @@ extension CleanupOrphansStep {
         
         let oldAppName = previous["APP_NAME"] ?? ""
         let oldProductName = previous["PRODUCT_NAME"] ?? ""
-        let oldServiceManagerStr = previous["SERVICE_MANAGER"] ?? ""
+        let oldServiceBackendRaw = previous["SERVICE_BACKEND"] ?? ""
         
-        guard !oldAppName.isEmpty, !oldProductName.isEmpty, !oldServiceManagerStr.isEmpty else { return }
+        guard !oldAppName.isEmpty, !oldProductName.isEmpty, !oldServiceBackendRaw.isEmpty else { return }
         
         let paths = try context.requirePaths()
         let productChanged = oldProductName != context.productName
@@ -42,8 +42,8 @@ extension CleanupOrphansStep {
             console.warning("Detected app name change from '\(oldAppName)' to '\(context.appName)'. Cleaning up old checkout and SSH deploy key.")
         }
         
-        if productChanged, let oldServiceManager = ServiceManagerKind(rawValue: oldServiceManagerStr) {
-            try await stopAndRemoveOldService(oldProductName: oldProductName, serviceManager: oldServiceManager, paths: paths)
+        if productChanged, let oldServiceBackend = ServiceBackend(rawValue: oldServiceBackendRaw) {
+            try await stopAndRemoveOldService(oldProductName: oldProductName, serviceBackend: oldServiceBackend, paths: paths)
         }
         
         if appNameChanged {
@@ -79,11 +79,11 @@ extension CleanupOrphansStep {
 
     private func stopAndRemoveOldService(
         oldProductName: String,
-        serviceManager: ServiceManagerKind,
+        serviceBackend: ServiceBackend,
         paths: SystemPaths
     ) async throws {
 
-        let configurator = serviceManager.makeConfigurator(shell: shell, paths: paths)
+        let configurator = serviceBackend.makeConfigurator(shell: shell, paths: paths)
         await configurator.disable([oldProductName])
         await configurator.removeConfigs(for: [oldProductName])
     }

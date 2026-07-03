@@ -5,7 +5,7 @@ struct ConfigDiscovery {
     
     private static let deployerctlKeys = [
         "SERVICE_USER",
-        "SERVICE_MANAGER",
+        "SERVICE_BACKEND",
         "PRODUCT_NAME",
         "APP_NAME",
         "APP_REPO_URL",

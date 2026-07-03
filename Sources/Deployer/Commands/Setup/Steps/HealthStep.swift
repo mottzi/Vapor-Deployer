@@ -94,7 +94,7 @@ extension SetupStep {
     }
 
     fileprivate func isServiceRunning(_ service: String) async -> Bool {
-        let configurator = context.serviceManagerKind.makeConfigurator(shell: shell, paths: paths)
+        let configurator = context.serviceBackend.makeConfigurator(shell: shell, paths: paths)
         return await configurator.isRunning(service)
     }
 

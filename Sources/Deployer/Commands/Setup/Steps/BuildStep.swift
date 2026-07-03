@@ -10,7 +10,7 @@ struct BuildStep: SetupStep {
 
     func run() async throws {
 
-        let configurator = context.serviceManagerKind.makeConfigurator(shell: shell, paths: paths)
+        let configurator = context.serviceBackend.makeConfigurator(shell: shell, paths: paths)
         if await configurator.isRunning("deployer") {
             await configurator.disable(["deployer"])
         }

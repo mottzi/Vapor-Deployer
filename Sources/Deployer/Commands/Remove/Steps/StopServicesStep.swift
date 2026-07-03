@@ -10,7 +10,7 @@ struct StopServicesStep: RemoveStep {
 
     func run() async throws {
 
-        let configurator = context.serviceManagerKind.makeConfigurator(shell: shell, paths: paths)
+        let configurator = context.serviceBackend.makeConfigurator(shell: shell, paths: paths)
         await configurator.disable(["deployer", context.productName])
 
         console.print("Services stopped.")

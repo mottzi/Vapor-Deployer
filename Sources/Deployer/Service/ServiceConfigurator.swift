@@ -18,14 +18,3 @@ protocol ServiceConfigurator {
     func enableAndStart(_ products: [String]) async throws
 
 }
-
-extension ServiceManagerKind {
-
-    func makeConfigurator(shell: SystemShell, paths: SystemPaths) -> any ServiceConfigurator {
-        switch self {
-        case .systemd: SystemdConfigurator(shell: shell, paths: paths)
-        case .supervisor: SupervisorConfigurator()
-        }
-    }
-
-}

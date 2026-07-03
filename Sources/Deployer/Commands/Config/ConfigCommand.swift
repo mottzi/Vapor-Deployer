@@ -164,14 +164,14 @@ private extension ConfigCommand {
 
 private extension ConfigCommand {
 
-    /// Restarts the deployer service via the configured `ServiceManagerKind`. Same primitive used by
+    /// Restarts the deployer service via the configured `ServiceBackend`. Same primitive used by
     /// `SetupCommand` rollback and by `UpdateCommand` post-swap. Service user is resolved from
     /// `/etc/deployer/deployerctl.conf` first, then falls back to the executable file owner.
     func restartDeployer(config: Configuration, installDirectory: URL, console: any Console) async throws {
 
         let executableURL = installDirectory.appendingPathComponent("deployer", isDirectory: false)
         let serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: executableURL) ?? ""
-        let manager = try config.serviceManager.makeManager(serviceUser: serviceUser)
+        let manager = try config.serviceBackend.makeManager(serviceUser: serviceUser)
         try await manager.restart(product: "deployer")
     }
 

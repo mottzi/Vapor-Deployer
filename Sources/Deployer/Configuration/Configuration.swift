@@ -11,7 +11,7 @@ struct Configuration: Codable, Sendable {
     var serviceHome: String
     var swiftPath: String
     var target: TargetConfiguration
-    var serviceManager: ServiceManagerKind
+    var serviceBackend: ServiceBackend
     var buildFromSource: Bool
     var deployerBranch: String
     var webhookSecret: String?
@@ -107,7 +107,7 @@ extension Configuration {
             serviceHome: Configuration.trimmedFileSystemPath(serviceHome, field: "serviceHome", relativeTo: baseDirectoryURL),
             swiftPath: Configuration.trimmedValue(swiftPath, field: "swiftPath"),
             target: try target.resolved(relativeTo: baseDirectoryURL),
-            serviceManager: serviceManager,
+            serviceBackend: serviceBackend,
             buildFromSource: buildFromSource,
             deployerBranch: try Configuration.trimmedValue(deployerBranch, field: "deployerBranch"),
             webhookSecret: webhookSecret

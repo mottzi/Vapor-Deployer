@@ -34,7 +34,7 @@ extension Deployer {
 
         let config = try Configuration.load()
         try useVariables()
-        app.deployer.serviceManager = try config.serviceManager.makeManager(serviceUser: UserAccount.currentName())
+        app.deployer.serviceManager = try config.serviceBackend.makeManager(serviceUser: UserAccount.currentName())
         app.deployer.configureHTTP(config: config)
         try await app.deployer.configureDatabase(config: config)
         await OperationRecovery.repairAbandonedOperations(app: app, config: config)
@@ -47,7 +47,7 @@ extension Deployer {
     func useHeadlessRuntime() async throws -> Configuration {
 
         let config = try Configuration.load()
-        app.deployer.serviceManager = try config.serviceManager.makeManager(serviceUser: UserAccount.currentName())
+        app.deployer.serviceManager = try config.serviceBackend.makeManager(serviceUser: UserAccount.currentName())
         try await app.deployer.configureHeadlessDatabase(config: config)
         await OperationRecovery.repairAbandonedOperations(app: app, config: config)
         return config

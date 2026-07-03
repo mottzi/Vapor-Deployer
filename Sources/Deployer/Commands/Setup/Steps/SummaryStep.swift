@@ -37,7 +37,7 @@ extension SummaryStep {
             ("Install dir", paths.installDirectory),
             ("App checkout", paths.appDirectory),
             ("Service user", context.serviceUser),
-            ("Service manager", context.serviceManagerKind.rawValue),
+            ("Service manager", context.serviceBackend.rawValue),
             ("Check services", "sudo deployerctl status"),
             ("Follow logs", "sudo deployerctl logs [deployer|app|all]")
         ]

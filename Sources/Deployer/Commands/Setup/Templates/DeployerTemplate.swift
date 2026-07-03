@@ -27,7 +27,7 @@ enum DeployerTemplate {
                 branch: context.appBranch,
                 testing: context.testing
             ),
-            serviceManager: context.serviceManagerKind,
+            serviceBackend: context.serviceBackend,
             buildFromSource: context.buildFromSource,
             deployerBranch: context.deployerRepositoryBranch,
             webhookSecret: context.webhookSecret.isEmpty ? nil : context.webhookSecret

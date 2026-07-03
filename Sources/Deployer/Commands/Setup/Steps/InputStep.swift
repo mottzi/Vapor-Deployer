@@ -43,7 +43,7 @@ struct InputStep: SetupStep {
             discoveredApp: metadata["APP_PORT"]
         )
         collectPanelRoute(discovered: jsonConfig?.panelRoute)
-        collectServiceManager(discovered: metadata["SERVICE_MANAGER"])
+        collectServiceBackend(discovered: metadata["SERVICE_BACKEND"])
         collectInstallMode()
 
         // Depends on serviceUser, appName, and panelRoute being finalized above.
@@ -154,19 +154,19 @@ extension InputStep {
         }
     }
 
-    private func collectServiceManager(discovered: String?) {
+    private func collectServiceBackend(discovered: String?) {
 
         console.section("Service manager")
 
         while true {
             let value = console.askRequired("Service manager", default: discovered ?? "systemd")
 
-            guard let kind = ServiceManagerKind(rawValue: value) else {
+            guard let backend = ServiceBackend(rawValue: value) else {
                 console.warning("Service manager must be 'systemd' or 'supervisor'.")
                 continue
             }
 
-            context.serviceManagerKind = kind
+            context.serviceBackend = backend
             break
         }
     }
@@ -351,7 +351,7 @@ extension InputStep {
             ("Deployer repo", context.deployerRepositoryURL),
             ("Deployer branch", context.deployerRepositoryBranch),
             ("Service user", context.serviceUser),
-            ("Service manager", context.serviceManagerKind.rawValue),
+            ("Service manager", context.serviceBackend.rawValue),
             ("App name", context.appName),
             ("App repo", context.appRepositoryURL),
             ("App repo web URL", context.appRepositoryWebURL),

@@ -22,7 +22,7 @@ final class SetupContext: SystemContext {
     var deployerPort = 8081
     var appPort = 8080
     var panelRoute = "/deployer"
-    var serviceManagerKind = ServiceManagerKind.systemd
+    var serviceBackend = ServiceBackend.systemd
     var buildFromSource = false
     var previousBuildFromSource: Bool?
 

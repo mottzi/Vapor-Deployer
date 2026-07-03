@@ -14,7 +14,7 @@ struct RemoveInputStep: RemoveStep {
         await discoverFromDeployerctl()
         discoverFromConfig()
         collectTargetApp()
-        collectServiceManager()
+        collectServiceBackend()
         derivePaths()
         deriveProxyMetadata()
         presentSummary()
@@ -64,9 +64,9 @@ extension RemoveInputStep {
             context.productName = product
         }
 
-        if let manager = metadata["SERVICE_MANAGER"],
-           let kind = ServiceManagerKind(rawValue: manager) {
-            context.serviceManagerKind = kind
+        if let serviceBackendRaw = metadata["SERVICE_BACKEND"],
+           let backend = ServiceBackend(rawValue: serviceBackendRaw) {
+            context.serviceBackend = backend
         }
     }
 
@@ -85,7 +85,7 @@ extension RemoveInputStep {
             context.productName = config.target.name
         }
 
-        context.serviceManagerKind = config.serviceManager
+        context.serviceBackend = config.serviceBackend
     }
 
     private func collectTargetApp() {
@@ -110,17 +110,17 @@ extension RemoveInputStep {
         )
     }
 
-    private func collectServiceManager() {
+    private func collectServiceBackend() {
 
         console.section("Runtime")
 
         while true {
-            let value = console.askRequired("Service manager", default: context.serviceManagerKind.rawValue)
-            guard let kind = ServiceManagerKind(rawValue: value) else {
+            let value = console.askRequired("Service manager", default: context.serviceBackend.rawValue)
+            guard let backend = ServiceBackend(rawValue: value) else {
                 console.warning("Service manager must be 'systemd' or 'supervisor'.")
                 continue
             }
-            context.serviceManagerKind = kind
+            context.serviceBackend = backend
             break
         }
     }
@@ -150,7 +150,7 @@ extension RemoveInputStep {
             ("Install dir", paths.installDirectory),
             ("App dir", paths.appDirectory),
             ("Service user", context.serviceUser),
-            ("Service manager", context.serviceManagerKind.rawValue),
+            ("Service manager", context.serviceBackend.rawValue),
             ("Product name", context.productName),
             ("App name", context.appName),
             ("Nginx site file", context.nginxSiteAvailable ?? "—"),
@@ -179,4 +179,3 @@ extension RemoveInputStep {
     }
 
 }
-

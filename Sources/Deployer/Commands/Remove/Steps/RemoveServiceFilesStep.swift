@@ -10,9 +10,9 @@ struct RemoveServiceFilesStep: RemoveStep {
 
     func run() async throws {
 
-        let configurator = context.serviceManagerKind.makeConfigurator(shell: shell, paths: paths)
+        let configurator = context.serviceBackend.makeConfigurator(shell: shell, paths: paths)
 
-        if context.serviceManagerKind == .systemd, await userExists() {
+        if context.serviceBackend == .systemd, await userExists() {
             await bestEffort("daemon-reload") {
                 try await shell.runUserSystemctl("daemon-reload")
             }

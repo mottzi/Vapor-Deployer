@@ -187,7 +187,7 @@ Runtime settings live in `deployer.json`, beside the deployer binary:
     "panelRoute": "/deployer",
     "port": 8081,
     "serviceHome": "/home/vapor",
-    "serviceManager": "systemd",
+    "serviceBackend": "systemd",
     "socketPath": "/deployer/ws",
     "swiftPath": "/home/vapor/.local/share/swiftly/bin:/usr/local/bin:/usr/bin:/bin",
     "target": {

@@ -91,10 +91,10 @@ private extension SetupCommand {
             }
             try? FileManager.default.moveItem(atPath: backupPath, toPath: paths.installDirectory)
             
-            if let serviceManager = context.previousMetadata?["SERVICE_MANAGER"],
-               let managerKind = ServiceManagerKind(rawValue: serviceManager) {
+            if let serviceBackendRaw = context.previousMetadata?["SERVICE_BACKEND"],
+               let serviceBackend = ServiceBackend(rawValue: serviceBackendRaw) {
                 do {
-                    let manager = try managerKind.makeManager(serviceUser: context.serviceUser)
+                    let manager = try serviceBackend.makeManager(serviceUser: context.serviceUser)
                     try await manager.start(product: "deployer")
                 } catch {
                     console.warning("Rollback restored files, but failed to restart the deployer service.")

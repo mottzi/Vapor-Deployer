@@ -4,7 +4,7 @@ import Foundation
 struct DeployerctlInstallContext {
 
     let serviceUser: String
-    let serviceManager: String
+    let serviceBackend: String
     let productName: String
     let appName: String
     let appRepositoryURL: String
@@ -41,7 +41,7 @@ extension DeployerctlInstallContext {
         let paths = try context.requirePaths()
         self.init(
             serviceUser: context.serviceUser,
-            serviceManager: context.serviceManagerKind.rawValue,
+            serviceBackend: context.serviceBackend.rawValue,
             productName: context.productName,
             appName: context.appName,
             appRepositoryURL: context.appRepositoryURL,
@@ -88,7 +88,7 @@ extension DeployerctlInstallContext {
 
         self.init(
             serviceUser: serviceUser,
-            serviceManager: config.serviceManager.rawValue,
+            serviceBackend: config.serviceBackend.rawValue,
             productName: productName,
             appName: appName,
             appRepositoryURL: Self.first(metadata["APP_REPO_URL"], config.target.repositoryURL),

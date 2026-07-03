@@ -6,7 +6,7 @@ final class UpdateContext {
     var serviceUser = ""
     var serviceUserUID: Int?
 
-    var serviceManagerKind = ServiceManagerKind.systemd
+    var serviceBackend = ServiceBackend.systemd
     var deployerBranch = ""
 
     let stagedBinaryURL: URL

@@ -15,7 +15,7 @@ struct StopServiceStep: UpdateStep {
         console.print("Stopping service '\(context.serviceName)'.")
         
         let config = try Configuration.load()
-        let manager = try config.serviceManager.makeManager(serviceUser: context.managerServiceUser)
+        let manager = try config.serviceBackend.makeManager(serviceUser: context.managerServiceUser)
         
         let wasRunning = await manager.isRunning(product: context.serviceName)
         if wasRunning { try await manager.stop(product: context.serviceName) }

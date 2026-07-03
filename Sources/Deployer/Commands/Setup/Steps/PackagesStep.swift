@@ -40,7 +40,7 @@ struct PackagesStep: SetupStep {
             "openssh-client"
         ]
 
-        if context.serviceManagerKind == .supervisor {
+        if context.serviceBackend == .supervisor {
             packages.append("supervisor")
         }
 

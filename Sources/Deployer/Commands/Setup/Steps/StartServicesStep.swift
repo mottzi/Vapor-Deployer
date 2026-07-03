@@ -10,7 +10,7 @@ struct StartServicesStep: SetupStep {
 
     func run() async throws {
 
-        let configurator = context.serviceManagerKind.makeConfigurator(shell: shell, paths: paths)
+        let configurator = context.serviceBackend.makeConfigurator(shell: shell, paths: paths)
         try await configurator.enableAndStart(["deployer", context.productName])
 
         console.print("Services enabled and started.")

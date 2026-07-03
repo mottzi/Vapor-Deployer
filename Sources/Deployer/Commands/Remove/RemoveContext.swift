@@ -7,7 +7,7 @@ final class RemoveContext: SystemContext {
     var serviceUserUID: Int?
     var productName = ""
     var appName = ""
-    var serviceManagerKind = ServiceManagerKind.systemd
+    var serviceBackend = ServiceBackend.systemd
     var certName = ""
 
     var paths: SystemPaths?
