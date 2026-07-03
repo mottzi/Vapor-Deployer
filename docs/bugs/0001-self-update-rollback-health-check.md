@@ -2,7 +2,7 @@
 
 ## Status
 
-Open...
+Resolved
 
 ## Summary
 
@@ -30,3 +30,9 @@ The post-start verification is too shallow for self-updates. "The service reache
 - Prefer checking the local control endpoint after startup, since it proves the HTTP server, route registration, and control token path are alive.
 - If post-start health fails, trigger the existing rollback path so the previous binary/assets/version marker are restored and restarted.
 - Keep CLI recovery behavior: if the server is unreachable before an update starts, `deployer update` should still be allowed to proceed.
+
+## Resolution
+
+`StartServiceStep` now keeps the existing service-manager startup check, then verifies the newly started deployer process can answer the authenticated local `/control/state` route through a short settling window. Any valid control state is accepted as post-start liveness, including `updating`, because the update child may still hold the update lock while the new server is being verified.
+
+If the service exits, the control endpoint remains unreachable/unhealthy, or it does not stay healthy long enough, `StartServiceStep` throws and the existing rollback path restores the previous deployer binary, assets, and version marker.

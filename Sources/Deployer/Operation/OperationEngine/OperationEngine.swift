@@ -19,52 +19,7 @@ struct OperationEngine: Sendable {
         self.origin = origin
         self.onStatusChange = onStatusChange
     }
-
-}
-
-extension OperationEngine {
-
-    /// The specific user-initiated deployment, compilation, or target cleanup command.
-    enum Action: Sendable {
-        
-        case deploy
-        case automaticDeploy
-        case build
-        case runSavedBinary
-        case test
-        case delete
-        case removeBinary
-
-        var kind: Operation.Kind {
-            switch self {
-                case .deploy, .automaticDeploy: .deploy
-                case .build: .build
-                case .runSavedBinary: .run
-                case .test: .test
-                case .delete: .delete
-                case .removeBinary: .removeBinary
-            }
-        }
-        
-    }
-
-    /// Rules determining whether target-specific test suites must be executed during operation pipelines.
-    enum TestPolicy: Sendable {
-        case configured
-        case forceEnabled
-        case forceDisabled
-    }
-
-    /// Configuration settings tailoring test execution behavior and output routing for an engine run.
-    struct Options: Sendable {
-        var testPolicy: TestPolicy = .configured
-        var consoleSink: OperationOutputConsoleSink?
-    }
-
-}
-
-extension OperationEngine {
-
+    
     /// Runs one operation while the caller retains the cross-process operation lock.
     func run(action: Action, deployment: Deployment, options: Options = Options()) async throws {
 
@@ -95,6 +50,47 @@ extension OperationEngine {
             await session.cleanupIfServerOrigin()
             throw error
         }
+    }
+
+}
+
+extension OperationEngine {
+
+    /// The specific user-initiated deployment, compilation, or target cleanup command.
+    enum Action {
+        
+        case deploy
+        case automaticDeploy
+        case build
+        case runSavedBinary
+        case test
+        case delete
+        case removeBinary
+
+        var kind: Operation.Kind {
+            switch self {
+                case .deploy, .automaticDeploy: .deploy
+                case .build: .build
+                case .runSavedBinary: .run
+                case .test: .test
+                case .delete: .delete
+                case .removeBinary: .removeBinary
+            }
+        }
+        
+    }
+
+    /// Rules determining whether target-specific test suites must be executed during operation pipelines.
+    enum TestPolicy {
+        case configured
+        case forceEnabled
+        case forceDisabled
+    }
+
+    /// Configuration settings tailoring test execution behavior and output routing for an engine run.
+    struct Options {
+        var testPolicy: TestPolicy = .configured
+        var consoleSink: OperationOutputConsoleSink?
     }
 
 }

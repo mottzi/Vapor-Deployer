@@ -1,7 +1,10 @@
-import Foundation
+import Vapor
 
 /// Shared mutable state for one update run, holding the identity, paths, and metadata needed to update an installation.
 final class UpdateContext {
+
+    let application: Application
+    let installDirectory: URL
 
     var serviceUser = ""
     var serviceUserUID: Int?
@@ -31,7 +34,9 @@ final class UpdateContext {
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    init(installDirectory: URL, executableName: String, serviceName: String) {
+    init(application: Application, installDirectory: URL, executableName: String, serviceName: String) {
+        self.application = application
+        self.installDirectory = installDirectory
         self.stagedBinaryURL = installDirectory.appendingPathComponent("\(executableName).new")
         self.backupBinaryURL = installDirectory.appendingPathComponent("\(executableName).old")
         self.versionFileURL = installDirectory.appendingPathComponent(".version")

@@ -45,6 +45,7 @@ struct UpdateCommand: AsyncCommand {
         defer { updateLock.release() }
 
         let updateContext = UpdateContext(
+            application: context.application,
             installDirectory: installDirectory,
             executableName: executableName,
             serviceName: "deployer"
