@@ -32,4 +32,29 @@ extension Deployment {
             .first()
     }
 
+    func isSuperseded(on database: Database) async throws -> Bool {
+
+        guard let startedAt = self.startedAt else { return false }
+
+        if let currentDeployment = try await Deployment.getCurrent(named: self.product, on: database),
+           let currentStartedAt = currentDeployment.startedAt,
+           currentStartedAt >= startedAt {
+
+            return true
+        }
+
+        let isSuperseded = try await Deployment.query(on: database)
+            .filter(\.$product, .equal, self.product)
+            .filter(\.$startedAt, .greaterThan, startedAt)
+            .group(.or) {
+                $0
+                    .filter(\.$status, .equal, .built)
+                    .filter(\.$status, .equal, .running)
+            }
+            .first() != nil
+
+        return isSuperseded
+    }
+
 }
+

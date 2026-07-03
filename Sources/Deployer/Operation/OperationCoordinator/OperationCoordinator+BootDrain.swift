@@ -18,33 +18,8 @@ extension OperationCoordinator {
             .sort(\.$startedAt, .descending)
             .first()
 
-        guard let candidate, try await !isSuperseded(candidate) else { return nil }
+        guard let candidate, try await !candidate.isSuperseded(on: app.db) else { return nil }
         return candidate
-    }
-
-    /// Returns true if a newer successful deployment already ran, making this candidate stale.
-    private func isSuperseded(_ deployment: Deployment) async throws -> Bool {
-
-        guard let startedAt = deployment.startedAt else { return false }
-
-        if let currentDeployment = try await Deployment.getCurrent(named: deployment.product, on: app.db),
-           let currentStartedAt = currentDeployment.startedAt,
-           currentStartedAt >= startedAt {
-
-            return true
-        }
-
-        let isSuperseded = try await Deployment.query(on: app.db)
-            .filter(\.$product, .equal, deployment.product)
-            .filter(\.$startedAt, .greaterThan, startedAt)
-            .group(.or) {
-                $0
-                    .filter(\.$status, .equal, .built)
-                    .filter(\.$status, .equal, .running)
-            }
-            .first() != nil
-
-        return isSuperseded
     }
 
 }

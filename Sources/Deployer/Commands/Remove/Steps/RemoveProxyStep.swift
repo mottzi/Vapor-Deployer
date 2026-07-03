@@ -30,68 +30,66 @@ struct RemoveProxyStep: RemoveStep {
 
 extension RemoveProxyStep {
 
-    private func removeNginxSiteEnabled() -> Bool {
+    private func removeManagedPath(
+        _ path: String?,
+        requiredPrefix: String,
+        outsidePrefixWarning: (String) -> String,
+        removedMessage: (String) -> String,
+        remove: (String) throws -> Void
+    ) -> Bool {
 
-        guard let path = context.nginxSiteEnabled, !path.isEmpty else { return false }
+        guard let path, !path.isEmpty else { return false }
 
-        guard path.hasPrefix("/etc/nginx/sites-enabled/") else {
-            console.warning("Skipping Nginx site entry outside /etc/nginx/sites-enabled: \(path)")
+        guard path.hasPrefix(requiredPrefix) else {
+            console.warning(outsidePrefixWarning(path))
             return false
         }
 
         guard FileManager.default.fileExists(atPath: path) else { return false }
 
-        try? SystemFileSystem.removeIfPresent(path)
-        console.print("Removed Nginx site entry: \(path)")
+        try? remove(path)
+        console.print(removedMessage(path))
         return true
+    }
+
+    private func removeNginxSiteEnabled() -> Bool {
+        removeManagedPath(
+            context.nginxSiteEnabled,
+            requiredPrefix: "/etc/nginx/sites-enabled/",
+            outsidePrefixWarning: { "Skipping Nginx site entry outside /etc/nginx/sites-enabled: \($0)" },
+            removedMessage: { "Removed Nginx site entry: \($0)" },
+            remove: SystemFileSystem.removeIfPresent
+        )
     }
 
     private func removeNginxSiteAvailable() -> Bool {
-
-        guard let path = context.nginxSiteAvailable, !path.isEmpty else { return false }
-
-        guard path.hasPrefix("/etc/nginx/sites-available/") else {
-            console.warning("Skipping Nginx site file outside /etc/nginx/sites-available: \(path)")
-            return false
-        }
-
-        guard FileManager.default.fileExists(atPath: path) else { return false }
-
-        try? SystemFileSystem.removeIfPresent(path)
-        console.print("Removed Nginx site file: \(path)")
-        return true
+        removeManagedPath(
+            context.nginxSiteAvailable,
+            requiredPrefix: "/etc/nginx/sites-available/",
+            outsidePrefixWarning: { "Skipping Nginx site file outside /etc/nginx/sites-available: \($0)" },
+            removedMessage: { "Removed Nginx site file: \($0)" },
+            remove: SystemFileSystem.removeIfPresent
+        )
     }
 
     private func removeCertbotRenewHook() -> Bool {
-
-        guard let path = context.certbotRenewHook, !path.isEmpty else { return false }
-
-        guard path.hasPrefix("/etc/letsencrypt/renewal-hooks/deploy/") else {
-            console.warning("Skipping renewal hook outside /etc/letsencrypt/renewal-hooks/deploy: \(path)")
-            return false
-        }
-
-        guard FileManager.default.fileExists(atPath: path) else { return false }
-
-        try? SystemFileSystem.removeIfPresent(path)
-        console.print("Removed Certbot renewal hook: \(path)")
-        return true
+        removeManagedPath(
+            context.certbotRenewHook,
+            requiredPrefix: "/etc/letsencrypt/renewal-hooks/deploy/",
+            outsidePrefixWarning: { "Skipping renewal hook outside /etc/letsencrypt/renewal-hooks/deploy: \($0)" },
+            removedMessage: { "Removed Certbot renewal hook: \($0)" },
+            remove: SystemFileSystem.removeIfPresent
+        )
     }
 
     private func removeAcmeWebroot() -> Bool {
-
-        guard let path = context.acmeWebroot, !path.isEmpty else { return false }
-
-        guard path.hasPrefix("/var/www/certbot/") else {
-            console.warning("Skipping ACME webroot cleanup because path is outside /var/www/certbot: \(path)")
-            return false
-        }
-
-        guard FileManager.default.fileExists(atPath: path) else { return false }
-
-        try? FileManager.default.removeItem(atPath: path)
-        console.print("Removed ACME webroot: \(path)")
-        return true
+        removeManagedPath(
+            context.acmeWebroot,
+            requiredPrefix: "/var/www/certbot/",
+            outsidePrefixWarning: { "Skipping ACME webroot cleanup because path is outside /var/www/certbot: \($0)" },
+            removedMessage: { "Removed ACME webroot: \($0)" },
+            remove: { try FileManager.default.removeItem(atPath: $0) }
+        )
     }
 
     private func reloadNginxIfPresent() async {
