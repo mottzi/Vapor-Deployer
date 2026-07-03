@@ -51,7 +51,7 @@ extension Shell {
     
 }
 
-struct GitCheckout: Sendable {
+struct GitCheckout {
     
     let commitID: String
     let commitMessage: String

@@ -4,9 +4,22 @@ import Mist
 
 extension Deployer {
     
-    func usePanel(config: Configuration, row: DeploymentRow, targetConfig: TargetConfig, deployerConfig: DeployerConfig, deployerStatus: DeployerStatus) {
-
-        let panel = Panel(config: config, row: row, targetConfig: targetConfig, deployerConfig: deployerConfig, deployerStatus: deployerStatus)
+    func usePanel(
+        config: Configuration,
+        row: DeploymentRow,
+        targetConfig: TargetConfig,
+        deployerConfig: DeployerConfig,
+        deployerStatus: DeployerStatus
+    ) {
+        
+        let panel = Panel(
+            config: config,
+            row: row,
+            targetConfig: targetConfig,
+            deployerConfig: deployerConfig,
+            deployerStatus: deployerStatus
+        )
+        
         let router = app.grouped(config.panelRoute.pathComponents).grouped(app.sessions.middleware)
         
         panel.registerAssetRoutes(on: app.grouped(config.panelRoute.pathComponents))
@@ -35,8 +48,13 @@ struct Panel {
     let loginPath: String
     let authenticator: PanelAuthenticator
 
-    init(config: Configuration, row: DeploymentRow, targetConfig: TargetConfig, deployerConfig: DeployerConfig, deployerStatus: DeployerStatus) {
-
+    init(
+        config: Configuration,
+        row: DeploymentRow,
+        targetConfig: TargetConfig,
+        deployerConfig: DeployerConfig,
+        deployerStatus: DeployerStatus
+    ) {
         self.panelPath = config.panelRoute.displayPath
         self.loginPath = panelPath == "/" ? "/login" : panelPath + "/login"
         self.authenticator = PanelAuthenticator(path: loginPath)

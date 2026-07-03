@@ -8,7 +8,15 @@ extension Panel {
 
         let store = EnvironmentStore(envFilePath: envFilePath)
         let entries = try store.load()
-        let rows = entries.map { SettingsContext.Row(key: $0.key, value: $0.value, error: nil) }
+        
+        let rows = entries.map() {
+            SettingsContext.Row(
+                key: $0.key,
+                value: $0.value,
+                error: nil
+            )
+        }
+        
         let context = SettingsContext(
             deployer: settingsDeployerContext,
             target: settingsTargetContext,
@@ -16,6 +24,7 @@ extension Panel {
             variableCount: rows.count,
             globalError: nil
         )
+        
         return try await request.view.render("Deployer/DeployerSettings", context)
     }
 
@@ -25,21 +34,26 @@ extension Panel {
     func handleSettingsSave(request: Request) async throws -> Response {
 
         let form: SettingsForm
+        
         do {
             form = try request.content.decode(SettingsForm.self)
         } catch {
             request.logger.warning("Failed to decode settings form: \(error)")
+            
             let view = try await renderSettingsWithErrors(
                 request: request,
                 entries: [],
                 issues: [],
                 globalError: "Could not read form data. Please reload and try again."
             )
+            
             return try await view.encodeResponse(for: request)
         }
+        
         let entries = form.entries
 
         let store = EnvironmentStore(envFilePath: envFilePath)
+        
         do {
             try store.save(entries.map { EnvironmentStore.Entry(key: $0.key, value: $0.value) }, logger: request.logger)
         } catch let EnvironmentStore.SaveError.validation(issues) {
@@ -47,17 +61,20 @@ extension Panel {
             return try await view.encodeResponse(for: request)
         } catch let EnvironmentStore.SaveError.writeFailed(path, underlying) {
             request.logger.error("Failed to write env file at \(path): \(underlying)")
+            
             let view = try await renderSettingsWithErrors(
                 request: request,
                 entries: entries,
                 issues: [],
                 globalError: "Could not write \(path). Check the deployer log."
             )
+            
             return try await view.encodeResponse(for: request)
         }
 
         let defaultTarget = panelPath == "/" ? "/settings" : panelPath + "/settings"
         let target = form.next.flatMap { $0.isEmpty ? nil : $0 } ?? defaultTarget
+        
         return request.redirect(to: target)
     }
 
@@ -86,6 +103,7 @@ private extension Panel {
         var rowErrors: [Int: String] = [:]
         var globalMessages: [String] = []
         if let globalError { globalMessages.append(globalError) }
+        
         for issue in issues {
             if let rowIndex = issue.rowIndex {
                 rowErrors[rowIndex] = [rowErrors[rowIndex], issue.message].compactMap { $0 }.joined(separator: " ")
@@ -94,8 +112,12 @@ private extension Panel {
             }
         }
 
-        let rows = entries.enumerated().map { index, entry in
-            SettingsContext.Row(key: entry.key, value: entry.value, error: rowErrors[index])
+        let rows = entries.enumerated().map() { index, entry in
+            SettingsContext.Row(
+                key: entry.key,
+                value: entry.value,
+                error: rowErrors[index]
+            )
         }
 
         let context = SettingsContext(
@@ -105,6 +127,7 @@ private extension Panel {
             variableCount: rows.count,
             globalError: globalMessages.isEmpty ? nil : globalMessages.joined(separator: " ")
         )
+        
         return try await request.view.render("Deployer/DeployerSettings", context)
     }
 
@@ -162,19 +185,28 @@ extension Panel {
         let value: [String]?
         let next: String?
 
-        struct Entry { let key: String; let value: String }
+        struct Entry {
+            let key: String
+            let value: String
+        }
 
         var entries: [Entry] {
+            
             let keys = key ?? []
             let values = value ?? []
             let count = max(keys.count, values.count)
+            
             var result: [Entry] = []
+            
             for index in 0..<count {
                 let k = (index < keys.count ? keys[index] : "").trimmingCharacters(in: .whitespaces)
                 let v = index < values.count ? values[index] : ""
+                
                 if k.isEmpty && v.isEmpty { continue }
+                
                 result.append(Entry(key: k, value: v))
             }
+            
             return result
         }
 
