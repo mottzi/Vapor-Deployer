@@ -5,7 +5,7 @@ struct TargetAppLogs: ManualComponent {
 
     static let componentName = "TargetAppLogs"
     static let streamName = "app-log"
-    static let retainedLineCount = 1000
+    static let retainedLineCount = 2000
 
     let name = TargetAppLogs.componentName
     let state = LiveState(of: true)

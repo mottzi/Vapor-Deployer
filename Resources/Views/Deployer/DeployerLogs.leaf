@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="#(deployer.panelRoute)/deployer.ico">
   <link rel="stylesheet" href="#(deployer.panelRoute)/deployer.css">
 </head>
-<body>
+<body class="dp-logs-page">
 
   <div class="dp-shell">
     <div class="dp-page">

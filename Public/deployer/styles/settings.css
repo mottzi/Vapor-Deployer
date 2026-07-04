@@ -88,19 +88,44 @@
 }
 
 /* ── Target app logs page ── */
+.dp-logs-page .dp-shell {
+    min-height: 100vh;
+}
+
+.dp-logs-page .dp-page,
+.dp-logs-page .dp-main,
+.dp-logs-page .dp-target-section,
+.dp-logs-page .dp-workspace,
+.dp-logs-page .dp-target-panel {
+    flex: 1;
+    min-height: 0;
+}
+
+.dp-logs-page .dp-target-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .dp-app-log-body {
+    flex: 1;
+    min-height: 0;
     padding: 0;
     gap: 0;
 }
 
 .dp-app-log-stream {
+    flex: 1;
+    display: flex;
     width: 100%;
     min-width: 0;
+    min-height: 0;
 }
 
 .dp-app-log-console {
-    min-height: min(58vh, 620px);
-    max-height: min(58vh, 620px);
+    flex: 1;
+    min-height: 0;
+    max-height: none;
     padding: 16px 20px;
 }
 
