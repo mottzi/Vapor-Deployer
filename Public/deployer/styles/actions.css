@@ -39,7 +39,7 @@
 
 @media (hover: hover) and (pointer: fine) {
     .dp-action-icon:hover {
-        background: var(--bg-hover);
+        background: var(--surface-3);
         color: var(--text);
     }
 
@@ -65,7 +65,7 @@
 }
 
 .dp-action-icon:active {
-    background: var(--bg-hover);
+    background: var(--surface-3);
     color: var(--text);
 }
 
@@ -107,19 +107,19 @@
 }
 
 .dp-dropdown-trigger:has(+ .dp-dropdown-menu:popover-open) {
-    background: var(--bg-hover);
+    background: var(--surface-3);
     color: var(--text);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .dp-dropdown-trigger:hover {
-        background: var(--bg-hover);
+        background: var(--surface-3);
         color: var(--text);
     }
 }
 
 .dp-dropdown-trigger:active {
-    background: var(--bg-hover);
+    background: var(--surface-3);
     color: var(--text);
 }
 
