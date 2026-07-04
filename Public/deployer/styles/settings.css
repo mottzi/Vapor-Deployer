@@ -143,6 +143,19 @@
     background: var(--c-running-bg);
 }
 
+.dp-log-wrap-btn--active,
+.dp-target-panel:not(:has(.dp-output-pre--nowrap)) .dp-log-wrap-btn {
+    color: var(--c-running);
+    border-color: var(--c-running-border);
+    background: var(--c-running-bg);
+}
+
+.dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn {
+    color: var(--btn-icon);
+    border-color: var(--border);
+    background: transparent;
+}
+
 /* ── Notice banners (saved / error) ── */
 .dp-settings-notice {
     display: flex;

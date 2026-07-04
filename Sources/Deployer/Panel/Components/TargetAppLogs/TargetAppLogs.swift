@@ -1,7 +1,8 @@
+import Vapor
 import Mist
 import Elementary
 
-struct TargetAppLogs: ManualComponent {
+struct TargetAppLogs: ClientStateManualComponent {
 
     static let componentName = "TargetAppLogs"
     static let streamName = "app-log"
@@ -9,21 +10,36 @@ struct TargetAppLogs: ManualComponent {
 
     let name = TargetAppLogs.componentName
     let state = LiveState(of: true)
-    let actions: [Action] = []
+    let defaultState: ComponentState = ["wrapDisabled": .bool(false)]
+    let actions: [any Action] = [ToggleWrapAction()]
 
     func body(state: Bool) -> some HTML {
-        div(
+        body(state: state, clientState: defaultState)
+    }
+
+    func body(state: Bool, clientState: ComponentState) -> some HTML {
+        let wrapDisabled = clientState["wrapDisabled"]?.bool ?? false
+        let consoleClass = wrapDisabled
+            ? "dp-output-pre dp-output-pre--live dp-output-pre--nowrap dp-app-log-console"
+            : "dp-output-pre dp-output-pre--live dp-app-log-console"
+
+        return div(
             .class("dp-app-log-stream"),
             .mistComponent(name),
             .mistSSR(true)
         ) {
             pre(
                 .id("dp-app-log-console"),
-                .class("dp-output-pre dp-output-pre--live dp-app-log-console"),
+                .class(consoleClass),
                 .mistStream(Self.streamName),
                 .custom(name: "data-mist-stream-limit", value: "\(Self.retainedLineCount)")
             ) {}
         }
+    }
+
+    func renderClientState(app: Application, state componentState: ComponentState) async -> RenderResult {
+        let current = await state.current
+        return .rendered(body(state: current, clientState: componentState).render())
     }
 
 }

@@ -77,22 +77,19 @@
                     </svg>
                     Copy
                   </button>
+                  <button type="button" class="dp-update-btn dp-log-wrap-btn dp-log-wrap-btn--active" mist-action="toggleWrap" mist-actions-for="#(componentName)" title="Toggle line wrapping">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="3 7 15 7 15 11 12 11"/>
+                      <path d="M12 11l3 3 3-3"/>
+                      <line x1="3" y1="17" x2="21" y2="17"/>
+                    </svg>
+                    Wrap
+                  </button>
                 </div>
               </div>
 
               <div class="dp-settings-body dp-app-log-body">
-                <div
-                  class="dp-app-log-stream"
-                  mist-component="#(componentName)"
-                  mist-ssr="true"
-                >
-                  <pre
-                    id="dp-app-log-console"
-                    class="dp-output-pre dp-output-pre--live dp-app-log-console"
-                    mist-stream="#(streamName)"
-                    data-mist-stream-limit="#(retainedLineCount)"
-                  ></pre>
-                </div>
+                #unsafeHTML(targetAppLogsHTML)
               </div>
 
             </div>
