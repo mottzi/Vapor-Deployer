@@ -56,9 +56,9 @@ actor TargetAppLogTailer {
             Task { await self?.finish(terminatedProcess, expectedProcess: process) }
         }
 
-            self.process = process
-            self.outputPipe = outputPipe
-            self.errorPipe = errorPipe
+        self.process = process
+        self.outputPipe = outputPipe
+        self.errorPipe = errorPipe
 
         do {
             try process.run()

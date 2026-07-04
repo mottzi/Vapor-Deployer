@@ -1,5 +1,6 @@
 ## Unreleased
 
+- Add an authenticated target app Logs page that streams the configured app log through Mist with subscriber-driven tailing, bounded 2000-line retention, local Clear/Copy actions, and viewport-filling console layout.
 - Reorganize `deployerctl` and operation execution/event files into clearer feature folders, including the shared `OperationEngine` and `OperationEvent` output pipeline.
 - Add `deployerctl` deployment controls: list deployments by short SHA, deploy, build, run saved binaries, test, inspect output, delete rows, and remove saved binaries.
 - Share one deployment engine between the panel and CLI, with cross-process operation locking so panel and CLI actions cannot run concurrently.
