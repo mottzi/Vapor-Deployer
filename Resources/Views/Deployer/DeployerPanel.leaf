@@ -282,7 +282,7 @@
             'dp-state-badge--operation-updating'
           );
           badge.classList.add('dp-state-badge--stopped');
-          badge.textContent = 'Disconnected';
+          badge.textContent = 'Closed';
           badge.setAttribute('title', 'Connection lost');
           badge.setAttribute('aria-label', 'Connection lost');
         });
