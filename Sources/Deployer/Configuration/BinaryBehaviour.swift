@@ -25,15 +25,16 @@ extension BinaryBehaviour {
     /// A string representation of the policy used for setup and CLI interaction.
     var setupValue: String {
         switch self {
-        case .newest(let count): "newest:\(count)"
-        case .automatic(let mb): "automatic:\(mb)"
-        case .all: "all"
-        case .off: "off"
+            case .newest(let count): "newest:\(count)"
+            case .automatic(let mb): "automatic:\(mb)"
+            case .all: "all"
+            case .off: "off"
         }
     }
 
     /// Parses a raw string value into a binary retention behaviour.
     static func parse(_ rawValue: String) -> BinaryBehaviour? {
+        
         let value = rawValue.trimmed.lowercased()
         guard !value.isEmpty else { return nil }
 
@@ -45,30 +46,27 @@ extension BinaryBehaviour {
             .components(separatedBy: separators)
             .filter { !$0.isEmpty }
 
-        guard parts.count == 2, let amount = Int(parts[1]), amount > 0 else { return nil }
+        guard parts.count == 2 else { return nil }
+        guard let amount = Int(parts[1]), amount > 0 else { return nil }
 
         return switch parts[0] {
-        case "newest": .newest(count: amount)
-        case "automatic", "auto": .automatic(mb: amount)
-        default: nil
+            case "newest": .newest(count: amount)
+            case "automatic", "auto": .automatic(mb: amount)
+            default: nil
         }
     }
 
     /// Validates the behaviour's parameters, throwing an error if they are invalid.
     func validated(field: String) throws -> BinaryBehaviour {
+        
         switch self {
-        case .newest(let count):
-            guard count > 0 else {
+            case .newest(let count) where count <= 0:
                 throw Configuration.Error.invalidField(field, "newest count must be greater than 0")
-            }
-                
-        case .automatic(let mb):
-            guard mb > 0 else {
+                    
+            case .automatic(let mb) where mb <= 0:
                 throw Configuration.Error.invalidField(field, "automatic megabyte limit must be greater than 0")
-            }
-                
-        case .all, .off:
-            break
+                    
+            default: break
         }
 
         return self
