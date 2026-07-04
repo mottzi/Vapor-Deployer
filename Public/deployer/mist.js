@@ -967,6 +967,11 @@ class MistSocket {
 
         this.stopHeartbeat();
 
+        if (!this.isConnected()) {
+            this.forceReconnect();
+            return;
+        }
+
         this.pendingHeartbeat = true;
         this.socket.send(JSON.stringify({ ping: {} }));
 

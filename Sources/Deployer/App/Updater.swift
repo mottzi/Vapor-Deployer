@@ -42,6 +42,7 @@ actor Updater {
 
     /// Mirrors the latest observation from the polling Task.
     private var lockHeldObserved: Bool = false
+    private var operationLockHeldObserved: Bool = false
 
     static let pollInterval: Duration = .seconds(2)
     static let stickyBitTimeout: TimeInterval = 5
@@ -109,8 +110,11 @@ actor Updater {
     private func tick() async {
 
         let nowHeld = UpdateLock.isHeld()
-        let wasHeld = lockHeldObserved
         lockHeldObserved = nowHeld
+
+        let operationLockHeld = OperationLock.isHeld()
+        let operationLockWasHeld = operationLockHeldObserved
+        operationLockHeldObserved = operationLockHeld
 
         if stickyBit {
             if nowHeld {
@@ -131,12 +135,15 @@ actor Updater {
             }
         }
 
-        await broadcastPhaseIfChanged(wasHeld: wasHeld)
+        await broadcastPhaseIfChanged()
+        if operationLockWasHeld && !operationLockHeld {
+            await refreshProductRows()
+        }
     }
 
     /// Reconciles `DeployerPhase` with derived state. Phase resolution: updating wins over deploying,
     /// matching `Panel.makePanelContext`'s priority. LiveState.set is a no-op if the value hasn't changed.
-    private func broadcastPhaseIfChanged(wasHeld: Bool) async {
+    private func broadcastPhaseIfChanged() async {
         
         let operationIsDeploying = await app.deployer.operations.isDeploying
         let resolved = DeployerPhase.resolve(
@@ -145,6 +152,22 @@ actor Updater {
         )
         
         await deployerPhase.set(resolved)
+    }
+
+    /// Re-renders deployment rows after cross-process operation lock state changes.
+    private func refreshProductRows() async {
+        do {
+            let deployments = try await Deployment.query(on: app.db)
+                .filter(\.$product, .equal, config.target.name)
+                .all()
+
+            for deployment in deployments {
+                guard let id = deployment.id else { continue }
+                await app.mist.models.sync(Deployment.self, id: id)
+            }
+        } catch {
+            app.logger.error("Failed to refresh deployment rows after operation lock release: \(error.localizedDescription)")
+        }
     }
 
     /// Launches the update child via the manager-appropriate cgroup-escape primitive.
