@@ -89,7 +89,10 @@
 
 /* ── Target app logs page ── */
 .dp-logs-page .dp-shell {
-    min-height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding-bottom: 32px;
+    overflow: hidden;
 }
 
 .dp-logs-page .dp-page,
@@ -99,6 +102,7 @@
 .dp-logs-page .dp-target-panel {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
 }
 
 .dp-logs-page .dp-target-panel {
