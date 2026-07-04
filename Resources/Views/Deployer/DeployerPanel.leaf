@@ -273,6 +273,20 @@
           e.stopPropagation();
         }
       }, true);
+
+      document.addEventListener('mist:close', function () {
+        document.querySelectorAll('[mist-component="DeployerStatus"]').forEach(function (badge) {
+          badge.classList.remove(
+            'dp-state-badge--operation-unlocked',
+            'dp-state-badge--operation-locked',
+            'dp-state-badge--operation-updating'
+          );
+          badge.classList.add('dp-state-badge--stopped');
+          badge.textContent = 'Disconnected';
+          badge.setAttribute('title', 'Connection lost');
+          badge.setAttribute('aria-label', 'Connection lost');
+        });
+      });
     })();
 
     function copyLogToClipboard(btn) {
