@@ -12,7 +12,18 @@ struct TargetAppLogs: ManualComponent {
     let actions: [Action] = []
 
     func body(state: Bool) -> some HTML {
-        div(.mistComponent(name), .mistSSR(true)) {}
+        div(
+            .class("dp-app-log-stream"),
+            .mistComponent(name),
+            .mistSSR(true)
+        ) {
+            pre(
+                .id("dp-app-log-console"),
+                .class("dp-output-pre dp-output-pre--live dp-app-log-console"),
+                .mistStream(Self.streamName),
+                .custom(name: "data-mist-stream-limit", value: "\(Self.retainedLineCount)")
+            ) {}
+        }
     }
 
 }
