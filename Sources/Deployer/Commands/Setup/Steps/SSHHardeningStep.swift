@@ -9,6 +9,7 @@ struct SSHHardeningStep: SetupStep {
 
     let title = "SSH hardening (optional)"
     private let sshdConfigPath = "/etc/ssh/sshd_config"
+    private let logger = Logger(label: "codes.mottzi.deployer.setup")
 
     func run() async throws {
 
@@ -110,6 +111,8 @@ extension SSHHardeningStep {
 
     private func applyHardening(to contents: String) async throws {
 
+        logger.warning("Applying SSH hardening rules...")
+        
         let backupPath = "\(sshdConfigPath).deployer-bak"
 
         try await Shell.runThrowing("cp", ["-a", sshdConfigPath, backupPath])

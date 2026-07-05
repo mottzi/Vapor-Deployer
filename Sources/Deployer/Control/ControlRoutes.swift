@@ -45,8 +45,16 @@ struct ControlBearerMiddleware: AsyncMiddleware {
 
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
 
-        guard let header = request.headers.bearerAuthorization?.token else { throw Abort(.unauthorized) }
-        guard constantTimeEquals(header, expected) else { throw Abort(.unauthorized) }
+        guard let header = request.headers.bearerAuthorization?.token else {
+            request.logger.warning("Unauthorized access attempt to control endpoint from \(request.remoteAddress?.description ?? "unknown IP") (missing bearer token)")
+            throw Abort(.unauthorized)
+        }
+        
+        guard constantTimeEquals(header, expected) else {
+            request.logger.warning("Unauthorized access attempt to control endpoint from \(request.remoteAddress?.description ?? "unknown IP") (invalid token)")
+            throw Abort(.unauthorized)
+        }
+        
         return try await next.respond(to: request)
     }
 

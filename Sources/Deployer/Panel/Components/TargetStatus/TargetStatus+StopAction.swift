@@ -25,6 +25,8 @@ extension TargetStatus {
                 let manager = app.deployer.serviceManager
                 await broadcaster.setBadge(StatusState(.stopping))
                 async let minHold: Void = Task.sleep(for: .seconds(1))
+                app.logger.info("Stop action triggered via Panel for service: \(productName)")
+                
                 try await manager.stop(product: productName)
                 try? await minHold
 

@@ -7,8 +7,11 @@ struct PackagesStep: SetupStep {
     let console: any Console
 
     let title = "Installing base packages"
+    private let logger = Logger(label: "codes.mottzi.deployer.setup")
 
     func run() async throws {
+        
+        logger.info("Identifying and installing required APT packages...")
         
         let gccMajor = await getGCCVersion()
         

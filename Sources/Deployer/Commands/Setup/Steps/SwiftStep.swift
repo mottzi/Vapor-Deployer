@@ -7,6 +7,7 @@ struct SwiftStep: SetupStep {
     let console: any Console
 
     let title = "Installing Swift via Swiftly"
+    private let logger = Logger(label: "codes.mottzi.deployer.setup")
 
     func run() async throws {
 
@@ -23,6 +24,8 @@ extension SwiftStep {
 
     private func installSwiftly() async throws {
 
+        logger.info("Installing Swiftly...")
+        
         let workdir = try await shell.runAsServiceUser("mktemp", ["-d"]).trimmed
         defer { try? FileManager.default.removeItem(atPath: workdir) }
 

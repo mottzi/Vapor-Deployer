@@ -25,10 +25,24 @@ struct GitHubWebhook {
         
         app.post(config.pusheventPath.pathComponents) { request async -> Response in
             
-            guard validateSignature(of: request) else { return denied }
-            guard validateEvent(of: request) else { return unsupportedEvent }
-            guard let pushEvent = request.pushEvent else { return invalidPayload }
-            guard pushEvent.deleted == false else { return ignoredDeletedPush }
+            guard validateSignature(of: request) else {
+                request.logger.warning("[\(config.name)] GitHub webhook signature verification failed from \(request.remoteAddress?.description ?? "unknown IP")")
+                return denied
+            }
+            guard validateEvent(of: request) else {
+                request.logger.warning("[\(config.name)] GitHub webhook event is unsupported (Event: \(request.headers.first(name: "X-GitHub-Event") ?? "none"))")
+                return unsupportedEvent
+            }
+            guard let pushEvent = request.pushEvent else {
+                request.logger.warning("[\(config.name)] GitHub webhook invalid push payload")
+                return invalidPayload
+            }
+            guard pushEvent.deleted == false else {
+                request.logger.info("[\(config.name)] Ignored deleted push event for branch '\(pushEvent.branch)'")
+                return ignoredDeletedPush
+            }
+            
+            request.logger.info("[\(config.name)] Accepted GitHub push event for branch '\(pushEvent.branch)' at commit \(pushEvent.commitID)")
             
             Task.detached { await onPush(pushEvent, config) }
             return accepted

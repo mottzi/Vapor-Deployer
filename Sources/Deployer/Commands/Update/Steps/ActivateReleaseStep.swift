@@ -7,11 +7,14 @@ struct ActivateReleaseStep: UpdateStep {
     let console: any Console
 
     let title = "Activating release"
+    private let logger = Logger(label: "codes.mottzi.deployer.update")
 
     func run() async throws {
 
         guard context.releaseVersion != context.currentVersion else { return }
 
+        logger.info("Activating new deployer release...")
+        
         try activateCandidateBinary()
         
         guard !context.isSourceInstall else { return }

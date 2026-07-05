@@ -1,5 +1,6 @@
 ## Unreleased
 
+- Add 27 high-value, non-spammy log statements across boot sequences, authentication audits, Panel UI actions, webhook execution, and setup/update CLI command steps, declaring loggers at the struct level as private properties to optimize performance and architecture.
 - Add Deployer daemon service logs to the web panel, exposing the deployer's own `deployer.log` file at `/logs/deployer` with a dedicated Logs button in the status bar, generalized page templates, and improved logging timestamps.
 - Add an authenticated target app Logs page that streams the configured app log through Mist with subscriber-driven tailing, bounded 2000-line retention, local Clear/Copy actions, a per-client Wrap toggle, and viewport-filling console layout.
 - Reorganize `deployerctl` and operation execution/event files into clearer feature folders, including the shared `OperationEngine` and `OperationEvent` output pipeline.

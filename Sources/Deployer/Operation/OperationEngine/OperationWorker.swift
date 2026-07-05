@@ -145,9 +145,13 @@ extension OperationWorker {
                             try fileManager.removeItem(atPath: deployPath)
                         }
                         try fileManager.moveItem(atPath: backupPath, toPath: deployPath)
+                        app.logger.error("replaceLiveBinary failed. Rollback successful: \(moveError.localizedDescription)")
                     } catch {
+                        app.logger.error("replaceLiveBinary failed. Rollback failed: \(error.localizedDescription). Original error: \(moveError.localizedDescription)")
                         throw Error.deploymentAndRollbackFailed(moveError.localizedDescription, error.localizedDescription)
                     }
+                } else {
+                    app.logger.error("replaceLiveBinary failed. No rollback possible: \(moveError.localizedDescription)")
                 }
 
                 throw Error.deploymentFailed(moveError.localizedDescription)

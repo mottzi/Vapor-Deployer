@@ -1,9 +1,11 @@
 import Foundation
+import Logging
 
 /// Shell facade for setup and remove steps; instance methods use SystemContext, static members provide lower-level commands.
 struct SystemShell {
     
     let context: any SystemContext
+    private static let logger = Logger(label: "codes.mottzi.deployer.system")
 
     /// Runs as the configured service user while enforcing `HOME` and `USER` so tool behavior matches non-root runtime expectations.
     @discardableResult
@@ -166,6 +168,8 @@ extension SystemShell {
 
         let busPath = "/run/user/\(uid)/bus"
         let start = ContinuousClock.now
+        
+        logger.info("Waiting for systemd user bus socket to become available...")
 
         while start.duration(to: ContinuousClock.now) < timeout {
             if FileManager.default.fileExists(atPath: busPath) { return }

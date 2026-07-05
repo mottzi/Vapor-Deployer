@@ -12,6 +12,8 @@ struct SetupCommand: AsyncCommand {
         try requireRoot()
         try requireUbuntu()
 
+        context.application.logger.info("Starting host provisioning...")
+        
         let setupContext = SetupContext()
 
         let stepTypes: [any SetupStep.Type] = [
@@ -57,7 +59,7 @@ struct SetupCommand: AsyncCommand {
             }
         } catch {
             do {
-                try await rollbackSetup(context: setupContext, console: context.console, originalError: error)
+                try await rollbackSetup(context: setupContext, console: context.console, app: context.application, originalError: error)
             } catch let rollbackError {
                 context.console.warning("Rollback also encountered an error: \(rollbackError.localizedDescription)")
             }
@@ -80,7 +82,8 @@ private extension SetupCommand {
         console.newLine()
     }
 
-    func rollbackSetup(context: SetupContext, console: any Console, originalError: Swift.Error) async throws {
+    func rollbackSetup(context: SetupContext, console: any Console, app: Application, originalError: Swift.Error) async throws {
+        app.logger.warning("Rollback initiated due to setup failure: \(originalError.localizedDescription)")
         guard let paths = context.paths else { return }
         let backupPath = paths.installDirectory + ".bak"
         

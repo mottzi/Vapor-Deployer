@@ -17,6 +17,8 @@ struct UpdateCommand: AsyncCommand {
 
     private func runPipeline(context: CommandContext) async throws {
 
+        context.application.logger.info("Running self-update pipeline...")
+        
         let executableURL = try Configuration.getExecutableURL()
         let installDirectory = executableURL.deletingLastPathComponent()
         let executableName = executableURL.lastPathComponent
@@ -138,6 +140,9 @@ extension UpdateCommand {
     
     /// Restores the last known-good binary and requires the service manager to recover before declaring rollback success.
     private func rollback(context: UpdateContext, originalError: Swift.Error) async throws {
+        
+        context.application.logger.warning("Rollback initiated due to update failure: \(originalError.localizedDescription)")
+        
         let fileManager = FileManager.default
         let config = try Configuration.load()
         let manager = try config.serviceBackend.makeManager(serviceUser: context.managerServiceUser)

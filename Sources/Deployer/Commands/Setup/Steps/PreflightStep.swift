@@ -6,6 +6,7 @@ struct PreflightStep: SetupStep {
     let console: any Console
 
     let title = "Preflight checks"
+    private let logger = Logger(label: "codes.mottzi.deployer.setup")
 
     func run() async throws {
         
@@ -41,13 +42,17 @@ extension PreflightStep {
         
         if let previous = context.previousBuildFromSource, previous != context.buildFromSource {
             console.warning("Switching deployer installation mode. Backing up current installation...")
+            logger.warning("Changing deployment mode; backing up current directory...")
+            
             let backupPath = paths.installDirectory + ".bak"
             if FileManager.default.fileExists(atPath: backupPath) {
                 try? FileManager.default.removeItem(atPath: backupPath)
             }
+            
             if FileManager.default.fileExists(atPath: paths.installDirectory) {
                 try FileManager.default.moveItem(atPath: paths.installDirectory, toPath: backupPath)
             }
+            
             return
         }
         

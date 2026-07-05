@@ -7,6 +7,7 @@ struct RemoveUserStep: RemoveStep {
     let console: any Console
 
     let title = "Removing service user"
+    private let logger = Logger(label: "codes.mottzi.deployer.remove")
 
     func run() async throws {
 
@@ -48,6 +49,7 @@ extension RemoveUserStep {
         for _ in 0..<10 {
             if await Shell.run("userdel", ["-r", context.serviceUser]).exitCode == 0 {
                 console.print("Removed user '\(context.serviceUser)'.")
+                logger.info("Successfully deleted system user account: \(context.serviceUser)")
                 return
             }
 
@@ -55,6 +57,7 @@ extension RemoveUserStep {
 
             await Shell.run("loginctl", ["terminate-user", context.serviceUser])
             await Shell.run("pkill", ["-KILL", "-u", context.serviceUser])
+            
             try? await Task.sleep(for: .seconds(1))
         }
 
@@ -73,6 +76,8 @@ extension RemoveUserStep {
                 result.output.trimmed
             )
         }
+        
+        logger.info("Successfully deleted system user account: \(context.serviceUser)")
     }
 
 }

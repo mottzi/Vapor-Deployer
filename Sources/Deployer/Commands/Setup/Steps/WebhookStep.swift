@@ -7,6 +7,7 @@ struct WebhookStep: SetupStep {
     let console: any Console
 
     let title = "Creating GitHub webhook"
+    private let logger = Logger(label: "codes.mottzi.deployer.setup")
 
     func run() async throws {
         guard !context.githubToken.isEmpty else {
@@ -33,6 +34,8 @@ extension WebhookStep {
 
     private func upsertWebhook(existingID: Any?) async throws {
 
+        logger.info("Registering GitHub webhook for repository: \(context.githubOwner)/\(context.githubRepo)")
+        
         let data = try buildWebhookPayload()
 
         if let existingID {

@@ -7,6 +7,7 @@ struct TLSStep: SetupStep {
     let console: any Console
 
     let title = "Activating HTTPS reverse proxy"
+    private let logger = Logger(label: "codes.mottzi.deployer.setup")
 
     func run() async throws {
 
@@ -105,6 +106,8 @@ extension TLSStep {
 
     private func issueTLSCertificate(staging: Bool, forceRenewal: Bool) async throws {
 
+        logger.info("Requesting Certbot TLS certificate for \(context.primaryDomain) (staging: \(staging))...")
+        
         let emailArguments = context.tlsContactEmail.isEmpty
             ? ["--register-unsafely-without-email"]
             : ["--email", context.tlsContactEmail]

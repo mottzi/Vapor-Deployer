@@ -27,6 +27,8 @@ extension TargetStatus {
                 await broadcaster.setBadge(StatusState(status.isRunning ? .stopping : .starting))
                 async let minHold: Void = Task.sleep(for: .seconds(1))
 
+                app.logger.info("Restart action triggered via Panel for service: \(productName)")
+                
                 try await manager.restart(product: productName)
                 await broadcaster.setBadge(StatusState(.starting))
                 try? await minHold

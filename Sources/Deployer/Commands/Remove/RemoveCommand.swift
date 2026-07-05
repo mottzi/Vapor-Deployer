@@ -32,6 +32,9 @@ struct RemoveCommand: AsyncCommand {
         printBanner(to: context.console)
 
         for (index, step) in steps.enumerated() {
+            if index == 1 {
+                context.application.logger.warning("Starting system teardown for \(removeContext.productName)...")
+            }
             context.console.stepHeader(title: step.title, index: index + 1, total: steps.count, color: .red)
             try await step.run()
         }

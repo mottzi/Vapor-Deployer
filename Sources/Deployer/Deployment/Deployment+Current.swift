@@ -10,6 +10,7 @@ extension Deployment {
         try await self.save(on: database)
 
         guard let selfID = self.id else { throw OperationWorker.Error.deploymentIDMissing }
+        database.logger.info("Setting deployment \(selfID.uuidString) (Commit: \(self.commitID)) as live/current for \(self.product)")
 
         let oldCurrentDeployments = try await Deployment.query(on: database)
             .filter(\.$isLive, .equal, true)

@@ -151,6 +151,7 @@ extension DeploymentBinaryStore {
     private func remove(_ deployments: [Deployment], on database: Database) async throws {
         for deployment in deployments {
             try deleteBinary(for: deployment)
+            database.logger.info("Evicted and deleted binary for deployment \(deployment.id?.uuidString ?? "unknown") due to storage limits")
             deployment.binarySizeMB = nil
             deployment.isManuallySaved = false
             try await deployment.save(on: database)
