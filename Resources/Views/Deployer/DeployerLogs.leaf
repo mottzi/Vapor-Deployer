@@ -77,7 +77,7 @@
                     </svg>
                     Copy
                   </button>
-                  <button type="button" class="dp-update-btn dp-log-wrap-btn dp-log-wrap-btn--active" mist-action="toggleWrap" mist-actions-for="#(componentName)" title="Toggle line wrapping">
+                  <button type="button" class="dp-update-btn dp-log-wrap-btn" mist-action="toggleWrap" mist-actions-for="#(componentName)" title="Toggle line wrapping">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <polyline points="3 7 15 7 15 11 12 11"/>
                       <path d="M12 11l3 3 3-3"/>

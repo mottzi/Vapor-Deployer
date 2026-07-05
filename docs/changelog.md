@@ -19,3 +19,7 @@
 - Fix the deployer status badge cycling Ready→Updating→Ready multiple times when clicking the panel update button, caused by two phase publishers bypassing the centralized resolver and ignoring the updater sticky bit. Defer updater polling to after Mist component registration to prevent a startup-order crash on the freshly updated binary.
 - Roll back self-updates when the newly started deployer fails post-start control-plane verification instead of accepting the first service-manager `running` status.
 - Refresh deployment rows after global operation locks clear so row action menus return automatically after reconnecting or loading the panel during a busy phase, and guard Mist's visibility wake-up ping against a socket that was already reset.
+- Refactor TargetAppLogs and DeployerLogs into a single generic FileLogTailer and LogViewer component to eliminate code duplication.
+- Fix deployer logs status bar button styling to match the target app logs button.
+- Improve the semantic accuracy of the updater polling log, replacing a misleading timeout warning with an info message when the deployer successfully determines no update is needed and exits quickly.
+- Change the default log viewer setting to disable line wrapping (no-wrap) by default.

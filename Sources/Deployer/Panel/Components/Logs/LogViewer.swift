@@ -33,7 +33,7 @@ extension LogViewer {
 
     var name: String { Self.componentName }
     var state: LiveState<Bool> { LiveState(of: true) }
-    var defaultState: ComponentState { ["wrapDisabled": .bool(false)] }
+    var defaultState: ComponentState { ["wrapDisabled": .bool(true)] }
     var actions: [any Action] { [ToggleWrapAction()] }
 
     func body(state: Bool) -> some HTML {
