@@ -127,8 +127,12 @@ actor Updater {
                 stickyBitSetAt = nil
                 stickyBitSawLockTaken = false
             } else if let setAt = stickyBitSetAt, Date.now.timeIntervalSince(setAt) > Self.stickyBitTimeout {
-                // Child never acquired within the window — assume it died early, clear the bit.
-                app.logger.warning("Updater poll: spawned child never acquired update lock within \(Self.stickyBitTimeout)s; clearing sticky bit.")
+                // Child never acquired within the observation window. Usually this means the deployer was already
+                // up to date and the child exited quickly before we could observe the lock.
+                let version = await DeployerVersion.current()
+                let branch = config.deployerBranch
+                app.logger.info("Deployer is already running on the latest version (\(version)) on the \(branch)-branch.")
+                
                 stickyBit = false
                 stickyBitSetAt = nil
                 stickyBitSawLockTaken = false
