@@ -13,7 +13,12 @@ extension Application {
     static func main() async throws {
         
         var env = try Environment.detect()
-        try LoggingSystem.bootstrap(from: &env)
+        
+        LoggingSystem.bootstrap(
+            fragment: timestampDefaultLoggerFragment(),
+            console: Terminal(),
+            level: try Logger.Level.detect(from: &env)
+        )
         
         let app = try await Application.make(env)
         app.deployer.useCommands()
