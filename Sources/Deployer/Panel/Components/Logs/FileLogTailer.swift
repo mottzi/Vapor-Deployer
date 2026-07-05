@@ -2,19 +2,21 @@ import Foundation
 import Mist
 import Vapor
 
-actor TargetAppLogTailer {
+actor FileLogTailer {
 
     private let app: Application
-    private let target: TargetConfiguration
+    private let logFilePath: String
+    private let logPrefix: String
 
     private var stream: StaticStream?
     private var process: Process?
     private var outputPipe: Pipe?
     private var errorPipe: Pipe?
 
-    init(app: Application, target: TargetConfiguration) {
+    init(app: Application, logFilePath: String, logPrefix: String) {
         self.app = app
-        self.target = target
+        self.logFilePath = logFilePath
+        self.logPrefix = logPrefix
     }
 
     func configure(stream: StaticStream) {
@@ -25,7 +27,7 @@ actor TargetAppLogTailer {
 
         guard process == nil else { return }
         guard let stream else {
-            app.logger.error("Target app log tailer started before its Mist stream was configured.")
+            app.logger.error("\(logPrefix) log tailer started before its Mist stream was configured.")
             return
         }
 
@@ -36,7 +38,7 @@ actor TargetAppLogTailer {
         let errorPipe = Pipe()
 
         process.executableURL = URL(fileURLWithPath: "/usr/bin/tail")
-        process.arguments = ["-n", "50", "-F", target.logFilePath]
+        process.arguments = ["-n", "50", "-F", logFilePath]
         process.standardOutput = outputPipe
         process.standardError = errorPipe
 
@@ -68,7 +70,7 @@ actor TargetAppLogTailer {
             self.process = nil
             self.outputPipe = nil
             self.errorPipe = nil
-            app.logger.error("Failed to start target app log tail for \(target.logFilePath): \(error.localizedDescription)")
+            app.logger.error("Failed to start \(logPrefix.lowercased()) log tail for \(logFilePath): \(error.localizedDescription)")
             await app.mist.streams.append(stream, text: "Could not start log stream. Check the deployer log.\n")
         }
     }
@@ -93,7 +95,7 @@ actor TargetAppLogTailer {
 
 }
 
-private extension TargetAppLogTailer {
+private extension FileLogTailer {
 
     func appendOutput(_ data: Data) async {
         guard let stream else { return }
@@ -107,7 +109,7 @@ private extension TargetAppLogTailer {
     func recordTailError(_ data: Data) {
         let text = LogSanitizer.sanitize(String(decoding: data, as: UTF8.self)).trimmed
         guard !text.isEmpty else { return }
-        app.logger.debug("Target app log tail stderr: \(text)")
+        app.logger.debug("\(logPrefix) log tail stderr: \(text)")
     }
 
     func finish(_ terminatedProcess: Process, expectedProcess: Process?) async {

@@ -121,7 +121,7 @@ extension Deployer {
             broadcaster: broadcaster
         )
         let targetAppLogs = TargetAppLogs()
-        let targetAppLogTailer = TargetAppLogTailer(app: app, target: config.target)
+        let targetAppLogTailer = FileLogTailer(app: app, logFilePath: config.target.logFilePath, logPrefix: "Target app")
         let targetAppLogStream = await app.mist.streams.staticStream(
             component: targetAppLogs.name,
             stream: TargetAppLogs.streamName,
@@ -136,7 +136,7 @@ extension Deployer {
         await targetAppLogTailer.configure(stream: targetAppLogStream)
 
         let deployerLogs = DeployerLogs()
-        let deployerLogTailer = DeployerLogTailer(app: app, logFilePath: config.deployerLogFilePath)
+        let deployerLogTailer = FileLogTailer(app: app, logFilePath: config.deployerLogFilePath, logPrefix: "Deployer")
         let deployerLogStream = await app.mist.streams.staticStream(
             component: deployerLogs.name,
             stream: DeployerLogs.streamName,
