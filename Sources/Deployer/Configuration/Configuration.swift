@@ -118,6 +118,8 @@ extension Configuration {
 
 extension Configuration {
 
+    var deployerLogFilePath: String { "\(deployerDirectory)/deployer.log" }
+
     /// Process environment used for deployment subprocesses so CLI and panel builds see the same toolchain.
     var deploymentEnvironment: [String: String] {
         [

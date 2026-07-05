@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Deployer · Logs</title>
+  <title>Deployer · #(title)</title>
   <link rel="icon" type="image/png" href="#(deployer.panelRoute)/deployer.ico">
   <link rel="stylesheet" href="#(deployer.panelRoute)/deployer.css">
 </head>
@@ -40,18 +40,18 @@
               <div class="dp-runtime-bar">
                 <div class="dp-runtime-brand">
                   <h2 class="dp-target-name">
-                    Logs
+                    #(title)
                   </h2>
                 </div>
 
                 <div class="dp-runtime-items">
                   <div class="dp-context-item">
-                    <span class="dp-context-label">Target</span>
-                    <span class="dp-context-value">#(target.name)</span>
+                    <span class="dp-context-label">#(source.label)</span>
+                    <span class="dp-context-value">#(source.name)</span>
                   </div>
                   <div class="dp-context-item">
                     <span class="dp-context-label">File</span>
-                    <span class="dp-context-value">#(target.logFilePath)</span>
+                    <span class="dp-context-value">#(source.logFilePath)</span>
                   </div>
                   <div class="dp-context-item">
                     <span class="dp-context-label">Retained</span>
@@ -89,7 +89,7 @@
               </div>
 
               <div class="dp-settings-body dp-app-log-body">
-                #unsafeHTML(targetAppLogsHTML)
+                #unsafeHTML(logsHTML)
               </div>
 
             </div>
@@ -105,7 +105,7 @@
   <script src="#(deployer.panelRoute)/mist.js" data-url="#(deployer.panelRoute)/ws"></script>
   <script>
     (function () {
-      const logConsole = document.getElementById('dp-app-log-console');
+      const logConsole = document.getElementById('#(consoleID)');
       const clearButton = document.getElementById('dp-log-clear');
       const copyButton = document.getElementById('dp-log-copy');
 

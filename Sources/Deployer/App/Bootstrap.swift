@@ -135,6 +135,21 @@ extension Deployer {
         )
         await targetAppLogTailer.configure(stream: targetAppLogStream)
 
+        let deployerLogs = DeployerLogs()
+        let deployerLogTailer = DeployerLogTailer(app: app, logFilePath: config.deployerLogFilePath)
+        let deployerLogStream = await app.mist.streams.staticStream(
+            component: deployerLogs.name,
+            stream: DeployerLogs.streamName,
+            retainingLines: DeployerLogs.retainedLineCount,
+            onActive: {
+                await deployerLogTailer.start()
+            },
+            onInactive: {
+                await deployerLogTailer.stop()
+            }
+        )
+        await deployerLogTailer.configure(stream: deployerLogStream)
+
         useOperations(
             config: config,
             deployerPhase: deployerPhase,
@@ -156,6 +171,7 @@ extension Deployer {
             targetStatus
             targetStatusActions
             targetAppLogs
+            deployerLogs
             deployerStatus
             targetConfig
             deployerConfig

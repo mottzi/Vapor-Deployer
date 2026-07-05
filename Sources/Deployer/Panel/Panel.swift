@@ -30,10 +30,11 @@ extension Deployer {
         
         let authRouter = router.grouped(panel.authenticator)
 
-        authRouter.get()             { try await panel.servePanel(request: $0) }
-        authRouter.get("logs")       { try await panel.serveLogs(request: $0) }
-        authRouter.get("settings")   { try await panel.serveSettings(request: $0) }
-        authRouter.post("settings")  { try await panel.handleSettingsSave(request: $0) }
+        authRouter.get()                    { try await panel.servePanel(request: $0) }
+        authRouter.get("logs", "app")       { try await panel.serveTargetAppLogs(request: $0) }
+        authRouter.get("logs", "deployer")  { try await panel.serveDeployerLogs(request: $0) }
+        authRouter.get("settings")          { try await panel.serveSettings(request: $0) }
+        authRouter.post("settings")         { try await panel.handleSettingsSave(request: $0) }
     }
     
 }
