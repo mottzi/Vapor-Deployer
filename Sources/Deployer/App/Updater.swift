@@ -193,7 +193,7 @@ actor Updater {
         try process.run()
     }
 
-    enum StartUpdateResult: Sendable {
+    enum StartUpdateResult {
 
         case started
         case busy

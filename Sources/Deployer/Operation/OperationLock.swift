@@ -5,7 +5,7 @@ import Foundation
 /// Acquire the lock by calling `acquire()` before starting an operation. The returned lock must be kept
 /// alive in memory for the exact duration of the operation. The lock is safely released by `deinit` once it
 /// goes out-of-scope, or explicitly by calling `release()`.
-final class OperationLock: @unchecked Sendable {
+final class OperationLock {
 
     private let lock: FileLock
 

@@ -1,7 +1,7 @@
 import Foundation
 
 /// The host service backend used to control and provision managed services.
-enum ServiceBackend: String, Codable, Sendable {
+enum ServiceBackend: String, Codable {
     
     /// Comes preinstalled with Ubuntu.
     case systemd

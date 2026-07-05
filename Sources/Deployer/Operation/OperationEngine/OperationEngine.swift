@@ -1,7 +1,7 @@
 import Vapor
 
 /// Shared executor for mutating deployment operations across the panel, coordinator, and CLI.
-struct OperationEngine: Sendable {
+struct OperationEngine {
 
     let app: Application
     let config: Configuration

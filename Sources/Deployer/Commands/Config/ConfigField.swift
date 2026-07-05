@@ -4,7 +4,7 @@ import Foundation
 /// in `Configuration` / `TargetConfiguration` is set at install time and changing it without re-running
 /// setup would desynchronize the JSON from on-disk state (nginx, systemd unit, clone path, …). See
 /// `docs/adr/0006-config-is-an-allowlist.md`.
-enum ConfigField: String, CaseIterable, Sendable {
+enum ConfigField: String, CaseIterable {
 
     case deployerBranch        = "deployerBranch"
     case targetBranch          = "target.branch"

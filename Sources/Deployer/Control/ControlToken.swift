@@ -3,7 +3,7 @@ import Foundation
 /// Shared secret used by Bearer-token authentication on the `/control` route group.
 /// Read at server boot from `<installDir>/.deployer-control.token`, generated if missing.
 /// See `docs/adr/0005-cli-server-state-channel.md`.
-struct ControlToken: Sendable {
+struct ControlToken {
 
     static let fileName = ".deployer-control.token"
 

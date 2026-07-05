@@ -32,7 +32,7 @@ final class Operation: Model, @unchecked Sendable {
 extension Operation {
 
     /// The category of mutating deployment or target lifecycle action being tracked.
-    enum Kind: String, Codable, Sendable {
+    enum Kind: String, Codable {
         case deploy
         case build
         case run
@@ -45,13 +45,13 @@ extension Operation {
     }
 
     /// The execution environment that initiated the operation.
-    enum Origin: String, Codable, Sendable {
+    enum Origin: String, Codable {
         case server
         case cli
     }
 
     /// The current execution lifecycle phase of the operation.
-    enum Status: String, Codable, Sendable {
+    enum Status: String, Codable {
         case running
         case completed
         case failed

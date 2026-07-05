@@ -75,7 +75,7 @@ struct PushPayload: Codable {
     
 }
  
-struct PushEvent: Sendable {
+struct PushEvent {
     
     let branch: String
     let commitID: String

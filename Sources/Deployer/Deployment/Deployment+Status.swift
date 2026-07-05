@@ -2,7 +2,7 @@ import Vapor
 
 extension Deployment {
 
-    enum Status: String, Codable, Sendable {
+    enum Status: String, Codable {
         
         case pushed
         case testing

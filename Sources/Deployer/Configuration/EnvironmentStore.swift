@@ -7,13 +7,13 @@ struct EnvironmentStore {
     /// Absolute path to the target's `.env`, e.g. `/home/vapor/apps/<appName>/.env`.
     let envFilePath: String
 
-    struct Entry: Equatable, Sendable {
+    struct Entry: Equatable {
         let key: String
         let value: String
     }
 
     /// Validation problem on a specific row, or on the form as a whole when `rowIndex` is nil.
-    struct ValidationIssue: Equatable, Sendable {
+    struct ValidationIssue: Equatable {
         let rowIndex: Int?
         let message: String
     }

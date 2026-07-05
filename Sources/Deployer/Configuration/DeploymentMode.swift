@@ -1,7 +1,7 @@
 import Foundation
 
 /// How incoming push events should be handled for the configured target.
-enum DeploymentMode: String, Codable, Sendable {
+enum DeploymentMode: String, Codable {
     
     /// Deploy immediately when a valid push event arrives.
     case automatic

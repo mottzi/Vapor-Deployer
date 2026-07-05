@@ -234,7 +234,7 @@ extension UpdateCommand {
 
 }
 
-struct ReleaseAssetBackup: Sendable {
+struct ReleaseAssetBackup {
 
     static let directoryNames = ["Public", "Resources"]
 

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Retention policy for deployment binaries stored under the target's deploy directory.
-enum BinaryBehaviour: Codable, Equatable, Sendable {
+enum BinaryBehaviour: Codable, Equatable {
     
     /// Retain a fixed number of the most recent binaries.
     case newest(count: Int)

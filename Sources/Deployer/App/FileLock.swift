@@ -8,7 +8,7 @@ import Darwin
 #endif
 
 /// Small POSIX `flock` wrapper used by deployer domain locks.
-final class FileLock: @unchecked Sendable {
+final class FileLock {
 
     private var fd: Int32?
 

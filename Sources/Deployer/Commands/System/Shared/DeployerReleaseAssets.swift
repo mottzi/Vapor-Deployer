@@ -1,13 +1,13 @@
 import Foundation
 
-struct DeployerReleaseAssetDirectories: Sendable {
+struct DeployerReleaseAssetDirectories {
 
     let publicDirectory: String
     let resourcesDirectory: String
 
 }
 
-struct DeployerReleasePayload: Sendable {
+struct DeployerReleasePayload {
 
     let binaryPath: String
     let assets: DeployerReleaseAssetDirectories

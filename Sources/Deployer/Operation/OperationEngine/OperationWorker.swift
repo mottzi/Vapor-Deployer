@@ -1,6 +1,6 @@
 import Vapor
 
-struct OperationWorker: Sendable {
+struct OperationWorker {
     
     let deployment: Deployment
     let target: TargetConfiguration
@@ -101,7 +101,7 @@ extension OperationWorker {
 
 extension OperationWorker {
 
-    private enum BinaryTransfer: Sendable {
+    private enum BinaryTransfer {
         case copy
         case move
     }

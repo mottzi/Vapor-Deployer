@@ -1,7 +1,7 @@
 import Vapor
 
 /// Runtime configuration for the local deployer, decoded from the sibling JSON file.
-struct Configuration: Codable, Sendable {
+struct Configuration: Codable {
     
     var port: Int
     var dbFile: String

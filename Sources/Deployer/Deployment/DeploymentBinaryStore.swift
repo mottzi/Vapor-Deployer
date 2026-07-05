@@ -1,7 +1,7 @@
 import Vapor
 import Fluent
 
-struct DeploymentBinaryStore: Sendable {
+struct DeploymentBinaryStore {
 
     let target: TargetConfiguration
 

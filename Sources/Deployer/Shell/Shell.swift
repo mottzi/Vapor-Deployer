@@ -104,7 +104,7 @@ extension Shell {
 
 }
 
-struct ShellResult: Sendable {
+struct ShellResult {
 
     let output: String
     let exitCode: Int32

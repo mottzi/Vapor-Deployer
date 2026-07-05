@@ -6,7 +6,7 @@ extension Application {
     
 }
  
-@main struct Deployer: Sendable {
+@main struct Deployer {
     
     let app: Application
     

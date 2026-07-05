@@ -1,7 +1,7 @@
 import Foundation
 
 /// Runtime configuration for the single deployment target managed by the deployer.
-struct TargetConfiguration: Codable, Sendable {
+struct TargetConfiguration: Codable {
 
     var name: String
     var repositoryURL: String?

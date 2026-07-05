@@ -88,7 +88,7 @@ actor OperationCoordinator {
 extension OperationCoordinator {
 
     /// Determines which execution path the coordinator takes for a given job.
-    enum OperationMode: Sendable {
+    enum OperationMode {
 
         /// Full build-and-deploy pipeline, draining any queued pushes in sequence.
         case deploy
@@ -108,7 +108,7 @@ extension OperationCoordinator {
     }
 
     /// Outcome returned to callers after attempting to start an operation job.
-    enum StartResult: Sendable {
+    enum StartResult {
         
         /// Job accepted and running in the background.
         case started
