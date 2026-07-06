@@ -100,14 +100,14 @@ private extension FileLogTailer {
     func appendOutput(_ data: Data) async {
         guard let stream else { return }
 
-        let text = LogSanitizer.sanitize(String(decoding: data, as: UTF8.self))
+        let text = String(decoding: data, as: UTF8.self).ansiStripped
         guard !text.isEmpty else { return }
 
         await app.mist.streams.append(stream, text: text)
     }
 
     func recordTailError(_ data: Data) {
-        let text = LogSanitizer.sanitize(String(decoding: data, as: UTF8.self)).trimmed
+        let text = String(decoding: data, as: UTF8.self).ansiStripped.trimmed
         guard !text.isEmpty else { return }
         app.logger.debug("\(logPrefix) log tail stderr: \(text)")
     }

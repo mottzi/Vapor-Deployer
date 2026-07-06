@@ -25,6 +25,17 @@ extension String {
         "'\(replacingOccurrences(of: "'", with: "'\"'\"'"))'"
     }
     
+    private static let ansiRegex = try! NSRegularExpression(pattern: "\u{001B}\\[[0-9;?]*[a-zA-Z]")
+    
+    var ansiStripped: String {
+        let range = NSRange(self.startIndex..., in: self)
+        let stripped = String.ansiRegex.stringByReplacingMatches(in: self, range: range, withTemplate: "")
+        
+        return String(stripped.unicodeScalars.filter { scalar in
+            scalar == "\n" || scalar == "\r" || scalar == "\t" || (scalar.value >= 32 && scalar.value != 127)
+        })
+    }
+    
 }
 
 extension StringProtocol {

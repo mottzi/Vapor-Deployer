@@ -1,4 +1,4 @@
-## Unreleased
+## Unreleased changes main...HEAD(dev)
 
 - Add the configured health check path (defaulting to "TCP" if nil) to the panel's target app metadata strip with the label "Health Check".
 - Add post-deployment health probes (supporting default TCP port checks and configurable HTTP GET path checks) with a 2-second settle check and automated rollback to the predecessor backup binary upon failure or timeout.

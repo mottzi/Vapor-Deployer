@@ -46,7 +46,7 @@ actor OperationOutputStream {
     func append(_ text: String) async {
         
         guard !text.isEmpty else { return }
-        let cleaned = LogSanitizer.sanitize(text)
+        let cleaned = text.ansiStripped
         guard !cleaned.isEmpty else { return }
         
         transcript.append(cleaned)

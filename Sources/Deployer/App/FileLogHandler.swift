@@ -22,22 +22,21 @@ struct FileLogHandler: LogHandler {
         set { metadata[key] = newValue }
     }
 
-    func log(level: Logger.Level, message: Logger.Message, metadata: Logger.Metadata?, source: String, file: String, function: String, line: UInt) {
-        
+    func log(event: LogEvent) {
         let timestamp = Self.formatter.string(from: Date())
-        let levelName = level.rawValue.uppercased()
+        let levelName = event.level.rawValue.uppercased()
         
-        var line = "\(timestamp) [ \(levelName) ] \(message)"
+        var outputLine = "\(timestamp) [ \(levelName) ] \(event.message)"
         
-        let merged = mergedMetadata(explicit: metadata)
+        let merged = mergedMetadata(explicit: event.metadata)
         if !merged.isEmpty {
             let rendered = merged.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
-            line += " [\(rendered)]"
+            outputLine += " [\(rendered)]"
         }
         
-        line += "\n"
+        outputLine += "\n"
         
-        if let data = line.data(using: .utf8) {
+        if let data = outputLine.data(using: .utf8) {
             fileHandle.write(data)
         }
     }
