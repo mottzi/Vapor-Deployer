@@ -140,10 +140,6 @@
         grid-column: 1 / -1;
     }
 
-    .dp-output-pre {
-        padding: 14px 20px;
-    }
-
     .dp-copy-log-btn {
         right: 16px;
     }
@@ -343,10 +339,6 @@
 
     .dp-output-row.dp-output-expanded {
         padding: 0;
-    }
-
-    .dp-output-pre {
-        padding: 14px 16px;
     }
 
     .dp-copy-log-btn {
