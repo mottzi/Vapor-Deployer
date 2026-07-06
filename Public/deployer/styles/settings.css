@@ -167,10 +167,15 @@
         border-color: var(--border-strong);
         background: var(--bg-hover);
     }
-    .dp-target-panel .dp-log-wrap-btn:hover {
+    .dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn:hover {
         color: var(--text);
         border-color: var(--border-strong);
         background: var(--bg-hover);
+    }
+    .dp-target-panel:not(:has(.dp-output-pre--nowrap)) .dp-log-wrap-btn:hover {
+        color: var(--c-building);
+        border-color: var(--c-building-border);
+        background: var(--c-building-border);
     }
 }
 
@@ -184,10 +189,15 @@
     border-color: var(--border-strong);
     background: var(--bg-hover);
 }
-.dp-target-panel .dp-log-wrap-btn:active {
+.dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn:active {
     color: var(--text);
     border-color: var(--border-strong);
     background: var(--bg-hover);
+}
+.dp-target-panel:not(:has(.dp-output-pre--nowrap)) .dp-log-wrap-btn:active {
+    color: var(--c-building);
+    border-color: var(--c-building-border);
+    background: var(--c-building-border);
 }
 
 /* ── Notice banners (saved / error) ── */
