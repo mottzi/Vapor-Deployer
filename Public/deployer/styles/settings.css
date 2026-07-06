@@ -145,15 +145,51 @@
 
 .dp-log-wrap-btn--active,
 .dp-target-panel:not(:has(.dp-output-pre--nowrap)) .dp-log-wrap-btn {
-    color: var(--c-running);
-    border-color: var(--c-running-border);
-    background: var(--c-running-bg);
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
 }
 
 .dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn {
     color: var(--btn-icon);
     border-color: var(--border);
     background: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .dp-log-clear-btn:hover {
+        color: var(--c-failed);
+        border-color: var(--c-failed-border);
+        background: var(--c-failed-bg);
+    }
+    .dp-log-copy-btn:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+        background: var(--bg-hover);
+    }
+    .dp-log-wrap-btn:hover,
+    .dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+        background: var(--bg-hover);
+    }
+}
+
+.dp-log-clear-btn:active {
+    color: var(--c-failed);
+    border-color: var(--c-failed-border);
+    background: var(--c-failed-bg);
+}
+.dp-log-copy-btn:active {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+}
+.dp-log-wrap-btn:active,
+.dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn:active {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
 }
 
 /* ── Notice banners (saved / error) ── */
