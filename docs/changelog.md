@@ -1,5 +1,7 @@
 ## Unreleased changes main...HEAD(dev)
 
+- Fix double padding and disjointed console text margins on mobile viewports (≤ 640px) by applying `!important` to `.dp-app-log-body` padding.
+- Standardize log viewer console padding to `16px 20px` across all responsive breakpoints, removing inconsistent padding overrides in `responsive.css`.
 - Add the configured health check path (defaulting to "TCP" if nil) to the panel's target app metadata strip with the label "Health Check".
 - Add post-deployment health probes (supporting default TCP port checks and configurable HTTP GET path checks) with a 2-second settle check and automated rollback to the predecessor backup binary upon failure or timeout.
 - Route CLI-triggered framework and database system logs to the shared `deployer.log` file using a custom FileLogHandler, preventing them from leaking into the terminal's clean deployment transcript while maintaining full observability in the web panel log viewer.
