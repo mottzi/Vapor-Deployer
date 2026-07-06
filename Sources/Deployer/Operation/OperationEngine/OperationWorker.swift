@@ -56,7 +56,7 @@ extension OperationWorker {
         )
     }
 
-    func restart() async throws {
+    func restart(overrideSHA: String? = nil) async throws {
         let manager = app.deployer.serviceManager
         let status = await manager.status(product: deployment.product)
         await onStatusChange(status.isRunning ? .stopping : .starting)
@@ -66,12 +66,13 @@ extension OperationWorker {
 
         let finalStatus = await manager.status(product: deployment.product)
         await onStatusChange(finalStatus)
-        await stream?.append("Restart service\n")
+        let sha = overrideSHA ?? String(deployment.commitID.prefix(7))
+        await stream?.append("Restart service (\(sha))\n")
     }
 
     func move() async throws {
         await stream?.appendLabel("deployer")
-        await stream?.append("Install binary\n")
+        await stream?.append("Install binary (\(deployment.commitID.prefix(7)))\n")
 
         let buildPath = "\(target.directory)/.build/\(target.buildMode)/\(deployment.product)"
         let deployPath = "\(target.directory)/deploy/\(deployment.product)"
@@ -80,7 +81,7 @@ extension OperationWorker {
 
     func restore(from store: DeploymentBinaryStore) async throws {
         await stream?.appendLabel("deployer")
-        await stream?.append("Restore binary\n")
+        await stream?.append("Restore binary (\(deployment.commitID.prefix(7)))\n")
 
         let binaryPath = try store.binaryPath(for: deployment)
         try await replaceLiveBinary(from: binaryPath, to: store.liveBinaryPath, transfer: .copy)
@@ -89,13 +90,13 @@ extension OperationWorker {
     func save(to store: DeploymentBinaryStore) async throws {
         await stream?.appendLabel("deployer")
         try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
-        await stream?.append("Archive binary\n")
+        await stream?.append("Archive binary (\(deployment.commitID.prefix(7)))\n")
     }
 
     func deploy(to store: DeploymentBinaryStore) async throws {
         await stream?.appendLabel("deployer")
         try await store.storeLiveBinary(for: deployment, app: app, manually: false)
-        await stream?.append("Archive binary\n")
+        await stream?.append("Archive binary (\(deployment.commitID.prefix(7)))\n")
     }
 
 }
@@ -222,7 +223,7 @@ extension OperationWorker {
                 await stream?.append("[Attempt \(attempt)/\(limit)]: Healthy (settled: \(String(format: "%.1f", duration))s / \(settleSeconds)s)\n")
                 
                 if duration >= settleSeconds {
-                    await stream?.append("\nService stabilized successfully. Deployment verified.\n")
+                    await stream?.append("\nDeployment healthy (\(deployment.commitID.prefix(7)))\n")
                     return
                 }
             } else {

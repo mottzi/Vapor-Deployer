@@ -34,12 +34,16 @@ extension OperationEngine {
                     try await worker.verifyHealth()
                     try await worker.cleanupPredecessorBackup()
                 } catch {
+                    let liveDeployment = try? await Deployment.getCurrent(named: deployment.product, on: app.db)
+                    let predecessorSHA = liveDeployment?.commitID.prefix(7).map { String($0) } ?? "unknown"
+                    let currentSHA = String(deployment.commitID.prefix(7))
+                    
                     await worker.stream?.appendLabel("Health Check Failure")
-                    await worker.stream?.append("Deployment unhealthy. Triggering auto-rollback to predecessor...\n")
+                    await worker.stream?.append("Deployment unhealthy (\(currentSHA))\nRollback to predecessor (\(currentSHA) -> \(predecessorSHA))...\n")
                     
                     // Recover backup binary & restart back to original predecessor
                     try? await worker.restorePredecessorBackup()
-                    try? await worker.restart()
+                    try? await worker.restart(overrideSHA: predecessorSHA)
                     throw error
                 }
             } else {
