@@ -169,8 +169,6 @@ extension OperationEventBridge {
             }
 
         case .completed, .failed:
-            app.logger.info("CLI operation completed sync (Kind: \(operation.kind.rawValue), State: \(event.type == .completed ? "completed" : "failed"))")
-            
             if let deploymentID = event.deploymentID {
                 await refreshRow(id: deploymentID)
                 await app.mist.streams.close(
