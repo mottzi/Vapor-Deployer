@@ -14,9 +14,19 @@ struct TargetConfiguration: Codable {
     var branch: String
     var testing: Bool
 
+    var healthCheckPath: String?
+    var healthCheckIntervalMs: Int?
+    var healthCheckMaxRetries: Int?
+    var healthCheckTimeoutMs: Int?
+
 }
 
 extension TargetConfiguration {
+
+    var resolvedHealthCheckIntervalMs: Int { healthCheckIntervalMs ?? 500 }
+    var resolvedHealthCheckMaxRetries: Int { healthCheckMaxRetries ?? 20 } // 10s total at 500ms intervals
+    var resolvedHealthCheckTimeoutMs: Int { healthCheckTimeoutMs ?? 1000 }
+    var settleDurationSeconds: Double { 2.0 }
 
     var logFilePath: String { "\(directory)/deploy/\(name).log" }
 

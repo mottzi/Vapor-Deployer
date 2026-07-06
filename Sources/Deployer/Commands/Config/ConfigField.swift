@@ -12,6 +12,10 @@ enum ConfigField: String, CaseIterable {
     case targetDeploymentMode  = "target.deploymentMode"
     case targetBinaryBehaviour = "target.binaryBehaviour"
     case targetTesting         = "target.testing"
+    case targetHealthCheckPath       = "target.healthCheckPath"
+    case targetHealthCheckInterval   = "target.healthCheckIntervalMs"
+    case targetHealthCheckMaxRetries = "target.healthCheckMaxRetries"
+    case targetHealthCheckTimeout    = "target.healthCheckTimeoutMs"
 
     /// Known setup-time field names. Used to give a friendly redirect-to-setup error when the user names
     /// one of these — distinct from unknown-field errors. List is exhaustive for `Configuration` and
@@ -51,6 +55,10 @@ enum ConfigField: String, CaseIterable {
         case .targetDeploymentMode:  config.target.deploymentMode.rawValue
         case .targetBinaryBehaviour: config.target.binaryBehaviour.setupValue
         case .targetTesting:         String(config.target.testing)
+        case .targetHealthCheckPath:       config.target.healthCheckPath ?? "nil"
+        case .targetHealthCheckInterval:   config.target.healthCheckIntervalMs.map(String.init) ?? "nil"
+        case .targetHealthCheckMaxRetries: config.target.healthCheckMaxRetries.map(String.init) ?? "nil"
+        case .targetHealthCheckTimeout:    config.target.healthCheckTimeoutMs.map(String.init) ?? "nil"
         }
     }
 
@@ -102,6 +110,15 @@ enum ConfigField: String, CaseIterable {
                 throw ConfigCommand.Error.invalidBoolean(rawValue, input)
             }
             copy.target.testing = lowered == "true"
+            
+        case .targetHealthCheckPath:
+            copy.target.healthCheckPath = input.trimmed == "nil" ? nil : input.trimmed
+        case .targetHealthCheckInterval:
+            copy.target.healthCheckIntervalMs = input.trimmed == "nil" ? nil : Int(input.trimmed)
+        case .targetHealthCheckMaxRetries:
+            copy.target.healthCheckMaxRetries = input.trimmed == "nil" ? nil : Int(input.trimmed)
+        case .targetHealthCheckTimeout:
+            copy.target.healthCheckTimeoutMs = input.trimmed == "nil" ? nil : Int(input.trimmed)
         }
 
         return copy

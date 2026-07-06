@@ -25,7 +25,11 @@ enum DeployerTemplate {
                 binaryBehaviour: context.binaryBehaviour,
                 appPort: context.appPort,
                 branch: context.appBranch,
-                testing: context.testing
+                testing: context.testing,
+                healthCheckPath: nil,
+                healthCheckIntervalMs: nil,
+                healthCheckMaxRetries: nil,
+                healthCheckTimeoutMs: nil
             ),
             serviceBackend: context.serviceBackend,
             buildFromSource: context.buildFromSource,

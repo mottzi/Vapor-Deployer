@@ -28,6 +28,24 @@ extension OperationEngine {
             try await worker.build()
             try await worker.move()
             try await worker.restart()
+
+            if !options.skipHealthCheck {
+                do {
+                    try await worker.verifyHealth()
+                    try await worker.cleanupPredecessorBackup()
+                } catch {
+                    await worker.stream?.appendLabel("Health Check Failure")
+                    await worker.stream?.append("Deployment unhealthy. Triggering auto-rollback to predecessor...\n")
+                    
+                    // Recover backup binary & restart back to original predecessor
+                    try? await worker.restorePredecessorBackup()
+                    try? await worker.restart()
+                    throw error
+                }
+            } else {
+                try await worker.cleanupPredecessorBackup()
+            }
+            
             try await worker.deploy(to: store)
 
             deployment.finishedAt = .now
@@ -93,6 +111,24 @@ extension OperationEngine {
             await output.open()
             try await worker.restore(from: store)
             try await worker.restart()
+
+            if !options.skipHealthCheck {
+                do {
+                    try await worker.verifyHealth()
+                    try await worker.cleanupPredecessorBackup()
+                } catch {
+                    await worker.stream?.appendLabel("Health Check Failure")
+                    await worker.stream?.append("Deployment unhealthy. Triggering auto-rollback to predecessor...\n")
+                    
+                    // Recover backup binary & restart back to original predecessor
+                    try? await worker.restorePredecessorBackup()
+                    try? await worker.restart()
+                    throw error
+                }
+            } else {
+                try await worker.cleanupPredecessorBackup()
+            }
+
             deployment.finishedAt = .now
             deployment.output = await output.transcript
             await output.close()

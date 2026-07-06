@@ -30,3 +30,8 @@
 - **Control endpoint**: `GET /control/state` on the deployer's HTTP listener, Bearer-token authenticated against `<installDir>/.deployer-control.token`. Returns the current **DeployerPhase**. Pure query, not a claim — the **Update lock** is the only mutex. Used by CLI commands to refuse-start when the server is busy. Named `control` (as in control plane), not `admin`, because the caller is always the local CLI process — there is no user, role, or panel surface here. See [ADR 0005](docs/adr/0005-cli-server-state-channel.md).
 - **DeployerStatus**: The Mist fragment component that renders the runtime-bar badge and owns the self-update action. Backed by a `LiveState<DeployerPhase>` shared between `OperationCoordinator` and `Updater`.
 - **Panel**: The web dashboard served by the deployer service, rendered with Leaf and updated live via Mist.
+- **Health probe**: A post-deployment validation phase (TCP socket listen or HTTP request) to verify target app functionality right after service startup.
+  _Avoid_: Ping, check, healthcheck
+- **Settle duration**: The period of continuous healthy response (e.g. 2s) required before declaring the promotion successful.
+- **Predecessor binary**: The archived backup binary representing the prior live deployment, used as the restore target if a health probe fails.
+

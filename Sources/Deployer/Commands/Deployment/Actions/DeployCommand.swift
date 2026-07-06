@@ -12,11 +12,11 @@ struct DeployCommand: AnyAsyncCommand {
         context.input.arguments = []
 
         let parsed = try DeploymentCLI.parse(args)
-        try DeploymentCLI.validateFlags(parsed, allowed: ["--testing", "-t", "--skip-tests", "--yes", "--no-logs"])
+        try DeploymentCLI.validateFlags(parsed, allowed: ["--testing", "-t", "--skip-tests", "--yes", "--no-logs", "--skip-health-check"])
 
         guard parsed.positionals.count == 1 else {
             throw DeploymentCLI.CLIError.usage(
-                "Usage: deployerctl deploy <sha> [--testing|-t] [--skip-tests --yes] [--no-logs]"
+                "Usage: deployerctl deploy <sha> [--testing|-t] [--skip-tests --yes] [--no-logs] [--skip-health-check]"
             )
         }
 
@@ -57,7 +57,8 @@ extension DeployCommand {
         let policy = try DeploymentCLI.testPolicy(parsed: parsed, target: config.target)
         let options = OperationEngine.Options(
             testPolicy: policy,
-            consoleSink: DeploymentCLI.consoleSink(parsed: parsed, console: context.console)
+            consoleSink: DeploymentCLI.consoleSink(parsed: parsed, console: context.console),
+            skipHealthCheck: parsed.flags.contains("--skip-health-check")
         )
 
         try await DeploymentCLI.runLocked(context: context) {

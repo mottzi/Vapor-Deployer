@@ -88,9 +88,10 @@ extension OperationEngine {
     }
 
     /// Configuration settings tailoring test execution behavior and output routing for an engine run.
-    struct Options {
+    struct Options: Sendable {
         var testPolicy: TestPolicy = .configured
         var consoleSink: OperationOutputConsoleSink?
+        var skipHealthCheck: Bool = false
     }
 
 }
