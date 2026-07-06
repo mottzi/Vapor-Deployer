@@ -47,7 +47,11 @@ extension TargetConfiguration {
             binaryBehaviour: binaryBehaviour.validated(field: "target.binaryBehaviour"),
             appPort: appPort,
             branch: Configuration.trimmedValue(branch, field: "target.branch"),
-            testing: testing
+            testing: testing,
+            healthCheckPath: healthCheckPath,
+            healthCheckIntervalMs: healthCheckIntervalMs,
+            healthCheckMaxRetries: healthCheckMaxRetries,
+            healthCheckTimeoutMs: healthCheckTimeoutMs
         )
     }
 
