@@ -6,7 +6,7 @@ enum DeployerctlInstaller {
     static let stagedWrapperName = ".deployerctl.wrapper.new"
     static let stagedConfigName = ".deployerctl.conf.new"
 
-    ///
+    /// Writes the deployerctl wrapper script, helper, and sudoers configuration directly as the root user.
     static func installRoot(context: DeployerctlInstallContext) async throws {
         
         try await SystemFileSystem.installDirectory(context.deployerctlConfigDirectory, owner: "root", group: "root")
@@ -19,7 +19,7 @@ enum DeployerctlInstaller {
         try await SystemFileSystem.writeFile(DeployerctlTemplate.refreshSudoers(context: context), to: context.deployerctlRefreshSudoers, mode: "0440")
     }
 
-    ///
+    /// Reinstalls the deployerctl wrapper, executing either directly as root or via the root-owned helper if unprivileged.
     static func refresh(context: DeployerctlInstallContext) async throws -> RefreshResult {
         
         if UserAccount.currentUID() == 0 {
@@ -41,7 +41,7 @@ enum DeployerctlInstaller {
 
 extension DeployerctlInstaller {
     
-    ///
+    /// Writes new configurations and scripts to temporary staged paths before the root helper moves them into place.
     private static func writeStagedFiles(context: DeployerctlInstallContext) throws {
         
         let installDirectoryURL = URL(fileURLWithPath: context.installDirectory, isDirectory: true)
@@ -58,24 +58,24 @@ extension DeployerctlInstaller {
 
 extension DeployerctlInstaller {
     
-    ///
+    /// The outcome of an attempt to refresh the deployerctl wrapper scripts.
     enum RefreshResult {
         
-        ///
+        /// The scripts were updated directly because the current user is already root.
         case refreshedDirectly
         
-        ///
+        /// The scripts were updated successfully by invoking the privileged sudo helper.
         case refreshedWithHelper
         
-        ///
+        /// The refresh was aborted because the required sudo helper is not installed or available.
         case helperUnavailable
         
     }
 
-    ///
+    /// Errors encountered during the process of updating the deployerctl wrappers.
     enum Error: DescribedError {
         
-        ///
+        /// The invocation of the deployerctl sudo helper failed with the specified output.
         case refreshFailed(String)
 
         var errorDescription: String? {

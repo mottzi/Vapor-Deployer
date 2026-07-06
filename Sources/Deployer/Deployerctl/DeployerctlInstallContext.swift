@@ -118,7 +118,7 @@ extension DeployerctlInstallContext {
         )
     }
 
-    ///
+    /// Resolves the system user that runs the deployment service, falling back to the configuration file's owner if undiscovered.
     private static func resolveServiceUser(config: Configuration, discovered: String?) throws -> String {
         
         if let discovered = discovered?.trimmed,
@@ -133,7 +133,7 @@ extension DeployerctlInstallContext {
         return user
     }
 
-    ///
+    /// Returns the first non-empty string among the provided candidates, useful for prioritized fallback resolution.
     private static func first(_ candidates: String?...) -> String {
         candidates.compactMap { $0?.trimmed }.first { !$0.isEmpty } ?? ""
     }

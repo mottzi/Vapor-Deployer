@@ -162,7 +162,7 @@ extension OperationCoordinator {
 
 extension OperationCoordinator {
     
-    ///
+    /// Acquires the necessary locks and launches the requested background operation if no conflicting operation is active.
     @discardableResult
     func start(deployment: Deployment, target: TargetConfiguration, mode: OperationMode) async -> StartResult {
 

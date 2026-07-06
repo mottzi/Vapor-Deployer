@@ -7,7 +7,7 @@ struct RefreshDeployerctlCommand: AsyncCommand {
 
     var help: String { "Refreshes the deployerctl wrapper for update internals." }
 
-    ///
+    /// Executes the command to refresh deployerctl wrapper scripts using current configuration and system context.
     func run(using context: CommandContext, signature: Signature) async throws {
         
         let config = try Configuration.load()
