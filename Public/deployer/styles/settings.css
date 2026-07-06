@@ -147,7 +147,7 @@
 .dp-target-panel:not(:has(.dp-output-pre--nowrap)) .dp-log-wrap-btn {
     color: var(--text);
     border-color: var(--border-strong);
-    background: var(--bg-hover);
+    background: var(--surface-3);
 }
 
 .dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn {
@@ -167,8 +167,7 @@
         border-color: var(--border-strong);
         background: var(--bg-hover);
     }
-    .dp-log-wrap-btn:hover,
-    .dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn:hover {
+    .dp-target-panel .dp-log-wrap-btn:hover {
         color: var(--text);
         border-color: var(--border-strong);
         background: var(--bg-hover);
@@ -185,8 +184,7 @@
     border-color: var(--border-strong);
     background: var(--bg-hover);
 }
-.dp-log-wrap-btn:active,
-.dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn:active {
+.dp-target-panel .dp-log-wrap-btn:active {
     color: var(--text);
     border-color: var(--border-strong);
     background: var(--bg-hover);
