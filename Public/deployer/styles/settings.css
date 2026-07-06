@@ -145,9 +145,9 @@
 
 .dp-log-wrap-btn--active,
 .dp-target-panel:not(:has(.dp-output-pre--nowrap)) .dp-log-wrap-btn {
-    color: var(--text);
-    border-color: var(--border-strong);
-    background: var(--surface-3);
+    color: var(--c-building);
+    border-color: var(--c-building-border);
+    background: var(--c-building-bg);
 }
 
 .dp-target-panel:has(.dp-output-pre--nowrap) .dp-log-wrap-btn {
