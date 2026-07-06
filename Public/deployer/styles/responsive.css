@@ -84,43 +84,12 @@
     .dp-td-action   { grid-area: actions; align-self: center; }
 
     .dp-td-commit .dp-msg {
-        font-size: 13px;
-        font-weight: 500;
-        line-height: 1.45;
-        color: var(--text-secondary);
-        white-space: normal;
-        word-break: break-word;
         overflow-wrap: anywhere;
     }
 
     .dp-time {
         align-items: flex-end;
         gap: 0;
-    }
-
-    .dp-time-value {
-        font-size: 12px;
-        color: var(--text-secondary);
-    }
-
-    .dp-time-date {
-        font-size: 12px;
-        color: var(--text-subtle);
-    }
-
-    .dp-duration,
-    .dp-duration-live,
-    .dp-duration-dash {
-        font-size: 11px;
-        color: var(--text-subtle);
-        line-height: 1.2;
-    }
-
-    .dp-binary-size,
-    .dp-binary-dash {
-        font-size: 11px;
-        color: var(--text-subtle);
-        line-height: 1.2;
     }
 
     .dp-row-actions {
