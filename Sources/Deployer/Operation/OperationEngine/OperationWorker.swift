@@ -93,6 +93,7 @@ extension OperationWorker {
     }
 
     func deploy(to store: DeploymentBinaryStore) async throws {
+        await stream?.appendLabel("deployer")
         try await store.storeLiveBinary(for: deployment, app: app, manually: false)
         await stream?.append("Archive binary\n")
     }
@@ -221,7 +222,7 @@ extension OperationWorker {
                 await stream?.append("[Attempt \(attempt)/\(limit)]: Healthy (settled: \(String(format: "%.1f", duration))s / \(settleSeconds)s)\n")
                 
                 if duration >= settleSeconds {
-                    await stream?.append("Service stabilized successfully. Deployment verified.\n")
+                    await stream?.append("\nService stabilized successfully. Deployment verified.\n")
                     return
                 }
             } else {
