@@ -6,7 +6,7 @@ extension OperationCoordinator {
     func drainOnBoot() async {
         guard config.target.deploymentMode == .automatic else { return }
         guard let seed = try? await bootDrainSeed() else { return }
-        _ = await start(deployment: seed, target: config.target, mode: .automaticDeploy)
+        await start(deployment: seed, target: config.target, mode: .automaticDeploy)
     }
 
     /// Returns the newest `.canceled` row for this product that has not been superseded, or nil.

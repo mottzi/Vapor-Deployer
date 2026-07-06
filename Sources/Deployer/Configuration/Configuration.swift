@@ -94,6 +94,7 @@ extension Configuration {
 extension Configuration {
 
     /// Validates and normalizes decoded config values using the executable directory as the base path.
+    @discardableResult
     func resolved(relativeTo baseDirectoryURL: URL) throws -> Configuration {
         
         guard port > 0 else { throw Error.invalidField("port", "must be greater than 0") }

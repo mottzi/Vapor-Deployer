@@ -62,7 +62,7 @@ struct SourceUpdateStep: UpdateStep {
         }
 
         console.print("Building deployer from source code.")
-        _ = try await SystemShell.runAsStreamingTail(
+        try await SystemShell.runAsStreamingTail(
             user: serviceUser,
             "swift",
             ["build", "-c", "release"],

@@ -68,7 +68,7 @@ private extension ConfigCommand {
 
         // Validate via the same function that gates the boot path. If this throws, the proposed JSON
         // would fail to load — refuse before touching the file.
-        _ = try newConfig.resolved(relativeTo: installDirectory)
+        try newConfig.resolved(relativeTo: installDirectory)
 
         // No-op detection: compare the rendered value after normalization, not the raw input string.
         // (`automatic:5` and `auto:5` parse to the same BinaryBehaviour; `True`/`true` are the same Bool.)

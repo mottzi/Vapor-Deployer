@@ -159,6 +159,7 @@ extension OperationWorker {
     }
 
     func cleanupPredecessorBackup() async throws {
+        
         let deployDir = URL(fileURLWithPath: "\(target.directory)/deploy/\(deployment.product)").deletingLastPathComponent().path
         let backupPath = "\(deployDir)/\(deployment.product).old"
         
@@ -172,6 +173,7 @@ extension OperationWorker {
     }
 
     func restorePredecessorBackup() async throws {
+        
         let deployPath = "\(target.directory)/deploy/\(deployment.product)"
         let deployDir = URL(fileURLWithPath: deployPath).deletingLastPathComponent().path
         let backupPath = "\(deployDir)/\(deployment.product).old"
@@ -188,66 +190,5 @@ extension OperationWorker {
         }.get()
     }
 
-    func verifyHealth() async throws {
-        let port = target.appPort
-        let limit = target.resolvedHealthCheckMaxRetries
-        let intervalMs = target.resolvedHealthCheckIntervalMs
-        let timeoutMs = target.resolvedHealthCheckTimeoutMs
-        let settleSeconds = target.settleDurationSeconds
-        
-        if let path = target.healthCheckPath {
-            await stream?.appendLabel("Verifying Health (HTTP GET \(path))")
-        } else {
-            await stream?.appendLabel("Verifying Health (TCP)")
-        }
-        
-        var firstHealthyResponseAt: Date?
-        let deadline = Date.now.addingTimeInterval(Double(limit * intervalMs) / 1000.0)
-        var attempt = 1
-        var lastError = "App failed to boot within time limit"
-
-        while Date.now < deadline {
-            let isHealthy: Bool
-            if let path = target.healthCheckPath {
-                isHealthy = await checkHTTPHealth(path: path, port: port, timeoutMs: timeoutMs)
-            } else {
-                isHealthy = await SocketProbe.canConnect(host: "127.0.0.1", port: port, timeoutMs: timeoutMs, on: app.eventLoopGroup)
-            }
-
-            let attemptPad = attempt < 10 ? " " : ""
-            if isHealthy {
-                let now = Date.now
-                let healthySince = firstHealthyResponseAt ?? now
-                firstHealthyResponseAt = healthySince
-                
-                let duration = now.timeIntervalSince(healthySince)
-                await stream?.append("\(attemptPad)[\(attempt)/\(limit)]: healthy   (settled: \(String(format: "%.1f", duration))s / \(settleSeconds)s)\n")
-                
-                if duration >= settleSeconds {
-                    await stream?.append("\nDeployment healthy (\(deployment.commitID.prefix(7)))\n")
-                    return
-                }
-            } else {
-                firstHealthyResponseAt = nil
-                lastError = target.healthCheckPath != nil ? "HTTP status check failed" : "TCP port connection refused"
-                await stream?.append("\(attemptPad)[\(attempt)/\(limit)]: unhealthy\n")
-            }
-
-            attempt += 1
-            try await Task.sleep(for: .milliseconds(intervalMs))
-        }
-
-        throw Error.deploymentFailed("Health check timed out: \(lastError)")
-    }
-
-    private func checkHTTPHealth(path: String, port: Int, timeoutMs: Int) async -> Bool {
-        do {
-            let url = "http://127.0.0.1:\(port)\(path)"
-            let response = try await app.client.get(URI(string: url))
-            return response.status.code >= 200 && response.status.code < 400
-        } catch {
-            return false
-        }
-    }
 
 }

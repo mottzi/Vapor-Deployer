@@ -163,6 +163,7 @@ extension OperationCoordinator {
 extension OperationCoordinator {
     
     ///
+    @discardableResult
     func start(deployment: Deployment, target: TargetConfiguration, mode: OperationMode) async -> StartResult {
 
         guard !isDeploying else { return .operationBusy }
