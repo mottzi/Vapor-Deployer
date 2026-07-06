@@ -45,7 +45,8 @@ struct TargetInfoState: ComponentData {
             Field("Deploy Mode", config.target.deploymentMode.rawValue),
             Field("Testing", config.target.testing ? "enabled" : "disabled"),
             Field("Keep Builds", config.target.binaryBehaviour.setupValue),
-            Field("Push Event", config.target.pusheventPath.displayPath)
+            Field("Push Event", config.target.pusheventPath.displayPath),
+            Field("Health Check", config.target.healthCheckPath ?? "TCP")
         ]
     }
 
