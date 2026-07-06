@@ -53,6 +53,13 @@ extension Deployer {
 
         let config = try Configuration.load()
         
+        // Route framework and database logs to the shared deployer.log file so they
+        // appear in the panel log viewer instead of leaking into the CLI transcript.
+        if let fileHandle = FileHandle(forWritingAtPath: config.deployerLogFilePath) {
+            fileHandle.seekToEndOfFile()
+            app.logger = Logger(label: "deployer.cli") { _ in FileLogHandler(fileHandle: fileHandle) }
+        }
+        
         app.deployer.serviceManager = try config.serviceBackend.makeManager(serviceUser: UserAccount.currentName())
         
         try await app.deployer.configureHeadlessDatabase(config: config)
