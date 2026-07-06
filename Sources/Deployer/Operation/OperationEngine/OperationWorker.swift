@@ -72,7 +72,7 @@ extension OperationWorker {
 
     func move() async throws {
         await stream?.appendLabel("deployer")
-        await stream?.append("Install binary (\(deployment.commitID.prefix(7)))\n")
+        await stream?.append("Install binary  (\(deployment.commitID.prefix(7)))\n")
 
         let buildPath = "\(target.directory)/.build/\(target.buildMode)/\(deployment.product)"
         let deployPath = "\(target.directory)/deploy/\(deployment.product)"
@@ -81,7 +81,7 @@ extension OperationWorker {
 
     func restore(from store: DeploymentBinaryStore) async throws {
         await stream?.appendLabel("deployer")
-        await stream?.append("Restore binary (\(deployment.commitID.prefix(7)))\n")
+        await stream?.append("Restore binary  (\(deployment.commitID.prefix(7)))\n")
 
         let binaryPath = try store.binaryPath(for: deployment)
         try await replaceLiveBinary(from: binaryPath, to: store.liveBinaryPath, transfer: .copy)
@@ -90,13 +90,13 @@ extension OperationWorker {
     func save(to store: DeploymentBinaryStore) async throws {
         await stream?.appendLabel("deployer")
         try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
-        await stream?.append("Archive binary (\(deployment.commitID.prefix(7)))\n")
+        await stream?.append("Archive binary  (\(deployment.commitID.prefix(7)))\n")
     }
 
     func deploy(to store: DeploymentBinaryStore) async throws {
         await stream?.appendLabel("deployer")
         try await store.storeLiveBinary(for: deployment, app: app, manually: false)
-        await stream?.append("Archive binary (\(deployment.commitID.prefix(7)))\n")
+        await stream?.append("Archive binary  (\(deployment.commitID.prefix(7)))\n")
     }
 
 }
@@ -198,7 +198,7 @@ extension OperationWorker {
         if let path = target.healthCheckPath {
             await stream?.appendLabel("Verifying Health (HTTP GET \(path))")
         } else {
-            await stream?.appendLabel("Verifying Health (TCP Connection)")
+            await stream?.appendLabel("Verifying Health (TCP)")
         }
         
         var firstHealthyResponseAt: Date?
@@ -214,13 +214,14 @@ extension OperationWorker {
                 isHealthy = await SocketProbe.canConnect(host: "127.0.0.1", port: port, timeoutMs: timeoutMs, on: app.eventLoopGroup)
             }
 
+            let attemptPad = attempt < 10 ? " " : ""
             if isHealthy {
                 let now = Date.now
                 let healthySince = firstHealthyResponseAt ?? now
                 firstHealthyResponseAt = healthySince
                 
                 let duration = now.timeIntervalSince(healthySince)
-                await stream?.append("[Attempt \(attempt)/\(limit)]: Healthy (settled: \(String(format: "%.1f", duration))s / \(settleSeconds)s)\n")
+                await stream?.append("\(attemptPad)[\(attempt)/\(limit)]: healthy   (settled: \(String(format: "%.1f", duration))s / \(settleSeconds)s)\n")
                 
                 if duration >= settleSeconds {
                     await stream?.append("\nDeployment healthy (\(deployment.commitID.prefix(7)))\n")
@@ -229,7 +230,7 @@ extension OperationWorker {
             } else {
                 firstHealthyResponseAt = nil
                 lastError = target.healthCheckPath != nil ? "HTTP status check failed" : "TCP port connection refused"
-                await stream?.append("[Attempt \(attempt)/\(limit)]: Unhealthy (\(lastError))\n")
+                await stream?.append("\(attemptPad)[\(attempt)/\(limit)]: unhealthy\n")
             }
 
             attempt += 1
