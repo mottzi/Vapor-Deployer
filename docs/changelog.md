@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add post-deployment health probes (supporting default TCP port checks and configurable HTTP GET path checks) with a 2-second settle check and automated rollback to the predecessor backup binary upon failure or timeout.
+- Route CLI-triggered framework and database system logs to the shared `deployer.log` file using a custom FileLogHandler, preventing them from leaking into the terminal's clean deployment transcript while maintaining full observability in the web panel log viewer.
 - Add 27 high-value, non-spammy log statements across boot sequences, authentication audits, Panel UI actions, webhook execution, and setup/update CLI command steps, declaring loggers at the struct level as private properties to optimize performance and architecture.
 - Add Deployer daemon service logs to the web panel, exposing the deployer's own `deployer.log` file at `/logs/deployer` with a dedicated Logs button in the status bar, generalized page templates, and improved logging timestamps.
 - Add an authenticated target app Logs page that streams the configured app log through Mist with subscriber-driven tailing, bounded 2000-line retention, local Clear/Copy actions, a per-client Wrap toggle, and viewport-filling console layout.
