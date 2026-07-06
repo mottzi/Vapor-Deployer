@@ -7,7 +7,7 @@ extension OperationEngine {
 
         if deployment.isLive { return }
 
-        let store = DeploymentBinaryStore(target: config.target)
+        let store = BinaryStore(target: config.target)
         let hasSavedBinary = deployment.hasSavedBinary || store.hasBinary(for: deployment)
 
         if hasSavedBinary {
@@ -70,7 +70,7 @@ extension OperationEngine {
 
         guard deployment.canStartBuildOperation else { throw OperationError.deploymentCannotBuild }
 
-        let store = DeploymentBinaryStore(target: config.target)
+        let store = BinaryStore(target: config.target)
         guard !store.hasBinary(for: deployment) else { throw OperationError.savedBinaryAlreadyExists }
 
         try await preparePipelineRow(deployment, status: .building, clearOutput: true, recorder: recorder)
@@ -102,7 +102,7 @@ extension OperationEngine {
 
         guard deployment.canStartRestoreOperation else { throw OperationError.deploymentCannotRunSavedBinary }
 
-        let store = DeploymentBinaryStore(target: config.target)
+        let store = BinaryStore(target: config.target)
         guard store.hasBinary(for: deployment) else { throw OperationError.savedBinaryMissing }
 
         try await preparePipelineRow(deployment, status: .restoring, clearOutput: false, recorder: recorder)
@@ -204,7 +204,7 @@ extension OperationEngine {
         guard !deployment.isLive else { throw OperationError.liveDeploymentBinaryCannotBeRemoved }
         guard deployment.hasSavedBinary else { throw OperationError.savedBinaryMissing }
 
-        let store = DeploymentBinaryStore(target: config.target)
+        let store = BinaryStore(target: config.target)
         guard store.hasBinary(for: deployment) else { throw OperationError.savedBinaryMissing }
 
         try store.deleteBinary(for: deployment)

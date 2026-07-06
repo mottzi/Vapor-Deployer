@@ -20,7 +20,7 @@ extension DeploymentRow {
             }
             
             let target = app.deployer.operations.config.target
-            let store = DeploymentBinaryStore(target: target)
+            let store = BinaryStore(target: target)
             guard store.hasBinary(for: deployment)
             else { return .failure("Saved binary not found on disk") }
 

@@ -12,7 +12,7 @@ extension OperationEngine {
 
         var current = deployment
         var lastSuccessful: (deployment: Deployment, transcript: String)?
-        let store = DeploymentBinaryStore(target: config.target)
+        let store = BinaryStore(target: config.target)
 
         while true {
             try await preparePipelineRow(current, status: .building, clearOutput: true, recorder: recorder)
@@ -57,7 +57,7 @@ extension OperationEngine {
     private func finalizeBuilt(
         _ deployment: Deployment,
         output: OperationOutputStream,
-        store: DeploymentBinaryStore,
+        store: BinaryStore,
         recorder: OperationEventRecorder
     ) async throws {
 
@@ -84,7 +84,7 @@ extension OperationEngine {
     private func finalizePreviouslyBuilt(
         _ deployment: Deployment,
         priorTranscript: String,
-        store: DeploymentBinaryStore,
+        store: BinaryStore,
         recorder: OperationEventRecorder
     ) async throws {
 

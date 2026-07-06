@@ -16,7 +16,7 @@ extension DeploymentRow {
             else { return .failure("Deployment not found or can't be built.") }
             
             let target = app.deployer.operations.config.target
-            let store = DeploymentBinaryStore(target: target)
+            let store = BinaryStore(target: target)
             guard !store.hasBinary(for: deployment)
             else { return .failure("This deployment already has a saved binary") }
             

@@ -126,7 +126,7 @@ extension Panel {
 
     func makePanelContext(request: Request) async throws -> PanelContext {
 
-        try await DeploymentBinaryStore(target: config.target).syncMetadata(product: config.target.name, on: request.db)
+        try await BinaryStore(target: config.target).syncMetadata(product: config.target.name, on: request.db)
 
         async let rows = row.makeContext(ofAll: request.db)
         async let isRunning = request.application.deployer.serviceManager.isRunning(product: config.target.name)

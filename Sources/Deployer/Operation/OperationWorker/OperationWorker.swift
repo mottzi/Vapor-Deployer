@@ -79,7 +79,7 @@ extension OperationWorker {
         try await replaceLiveBinary(from: buildPath, to: deployPath, transfer: .move)
     }
 
-    func restore(from store: DeploymentBinaryStore) async throws {
+    func restore(from store: BinaryStore) async throws {
         await stream?.appendLabel("deployer")
         await stream?.append("Restore binary  (\(deployment.commitID.prefix(7)))\n")
 
@@ -87,15 +87,15 @@ extension OperationWorker {
         try await replaceLiveBinary(from: binaryPath, to: store.liveBinaryPath, transfer: .copy)
     }
 
-    func save(to store: DeploymentBinaryStore) async throws {
+    func save(to store: BinaryStore) async throws {
         await stream?.appendLabel("deployer")
-        try await store.storeBuiltBinary(for: deployment, app: app, manually: true)
+        try await store.archiveBinary(for: deployment, app: app, manually: true)
         await stream?.append("Archive binary  (\(deployment.commitID.prefix(7)))\n")
     }
 
-    func deploy(to store: DeploymentBinaryStore) async throws {
+    func deploy(to store: BinaryStore) async throws {
         await stream?.appendLabel("deployer")
-        try await store.storeLiveBinary(for: deployment, app: app, manually: false)
+        try await store.archiveLiveBinary(for: deployment, app: app, manually: false)
         await stream?.append("Archive binary  (\(deployment.commitID.prefix(7)))\n")
     }
 

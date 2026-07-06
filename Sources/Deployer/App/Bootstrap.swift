@@ -80,7 +80,7 @@ extension Deployer {
     func configureDatabase(config: Configuration) async throws {
         try createDatabaseDirectory(for: config.dbFile)
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
-        app.databases.middleware.use(DeploymentBinaryCleanupMiddleware(target: config.target))
+        app.databases.middleware.use(BinaryStore.CleanupMiddleware(target: config.target))
         app.sessions.use(.fluent)
         app.migrations.add(Deployment.migrations + Operation.migrations + OperationEvent.migrations + [SessionRecord.migration])
         try await app.autoMigrate()
@@ -90,7 +90,7 @@ extension Deployer {
     func configureHeadlessDatabase(config: Configuration) async throws {
         try createDatabaseDirectory(for: config.dbFile)
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
-        app.databases.middleware.use(DeploymentBinaryCleanupMiddleware(target: config.target))
+        app.databases.middleware.use(BinaryStore.CleanupMiddleware(target: config.target))
         app.migrations.add(Deployment.migrations + Operation.migrations + OperationEvent.migrations)
         try await app.autoMigrate()
         await seedFirstDeployment(config: config)
@@ -237,7 +237,7 @@ extension Deployer {
             deployment.startedAt = checkout.committedAt
             deployment.finishedAt = checkout.committedAt
             try await deployment.save(on: app.db)
-            try await DeploymentBinaryStore(target: config.target).storeLiveBinary(for: deployment, app: app, manually: false)
+            try await BinaryStore(target: config.target).archiveLiveBinary(for: deployment, app: app, manually: false)
             
         } catch {
             app.logger.warning("Error when seeding initial deployment for '\(config.target.name)': \(error.localizedDescription)")
