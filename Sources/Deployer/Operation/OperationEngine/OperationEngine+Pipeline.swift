@@ -35,7 +35,7 @@ extension OperationEngine {
                     try await worker.cleanupPredecessorBackup()
                 } catch {
                     let liveDeployment = try? await Deployment.getCurrent(named: deployment.product, on: app.db)
-                    let predecessorSHA = liveDeployment?.commitID.prefix(7).map { String($0) } ?? "unknown"
+                    let predecessorSHA = liveDeployment.flatMap { String($0.commitID.prefix(7)) } ?? "unknown"
                     let currentSHA = String(deployment.commitID.prefix(7))
                     
                     await worker.stream?.appendLabel("Health Check Failure")
