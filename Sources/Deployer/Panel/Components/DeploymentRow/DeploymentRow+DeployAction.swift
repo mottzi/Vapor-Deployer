@@ -22,8 +22,6 @@ extension DeploymentRow {
             
             switch result {
                 case .started:
-                    app.logger.info("Started deployment (Branch: \(deployment.branch), Commit: \(deployment.commitID.prefix(7)))")
-                    
                     return .success("Deployment started")
                 case .operationBusy:
                     return .failure("A deployment is already running")

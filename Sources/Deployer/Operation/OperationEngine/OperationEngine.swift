@@ -31,6 +31,8 @@ struct OperationEngine {
             deploymentID: deployment.id
         )
         
+        app.logger.info("Started \(action.kind.rawValue) (Branch: \(deployment.branch), Commit: \(deployment.commitID.prefix(7)))")
+        
         let recorder = session.recorder
         
         do {
