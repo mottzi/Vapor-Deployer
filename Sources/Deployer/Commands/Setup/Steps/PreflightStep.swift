@@ -42,7 +42,7 @@ extension PreflightStep {
         
         if let previous = context.previousBuildFromSource, previous != context.buildFromSource {
             console.warning("Switching deployer installation mode. Backing up current installation...")
-            logger.warning("Changing deployment mode; backing up current directory...")
+            logger.warning("Changing deployment mode; backing up current directory to \(paths.installDirectory).bak")
             
             let backupPath = paths.installDirectory + ".bak"
             if FileManager.default.fileExists(atPath: backupPath) {

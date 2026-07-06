@@ -57,7 +57,7 @@ extension OperationRecovery {
            let deployment = try await Deployment.find(deploymentID, on: app.db),
            isTransient(deployment.status) {
 
-            app.logger.warning("Orphaned operation \(operation.id?.uuidString ?? "unknown") found. Marking deployment \(deployment.id?.uuidString ?? "unknown") as failed.")
+            app.logger.warning("Orphaned \(operation.kind.rawValue) operation found. Marking commit \(deployment.commitID.prefix(7)) as failed.")
             
             let note = "\n\nOperation abandoned; no process holds the deployment operation lock. Marking deployment failed.\n"
             deployment.status = .failed
@@ -67,7 +67,7 @@ extension OperationRecovery {
             
             try await deployment.save(on: app.db)
         } else {
-            app.logger.warning("Orphaned operation \(operation.id?.uuidString ?? "unknown") found.")
+            app.logger.warning("Orphaned \(operation.kind.rawValue) operation found.")
         }
 
         operation.status = .failed

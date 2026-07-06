@@ -120,7 +120,7 @@ extension OperationEventBridge {
 
         let sawTerminalEvent = events.contains(where: { $0.type == .completed || $0.type == .failed })
         for event in events {
-            await apply(event)
+            await apply(event, operation: operation)
             lastSequences[operationID] = event.sequence
         }
 
@@ -136,7 +136,7 @@ extension OperationEventBridge {
     }
 
     /// Applies one operation event to Mist streams, row rendering, or target status state.
-    private func apply(_ event: OperationEvent) async {
+    private func apply(_ event: OperationEvent, operation: Operation) async {
 
         switch event.type {
         case .outputOpened:
@@ -169,7 +169,7 @@ extension OperationEventBridge {
             }
 
         case .completed, .failed:
-            app.logger.info("CLI operation completed sync (State: \(event.type == .completed ? "completed" : "failed"))")
+            app.logger.info("CLI operation completed sync (Kind: \(operation.kind.rawValue), State: \(event.type == .completed ? "completed" : "failed"))")
             
             if let deploymentID = event.deploymentID {
                 await refreshRow(id: deploymentID)

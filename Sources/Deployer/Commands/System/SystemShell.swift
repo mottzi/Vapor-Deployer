@@ -169,7 +169,7 @@ extension SystemShell {
         let busPath = "/run/user/\(uid)/bus"
         let start = ContinuousClock.now
         
-        logger.info("Waiting for systemd user bus socket to become available...")
+        logger.info("Waiting for systemd user bus socket (UID: \(uid))...")
 
         while start.duration(to: ContinuousClock.now) < timeout {
             if FileManager.default.fileExists(atPath: busPath) { return }

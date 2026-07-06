@@ -13,7 +13,7 @@ struct ActivateReleaseStep: UpdateStep {
 
         guard context.releaseVersion != context.currentVersion else { return }
 
-        logger.info("Activating new deployer release...")
+        logger.info("Activating new deployer release (version: \(context.releaseVersion ?? "unknown") from current: \(context.currentVersion ?? "unknown"))...")
         
         try activateCandidateBinary()
         

@@ -111,7 +111,7 @@ extension SSHHardeningStep {
 
     private func applyHardening(to contents: String) async throws {
 
-        logger.warning("Applying SSH hardening rules...")
+        logger.warning("Applying SSH hardening rules to deny SSH login for user \(context.serviceUser)...")
         
         let backupPath = "\(sshdConfigPath).deployer-bak"
 

@@ -30,9 +30,8 @@ actor OperationSession {
         let operation = Operation(kind: kind, origin: origin, product: product, deploymentID: deploymentID)
         try await operation.save(on: app.db)
         
-        let opID = operation.id?.uuidString ?? "unknown"
-        app.logger.info("Operation session started (ID: \(opID))")
-
+        app.logger.info("Operation session started (Kind: \(kind.rawValue), Origin: \(origin.rawValue))")
+        
         let recorder = try await OperationEventRecorder(app: app, operation: operation)
         return OperationSession(app: app, operation: operation, recorder: recorder)
     }
@@ -59,13 +58,12 @@ extension OperationSession {
     
     /// Records the terminal event before marking the parent operation terminal.
     private func finish(_ status: Operation.Status, deploymentID: UUID?) async {
-        let opID = operation.id?.uuidString ?? "unknown"
         do {
             try await recorder.record(status == .completed ? .completed : .failed, deploymentID: deploymentID)
             operation.status = status
             operation.finishedAt = .now
             try await operation.save(on: app.db)
-            app.logger.info("Operation session \(status == .completed ? "completed" : "failed") (ID: \(opID))")
+            app.logger.info("Operation session \(status == .completed ? "completed" : "failed") (Kind: \(operation.kind.rawValue), Origin: \(operation.origin.rawValue))")
         } catch {
             app.logger.error("Failed to finish operation: \(error.localizedDescription)")
         }

@@ -31,7 +31,7 @@ extension DeploymentRow {
                 defer { lock.release() }
                 let engine = OperationEngine(app: app, config: app.deployer.operations.config)
                 try await engine.run(action: .delete, deployment: deployment)
-                app.logger.info("Deleted deployment \(deployment.id?.uuidString ?? "unknown") for product \(deployment.product)")
+                app.logger.info("Deleted deployment for commit \(deployment.commitID.prefix(7))")
             }
             catch {
                 let error = MistError.databaseFetchFailed(
