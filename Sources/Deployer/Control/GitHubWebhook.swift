@@ -17,35 +17,34 @@ struct GitHubWebhook {
         on app: Application,
         onPush: @Sendable @escaping (PushEvent, TargetConfiguration) async -> Void
     ) {
-        let accepted = Response(status: .ok, body: .init(stringLiteral: "[\(config.name)] Push event accepted."))
-        let denied = Response(status: .forbidden, body: .init(stringLiteral: "[\(config.name)] Push event denied."))
-        let unsupportedEvent = Response(status: .badRequest, body: .init(stringLiteral: "[\(config.name)] Unsupported GitHub event."))
-        let invalidPayload = Response(status: .badRequest, body: .init(stringLiteral: "[\(config.name)] Invalid push payload."))
-        let ignoredDeletedPush = Response(status: .ok, body: .init(stringLiteral: "[\(config.name)] Deleted push ignored."))
         
         app.post(config.pusheventPath.pathComponents) { request async -> Response in
             
             guard validateSignature(of: request) else {
                 request.logger.warning("[\(config.name)] GitHub webhook signature verification failed from \(request.remoteAddress?.description ?? "unknown IP")")
-                return denied
+                return Response(status: .forbidden, body: .init(stringLiteral: "[\(config.name)] Push event denied."))
             }
+            
             guard validateEvent(of: request) else {
                 request.logger.warning("[\(config.name)] GitHub webhook event is unsupported (Event: \(request.headers.first(name: "X-GitHub-Event") ?? "none"))")
-                return unsupportedEvent
+                return Response(status: .badRequest, body: .init(stringLiteral: "[\(config.name)] Unsupported GitHub event."))
             }
+            
             guard let pushEvent = request.pushEvent else {
                 request.logger.warning("[\(config.name)] GitHub webhook invalid push payload")
-                return invalidPayload
+                return Response(status: .badRequest, body: .init(stringLiteral: "[\(config.name)] Invalid push payload."))
             }
+            
             guard pushEvent.deleted == false else {
                 request.logger.info("[\(config.name)] Ignored deleted push event for branch '\(pushEvent.branch)'")
-                return ignoredDeletedPush
+                return Response(status: .ok, body: .init(stringLiteral: "[\(config.name)] Deleted push ignored."))
             }
             
             request.logger.info("[\(config.name)] Accepted GitHub push event for branch '\(pushEvent.branch)' at commit \(pushEvent.commitID)")
             
             Task.detached { await onPush(pushEvent, config) }
-            return accepted
+            
+            return Response(status: .ok, body: .init(stringLiteral: "[\(config.name)] Push event accepted."))
         }
     }
     
