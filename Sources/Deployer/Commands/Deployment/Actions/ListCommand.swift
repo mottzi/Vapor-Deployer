@@ -17,11 +17,11 @@ struct ListCommand: AnyAsyncCommand {
         var limit = DeploymentCLI.defaultListLimit
         if parsed.positionals.count == 1 {
             guard let customLimit = Int(parsed.positionals[0]), customLimit > 0 else {
-                throw DeploymentCLI.CLIError.usage("Usage: deployerctl list [max]")
+                throw DeploymentCLI.Error.usage("Usage: deployerctl list [max]")
             }
             limit = customLimit
         } else if parsed.positionals.count > 1 {
-            throw DeploymentCLI.CLIError.usage("Usage: deployerctl list [max]")
+            throw DeploymentCLI.Error.usage("Usage: deployerctl list [max]")
         }
 
         let config = try await context.application.deployer.useHeadlessRuntime()

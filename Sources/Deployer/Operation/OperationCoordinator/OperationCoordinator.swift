@@ -175,7 +175,7 @@ extension OperationCoordinator {
         do {
             if UpdateLock.isHeld() { return .operationBusy }
             lock = try OperationLock.acquire()
-        } catch OperationError.anotherOperationInProgress {
+        } catch Operation.Error.anotherOperationInProgress {
             return .operationBusy
         } catch {
             return .failure(error.localizedDescription)

@@ -5,7 +5,7 @@ extension AsyncCommand {
 
     /// Ensures privileged filesystem and service-management operations cannot fail midway under an unprivileged user.
     func requireRoot() throws {
-        guard geteuid() == 0 else { throw SystemError.notRoot }
+        guard geteuid() == 0 else { throw System.Error.notRoot }
     }
 
     /// Guards distro-specific provisioning (`apt`, `systemd`, Certbot paths) that assumes Ubuntu naming and layout.
@@ -19,7 +19,7 @@ extension AsyncCommand {
         let osRaw = line?.dropFirst("ID=".count) ?? "unknown"
         let os = String(osRaw).trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
 
-        guard os == "ubuntu" else { throw SystemError.unsupportedOperatingSystem(os) }
+        guard os == "ubuntu" else { throw System.Error.unsupportedOperatingSystem(os) }
     }
 
 }

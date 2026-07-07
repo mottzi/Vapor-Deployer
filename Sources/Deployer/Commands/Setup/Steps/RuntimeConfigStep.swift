@@ -21,7 +21,7 @@ extension RuntimeConfigStep {
     private func writeDeployerConfig() async throws {
 
         guard let json = try DeployerTemplate.encodeJSON(from: context) else {
-            throw SystemError.invalidValue("deployer.json", "failed to encode UTF-8 JSON")
+            throw System.Error.invalidValue("deployer.json", "failed to encode UTF-8 JSON")
         }
         
         try await SystemFileSystem.writeFile(

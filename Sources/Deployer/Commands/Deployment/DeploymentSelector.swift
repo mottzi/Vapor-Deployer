@@ -18,8 +18,8 @@ enum DeploymentSelector {
             .filter { $0.commitID.hasPrefix(selector) }
 
         if known.count == 1 { return known[0] }
-        if known.count > 1 { throw OperationError.ambiguousSHA(selector, known) }
-        guard allowCreate else { throw OperationError.deploymentNotFound(selector) }
+        if known.count > 1 { throw Operation.Error.ambiguousSHA(selector, known) }
+        guard allowCreate else { throw Operation.Error.deploymentNotFound(selector) }
 
         return try await createReachableDeployment(selector, config: config, app: app)
     }
@@ -41,7 +41,7 @@ private extension DeploymentSelector {
         do {
             try await Shell.runThrowing("git", ["fetch", "origin", target.branch], directory: target.directory)
         } catch {
-            throw OperationError.unreachableSHA(selector)
+            throw Operation.Error.unreachableSHA(selector)
         }
 
         let resolved: String
@@ -52,7 +52,7 @@ private extension DeploymentSelector {
                 directory: target.directory
             ).trimmed
         } catch {
-            throw OperationError.unreachableSHA(selector)
+            throw Operation.Error.unreachableSHA(selector)
         }
 
         let reachable = await Shell.run(
@@ -61,7 +61,7 @@ private extension DeploymentSelector {
             directory: target.directory
         )
         
-        guard reachable.exitCode == 0 else { throw OperationError.unreachableSHA(selector) }
+        guard reachable.exitCode == 0 else { throw Operation.Error.unreachableSHA(selector) }
 
         let message = (try? await Shell.runThrowing(
             "git",

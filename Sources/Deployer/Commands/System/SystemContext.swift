@@ -16,7 +16,7 @@ extension SystemContext {
     /// Enforces that path layout has been derived before provisioning steps try to consume it.
     func requirePaths() throws -> SystemPaths {
         if let paths { return paths }
-        throw SystemError.missingValue("paths")
+        throw System.Error.missingValue("paths")
     }
 
     /// Resolves and memoizes the service user's UID so user-scoped systemd calls can build runtime and DBus paths reliably.

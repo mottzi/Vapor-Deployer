@@ -14,7 +14,7 @@ struct TestCommand: AnyAsyncCommand {
         let parsed = try DeploymentCLI.parse(args)
         try DeploymentCLI.validateFlags(parsed, allowed: ["--no-logs"])
         guard parsed.positionals.count == 1 else {
-            throw DeploymentCLI.CLIError.usage("Usage: deployerctl test <sha> [--no-logs]")
+            throw DeploymentCLI.Error.usage("Usage: deployerctl test <sha> [--no-logs]")
         }
 
         let (config, engine) = try await DeploymentCLI.runtime(from: context)

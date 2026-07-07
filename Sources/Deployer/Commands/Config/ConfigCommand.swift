@@ -17,12 +17,9 @@ struct ConfigCommand: AnyAsyncCommand {
         context.input.arguments = []
 
         switch args.count {
-        case 0:
-            try await runList(console: context.console)
-        case 2:
-            try await runSet(key: args[0], value: args[1], app: context.application, console: context.console)
-        default:
-            throw Error.usage
+            case 0: try await runList(console: context.console)
+            case 2: try await runSet(key: args[0], value: args[1], app: context.application, console: context.console)
+            default: throw Error.usage
         }
     }
 
@@ -37,8 +34,9 @@ private extension ConfigCommand {
 
         printBanner(console: console)
 
-        let labelWidth = ConfigField.allCases.map { $0.rawValue.count }.max() ?? 0
-        for field in ConfigField.allCases {
+        let labelWidth = Field.allCases.map { $0.rawValue.count }.max() ?? 0
+        
+        for field in Field.allCases {
             let label = field.rawValue.padding(toLength: labelWidth, withPad: " ", startingAt: 0)
             console.output(
                 "  \(label)".consoleText(color: .cyan)
@@ -46,6 +44,7 @@ private extension ConfigCommand {
                 + field.displayValue(in: config).consoleText(isBold: true)
             )
         }
+        
         console.newLine()
         console.output("  To change a setting, use 'deployerctl config <field> <value>'.".consoleText())
         console.newLine()
@@ -56,7 +55,7 @@ private extension ConfigCommand {
     /// atomically → restart if requested.
     func runSet(key: String, value: String, app: Application, console: any Console) async throws {
 
-        let field = try ConfigField.resolve(key)
+        let field = try Field.resolve(key)
 
         let (oldConfig, configURL, installDirectory) = try loadRawConfig()
 
@@ -126,6 +125,7 @@ private extension ConfigCommand {
 
         let data = try Data(contentsOf: configURL)
         let config = try JSONDecoder().decode(Configuration.self, from: data)
+        
         return (config, configURL, installDirectory)
     }
 
@@ -134,6 +134,7 @@ private extension ConfigCommand {
     /// match `DeployerTemplate` so the file shape doesn't churn between Setup-written and config-written
     /// states.
     func writeAtomically(_ config: Configuration, to url: URL) throws {
+        
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
@@ -172,6 +173,7 @@ private extension ConfigCommand {
         let executableURL = installDirectory.appendingPathComponent("deployer", isDirectory: false)
         let serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: executableURL) ?? ""
         let manager = try config.serviceBackend.makeManager(serviceUser: serviceUser)
+        
         try await manager.restart(product: "deployer")
     }
 

@@ -15,7 +15,7 @@ actor OperationEventRecorder {
         self.app = app
         self.origin = operation.origin
         
-        guard let operationID = operation.id else { throw OperationError.operationIDMissing }
+        guard let operationID = operation.id else { throw Operation.Error.operationIDMissing }
         self.operationID = operationID
         
         let lastSequence = try await OperationEvent.query(on: app.db)

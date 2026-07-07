@@ -15,7 +15,7 @@ struct OutputCommand: AnyAsyncCommand {
         let parsed = try DeploymentCLI.parse(args)
         try DeploymentCLI.validateFlags(parsed, allowed: [])
         guard parsed.positionals.count == 1 else {
-            throw DeploymentCLI.CLIError.usage("Usage: deployerctl output <sha>")
+            throw DeploymentCLI.Error.usage("Usage: deployerctl output <sha>")
         }
 
         let (config, _) = try await DeploymentCLI.runtime(from: context)

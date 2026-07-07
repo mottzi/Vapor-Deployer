@@ -14,7 +14,7 @@ struct RunCommand: AnyAsyncCommand {
         let parsed = try DeploymentCLI.parse(args)
         try DeploymentCLI.validateFlags(parsed, allowed: ["--skip-health-check"])
         guard parsed.positionals.count == 1 else {
-            throw DeploymentCLI.CLIError.usage("Usage: deployerctl run <sha> [--skip-health-check]")
+            throw DeploymentCLI.Error.usage("Usage: deployerctl run <sha> [--skip-health-check]")
         }
 
         let (config, engine) = try await DeploymentCLI.runtime(from: context)

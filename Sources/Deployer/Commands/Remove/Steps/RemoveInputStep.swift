@@ -174,7 +174,7 @@ extension RemoveInputStep {
     private func confirmTeardown() throws {
 
         guard console.confirm("Proceed with teardown?", defaultYes: false) else {
-            throw SystemError.invalidValue("confirmation", "Cancelled.")
+            throw System.Error.invalidValue("confirmation", "Cancelled.")
         }
     }
 

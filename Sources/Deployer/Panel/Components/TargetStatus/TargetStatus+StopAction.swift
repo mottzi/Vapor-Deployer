@@ -14,7 +14,7 @@ extension TargetStatus {
             let lock: OperationLock
             do {
                 lock = try OperationLock.acquire()
-            } catch OperationError.anotherOperationInProgress {
+            } catch Operation.Error.anotherOperationInProgress {
                 return .failure("A deployment is already running")
             } catch {
                 return .failure(error.localizedDescription)

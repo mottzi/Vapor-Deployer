@@ -15,7 +15,7 @@ struct DeployCommand: AnyAsyncCommand {
         try DeploymentCLI.validateFlags(parsed, allowed: ["--testing", "-t", "--skip-tests", "--yes", "--no-logs", "--skip-health-check"])
 
         guard parsed.positionals.count == 1 else {
-            throw DeploymentCLI.CLIError.usage(
+            throw DeploymentCLI.Error.usage(
                 "Usage: deployerctl deploy <sha> [--testing|-t] [--skip-tests --yes] [--no-logs] [--skip-health-check]"
             )
         }

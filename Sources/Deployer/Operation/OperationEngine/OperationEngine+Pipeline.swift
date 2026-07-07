@@ -11,7 +11,7 @@ extension OperationEngine {
         let hasSavedBinary = deployment.hasSavedBinary || store.hasBinary(for: deployment)
 
         if hasSavedBinary {
-            guard options.testPolicy != .forceEnabled else { throw OperationError.testingSavedBinaryUnsupported }
+            guard options.testPolicy != .forceEnabled else { throw Operation.Error.testingSavedBinaryUnsupported }
             try await runSavedBinary(deployment: deployment, options: options, recorder: recorder)
             return
         }
@@ -68,10 +68,10 @@ extension OperationEngine {
     /// Builds and archives a deployment without making it live.
     func runBuild(deployment: Deployment, options: Options, recorder: OperationEventRecorder) async throws {
 
-        guard deployment.canStartBuildOperation else { throw OperationError.deploymentCannotBuild }
+        guard deployment.canStartBuildOperation else { throw Operation.Error.deploymentCannotBuild }
 
         let store = BinaryStore(target: config.target)
-        guard !store.hasBinary(for: deployment) else { throw OperationError.savedBinaryAlreadyExists }
+        guard !store.hasBinary(for: deployment) else { throw Operation.Error.savedBinaryAlreadyExists }
 
         try await preparePipelineRow(deployment, status: .building, clearOutput: true, recorder: recorder)
 
@@ -100,10 +100,10 @@ extension OperationEngine {
     /// Restores an archived binary and makes that deployment live.
     func runSavedBinary(deployment: Deployment, options: Options, recorder: OperationEventRecorder) async throws {
 
-        guard deployment.canStartRestoreOperation else { throw OperationError.deploymentCannotRunSavedBinary }
+        guard deployment.canStartRestoreOperation else { throw Operation.Error.deploymentCannotRunSavedBinary }
 
         let store = BinaryStore(target: config.target)
-        guard store.hasBinary(for: deployment) else { throw OperationError.savedBinaryMissing }
+        guard store.hasBinary(for: deployment) else { throw Operation.Error.savedBinaryMissing }
 
         try await preparePipelineRow(deployment, status: .restoring, clearOutput: false, recorder: recorder)
 
@@ -150,7 +150,7 @@ extension OperationEngine {
     /// Runs `swift test` as an audit and restores the deployment lifecycle status afterwards.
     func runTest(deployment: Deployment, options: Options, recorder: OperationEventRecorder) async throws {
 
-        guard deployment.canStartTestOperation else { throw OperationError.deploymentCannotTest }
+        guard deployment.canStartTestOperation else { throw Operation.Error.deploymentCannotTest }
 
         let priorStatus = deployment.status
         let priorOutput = deployment.output ?? ""
@@ -193,7 +193,7 @@ extension OperationEngine {
     /// Deletes a deployment row after enforcing live-row protection.
     func runDelete(deployment: Deployment, recorder: OperationEventRecorder) async throws {
 
-        guard !deployment.isLive else { throw OperationError.liveDeploymentCannotBeDeleted }
+        guard !deployment.isLive else { throw Operation.Error.liveDeploymentCannotBeDeleted }
         try await deployment.delete(on: app.db)
         await recorder.recordRowDeleted(deploymentID: deployment.id)
     }
@@ -201,11 +201,11 @@ extension OperationEngine {
     /// Removes a saved binary and returns the row to the pushed state.
     func runRemoveBinary(deployment: Deployment, recorder: OperationEventRecorder) async throws {
 
-        guard !deployment.isLive else { throw OperationError.liveDeploymentBinaryCannotBeRemoved }
-        guard deployment.hasSavedBinary else { throw OperationError.savedBinaryMissing }
+        guard !deployment.isLive else { throw Operation.Error.liveDeploymentBinaryCannotBeRemoved }
+        guard deployment.hasSavedBinary else { throw Operation.Error.savedBinaryMissing }
 
         let store = BinaryStore(target: config.target)
-        guard store.hasBinary(for: deployment) else { throw OperationError.savedBinaryMissing }
+        guard store.hasBinary(for: deployment) else { throw Operation.Error.savedBinaryMissing }
 
         try store.deleteBinary(for: deployment)
         deployment.binarySizeMB = nil

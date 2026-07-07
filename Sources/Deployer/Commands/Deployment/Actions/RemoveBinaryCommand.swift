@@ -14,7 +14,7 @@ struct RemoveBinaryCommand: AnyAsyncCommand {
         let parsed = try DeploymentCLI.parse(args)
         try DeploymentCLI.validateFlags(parsed, allowed: ["--yes"])
         guard parsed.positionals.count == 1 else {
-            throw DeploymentCLI.CLIError.usage("Usage: deployerctl remove-binary <sha> [--yes]")
+            throw DeploymentCLI.Error.usage("Usage: deployerctl remove-binary <sha> [--yes]")
         }
 
         let (config, engine) = try await DeploymentCLI.runtime(from: context)

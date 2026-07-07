@@ -155,7 +155,7 @@ extension StageDeployerStep {
     ) async throws {
         
         guard FileManager.default.fileExists(atPath: binary) else {
-            throw SystemError.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
+            throw System.Error.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
         }
 
         if !PathComparison.isSamePath(binary, paths.deployerBinary) {

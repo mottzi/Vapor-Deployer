@@ -15,7 +15,7 @@ struct SourceUpdateStep: UpdateStep {
         let installDirectory = context.stagedBinaryURL.deletingLastPathComponent().path
 
         guard !serviceUser.isEmpty else {
-            throw SystemError.invalidValue("serviceUser", "unable to determine user for source-based update")
+            throw System.Error.invalidValue("serviceUser", "unable to determine user for source-based update")
         }
 
         context.currentVersion = readInstalledVersion(at: context.versionFileURL)

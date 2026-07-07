@@ -34,8 +34,8 @@ final class OperationLock {
         let path = try lockPath()
         let lock = try FileLock.acquire(
             path: path,
-            busyError: OperationError.anotherOperationInProgress,
-            failureError: OperationError.lockFailed
+            busyError: Operation.Error.anotherOperationInProgress,
+            failureError: Operation.Error.lockFailed
         )
         return OperationLock(lock: lock)
     }

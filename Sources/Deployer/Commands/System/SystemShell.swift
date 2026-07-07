@@ -176,7 +176,7 @@ extension SystemShell {
             try await Task.sleep(for: .milliseconds(100))
         }
 
-        throw SystemError.serviceTimeout("user@\(uid).service bus")
+        throw System.Error.serviceTimeout("user@\(uid).service bus")
     }
 }
 

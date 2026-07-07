@@ -19,7 +19,7 @@ extension ServiceBackend {
         switch self {
             case .systemd:
                 guard let user = serviceUser?.trimmed, !user.isEmpty else {
-                    throw SystemError.missingValue("serviceUser")
+                    throw System.Error.missingValue("serviceUser")
                 }
                 return SystemdServiceManager(serviceUser: user)
                     

@@ -396,7 +396,7 @@ extension InputStep {
         
         let isResolvable = await Shell.run("getent", ["ahosts", domain]).exitCode == 0
         if !isResolvable {
-            throw SystemError.invalidValue(
+            throw System.Error.invalidValue(
                 label,
                 "'\(domain)' does not resolve in DNS. Point it to this server before continuing."
             )

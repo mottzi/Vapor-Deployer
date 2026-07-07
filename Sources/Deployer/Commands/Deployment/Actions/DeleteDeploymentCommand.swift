@@ -14,7 +14,7 @@ struct DeleteDeploymentCommand: AnyAsyncCommand {
         let parsed = try DeploymentCLI.parse(args)
         try DeploymentCLI.validateFlags(parsed, allowed: ["--yes"])
         guard parsed.positionals.count == 1 else {
-            throw DeploymentCLI.CLIError.usage("Usage: deployerctl delete <sha> [--yes]")
+            throw DeploymentCLI.Error.usage("Usage: deployerctl delete <sha> [--yes]")
         }
 
         let (config, engine) = try await DeploymentCLI.runtime(from: context)

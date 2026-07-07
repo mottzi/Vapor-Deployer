@@ -44,7 +44,7 @@ enum DeploymentCLI {
     /// Ensures only the expected flags were supplied.
     static func validateFlags(_ parsed: ParsedArguments, allowed: Set<String>) throws {
         let unknown = parsed.flags.subtracting(allowed)
-        guard unknown.isEmpty else { throw CLIError.unknownFlags(Array(unknown).sorted()) }
+        guard unknown.isEmpty else { throw Error.unknownFlags(Array(unknown).sorted()) }
     }
 
     /// Renders the deployment list as the compact operator table.
@@ -91,7 +91,7 @@ enum DeploymentCLI {
         }
 
         if parsed.flags.contains("--skip-tests") {
-            guard parsed.flags.contains("--yes") else { throw OperationError.skipTestsRequiresConfirmation }
+            guard parsed.flags.contains("--yes") else { throw Operation.Error.skipTestsRequiresConfirmation }
             return .forceDisabled
         }
 
@@ -106,7 +106,7 @@ enum DeploymentCLI {
     /// Prompts the operator for interactive confirmation unless the non-interactive --yes flag was provided.
     static func confirmIfNeeded(_ message: String, parsed: ParsedArguments, console: any Console) throws {
         guard !parsed.flags.contains("--yes") else { return }
-        guard console.confirm(message, defaultYes: false) else { throw CLIError.aborted }
+        guard console.confirm(message, defaultYes: false) else { throw Error.aborted }
     }
 
 }
@@ -118,7 +118,7 @@ extension DeploymentCLI {
         let flags: Set<String>
     }
 
-    enum CLIError: DescribedError {
+    enum Error: DescribedError {
         
         case usage(String)
         case unknownFlags([String])

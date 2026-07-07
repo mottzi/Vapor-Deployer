@@ -70,14 +70,14 @@ extension SSHStep {
         )
 
         if !console.confirm("Continue after adding the deploy key on GitHub?", defaultYes: true) {
-            throw SystemError.invalidValue(
+            throw System.Error.invalidValue(
                 "deployKey",
                 "GitHub deploy key setup was not confirmed"
             )
         }
 
         if try await !canReachRepository() {
-            throw SystemError.invalidValue(
+            throw System.Error.invalidValue(
                 "deployKey",
                 "GitHub access check failed. Verify the deploy key and repository permissions."
             )

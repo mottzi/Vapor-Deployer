@@ -30,7 +30,7 @@ extension PreflightStep {
         let home = try await UserAccount.homeDirectory(for: context.serviceUser, errorLabel: "serviceUser")
         
         guard home == paths.serviceHome else {
-            throw SystemError.invalidValue("serviceUser", "user exists with home '\(home)', not '\(paths.serviceHome)'")
+            throw System.Error.invalidValue("serviceUser", "user exists with home '\(home)', not '\(paths.serviceHome)'")
         }
         
         console.print("Reusing user '\(context.serviceUser)' (home: \(home))")
@@ -66,7 +66,7 @@ extension PreflightStep {
             }
         } else if FileManager.default.fileExists(atPath: paths.installDirectory), context.buildFromSource {
             if try !isDirectoryEmpty(paths.installDirectory) {
-                throw SystemError.invalidValue(
+                throw System.Error.invalidValue(
                     "installDirectory",
                     "'\(paths.installDirectory)' exists but is not an empty deployer checkout"
                 )
@@ -97,12 +97,12 @@ extension PreflightStep {
         
         let origin = try await shell.git("remote", ["get-url", "origin"], in: path).trimmed
         if !githubRemoteMatches(origin, expectedRemote) {
-            throw SystemError.invalidValue("\(componentName) checkout", "existing origin '\(origin)' does not match '\(expectedRemote)'")
+            throw System.Error.invalidValue("\(componentName) checkout", "existing origin '\(origin)' does not match '\(expectedRemote)'")
         }
         
         let dirty = try await shell.git("status", ["--porcelain", "--untracked-files=no"], in: path).trimmed
         if !dirty.isEmpty {
-            throw SystemError.invalidValue("\(componentName) checkout", "existing checkout has uncommitted changes")
+            throw System.Error.invalidValue("\(componentName) checkout", "existing checkout has uncommitted changes")
         }
     }
     

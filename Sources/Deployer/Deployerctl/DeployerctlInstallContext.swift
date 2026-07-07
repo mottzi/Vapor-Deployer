@@ -128,7 +128,7 @@ extension DeployerctlInstallContext {
         }
 
         let user = URL(fileURLWithPath: config.serviceHome, isDirectory: true).lastPathComponent.trimmed
-        guard !user.isEmpty else { throw SystemError.missingValue("serviceUser") }
+        guard !user.isEmpty else { throw System.Error.missingValue("serviceUser") }
         
         return user
     }

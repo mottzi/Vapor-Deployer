@@ -60,7 +60,7 @@ struct UpdateCommand: AsyncCommand {
         if updateContext.isSourceInstall {
             let gitMarker = installDirectory.appendingPathComponent(".git")
             if !FileManager.default.fileExists(atPath: gitMarker.path) {
-                throw SystemError.invalidValue(
+                throw System.Error.invalidValue(
                     "installation",
                     "Configured for source build, but no .git repository found. Run 'deployerctl setup' to repair."
                 )

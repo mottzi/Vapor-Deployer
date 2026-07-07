@@ -18,7 +18,7 @@ enum UserAccount {
     /// Resolves a user's uid from the passwd database.
     static func uid(for user: String, errorLabel: String = "user") throws -> Int {
         guard let cUser = user.cString(using: .utf8), let entry = getpwnam(cUser) else {
-            throw SystemError.invalidValue(errorLabel, "user '\(user)' does not exist")
+            throw System.Error.invalidValue(errorLabel, "user '\(user)' does not exist")
         }
 
         let raw = entry.pointee.pw_uid
@@ -39,7 +39,7 @@ enum UserAccount {
     /// Resolves a user's home directory from the passwd database.
     static func homeDirectory(for user: String, errorLabel: String = "user") async throws -> String {
         guard let cUser = user.cString(using: .utf8), let entry = getpwnam(cUser) else {
-            throw SystemError.invalidValue(errorLabel, "user '\(user)' does not exist")
+            throw System.Error.invalidValue(errorLabel, "user '\(user)' does not exist")
         }
 
         return String(cString: entry.pointee.pw_dir)
