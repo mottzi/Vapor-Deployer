@@ -38,11 +38,7 @@ extension DeploymentSelector {
 
         let target = config.target
 
-        do {
-            try await Shell.runThrowing("git", ["fetch", "origin", target.branch], directory: target.directory)
-        } catch {
-            throw Operation.Error.unreachableSHA(selector)
-        }
+        _ = try? await Shell.runThrowing("git", ["fetch", "origin", target.branch], directory: target.directory)
 
         let resolved: String
         do {
