@@ -3,10 +3,8 @@ import Vapor
 import FoundationNetworking
 #endif
 
-/// Reads and writes a narrow allowlist of fields in `deployer.json`. See `docs/adr/0006-config-is-an-allowlist.md`
-/// for the editable set and the rationale. Conforms to `AnyAsyncCommand` directly (rather than `AsyncCommand`)
-/// because the command takes optional positional arguments (`config` vs. `config <key> <value>`) and the
-/// `AsyncCommand` default machinery rejects leftover positional input.
+/// Reads and writes a narrow allowlist of fields in `deployer.json`.
+/// See `docs/adr/0006-config-is-an-allowlist.md`.
 struct ConfigCommand: AnyAsyncCommand {
 
     var help: String { "View or modify fields in deployer.json. Run with no arguments to list editable fields." }
@@ -25,10 +23,10 @@ struct ConfigCommand: AnyAsyncCommand {
 
 }
 
-private extension ConfigCommand {
+extension ConfigCommand {
 
-    /// Prints the 6 editable fields and their current on-disk values.
-    func runList(console: any Console) async throws {
+    /// Formats and displays the editable configuration fields, dynamically annotating values ignored by the current build settings.
+    private func runList(console: any Console) async throws {
 
         let (config, _, _) = try loadRawConfig()
 
@@ -50,10 +48,8 @@ private extension ConfigCommand {
         console.newLine()
     }
 
-    /// Applies a single field edit. Order: resolve key → load raw JSON → parse and apply input → validate
-    /// via `Configuration.resolved()` round-trip → preflight control query if user wants restart → write
-    /// atomically → restart if requested.
-    func runSet(key: String, value: String, app: Application, console: any Console) async throws {
+    /// Resolves, validates, and atomically writes a configuration edit, optionally restarting the active daemon.
+    private func runSet(key: String, value: String, app: Application, console: any Console) async throws {
 
         let field = try Field.resolve(key)
 
@@ -111,13 +107,10 @@ private extension ConfigCommand {
 
 }
 
-private extension ConfigCommand {
+extension ConfigCommand {
 
-    /// Decodes `deployer.json` *without* the `resolved()` normalization pass. This preserves the on-disk
-    /// shape (relative paths stay relative, etc.) so that round-tripping through encode/write doesn't
-    /// rewrite fields the user didn't touch. Returns the raw config, the config-file URL, and the
-    /// install directory.
-    func loadRawConfig() throws -> (Configuration, URL, URL) {
+    /// Decodes the configuration file directly to preserve raw layouts and relative paths on save.
+    private func loadRawConfig() throws -> (config: Configuration, configURL: URL, installDirectory: URL) {
 
         let executableURL = try Configuration.getExecutableURL()
         let installDirectory = executableURL.deletingLastPathComponent()
@@ -129,11 +122,8 @@ private extension ConfigCommand {
         return (config, configURL, installDirectory)
     }
 
-    /// Encodes the new config and writes it via `Data.write(.atomic)`, which writes to a sibling temp
-    /// file and atomically renames over the original. Encoder settings (`prettyPrinted`, `sortedKeys`)
-    /// match `DeployerTemplate` so the file shape doesn't churn between Setup-written and config-written
-    /// states.
-    func writeAtomically(_ config: Configuration, to url: URL) throws {
+    /// Safely encodes and writes the config atomically to prevent file corruption and style churn.
+    private func writeAtomically(_ config: Configuration, to url: URL) throws {
         
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -145,13 +135,16 @@ private extension ConfigCommand {
         do { try data.write(to: url, options: [.atomic]) }
         catch { throw Error.writeFailed(url.path, error) }
     }
-
-}
-
-private extension ConfigCommand {
-
-    // See `ControlPreflight.query` and `docs/adr/0005-cli-server-state-channel.md`.
-    func preflightControlQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
+    
+    /// Aborts the config update if the running daemon reports it is currently executing a deployment.
+    /// See `ControlPreflight.query` and `docs/adr/0005-cli-server-state-channel.md`.
+    private func preflightControlQuery(
+        app: Application,
+        config: Configuration,
+        installDirectory: URL,
+        console: any Console
+    ) async throws {
+        
         switch await ControlPreflight.query(app: app, port: config.port, installDirectory: installDirectory) {
             case .ready: return
             case .busy(let phase): throw Error.serverBusy(phase)
@@ -160,15 +153,9 @@ private extension ConfigCommand {
                 console.print("Warning: deployer server not reachable for state check (\(reason)). Proceeding with restart.")
         }
     }
-
-}
-
-private extension ConfigCommand {
-
-    /// Restarts the deployer service via the configured `ServiceBackend`. Same primitive used by
-    /// `SetupCommand` rollback and by `UpdateCommand` post-swap. Service user is resolved from
-    /// `/etc/deployer/deployerctl.conf` first, then falls back to the executable file owner.
-    func restartDeployer(config: Configuration, installDirectory: URL, console: any Console) async throws {
+    
+    /// Resolves the service owner and restarts the deployer daemon via the system service manager.
+    private func restartDeployer(config: Configuration, installDirectory: URL, console: any Console) async throws {
 
         let executableURL = installDirectory.appendingPathComponent("deployer", isDirectory: false)
         let serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: executableURL) ?? ""
@@ -176,12 +163,9 @@ private extension ConfigCommand {
         
         try await manager.restart(product: "deployer")
     }
-
-}
-
-private extension ConfigCommand {
-
-    func printBanner(console: any Console) {
+    
+    /// Outputs the cyan command header and ruler separating console output sections.
+    private func printBanner(console: any Console) {
         console.newLine()
         console.ruler(color: .cyan)
         console.output("  Vapor Deployer · Config".consoleText(color: .cyan, isBold: true))

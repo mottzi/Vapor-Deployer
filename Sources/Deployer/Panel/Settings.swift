@@ -89,11 +89,11 @@ extension Panel {
 
 }
 
-private extension Panel {
+extension Panel {
 
     /// Re-renders the settings page after a save failure, preserving the user's submitted values
     /// and attaching per-row + global error messages.
-    func renderSettingsWithErrors(
+    private func renderSettingsWithErrors(
         request: Request,
         entries: [SettingsForm.Entry],
         issues: [EnvironmentStore.ValidationIssue],
@@ -131,14 +131,14 @@ private extension Panel {
         return try await request.view.render("Deployer/DeployerSettings", context)
     }
 
-    var settingsDeployerContext: SettingsContext.Deployer {
+    private var settingsDeployerContext: SettingsContext.Deployer {
         SettingsContext.Deployer(
             panelRoute: panelPath,
             repositoryWebPageURL: DeployerVersion.repositoryWebPageURL
         )
     }
 
-    var settingsTargetContext: SettingsContext.Target {
+    private var settingsTargetContext: SettingsContext.Target {
         SettingsContext.Target(
             name: config.target.name,
             repositoryURL: config.target.repositoryURL,

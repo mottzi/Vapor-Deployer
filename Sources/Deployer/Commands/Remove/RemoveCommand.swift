@@ -42,9 +42,9 @@ struct RemoveCommand: AsyncCommand {
 
 }
 
-private extension RemoveCommand {
+extension RemoveCommand {
 
-    func printBanner(to console: any Console) {
+    private func printBanner(to console: any Console) {
         console.newLine()
         console.ruler(color: .red)
         console.output("  Vapor Deployer · Remove".consoleText(color: .red, isBold: true))

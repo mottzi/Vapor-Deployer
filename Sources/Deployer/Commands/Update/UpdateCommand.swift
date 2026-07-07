@@ -106,10 +106,10 @@ struct UpdateCommand: AsyncCommand {
 
 }
 
-private extension UpdateCommand {
+extension UpdateCommand {
 
     // See `ControlPreflight.query` and `docs/adr/0005-cli-server-state-channel.md`.
-    func preflightControlQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
+    private func preflightControlQuery(app: Application, config: Configuration, installDirectory: URL, console: any Console) async throws {
         switch await ControlPreflight.query(app: app, port: config.port, installDirectory: installDirectory) {
             case .ready: return
             case .busy(let phase): throw Error.serverBusy(phase)
@@ -121,9 +121,9 @@ private extension UpdateCommand {
 
 }
 
-private extension UpdateCommand {
+extension UpdateCommand {
 
-    func printBanner(console: any Console) {
+    private func printBanner(console: any Console) {
         console.newLine()
         console.ruler(color: .yellow)
         console.output("  Vapor Deployer · Update".consoleText(color: .yellow, isBold: true))

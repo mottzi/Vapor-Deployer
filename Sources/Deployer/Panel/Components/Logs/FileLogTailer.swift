@@ -95,9 +95,9 @@ actor FileLogTailer {
 
 }
 
-private extension FileLogTailer {
+extension FileLogTailer {
 
-    func appendOutput(_ data: Data) async {
+    private func appendOutput(_ data: Data) async {
         guard let stream else { return }
 
         let text = String(decoding: data, as: UTF8.self).ansiStripped
@@ -106,13 +106,13 @@ private extension FileLogTailer {
         await app.mist.streams.append(stream, text: text)
     }
 
-    func recordTailError(_ data: Data) {
+    private func recordTailError(_ data: Data) {
         let text = String(decoding: data, as: UTF8.self).ansiStripped.trimmed
         guard !text.isEmpty else { return }
         app.logger.debug("\(logPrefix) log tail stderr: \(text)")
     }
 
-    func finish(_ terminatedProcess: Process, expectedProcess: Process?) async {
+    private func finish(_ terminatedProcess: Process, expectedProcess: Process?) async {
 
         guard expectedProcess == nil || terminatedProcess === expectedProcess else { return }
         guard process === terminatedProcess else { return }

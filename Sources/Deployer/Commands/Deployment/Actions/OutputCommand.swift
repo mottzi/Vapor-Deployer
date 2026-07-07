@@ -33,10 +33,10 @@ struct OutputCommand: AnyAsyncCommand {
 
 }
 
-private extension OutputCommand {
+extension OutputCommand {
 
     /// Finds an active operation for the selected deployment.
-    func activeOperation(for deployment: Deployment, product: String, app: Application) async throws -> Operation? {
+    private func activeOperation(for deployment: Deployment, product: String, app: Application) async throws -> Operation? {
         guard let deploymentID = deployment.id else { return nil }
 
         return try await Operation.query(on: app.db)
@@ -49,7 +49,7 @@ private extension OutputCommand {
     }
 
     /// Follows operation events until a terminal event is observed.
-    func follow(operation: Operation, deploymentID: UUID?, console: any Console, app: Application) async throws {
+    private func follow(operation: Operation, deploymentID: UUID?, console: any Console, app: Application) async throws {
         guard let operationID = operation.id else { return }
 
         var lastSequence = 0
@@ -100,7 +100,7 @@ private extension OutputCommand {
     }
 
     /// Prints any persisted transcript tail that may have been cleaned from operation events before this follower observed it.
-    func printFinalOutputSuffix(deploymentID: UUID?, printed: String, console: any Console, app: Application) async throws {
+    private func printFinalOutputSuffix(deploymentID: UUID?, printed: String, console: any Console, app: Application) async throws {
         guard let deploymentID else { return }
         guard let deployment = try await Deployment.find(deploymentID, on: app.db) else { return }
         guard let output = deployment.output, output.hasPrefix(printed), output.count > printed.count else { return }

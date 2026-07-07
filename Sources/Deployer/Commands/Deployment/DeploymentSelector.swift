@@ -31,10 +31,10 @@ enum DeploymentSelector {
 
 }
 
-private extension DeploymentSelector {
+extension DeploymentSelector {
 
     /// Creates a pushed deployment row for a commit reachable from the configured branch.
-    static func createReachableDeployment(_ selector: String, config: Configuration, app: Application) async throws -> Deployment {
+    private static func createReachableDeployment(_ selector: String, config: Configuration, app: Application) async throws -> Deployment {
 
         let target = config.target
 

@@ -218,10 +218,10 @@ extension OperationEngine {
 
 }
 
-private extension Deployment {
+extension Deployment {
 
     /// Engine-level deployability excludes UI-only global lock state because callers already hold the lock.
-    var canStartPipelineOperation: Bool {
+    fileprivate var canStartPipelineOperation: Bool {
         switch displayStatus {
             case .building, .testing, .restoring, .running: false
             default: true
@@ -229,17 +229,17 @@ private extension Deployment {
     }
 
     /// Engine-level build eligibility for an operation that already owns the global lock.
-    var canStartBuildOperation: Bool {
+    fileprivate var canStartBuildOperation: Bool {
         !isLive && canStartPipelineOperation && !hasSavedBinary
     }
 
     /// Engine-level restore eligibility for an operation that already owns the global lock.
-    var canStartRestoreOperation: Bool {
+    fileprivate var canStartRestoreOperation: Bool {
         !isLive && canStartPipelineOperation && hasSavedBinary
     }
 
     /// Engine-level test eligibility for an operation that already owns the global lock.
-    var canStartTestOperation: Bool {
+    fileprivate var canStartTestOperation: Bool {
         switch displayStatus {
             case .building, .testing, .restoring: false
             default: true

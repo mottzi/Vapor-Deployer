@@ -136,27 +136,27 @@ extension DeploymentCLI {
 
 }
 
-private extension DeploymentCLI {
+extension DeploymentCLI {
 
-    static func testLabel(for deployment: Deployment) -> String {
+    private static func testLabel(for deployment: Deployment) -> String {
         if deployment.testsPassed { return "ok" }
         if deployment.testsFailed { return "fail" }
         return "-"
     }
 
-    static func binaryLabel(for deployment: Deployment) -> String {
+    private static func binaryLabel(for deployment: Deployment) -> String {
         guard let mb = deployment.binarySizeMB else { return "-" }
         return "\(mb) MB"
     }
 
-    static func startedLabel(for deployment: Deployment) -> String {
+    private static func startedLabel(for deployment: Deployment) -> String {
         guard let date = deployment.startedAt else { return "-" }
         let formatter = DateFormatter()
         formatter.dateFormat = "yy-MM-dd HH:mm"
         return formatter.string(from: date)
     }
 
-    static func truncate(_ text: String, to maxLength: Int) -> String {
+    private static func truncate(_ text: String, to maxLength: Int) -> String {
         guard text.count > maxLength else { return text }
         guard maxLength > 1 else { return String(text.prefix(maxLength)) }
         guard maxLength > 3 else { return String(text.prefix(maxLength)) }

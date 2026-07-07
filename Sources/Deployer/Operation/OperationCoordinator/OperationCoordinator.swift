@@ -123,10 +123,10 @@ extension OperationCoordinator {
 
 }
 
-private extension OperationCoordinator {
+extension OperationCoordinator {
 
     /// Treats any cross-process deployer operation as busy when classifying automatic webhook pushes.
-    func globalOperationLockHeld() -> Bool {
+    private func globalOperationLockHeld() -> Bool {
 
         let updateLockHeld = UpdateLock.isHeld()
         let operationLockHeld = OperationLock.isHeld()

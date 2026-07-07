@@ -69,9 +69,9 @@ struct SetupCommand: AsyncCommand {
 
 }
 
-private extension SetupCommand {
+extension SetupCommand {
 
-    func printBanner(console: any Console) {
+    private func printBanner(console: any Console) {
         console.newLine()
         console.ruler(color: .cyan)
         console.output("  Vapor Deployer · Setup".consoleText(color: .cyan, isBold: true))
@@ -82,7 +82,7 @@ private extension SetupCommand {
         console.newLine()
     }
 
-    func rollbackSetup(context: SetupContext, console: any Console, app: Application, originalError: Swift.Error) async throws {
+    private func rollbackSetup(context: SetupContext, console: any Console, app: Application, originalError: Swift.Error) async throws {
         app.logger.warning("Rollback initiated due to setup failure: \(originalError.localizedDescription)")
         guard let paths = context.paths else { return }
         let backupPath = paths.installDirectory + ".bak"
