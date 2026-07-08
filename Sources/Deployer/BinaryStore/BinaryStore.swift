@@ -16,7 +16,7 @@ struct BinaryStore {
 
     /// /home/vapor/apps/<name>/deploy/binaries/<id>
     func binaryPath(for deployment: Deployment) throws -> String {
-        guard let id = deployment.id else { throw OperationWorker.Error.deploymentIDMissing }
+        guard let id = deployment.id else { throw Error.deploymentIDMissing }
         return "\(binariesPath)/\(id.uuidString)"
     }
 
@@ -48,8 +48,8 @@ extension BinaryStore {
             let fileManager = FileManager.default
             try fileManager.createDirectory(atPath: binariesPath, withIntermediateDirectories: true)
             
-            guard fileManager.fileExists(atPath: sourcePath) else { throw OperationWorker.Error.binaryNotFound(sourcePath) }
-            guard !fileManager.fileExists(atPath: destinationPath) else { throw OperationWorker.Error.binaryAlreadyExists(destinationPath) }
+            guard fileManager.fileExists(atPath: sourcePath) else { throw Error.binaryNotFound(sourcePath) }
+            guard !fileManager.fileExists(atPath: destinationPath) else { throw Error.binaryAlreadyExists(destinationPath) }
             
             try fileManager.moveItem(atPath: sourcePath, toPath: destinationPath)
             
@@ -71,7 +71,7 @@ extension BinaryStore {
             let fileManager = FileManager.default
             try fileManager.createDirectory(atPath: binariesPath, withIntermediateDirectories: true)
             
-            guard fileManager.fileExists(atPath: liveBinaryPath) else { throw OperationWorker.Error.binaryNotFound(liveBinaryPath) }
+            guard fileManager.fileExists(atPath: liveBinaryPath) else { throw Error.binaryNotFound(liveBinaryPath) }
             if fileManager.fileExists(atPath: destinationPath) {
                 try fileManager.removeItem(atPath: destinationPath)
             }
