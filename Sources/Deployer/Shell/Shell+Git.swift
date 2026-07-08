@@ -2,6 +2,7 @@ import Foundation
 
 extension Shell {
     
+    /// Fetches HEAD metadata and resolves current branch via getCurrentBranch to seed new DB deployments on boot.
     static func getCurrentCheckout(in directory: String) async throws -> GitCheckout {
         
         let commitID = try await runThrowing("git rev-parse HEAD", directory: directory).trimmed
@@ -26,6 +27,7 @@ extension Shell {
         )
     }
     
+    /// Finds the active branch or falls back to remote ancestors to safely return a branch label in detached HEAD.
     static func getCurrentBranch(in directory: String) async -> String {
         
         let symbolicBranch = await run("git symbolic-ref -q --short HEAD", directory: directory).output.trimmed
@@ -51,6 +53,7 @@ extension Shell {
     
 }
 
+/// Stores Git metadata resolved by getCurrentCheckout to seed the DB with the running version on boot.
 struct GitCheckout {
     
     let commitID: String

@@ -19,7 +19,7 @@ extension Shell {
             using: environment
         ) else {
             return try Shell.requireSuccess(
-                ShellResult(output: "No command was provided.", exitCode: -1),
+                Result(output: "No command was provided.", exitCode: -1),
                 command: command,
                 arguments: arguments
             )
@@ -39,7 +39,7 @@ extension Shell {
         } catch {
             reader.readabilityHandler = nil
             return try Shell.requireSuccess(
-                ShellResult(output: error.localizedDescription, exitCode: -1),
+                Result(output: error.localizedDescription, exitCode: -1),
                 command: command,
                 arguments: arguments
             )
@@ -55,7 +55,7 @@ extension Shell {
 
         await capture.waitForCallbacks()
         
-        let result = ShellResult(output: capture.output, exitCode: process.terminationStatus)
+        let result = Result(output: capture.output, exitCode: process.terminationStatus)
         return try Shell.requireSuccess(result, command: command, arguments: arguments)
     }
 }

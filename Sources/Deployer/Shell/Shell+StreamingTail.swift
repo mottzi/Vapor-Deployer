@@ -21,7 +21,7 @@ extension Shell {
             using: environment
         ) else {
             return try Shell.requireSuccess(
-                ShellResult(output: "No command was provided.", exitCode: -1),
+                Result(output: "No command was provided.", exitCode: -1),
                 command: command,
                 arguments: arguments
             )
@@ -47,7 +47,7 @@ extension Shell {
         } catch {
             reader.readabilityHandler = nil
             return try Shell.requireSuccess(
-                ShellResult(output: error.localizedDescription, exitCode: -1),
+                Result(output: error.localizedDescription, exitCode: -1),
                 command: command,
                 arguments: arguments
             )
@@ -61,38 +61,38 @@ extension Shell {
 
         renderer.finish(render: shouldRender)
         
-        let result = ShellResult(output: renderer.output, exitCode: process.terminationStatus)
+        let result = Result(output: renderer.output, exitCode: process.terminationStatus)
         return try Shell.requireSuccess(result, command: command, arguments: arguments)
     }
 }
 
 /// Renders a live, rolling window of process output directly to the terminal.
 private final class StreamingTailRenderer: @unchecked Sendable {
-
+    
     private let lock = NSLock()
     private let tailLineCount: Int
     private let redrawInterval: TimeInterval
     private let maxLineLength: Int
-
+    
     private var captured = Data()
     private var pendingLine = ""
     private var tail: [String] = []
     private var renderedLineCount = 0
     private var lastRender = Date.distantPast
-
+    
     init(tailLineCount: Int, redrawInterval: TimeInterval, terminalWidth: Int) {
         self.tailLineCount = max(tailLineCount, 1)
         self.redrawInterval = redrawInterval
         self.maxLineLength = max(20, terminalWidth - 6)
     }
-
+    
     /// Provides the complete execution transcript once the process terminates.
     var output: String {
         lock.lock()
         defer { lock.unlock() }
         return String(data: captured, encoding: .utf8) ?? ""
     }
-
+    
     /// Queues incoming process output and triggers a terminal redraw if the throttle interval has elapsed.
     func append(_ data: Data, render: Bool) {
         lock.lock()
@@ -101,7 +101,7 @@ private final class StreamingTailRenderer: @unchecked Sendable {
         if render { renderTailIfNeeded(force: false) }
         lock.unlock()
     }
-
+    
     /// Flushes remaining output and clears the rolling tail block from the terminal.
     func finish(render: Bool) {
         lock.lock()
@@ -118,6 +118,10 @@ private final class StreamingTailRenderer: @unchecked Sendable {
         
         lock.unlock()
     }
+    
+}
+
+extension StreamingTailRenderer {
 
     /// Splits raw data into individual lines, buffering any incomplete trailing segment for the next chunk.
     private func appendTailLines(from data: Data) {

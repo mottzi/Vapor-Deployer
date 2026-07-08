@@ -3,12 +3,13 @@ import Foundation
 struct Shell {
 
     @discardableResult
+    /// Spawns a process via prepareProcess to query tool statuses (e.g. check which/dpkg) without throwing errors.
     static func run(
         _ command: String,
         _ arguments: [String],
         directory: String? = nil,
         environment: [String: String]? = nil
-    ) async -> ShellResult {
+    ) async -> Result {
         
         guard let (process, pipe) = prepareProcess(
             running: command,
@@ -16,24 +17,26 @@ struct Shell {
             in: directory,
             using: environment
         ) else {
-            return ShellResult(output: "No command was provided.", exitCode: -1)
+            return Result(output: "No command was provided.", exitCode: -1)
         }
 
         do { try process.run() }
-        catch { return ShellResult(output: error.localizedDescription, exitCode: -1) }
+        catch { return Result(output: error.localizedDescription, exitCode: -1) }
 
         let outputData = try? pipe.fileHandleForReading.readToEnd()
         process.waitUntilExit()
 
         let outputString = String(data: outputData ?? Data(), encoding: .utf8) ?? ""
-        return ShellResult(output: outputString, exitCode: process.terminationStatus)
+        return Result(output: outputString, exitCode: process.terminationStatus)
     }
 
-    static func run(_ command: String, directory: String? = nil) async -> ShellResult {
+    /// Evaluates commands in bash for pipe/redirect features (e.g. TCP checks), assuming inputs are pre-sanitized.
+    static func run(_ command: String, directory: String? = nil) async -> Result {
         await run("bash", ["-c", command], directory: directory)
     }
 
     @discardableResult
+    /// Runs a command and asserts exit code 0 via requireSuccess, throwing to halt on critical setup failures.
     static func runThrowing(
         _ command: String,
         _ arguments: [String],
@@ -46,6 +49,7 @@ struct Shell {
     }
 
     @discardableResult
+    /// Runs a bash command and asserts success via requireSuccess, throwing to abort on download or stage failures.
     static func runThrowing(_ command: String, directory: String? = nil) async throws -> String {
 
         let result = await run(command, directory: directory)
@@ -56,6 +60,7 @@ struct Shell {
 
 extension Shell {
 
+    /// Configures a Process/Pipe with env-lookups and merged contexts, called by run/stream commands on launch.
     static func prepareProcess(
         running command: String,
         with arguments: [String],
@@ -86,8 +91,9 @@ extension Shell {
     }
 
     @discardableResult
+    /// Validates result.exitCode is 0 to return output, or reconstructs command arguments to throw a Shell.Error.
     static func requireSuccess(
-        _ result: ShellResult,
+        _ result: Result,
         command: String,
         arguments: [String] = []
     ) throws -> String {
@@ -96,17 +102,11 @@ extension Shell {
             let fullCommand = arguments.isEmpty
                 ? command
                 : (Shell.tokenize(command) + arguments).joined(separator: " ")
+            
             throw Error(command: fullCommand, output: result.output)
         }
 
         return result.output
     }
-
-}
-
-struct ShellResult {
-
-    let output: String
-    let exitCode: Int32
 
 }
