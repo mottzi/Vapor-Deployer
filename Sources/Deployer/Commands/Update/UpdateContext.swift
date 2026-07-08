@@ -20,7 +20,7 @@ final class UpdateContext {
     var releaseVersion: String?
     var downloadURL: String?
     var stagingDir: String?
-    var releaseAssets: DeployerReleaseAssetDirectories?
+    var releaseAssets: DeployerRelease.AssetDirectories?
     var assetBackup: ReleaseAssetBackup?
     var currentVersion: String?
     var previousVersionFileExisted = false

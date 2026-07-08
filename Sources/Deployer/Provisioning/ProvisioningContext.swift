@@ -1,20 +1,20 @@
 import Foundation
 
-/// Shared contract for installation operations that need the service identity and path layout.
-protocol InstallationContext: AnyObject {
+/// Shared contract for setup/remove state that needs service identity and the derived host layout.
+protocol ProvisioningContext: AnyObject {
     
     var serviceUser: String { get }
     
     var serviceUserUID: Int? { get set }
     
-    var paths: InstallationPaths? { get }
+    var paths: ProvisioningPaths? { get }
     
 }
 
-extension InstallationContext {
+extension ProvisioningContext {
 
     /// Enforces that path layout has been derived before provisioning steps try to consume it.
-    func requirePaths() throws -> InstallationPaths {
+    func requirePaths() throws -> ProvisioningPaths {
         if let paths { return paths }
         throw Host.Error.missingValue("paths")
     }

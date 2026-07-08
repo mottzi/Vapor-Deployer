@@ -3,7 +3,7 @@ import Foundation
 struct Shell {
 
     @discardableResult
-    /// Spawns a process via prepareProcess to query tool statuses (e.g. check which/dpkg) without throwing errors.
+    /// Spawns system utilities during environment setup and removal steps, returning execution results without throwing errors.
     static func run(
         _ command: String,
         _ arguments: [String],
@@ -30,13 +30,13 @@ struct Shell {
         return Result(output: outputString, exitCode: process.terminationStatus)
     }
 
-    /// Evaluates commands in bash for pipe/redirect features (e.g. TCP checks), assuming inputs are pre-sanitized.
+    /// Executes scripts inside a subshell to enable piping and redirects (like local port checks), assuming inputs are pre-sanitized.
     static func run(_ command: String, directory: String? = nil) async -> Result {
         await run("bash", ["-c", command], directory: directory)
     }
 
     @discardableResult
-    /// Runs a command and asserts exit code 0 via requireSuccess, throwing to halt on critical setup failures.
+    /// Executes critical binaries (e.g., systemctl, chown) during installation, raising exceptions to roll back or halt setup failures.
     static func runThrowing(
         _ command: String,
         _ arguments: [String],
@@ -49,7 +49,7 @@ struct Shell {
     }
 
     @discardableResult
-    /// Runs a bash command and asserts success via requireSuccess, throwing to abort on download or stage failures.
+    /// Executes critical bash commands (e.g., mktemp, tar) where failure is fatal, halting dependent download/staging sequences.
     static func runThrowing(_ command: String, directory: String? = nil) async throws -> String {
 
         let result = await run(command, directory: directory)
@@ -60,7 +60,7 @@ struct Shell {
 
 extension Shell {
 
-    /// Configures a Process/Pipe with env-lookups and merged contexts, called by run/stream commands on launch.
+    /// Builds process handles with merged environment variables and merged stdout/stderr to prevent output race conditions.
     static func prepareProcess(
         running command: String,
         with arguments: [String],
@@ -91,7 +91,7 @@ extension Shell {
     }
 
     @discardableResult
-    /// Validates result.exitCode is 0 to return output, or reconstructs command arguments to throw a Shell.Error.
+    /// Asserts process completion success, translating Unix exit codes into structured error flows for deployment tasks.
     static func requireSuccess(
         _ result: Result,
         command: String,

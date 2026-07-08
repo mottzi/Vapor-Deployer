@@ -46,7 +46,7 @@ actor OperationCoordinator {
         self.onStatusChange = onStatusChange
     }
 
-    func recordPush(event: PushEvent, target: TargetConfiguration) async {
+    func recordPush(event: GitHub.PushEvent, target: TargetConfiguration) async {
 
         let eventBranch = event.branch.hasPrefix("refs/heads/")
             ? String(event.branch.dropFirst("refs/heads/".count))

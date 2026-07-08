@@ -29,7 +29,7 @@ extension ServiceBackend {
     }
 
     /// Creates a service configurator instance for this backend.
-    func makeConfigurator(shell: InstallationShell, paths: InstallationPaths) -> any ServiceConfigurator {
+    func makeConfigurator(shell: ProvisioningShell, paths: ProvisioningPaths) -> any ServiceConfigurator {
         switch self {
             case .systemd: SystemdConfigurator(shell: shell, paths: paths)
             case .supervisor: SupervisorConfigurator()

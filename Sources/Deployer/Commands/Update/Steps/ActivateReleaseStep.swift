@@ -50,7 +50,7 @@ extension ActivateReleaseStep {
     }
 
     /// Replaces Public/ and Resources/ wholesale from the release payload or matching source archive.
-    private func copyReleaseAssets(_ assets: DeployerReleaseAssetDirectories) throws {
+    private func copyReleaseAssets(_ assets: DeployerRelease.AssetDirectories) throws {
         let fileManager = FileManager.default
         let installDirectory = context.stagedBinaryURL.deletingLastPathComponent()
         let candidateRoot = installDirectory

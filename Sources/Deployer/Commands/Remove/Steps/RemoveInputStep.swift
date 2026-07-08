@@ -127,7 +127,7 @@ extension RemoveInputStep {
 
     private func derivePaths() {
         
-        context.paths = InstallationPaths.derive(
+        context.paths = ProvisioningPaths.derive(
             serviceUser: context.serviceUser,
             appName: context.appName,
             panelRoute: "/deployer"

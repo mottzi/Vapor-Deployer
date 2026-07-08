@@ -12,7 +12,7 @@ struct DownloadStep: UpdateStep {
 
         console.print("Checking for deployer updates.")
 
-        let (tagName, downloadURL) = try await DeployerReleaseAssets.fetchLatestReleaseMetadata()
+        let (tagName, downloadURL) = try await DeployerRelease.fetchLatestReleaseMetadata()
         context.releaseVersion = tagName
         context.downloadURL = downloadURL
 
@@ -35,7 +35,7 @@ struct DownloadStep: UpdateStep {
         context.stagingDir = stagingDir
 
         console.print("Downloading release.")
-        let payload = try await DeployerReleaseAssets.downloadRelease(
+        let payload = try await DeployerRelease.downloadRelease(
             tag: tagName,
             downloadURL: downloadURL,
             into: stagingDir

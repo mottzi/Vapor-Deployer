@@ -47,7 +47,7 @@ struct InputStep: SetupStep {
         collectInstallMode()
 
         // Depends on serviceUser, appName, and panelRoute being finalized above.
-        context.paths = InstallationPaths.derive(
+        context.paths = ProvisioningPaths.derive(
             serviceUser: context.serviceUser,
             appName: context.appName,
             panelRoute: context.panelRoute
@@ -411,7 +411,7 @@ extension InputStep {
             throw SetupCommand.Error.githubAPI("invalid hooks URL")
         }
 
-        let (_, status) = try await GitHubAPI.request(url: url, token: context.githubToken)
+        let (_, status) = try await GitHub.API.request(url: url, token: context.githubToken)
         guard (200..<300).contains(status) else {
             throw SetupCommand.Error.githubAPI("token check failed for \(context.githubOwner)/\(context.githubRepo) (HTTP \(status))")
         }

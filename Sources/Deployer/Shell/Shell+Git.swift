@@ -2,7 +2,7 @@ import Foundation
 
 extension Shell {
     
-    /// Fetches HEAD metadata and resolves current branch via getCurrentBranch to seed new DB deployments on boot.
+    /// Inspects local Git repository state to capture build history metadata, letting Bootstrap seed the initial deployment on boot.
     static func getCurrentCheckout(in directory: String) async throws -> GitCheckout {
         
         let commitID = try await runThrowing("git rev-parse HEAD", directory: directory).trimmed
@@ -27,7 +27,7 @@ extension Shell {
         )
     }
     
-    /// Finds the active branch or falls back to remote ancestors to safely return a branch label in detached HEAD.
+    /// Resolves the current branch label, implementing fallback remote searches to handle detached HEAD states during build phases.
     static func getCurrentBranch(in directory: String) async -> String {
         
         let symbolicBranch = await run("git symbolic-ref -q --short HEAD", directory: directory).output.trimmed
@@ -53,7 +53,7 @@ extension Shell {
     
 }
 
-/// Stores Git metadata resolved by getCurrentCheckout to seed the DB with the running version on boot.
+/// Read-only snapshot of Git reference details used to populate deployment records in database transactions.
 struct GitCheckout {
     
     let commitID: String

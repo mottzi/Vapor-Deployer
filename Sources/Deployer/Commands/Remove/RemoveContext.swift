@@ -1,7 +1,7 @@
 import Foundation
 
 /// Shared mutable state for one remove run, holding the identity, paths, and metadata needed to tear down an installation.
-final class RemoveContext: InstallationContext {
+final class RemoveContext: ProvisioningContext {
 
     var serviceUser = ""
     var serviceUserUID: Int?
@@ -10,7 +10,7 @@ final class RemoveContext: InstallationContext {
     var serviceBackend = ServiceBackend.systemd
     var certName = ""
 
-    var paths: InstallationPaths?
+    var paths: ProvisioningPaths?
 
     // Values read from deployerctl.conf for auto-discovery
     var nginxSiteAvailable: String?

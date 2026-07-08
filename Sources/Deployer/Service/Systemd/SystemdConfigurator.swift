@@ -3,8 +3,8 @@ import Foundation
 /// Setup/teardown operations for systemd user units.
 struct SystemdConfigurator: ServiceConfigurator {
 
-    let shell: InstallationShell
-    let paths: InstallationPaths
+    let shell: ProvisioningShell
+    let paths: ProvisioningPaths
 
     private var unitDirectory: String { "\(paths.serviceHome)/.config/systemd/user" }
     private var serviceUser: String { shell.context.serviceUser }

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Preconditions for commands that install, update, or remove host-managed deployer resources.
-enum InstallationPreconditions {
+enum ProvisioningPreconditions {
 
     /// Ensures privileged filesystem and service-management operations cannot fail midway under an unprivileged user.
     static func requireRoot() throws {

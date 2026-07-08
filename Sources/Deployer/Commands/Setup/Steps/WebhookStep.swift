@@ -25,7 +25,7 @@ extension WebhookStep {
 
     private func fetchExistingWebhookID() async throws -> Any? {
 
-        let hooks = try await GitHubAPI.requestJSON(url: hooksURL, token: context.githubToken)
+        let hooks = try await GitHub.API.requestJSON(url: hooksURL, token: context.githubToken)
         return (hooks as? [[String: Any]])?.first { hook in
             guard let config = hook["config"] as? [String: Any] else { return false }
             return config["url"] as? String == context.webhookURL
@@ -39,7 +39,7 @@ extension WebhookStep {
         let data = try buildWebhookPayload()
 
         if let existingID {
-            try await GitHubAPI.requestJSON(
+            try await GitHub.API.requestJSON(
                 method: "PATCH", 
                 url: "\(hooksURL)/\(existingID)", 
                 token: context.githubToken, 
@@ -47,7 +47,7 @@ extension WebhookStep {
             )
             console.print("Updated existing GitHub webhook.")
         } else {
-            try await GitHubAPI.requestJSON(
+            try await GitHub.API.requestJSON(
                 method: "POST", 
                 url: hooksURL, 
                 token: context.githubToken, 

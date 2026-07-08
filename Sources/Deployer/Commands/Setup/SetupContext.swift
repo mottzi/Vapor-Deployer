@@ -1,7 +1,7 @@
 import Foundation
 
 /// Shared mutable state for one setup run, holding user input, discovered host facts, and derived values for later steps.
-final class SetupContext: InstallationContext {
+final class SetupContext: ProvisioningContext {
 
     let deployerRepositoryURL = DeployerVersion.repositoryWebPageURL + ".git"
     var deployerRepositoryBranch = "main"
@@ -26,7 +26,7 @@ final class SetupContext: InstallationContext {
     var buildFromSource = false
     var previousBuildFromSource: Bool?
 
-    var paths: InstallationPaths?
+    var paths: ProvisioningPaths?
 
     var productName = ""
     var executableProducts: [String] = []

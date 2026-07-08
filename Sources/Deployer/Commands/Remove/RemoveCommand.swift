@@ -9,8 +9,8 @@ struct RemoveCommand: AsyncCommand {
 
     func run(using context: CommandContext, signature: Signature) async throws {
 
-        try InstallationPreconditions.requireRoot()
-        try InstallationPreconditions.requireUbuntu()
+        try ProvisioningPreconditions.requireRoot()
+        try ProvisioningPreconditions.requireUbuntu()
 
         let removeContext = RemoveContext()
 

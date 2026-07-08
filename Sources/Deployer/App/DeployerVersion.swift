@@ -46,6 +46,7 @@ extension DeployerVersion {
 
     /// Falls back to source-control metadata when running from a development checkout.
     private static func readGitVersion(near directory: URL) async -> String? {
+        
         guard let gitRoot = findGitRoot(startingAt: directory) else { return nil }
 
         let describe = await Shell.run("git", ["-C", gitRoot.path, "describe", "--tags", "--always", "--dirty", "--abbrev=7"])
@@ -65,6 +66,7 @@ extension DeployerVersion {
 
     /// Walks parent directories to detect repository roots in source installs and local development runs.
     private static func findGitRoot(startingAt directory: URL) -> URL? {
+        
         let fileManager = FileManager.default
         var cursor = directory.standardizedFileURL
 
@@ -77,6 +79,7 @@ extension DeployerVersion {
             if parent.path == cursor.path {
                 break
             }
+            
             cursor = parent
         }
 
@@ -85,6 +88,7 @@ extension DeployerVersion {
 
     /// Returns bundle-provided version metadata when available (mainly for platform-specific packaging).
     private static func bundleVersion() -> String? {
+        
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String
         if let short, !short.trimmed.isEmpty { return short.trimmed }

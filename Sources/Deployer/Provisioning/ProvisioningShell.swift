@@ -1,9 +1,9 @@
 import Foundation
 
-/// Shell facade for setup and remove steps; instance methods use InstallationContext.
-struct InstallationShell {
+/// Shell facade for setup and remove steps; instance methods use ProvisioningContext.
+struct ProvisioningShell {
     
-    let context: any InstallationContext
+    let context: any ProvisioningContext
 
     /// Runs as the configured service user while enforcing `HOME` and `USER` so tool behavior matches non-root runtime expectations.
     @discardableResult

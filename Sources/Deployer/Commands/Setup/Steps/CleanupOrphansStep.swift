@@ -80,7 +80,7 @@ extension CleanupOrphansStep {
     private func stopAndRemoveOldService(
         oldProductName: String,
         serviceBackend: ServiceBackend,
-        paths: InstallationPaths
+        paths: ProvisioningPaths
     ) async throws {
 
         let configurator = serviceBackend.makeConfigurator(shell: shell, paths: paths)
@@ -88,13 +88,13 @@ extension CleanupOrphansStep {
         await configurator.removeConfigs(for: [oldProductName])
     }
 
-    private func removeOldCheckout(oldAppName: String, paths: InstallationPaths) async throws {
+    private func removeOldCheckout(oldAppName: String, paths: ProvisioningPaths) async throws {
         
         let oldCheckoutPath = "\(paths.appsRootDirectory)/\(oldAppName)"
         try? Host.FileSystem.removeIfPresent(oldCheckoutPath)
     }
 
-    private func removeOldDeployKey(oldAppName: String, paths: InstallationPaths) async throws {
+    private func removeOldDeployKey(oldAppName: String, paths: ProvisioningPaths) async throws {
         
         let oldDeployKeyPath = "\(paths.serviceHome)/.ssh/\(oldAppName)_deploy_key"
         try? Host.FileSystem.removeIfPresent(oldDeployKeyPath)

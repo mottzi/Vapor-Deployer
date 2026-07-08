@@ -79,7 +79,7 @@ extension StageDeployerStep {
         let executableDirectory = currentExecutableURL.deletingLastPathComponent()
         let publicDirectory = executableDirectory.appendingPathComponent("Public", isDirectory: true)
         let resourcesDirectory = executableDirectory.appendingPathComponent("Resources", isDirectory: true)
-        let localReleaseTag = DeployerReleaseAssets.localReleaseTag(in: executableDirectory)
+        let localReleaseTag = DeployerRelease.localReleaseTag(in: executableDirectory)
         context.releaseVersion = localReleaseTag
         
         if FileManager.default.fileExists(atPath: publicDirectory.path),
@@ -105,7 +105,7 @@ extension StageDeployerStep {
             defer { try? FileManager.default.removeItem(atPath: stagingPath) }
             
             console.print("Downloading deployer web assets for \(localReleaseTag).")
-            let assets = try await DeployerReleaseAssets.downloadSourceAssets(tag: localReleaseTag, into: stagingPath)
+            let assets = try await DeployerRelease.downloadSourceAssets(tag: localReleaseTag, into: stagingPath)
             try await installPayload(
                 binary: currentExecutableURL.path,
                 publicDirectory: assets.publicDirectory,
@@ -126,14 +126,14 @@ extension StageDeployerStep {
     /// Fetches the most recent published release archive from GitHub and stages its contents.
     private func installLatestRelease() async throws {
         
-        let (tagName, downloadURL) = try await DeployerReleaseAssets.fetchLatestReleaseMetadata()
+        let (tagName, downloadURL) = try await DeployerRelease.fetchLatestReleaseMetadata()
         context.releaseVersion = tagName
 
         let stagingPath = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
         defer { try? FileManager.default.removeItem(atPath: stagingPath) }
 
         console.print("Downloading \(downloadURL).")
-        let payload = try await DeployerReleaseAssets.downloadRelease(tag: tagName, downloadURL: downloadURL, into: stagingPath)
+        let payload = try await DeployerRelease.downloadRelease(tag: tagName, downloadURL: downloadURL, into: stagingPath)
 
         try await installPayload(
             binary: payload.binaryPath,
