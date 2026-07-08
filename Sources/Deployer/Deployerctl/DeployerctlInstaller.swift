@@ -9,20 +9,20 @@ enum DeployerctlInstaller {
     /// Writes the deployerctl wrapper script, helper, and sudoers configuration directly as the root user.
     static func installRoot(context: DeployerctlInstallContext) async throws {
         
-        try await SystemFileSystem.installDirectory(context.deployerctlConfigDirectory, owner: "root", group: "root")
-        try await SystemFileSystem.writeFile(DeployerctlTemplate.wrapperConfig(context: context), to: context.deployerctlConfig)
-        try await SystemFileSystem.writeFile(DeployerctlTemplate.wrapperScript(), to: context.deployerctlBinary, mode: "0755")
+        try await Host.FileSystem.installDirectory(context.deployerctlConfigDirectory, owner: "root", group: "root")
+        try await Host.FileSystem.writeFile(DeployerctlTemplate.wrapperConfig(context: context), to: context.deployerctlConfig)
+        try await Host.FileSystem.writeFile(DeployerctlTemplate.wrapperScript(), to: context.deployerctlBinary, mode: "0755")
 
-        try await SystemFileSystem.installDirectory(context.deployerctlHelperDirectory, owner: "root", group: "root")
-        try await SystemFileSystem.writeFile(DeployerctlTemplate.refreshHelperScript(context: context), to: context.deployerctlRefreshHelper, mode: "0755")
-        try await SystemFileSystem.installDirectory(URL(fileURLWithPath: context.deployerctlRefreshSudoers).deletingLastPathComponent().path, owner: "root", group: "root")
-        try await SystemFileSystem.writeFile(DeployerctlTemplate.refreshSudoers(context: context), to: context.deployerctlRefreshSudoers, mode: "0440")
+        try await Host.FileSystem.installDirectory(context.deployerctlHelperDirectory, owner: "root", group: "root")
+        try await Host.FileSystem.writeFile(DeployerctlTemplate.refreshHelperScript(context: context), to: context.deployerctlRefreshHelper, mode: "0755")
+        try await Host.FileSystem.installDirectory(URL(fileURLWithPath: context.deployerctlRefreshSudoers).deletingLastPathComponent().path, owner: "root", group: "root")
+        try await Host.FileSystem.writeFile(DeployerctlTemplate.refreshSudoers(context: context), to: context.deployerctlRefreshSudoers, mode: "0440")
     }
 
     /// Reinstalls the deployerctl wrapper, executing either directly as root or via the root-owned helper if unprivileged.
     static func refresh(context: DeployerctlInstallContext) async throws -> RefreshResult {
         
-        if UserAccount.currentUID() == 0 {
+        if Host.User.currentUID == 0 {
             try await installRoot(context: context)
             return .refreshedDirectly
         }

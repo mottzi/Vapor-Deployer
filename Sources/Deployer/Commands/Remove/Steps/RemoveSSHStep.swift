@@ -31,8 +31,8 @@ extension RemoveSSHStep {
             console.print("Removing deploy key files for app '\(context.appName)'.")
         }
 
-        try? SystemFileSystem.removeIfPresent(keyBase)
-        try? SystemFileSystem.removeIfPresent("\(keyBase).pub")
+        try? Host.FileSystem.removeIfPresent(keyBase)
+        try? Host.FileSystem.removeIfPresent("\(keyBase).pub")
     }
 
     private func pruneSSHConfig() async {

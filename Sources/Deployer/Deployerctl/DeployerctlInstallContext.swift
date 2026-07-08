@@ -82,7 +82,7 @@ extension DeployerctlInstallContext {
         let serviceUser = try Self.resolveServiceUser(config: config, discovered: discoveredServiceUser)
         let productName = config.target.name
         let appName = Self.first(metadata["APP_NAME"], URL(fileURLWithPath: config.target.directory, isDirectory: true).lastPathComponent, productName)
-        let paths = SystemPaths.derive(serviceUser: serviceUser, appName: appName, panelRoute: config.panelRoute)
+        let paths = InstallationPaths.derive(serviceUser: serviceUser, appName: appName, panelRoute: config.panelRoute)
         let appDirectory = config.target.directory
         let primaryDomain = metadata["PRIMARY_DOMAIN"] ?? ""
 
@@ -128,7 +128,7 @@ extension DeployerctlInstallContext {
         }
 
         let user = URL(fileURLWithPath: config.serviceHome, isDirectory: true).lastPathComponent.trimmed
-        guard !user.isEmpty else { throw System.Error.missingValue("serviceUser") }
+        guard !user.isEmpty else { throw Host.Error.missingValue("serviceUser") }
         
         return user
     }

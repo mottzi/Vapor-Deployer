@@ -60,7 +60,7 @@ struct UpdateCommand: AsyncCommand {
         if updateContext.isSourceInstall {
             let gitMarker = installDirectory.appendingPathComponent(".git")
             if !FileManager.default.fileExists(atPath: gitMarker.path) {
-                throw System.Error.invalidValue(
+                throw Host.Error.invalidValue(
                     "installation",
                     "Configured for source build, but no .git repository found. Run 'deployerctl setup' to repair."
                 )
@@ -195,7 +195,7 @@ extension UpdateCommand {
         let backupBinaryExists = fileManager.fileExists(atPath: context.backupBinaryURL.path)
         guard backupBinaryExists else { throw Error.binaryNotFound(context.backupBinaryURL.path) }
 
-        try SystemFileSystem.removeIfPresent(executableURL.path)
+        try Host.FileSystem.removeIfPresent(executableURL.path)
         try fileManager.moveItem(at: context.backupBinaryURL, to: executableURL)
     }
 
@@ -203,7 +203,7 @@ extension UpdateCommand {
     private func restoreReleaseAssets(from backup: ReleaseAssetBackup, installDirectory: URL, fileManager: FileManager) throws {
         for name in ReleaseAssetBackup.directoryNames {
             let destination = installDirectory.appendingPathComponent(name, isDirectory: true)
-            try SystemFileSystem.removeIfPresent(destination.path)
+            try Host.FileSystem.removeIfPresent(destination.path)
 
             guard let source = backup.directory(named: name) else { continue }
             try fileManager.copyItem(at: source, to: destination)

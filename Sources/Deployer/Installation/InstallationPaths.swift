@@ -1,7 +1,7 @@
 import Foundation
 
 /// Canonical install and runtime paths derived from setup inputs so steps and templates share one filesystem and routing contract.
-struct SystemPaths {
+struct InstallationPaths {
 
     let serviceHome: String
     let installDirectory: String
@@ -32,7 +32,7 @@ struct SystemPaths {
     var appDeployDirectory: String { "\(appDirectory)/deploy" }
 
     /// Derives all managed paths from `serviceUser`, `appName`, and `panelRoute` so reruns stay deterministic across execution contexts.
-    static func derive(serviceUser: String, appName: String, panelRoute: String) -> SystemPaths {
+    static func derive(serviceUser: String, appName: String, panelRoute: String) -> InstallationPaths {
         
         let serviceHome = "/home/\(serviceUser)"
         let installDirectory = "\(serviceHome)/deployer"
@@ -42,7 +42,7 @@ struct SystemPaths {
         let swiftlyHomeDirectory = "\(serviceHome)/.local/share/swiftly"
         let nginxSiteName = "deployer-\(appName)"
 
-        return SystemPaths(
+        return InstallationPaths(
             serviceHome: serviceHome,
             installDirectory: installDirectory,
             appsRootDirectory: appsRootDirectory,

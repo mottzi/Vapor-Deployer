@@ -31,7 +31,7 @@ struct RemoveServiceFilesStep: RemoveStep {
 extension RemoveServiceFilesStep {
 
     private func userExists() async -> Bool {
-        await UserAccount.exists(context.serviceUser)
+        await Host.User.exists(context.serviceUser)
     }
 
 }

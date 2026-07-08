@@ -47,7 +47,7 @@ struct InputStep: SetupStep {
         collectInstallMode()
 
         // Depends on serviceUser, appName, and panelRoute being finalized above.
-        context.paths = SystemPaths.derive(
+        context.paths = InstallationPaths.derive(
             serviceUser: context.serviceUser,
             appName: context.appName,
             panelRoute: context.panelRoute
@@ -396,7 +396,7 @@ extension InputStep {
         
         let isResolvable = await Shell.run("getent", ["ahosts", domain]).exitCode == 0
         if !isResolvable {
-            throw System.Error.invalidValue(
+            throw Host.Error.invalidValue(
                 label,
                 "'\(domain)' does not resolve in DNS. Point it to this server before continuing."
             )

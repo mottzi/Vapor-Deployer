@@ -142,7 +142,7 @@ extension Configuration {
 
     static func trimmedFileSystemPath(_ value: String, field: String, relativeTo baseDirectoryURL: URL) throws -> String {
         let trimmed = try trimmedValue(value, field: field)
-        return PathComparison.standardizedPath(trimmed, relativeTo: baseDirectoryURL)
+        return Host.Path.standardizedPath(trimmed, relativeTo: baseDirectoryURL)
     }
 
 }

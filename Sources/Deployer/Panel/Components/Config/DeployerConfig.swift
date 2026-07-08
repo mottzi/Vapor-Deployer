@@ -43,7 +43,7 @@ struct DeployerInfoState: ComponentData {
             Field("Directory", config.deployerDirectory.displayPath),
             Field("Branch", config.deployerBranch),
             Field("Version", version),
-            Field("User", UserAccount.currentName() ?? ""),
+            Field("User", Host.User.currentName ?? ""),
             Field("Service", config.serviceBackend.rawValue),
             Field("Installation", config.buildFromSource ? "local build" : "release"),
             Field("Socket", config.socketPath.displayPath),

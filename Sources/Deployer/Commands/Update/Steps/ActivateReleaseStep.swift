@@ -31,7 +31,7 @@ extension ActivateReleaseStep {
         let fileManager = FileManager.default
         let executableURL = context.stagedBinaryURL.deletingPathExtension()
 
-        try SystemFileSystem.removeIfPresent(context.backupBinaryURL.path)
+        try Host.FileSystem.removeIfPresent(context.backupBinaryURL.path)
 
         let liveBinaryExists = fileManager.fileExists(atPath: executableURL.path)
         guard liveBinaryExists else { throw UpdateCommand.Error.binaryNotFound(executableURL.path) }
@@ -55,7 +55,7 @@ extension ActivateReleaseStep {
         let installDirectory = context.stagedBinaryURL.deletingLastPathComponent()
         let candidateRoot = installDirectory
             .appendingPathComponent(".deployer-assets-new-\(UUID().uuidString)", isDirectory: true)
-        defer { try? SystemFileSystem.removeIfPresent(candidateRoot.path) }
+        defer { try? Host.FileSystem.removeIfPresent(candidateRoot.path) }
 
         try fileManager.createDirectory(at: candidateRoot, withIntermediateDirectories: true)
 
@@ -71,7 +71,7 @@ extension ActivateReleaseStep {
         for name in ReleaseAssetBackup.directoryNames {
             let candidate = candidateRoot.appendingPathComponent(name, isDirectory: true)
             let destination = installDirectory.appendingPathComponent(name, isDirectory: true)
-            try SystemFileSystem.removeIfPresent(destination.path)
+            try Host.FileSystem.removeIfPresent(destination.path)
             try fileManager.moveItem(at: candidate, to: destination)
         }
     }

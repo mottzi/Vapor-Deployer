@@ -30,7 +30,7 @@ extension Shell {
         let renderer = StreamingTailRenderer(
             tailLineCount: tailLineCount,
             redrawInterval: redrawInterval,
-            terminalWidth: TerminalWidth.current()
+            terminalWidth: Host.Terminal.current()
         )
         
         let shouldRender = forceTTY ?? Bool(isatty(STDOUT_FILENO) == 1)

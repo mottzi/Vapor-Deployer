@@ -91,9 +91,9 @@ extension TLSStep {
 
     private func configureNginxTLS() async throws {
 
-        try await SystemFileSystem.writeFile(try NginxTemplate.tls(context: context), to: paths.nginxSiteAvailable)
-        try await SystemFileSystem.installDirectory("/etc/letsencrypt/renewal-hooks/deploy", owner: "root", group: "root")
-        try await SystemFileSystem.writeFile(NginxTemplate.renewHookScript(), to: paths.certbotRenewHook, mode: "0755")
+        try await Host.FileSystem.writeFile(try NginxTemplate.tls(context: context), to: paths.nginxSiteAvailable)
+        try await Host.FileSystem.installDirectory("/etc/letsencrypt/renewal-hooks/deploy", owner: "root", group: "root")
+        try await Host.FileSystem.writeFile(NginxTemplate.renewHookScript(), to: paths.certbotRenewHook, mode: "0755")
         
         try await Shell.runThrowing("ln", ["-sfn", paths.nginxSiteAvailable, paths.nginxSiteEnabled])
         try await Shell.runThrowing("nginx", ["-t"])

@@ -73,7 +73,7 @@ extension StageDeployerStep {
     /// Acquires and installs a pre-built executable alongside its required web assets.
     private func installFromBinary() async throws {
         
-        try await SystemFileSystem.installDirectory(paths.installDirectory, owner: context.serviceUser, group: context.serviceUser)
+        try await Host.FileSystem.installDirectory(paths.installDirectory, owner: context.serviceUser, group: context.serviceUser)
         
         let currentExecutableURL = try Configuration.getExecutableURL()
         let executableDirectory = currentExecutableURL.deletingLastPathComponent()
@@ -84,7 +84,7 @@ extension StageDeployerStep {
         
         if FileManager.default.fileExists(atPath: publicDirectory.path),
            FileManager.default.fileExists(atPath: resourcesDirectory.path) {
-            if PathComparison.isSamePath(executableDirectory.path, paths.installDirectory) {
+            if Host.Path.isSamePath(executableDirectory.path, paths.installDirectory) {
                 try await Shell.runThrowing("chmod", ["0755", paths.deployerBinary])
                 try await Shell.runThrowing("chown", ["-R", "\(context.serviceUser):\(context.serviceUser)", paths.installDirectory])
                 if let localReleaseTag { try await writeReleaseVersion(localReleaseTag) }
@@ -155,11 +155,11 @@ extension StageDeployerStep {
     ) async throws {
         
         guard FileManager.default.fileExists(atPath: binary) else {
-            throw System.Error.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
+            throw Host.Error.invalidValue("deployer binary", "expected binary missing at '\(binary)'")
         }
 
-        if !PathComparison.isSamePath(binary, paths.deployerBinary) {
-            let tmpPath = SystemFileSystem.stagedInstallTmpPath(for: paths.deployerBinary)
+        if !Host.Path.isSamePath(binary, paths.deployerBinary) {
+            let tmpPath = Host.FileSystem.stagedInstallTmpPath(for: paths.deployerBinary)
             try await Shell.runThrowing("install", [
                 "-m", "0755",
                 "-o", context.serviceUser,
@@ -167,23 +167,23 @@ extension StageDeployerStep {
                 binary,
                 tmpPath
             ])
-            try await SystemFileSystem.commitStagedBinary(from: tmpPath, to: paths.deployerBinary)
+            try await Host.FileSystem.commitStagedBinary(from: tmpPath, to: paths.deployerBinary)
         }
 
         if FileManager.default.fileExists(atPath: publicDirectory),
-           !PathComparison.isSamePath(publicDirectory, "\(paths.installDirectory)/Public") {
-            try SystemFileSystem.copyReplacing(source: publicDirectory, destination: "\(paths.installDirectory)/Public")
+           !Host.Path.isSamePath(publicDirectory, "\(paths.installDirectory)/Public") {
+            try Host.FileSystem.copyReplacing(source: publicDirectory, destination: "\(paths.installDirectory)/Public")
         }
         
         if FileManager.default.fileExists(atPath: resourcesDirectory),
-           !PathComparison.isSamePath(resourcesDirectory, "\(paths.installDirectory)/Resources") {
-            try SystemFileSystem.copyReplacing(source: resourcesDirectory, destination: "\(paths.installDirectory)/Resources")
+           !Host.Path.isSamePath(resourcesDirectory, "\(paths.installDirectory)/Resources") {
+            try Host.FileSystem.copyReplacing(source: resourcesDirectory, destination: "\(paths.installDirectory)/Resources")
         }
 
         if let versionFile,
            FileManager.default.fileExists(atPath: versionFile),
-           !PathComparison.isSamePath(versionFile, "\(paths.installDirectory)/.version") {
-            try SystemFileSystem.copyReplacing(source: versionFile, destination: "\(paths.installDirectory)/.version")
+           !Host.Path.isSamePath(versionFile, "\(paths.installDirectory)/.version") {
+            try Host.FileSystem.copyReplacing(source: versionFile, destination: "\(paths.installDirectory)/.version")
         }
 
         try await Shell.runThrowing("chown", [
@@ -194,7 +194,7 @@ extension StageDeployerStep {
 
     /// Records the active release tag into a local tracking file to avoid redundant downloads.
     private func writeReleaseVersion(_ tagName: String) async throws {
-        try await SystemFileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
+        try await Host.FileSystem.writeFile(tagName, to: "\(paths.installDirectory)/.version", owner: context.serviceUser, group: context.serviceUser)
     }
     
 }

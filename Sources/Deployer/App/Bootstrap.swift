@@ -36,7 +36,7 @@ extension Deployer {
         app.logger.info("Initializing Deployer server runtime with service manager: \(config.serviceBackend)")
         
         try useVariables()
-        app.deployer.serviceManager = try config.serviceBackend.makeManager(serviceUser: UserAccount.currentName())
+        app.deployer.serviceManager = try config.serviceBackend.makeManager(serviceUser: Host.User.currentName)
         app.deployer.configureHTTP(config: config)
         
         try await app.deployer.configureDatabase(config: config)
@@ -60,7 +60,7 @@ extension Deployer {
             app.logger = Logger(label: "deployer.cli") { _ in FileLogHandler(fileHandle: fileHandle) }
         }
         
-        app.deployer.serviceManager = try config.serviceBackend.makeManager(serviceUser: UserAccount.currentName())
+        app.deployer.serviceManager = try config.serviceBackend.makeManager(serviceUser: Host.User.currentName)
         
         try await app.deployer.configureHeadlessDatabase(config: config)
         await OperationRecovery.repairAbandonedOperations(app: app, config: config)
@@ -209,8 +209,8 @@ extension Deployer {
         let dbDirectoryPath = URL(fileURLWithPath: dbFile).deletingLastPathComponent().path
         let workingDirectoryPath = app.directory.workingDirectory
         
-        guard !PathComparison.isSamePath(dbDirectoryPath, workingDirectoryPath) else { return }
-        try FileManager.default.createDirectory(atPath: PathComparison.standardizedPath(dbDirectoryPath), withIntermediateDirectories: true)
+        guard !Host.Path.isSamePath(dbDirectoryPath, workingDirectoryPath) else { return }
+        try FileManager.default.createDirectory(atPath: Host.Path.standardizedPath(dbDirectoryPath), withIntermediateDirectories: true)
     }
     
     func seedFirstDeployment(config: Configuration) async {

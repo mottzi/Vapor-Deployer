@@ -103,7 +103,7 @@ extension SSHHardeningStep {
     private func loadConfig() throws -> String {
         
         guard FileManager.default.fileExists(atPath: sshdConfigPath) else {
-            throw System.Error.invalidValue(sshdConfigPath, "sshd_config not found")
+            throw Host.Error.invalidValue(sshdConfigPath, "sshd_config not found")
         }
         
         return try String(contentsOfFile: sshdConfigPath, encoding: .utf8)
@@ -123,7 +123,7 @@ extension SSHHardeningStep {
 
             let testResult = await Shell.run("sshd", ["-t"])
             guard testResult.exitCode == 0 else {
-                throw System.Error.invalidValue(
+                throw Host.Error.invalidValue(
                     sshdConfigPath,
                     "Validation failed after inserting DenyUsers:\n\(testResult.output.trimmed)"
                 )
@@ -136,7 +136,7 @@ extension SSHHardeningStep {
 
             console.print("SSH hardening applied. '\(context.serviceUser)' can no longer log in via SSH.")
 
-            try? SystemFileSystem.removeIfPresent(backupPath)
+            try? Host.FileSystem.removeIfPresent(backupPath)
 
         } catch {
             console.warning("SSH hardening failed. Reverting \(sshdConfigPath).")

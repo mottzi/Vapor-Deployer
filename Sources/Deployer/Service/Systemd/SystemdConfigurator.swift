@@ -3,8 +3,8 @@ import Foundation
 /// Setup/teardown operations for systemd user units.
 struct SystemdConfigurator: ServiceConfigurator {
 
-    let shell: SystemShell
-    let paths: SystemPaths
+    let shell: InstallationShell
+    let paths: InstallationPaths
 
     private var unitDirectory: String { "\(paths.serviceHome)/.config/systemd/user" }
     private var serviceUser: String { shell.context.serviceUser }
@@ -21,7 +21,7 @@ struct SystemdConfigurator: ServiceConfigurator {
 
     func removeConfigs(for products: [String]) async {
         for product in products {
-            try? SystemFileSystem.removeIfPresent("\(unitDirectory)/\(product).service")
+            try? Host.FileSystem.removeIfPresent("\(unitDirectory)/\(product).service")
         }
         _ = try? await shell.runUserSystemctl("daemon-reload")
     }
@@ -31,7 +31,7 @@ struct SystemdConfigurator: ServiceConfigurator {
 
         try await Shell.runThrowing("loginctl", ["enable-linger", serviceUser])
         await Shell.run("systemctl", ["start", "user@\(uid).service"])
-        try await SystemShell.waitForUserBus(uid: uid)
+        try await Host.Command.waitForUserBus(uid: uid)
         try await shell.runUserSystemctl("daemon-reload")
 
         let units = products.map { "\($0).service" }

@@ -19,7 +19,7 @@ extension ServiceBackend {
         switch self {
             case .systemd:
                 guard let user = serviceUser?.trimmed, !user.isEmpty else {
-                    throw System.Error.missingValue("serviceUser")
+                    throw Host.Error.missingValue("serviceUser")
                 }
                 return SystemdServiceManager(serviceUser: user)
                     
@@ -29,7 +29,7 @@ extension ServiceBackend {
     }
 
     /// Creates a service configurator instance for this backend.
-    func makeConfigurator(shell: SystemShell, paths: SystemPaths) -> any ServiceConfigurator {
+    func makeConfigurator(shell: InstallationShell, paths: InstallationPaths) -> any ServiceConfigurator {
         switch self {
             case .systemd: SystemdConfigurator(shell: shell, paths: paths)
             case .supervisor: SupervisorConfigurator()

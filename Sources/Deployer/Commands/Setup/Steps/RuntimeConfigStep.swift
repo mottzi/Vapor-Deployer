@@ -21,10 +21,10 @@ extension RuntimeConfigStep {
     private func writeDeployerConfig() async throws {
 
         guard let json = try DeployerTemplate.encodeJSON(from: context) else {
-            throw System.Error.invalidValue("deployer.json", "failed to encode UTF-8 JSON")
+            throw Host.Error.invalidValue("deployer.json", "failed to encode UTF-8 JSON")
         }
         
-        try await SystemFileSystem.writeFile(
+        try await Host.FileSystem.writeFile(
             json, 
             to: paths.deployerConfig, 
             owner: context.serviceUser, 
@@ -56,16 +56,16 @@ extension RuntimeConfigStep {
     private func writeSystemdUnits() async throws {
 
         let unitDirectory = "\(paths.serviceHome)/.config/systemd/user"
-        try await SystemFileSystem.installDirectory(unitDirectory, owner: context.serviceUser, group: context.serviceUser)
+        try await Host.FileSystem.installDirectory(unitDirectory, owner: context.serviceUser, group: context.serviceUser)
         
-        try await SystemFileSystem.writeFile(
+        try await Host.FileSystem.writeFile(
             try SystemdTemplate.deployerUnit(context: context),
             to: "\(unitDirectory)/deployer.service",
             owner: context.serviceUser,
             group: context.serviceUser
         )
         
-        try await SystemFileSystem.writeFile(
+        try await Host.FileSystem.writeFile(
             try SystemdTemplate.appUnit(context: context),
             to: "\(unitDirectory)/\(context.productName).service",
             owner: context.serviceUser,
@@ -75,12 +75,12 @@ extension RuntimeConfigStep {
 
     private func writeSupervisorFiles() async throws {
         
-        try await SystemFileSystem.writeFile(
+        try await Host.FileSystem.writeFile(
             try SupervisorTemplate.deployerProgram(context: context),
             to: "/etc/supervisor/conf.d/deployer.conf"
         )
         
-        try await SystemFileSystem.writeFile(
+        try await Host.FileSystem.writeFile(
             try SupervisorTemplate.appProgram(context: context),
             to: "/etc/supervisor/conf.d/\(context.productName).conf"
         )

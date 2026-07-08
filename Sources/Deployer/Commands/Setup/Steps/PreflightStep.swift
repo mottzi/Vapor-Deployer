@@ -10,7 +10,7 @@ struct PreflightStep: SetupStep {
 
     func run() async throws {
         
-        if await UserAccount.exists(context.serviceUser) {
+        if await Host.User.exists(context.serviceUser) {
             try await verifyServiceUser()
             try await verifyDeployerCheckout()
             try await verifyAppCheckout()
@@ -27,10 +27,10 @@ extension PreflightStep {
     
     private func verifyServiceUser() async throws {
         
-        let home = try await UserAccount.homeDirectory(for: context.serviceUser, errorLabel: "serviceUser")
+        let home = try await Host.User.homeDirectory(for: context.serviceUser, errorLabel: "serviceUser")
         
         guard home == paths.serviceHome else {
-            throw System.Error.invalidValue("serviceUser", "user exists with home '\(home)', not '\(paths.serviceHome)'")
+            throw Host.Error.invalidValue("serviceUser", "user exists with home '\(home)', not '\(paths.serviceHome)'")
         }
         
         console.print("Reusing user '\(context.serviceUser)' (home: \(home))")
@@ -66,7 +66,7 @@ extension PreflightStep {
             }
         } else if FileManager.default.fileExists(atPath: paths.installDirectory), context.buildFromSource {
             if try !isDirectoryEmpty(paths.installDirectory) {
-                throw System.Error.invalidValue(
+                throw Host.Error.invalidValue(
                     "installDirectory",
                     "'\(paths.installDirectory)' exists but is not an empty deployer checkout"
                 )
@@ -97,12 +97,12 @@ extension PreflightStep {
         
         let origin = try await shell.git("remote", ["get-url", "origin"], in: path).trimmed
         if !githubRemoteMatches(origin, expectedRemote) {
-            throw System.Error.invalidValue("\(componentName) checkout", "existing origin '\(origin)' does not match '\(expectedRemote)'")
+            throw Host.Error.invalidValue("\(componentName) checkout", "existing origin '\(origin)' does not match '\(expectedRemote)'")
         }
         
         let dirty = try await shell.git("status", ["--porcelain", "--untracked-files=no"], in: path).trimmed
         if !dirty.isEmpty {
-            throw System.Error.invalidValue("\(componentName) checkout", "existing checkout has uncommitted changes")
+            throw Host.Error.invalidValue("\(componentName) checkout", "existing checkout has uncommitted changes")
         }
     }
     

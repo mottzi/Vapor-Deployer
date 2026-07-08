@@ -25,10 +25,10 @@ extension NginxStep {
 
         if let previousAvailable, previousAvailable != paths.nginxSiteAvailable {
             if let previousEnabled, previousEnabled.hasPrefix("/etc/nginx/sites-enabled/") {
-                try? SystemFileSystem.removeIfPresent(previousEnabled)
+                try? Host.FileSystem.removeIfPresent(previousEnabled)
             }
             if previousAvailable.hasPrefix("/etc/nginx/sites-available/") {
-                try? SystemFileSystem.removeIfPresent(previousAvailable)
+                try? Host.FileSystem.removeIfPresent(previousAvailable)
             }
         }
 
@@ -36,14 +36,14 @@ extension NginxStep {
            previousHook != paths.certbotRenewHook,
            previousHook.hasPrefix("/etc/letsencrypt/renewal-hooks/deploy/") {
             
-            try? SystemFileSystem.removeIfPresent(previousHook)
+            try? Host.FileSystem.removeIfPresent(previousHook)
         }
     }
 
     private func bootstrapNginx() async throws {
 
-        try await SystemFileSystem.installDirectory(paths.acmeWebroot, owner: "root", group: "root")
-        try await SystemFileSystem.writeFile(try NginxTemplate.bootstrap(context: context), to: paths.nginxSiteAvailable)
+        try await Host.FileSystem.installDirectory(paths.acmeWebroot, owner: "root", group: "root")
+        try await Host.FileSystem.writeFile(try NginxTemplate.bootstrap(context: context), to: paths.nginxSiteAvailable)
         
         try await Shell.runThrowing(
             "install", [

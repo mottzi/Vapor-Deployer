@@ -16,7 +16,7 @@ struct SupervisorConfigurator: ServiceConfigurator {
 
     func removeConfigs(for products: [String]) async {
         for product in products {
-            try? SystemFileSystem.removeIfPresent("/etc/supervisor/conf.d/\(product).conf")
+            try? Host.FileSystem.removeIfPresent("/etc/supervisor/conf.d/\(product).conf")
         }
         await Shell.run("supervisorctl", ["reread"])
         await Shell.run("supervisorctl", ["update"])

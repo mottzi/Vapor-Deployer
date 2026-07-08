@@ -32,7 +32,7 @@ extension RemoveCheckoutsStep {
         ]
 
         for path in removablePaths {
-            try? SystemFileSystem.removeIfPresent(path)
+            try? Host.FileSystem.removeIfPresent(path)
         }
 
         console.print("Removed deployer binary, config, database, and log files.")

@@ -15,14 +15,14 @@ struct SourceUpdateStep: UpdateStep {
         let installDirectory = context.stagedBinaryURL.deletingLastPathComponent().path
 
         guard !serviceUser.isEmpty else {
-            throw System.Error.invalidValue("serviceUser", "unable to determine user for source-based update")
+            throw Host.Error.invalidValue("serviceUser", "unable to determine user for source-based update")
         }
 
         context.currentVersion = readInstalledVersion(at: context.versionFileURL)
         context.assetBackup = try await backupInstalledAssets()
 
         console.print("Pulling latest source code from deployer repository.")
-        try await SystemShell.runAs(
+        try await Host.Command.runAs(
             user: serviceUser,
             "git",
             ["fetch", "origin", context.deployerBranch],
@@ -30,7 +30,7 @@ struct SourceUpdateStep: UpdateStep {
             environment: sourceBuildEnvironment(for: serviceUser)
         )
 
-        let outputBeforeReset = try await SystemShell.runAs(
+        let outputBeforeReset = try await Host.Command.runAs(
             user: serviceUser,
             "git",
             ["rev-parse", "HEAD"],
@@ -38,7 +38,7 @@ struct SourceUpdateStep: UpdateStep {
             environment: sourceBuildEnvironment(for: serviceUser)
         ).trimmed
 
-        try await SystemShell.runAs(
+        try await Host.Command.runAs(
             user: serviceUser,
             "git",
             ["reset", "--hard", "origin/\(context.deployerBranch)"],
@@ -46,7 +46,7 @@ struct SourceUpdateStep: UpdateStep {
             environment: sourceBuildEnvironment(for: serviceUser)
         )
 
-        let outputAfterReset = try await SystemShell.runAs(
+        let outputAfterReset = try await Host.Command.runAs(
             user: serviceUser,
             "git",
             ["rev-parse", "HEAD"],
@@ -62,7 +62,7 @@ struct SourceUpdateStep: UpdateStep {
         }
 
         console.print("Building deployer from source code.")
-        try await SystemShell.runAsStreamingTail(
+        try await Host.Command.runAsStreamingTail(
             user: serviceUser,
             "swift",
             ["build", "-c", "release"],
@@ -70,7 +70,7 @@ struct SourceUpdateStep: UpdateStep {
             environment: sourceBuildEnvironment(for: serviceUser)
         )
 
-        let binPath = try await SystemShell.runAs(
+        let binPath = try await Host.Command.runAs(
             user: serviceUser,
             "swift",
             ["build", "-c", "release", "--show-bin-path"],
@@ -84,7 +84,7 @@ struct SourceUpdateStep: UpdateStep {
             throw UpdateCommand.Error.binaryNotFound(builtBinaryURL.path)
         }
 
-        try SystemFileSystem.removeIfPresent(context.stagedBinaryURL.path)
+        try Host.FileSystem.removeIfPresent(context.stagedBinaryURL.path)
         try FileManager.default.copyItem(at: builtBinaryURL, to: context.stagedBinaryURL)
         try FileManager.default.setAttributes(
             [.posixPermissions: NSNumber(value: Int16(0o755))],
@@ -111,7 +111,7 @@ extension SourceUpdateStep {
     }
 
     private func resolveHeadRevision(serviceUser: String, directory: String) async throws -> String {
-        let revision = try await SystemShell.runAs(
+        let revision = try await Host.Command.runAs(
             user: serviceUser,
             "git",
             ["rev-parse", "--short", "HEAD"],

@@ -9,8 +9,8 @@ struct SetupCommand: AsyncCommand {
 
     func run(using context: CommandContext, signature: Signature) async throws {
 
-        try requireRoot()
-        try requireUbuntu()
+        try InstallationPreconditions.requireRoot()
+        try InstallationPreconditions.requireUbuntu()
 
         context.application.logger.info("Starting host provisioning...")
         

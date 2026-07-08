@@ -46,16 +46,16 @@ extension BuildStep {
         
         let binary = "\(binDir)/deployer"
         guard FileManager.default.isExecutableFile(atPath: binary) else {
-            throw System.Error.invalidValue("deployer binary", "expected binary was not produced at '\(binary)'")
+            throw Host.Error.invalidValue("deployer binary", "expected binary was not produced at '\(binary)'")
         }
         
-        let tmpPath = SystemFileSystem.stagedInstallTmpPath(for: paths.deployerBinary)
+        let tmpPath = Host.FileSystem.stagedInstallTmpPath(for: paths.deployerBinary)
         try await shell.runAsServiceUser(
             "install",
             ["-m", "0755", binary, tmpPath],
             environment: buildEnvironment
         )
-        try await SystemFileSystem.commitStagedBinary(from: tmpPath, to: paths.deployerBinary)
+        try await Host.FileSystem.commitStagedBinary(from: tmpPath, to: paths.deployerBinary)
     }
 
     private func buildTargetApp() async throws {
@@ -78,7 +78,7 @@ extension BuildStep {
         
         let appBinary = "\(appBinDir)/\(context.productName)"
         guard FileManager.default.isExecutableFile(atPath: appBinary) else {
-            throw System.Error.invalidValue("app binary", "expected binary was not produced at '\(appBinary)'")
+            throw Host.Error.invalidValue("app binary", "expected binary was not produced at '\(appBinary)'")
         }
 
         try await shell.runAsServiceUser(
@@ -88,13 +88,13 @@ extension BuildStep {
         )
         
         let finalAppBinaryPath = "\(paths.appDeployDirectory)/\(context.productName)"
-        let tmpAppPath = SystemFileSystem.stagedInstallTmpPath(for: finalAppBinaryPath)
+        let tmpAppPath = Host.FileSystem.stagedInstallTmpPath(for: finalAppBinaryPath)
         try await shell.runAsServiceUser(
             "install",
             ["-m", "0755", appBinary, tmpAppPath],
             environment: buildEnvironment
         )
-        try await SystemFileSystem.commitStagedBinary(from: tmpAppPath, to: finalAppBinaryPath)
+        try await Host.FileSystem.commitStagedBinary(from: tmpAppPath, to: finalAppBinaryPath)
         
         console.print("Build artifacts installed.")
     }

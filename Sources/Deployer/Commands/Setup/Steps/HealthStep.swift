@@ -71,7 +71,7 @@ extension SetupStep {
             try await Task.sleep(for: .seconds(1))
         }
 
-        throw System.Error.serviceTimeout(service)
+        throw Host.Error.serviceTimeout(service)
     }
 
     fileprivate func waitForTCP(port: Int) async throws {
@@ -82,7 +82,7 @@ extension SetupStep {
             try await Task.sleep(for: .seconds(1))
         }
 
-        throw System.Error.serviceTimeout("127.0.0.1:\(port)")
+        throw Host.Error.serviceTimeout("127.0.0.1:\(port)")
     }
 
     fileprivate func describe(_ error: Swift.Error) -> String {
@@ -105,7 +105,7 @@ extension HealthStep {
     private func verifyAppBinary() throws {
 
         if !FileManager.default.isExecutableFile(atPath: "\(paths.appDeployDirectory)/\(context.productName)") {
-            throw System.Error.invalidValue("app binary", "missing deployed app binary")
+            throw Host.Error.invalidValue("app binary", "missing deployed app binary")
         }
     }
 

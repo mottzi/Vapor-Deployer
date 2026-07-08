@@ -85,7 +85,7 @@ extension RemoveUserStep {
 extension RemoveUserStep {
 
     private func userExists() async -> Bool {
-        await UserAccount.exists(context.serviceUser)
+        await Host.User.exists(context.serviceUser)
     }
 
 }

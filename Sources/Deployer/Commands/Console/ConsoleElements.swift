@@ -7,14 +7,14 @@ extension Console {
     }
     
     func ruler(color: ConsoleColor? = nil) {
-        let ruler = String(repeating: "━", count: TerminalWidth.current())
+        let ruler = String(repeating: "━", count: Host.Terminal.current())
         output(ruler.consoleText(color: color))
     }
 
     func ruler(_ title: String, color: ConsoleColor? = nil) {
         
         let prefix = "━━━ "
-        let fill = max(TerminalWidth.current() - (prefix.count + title.count + 1), 0)
+        let fill = max(Host.Terminal.current() - (prefix.count + title.count + 1), 0)
         let string = "\(prefix)\(title) \(String(repeating: "━", count: fill))"
         
         output(string.consoleText(color: color, isBold: true))

@@ -66,7 +66,7 @@ enum DeploymentCLI {
             return
         }
 
-        let width = TerminalWidth.current()
+        let width = Host.Terminal.current()
         let commitWidth = max(width - 74, 12)
 
         console.output("L  STATUS     SHA      TESTS  BINARY    STARTED           DUR    COMMIT".consoleText(isBold: true))

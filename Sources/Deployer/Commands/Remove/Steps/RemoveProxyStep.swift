@@ -58,7 +58,7 @@ extension RemoveProxyStep {
             requiredPrefix: "/etc/nginx/sites-enabled/",
             outsidePrefixWarning: { "Skipping Nginx site entry outside /etc/nginx/sites-enabled: \($0)" },
             removedMessage: { "Removed Nginx site entry: \($0)" },
-            remove: SystemFileSystem.removeIfPresent
+            remove: Host.FileSystem.removeIfPresent
         )
     }
 
@@ -68,7 +68,7 @@ extension RemoveProxyStep {
             requiredPrefix: "/etc/nginx/sites-available/",
             outsidePrefixWarning: { "Skipping Nginx site file outside /etc/nginx/sites-available: \($0)" },
             removedMessage: { "Removed Nginx site file: \($0)" },
-            remove: SystemFileSystem.removeIfPresent
+            remove: Host.FileSystem.removeIfPresent
         )
     }
 
@@ -78,7 +78,7 @@ extension RemoveProxyStep {
             requiredPrefix: "/etc/letsencrypt/renewal-hooks/deploy/",
             outsidePrefixWarning: { "Skipping renewal hook outside /etc/letsencrypt/renewal-hooks/deploy: \($0)" },
             removedMessage: { "Removed Certbot renewal hook: \($0)" },
-            remove: SystemFileSystem.removeIfPresent
+            remove: Host.FileSystem.removeIfPresent
         )
     }
 

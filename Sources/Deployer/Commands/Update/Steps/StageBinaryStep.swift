@@ -34,7 +34,7 @@ extension StageBinaryStep {
             throw UpdateCommand.Error.binaryNotFound(stagedSource.path)
         }
 
-        try SystemFileSystem.removeIfPresent(context.stagedBinaryURL.path)
+        try Host.FileSystem.removeIfPresent(context.stagedBinaryURL.path)
         try fileManager.copyItem(at: stagedSource, to: context.stagedBinaryURL)
         try fileManager.setAttributes([.posixPermissions: NSNumber(value: Int16(0o755))], ofItemAtPath: context.stagedBinaryURL.path)
     }

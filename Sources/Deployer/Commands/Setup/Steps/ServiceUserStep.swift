@@ -23,7 +23,7 @@ extension ServiceUserStep {
     /// Checks if the service user exists and creates them as a system user if necessary.
     func ensureUserExists() async throws {
         
-        if await UserAccount.exists(context.serviceUser) {
+        if await Host.User.exists(context.serviceUser) {
             console.print("Reusing existing user '\(context.serviceUser)'.")
         } else {
             try await Shell.runThrowing(
@@ -42,13 +42,13 @@ extension ServiceUserStep {
     /// Creates the service user's home and apps root directories with appropriate ownership.
     func prepareDirectories() async throws {
         
-        try await SystemFileSystem.installDirectory(
+        try await Host.FileSystem.installDirectory(
             paths.serviceHome,
             owner: context.serviceUser,
             group: context.serviceUser
         )
         
-        try await SystemFileSystem.installDirectory(
+        try await Host.FileSystem.installDirectory(
             paths.appsRootDirectory,
             owner: context.serviceUser,
             group: context.serviceUser

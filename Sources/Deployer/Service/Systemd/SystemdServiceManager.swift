@@ -44,8 +44,8 @@ struct SystemdServiceManager: ServiceManager {
 
     @discardableResult
     private func runUserSystemctl(_ command: String, product: String) async throws -> String {
-        let uid = try UserAccount.uid(for: serviceUser, errorLabel: "serviceUser")
-        return try await SystemShell.runUserSystemctl(
+        let uid = try Host.User.uid(for: serviceUser, errorLabel: "serviceUser")
+        return try await Host.Command.runUserSystemctl(
             user: serviceUser,
             uid: uid,
             command: command,

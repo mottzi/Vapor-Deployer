@@ -36,7 +36,7 @@ extension RemoveInputStep {
             validate: InputValidator.isNonRootSafeName
         )
 
-        if let home = try? await UserAccount.homeDirectory(for: context.serviceUser) {
+        if let home = try? await Host.User.homeDirectory(for: context.serviceUser) {
             console.print("Found user '\(context.serviceUser)' (home: \(home)).")
         } else {
             console.warning("User '\(context.serviceUser)' does not exist — some cleanup steps will be no-ops.")
@@ -127,7 +127,7 @@ extension RemoveInputStep {
 
     private func derivePaths() {
         
-        context.paths = SystemPaths.derive(
+        context.paths = InstallationPaths.derive(
             serviceUser: context.serviceUser,
             appName: context.appName,
             panelRoute: "/deployer"
@@ -174,7 +174,7 @@ extension RemoveInputStep {
     private func confirmTeardown() throws {
 
         guard console.confirm("Proceed with teardown?", defaultYes: false) else {
-            throw System.Error.invalidValue("confirmation", "Cancelled.")
+            throw Host.Error.invalidValue("confirmation", "Cancelled.")
         }
     }
 
