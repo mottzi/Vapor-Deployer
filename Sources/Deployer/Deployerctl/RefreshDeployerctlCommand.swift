@@ -15,7 +15,7 @@ struct RefreshDeployerctlCommand: AsyncCommand {
         let executableURL = try Configuration.getExecutableURL()
         let serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: executableURL)
        
-        let installContext = try DeployerctlInstallContext(
+        let installContext = try DeployerctlInstaller.Context(
             configuration: config,
             metadata: metadata,
             executableURL: executableURL,

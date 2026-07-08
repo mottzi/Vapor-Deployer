@@ -1,44 +1,49 @@
 import Foundation
 
-/// Fully resolved metadata needed to render and install deployerctl without depending on setup-only state.
-struct DeployerctlInstallContext {
+extension DeployerctlInstaller {
 
-    let serviceUser: String
-    let serviceBackend: String
-    let productName: String
-    let appName: String
-    let appRepositoryURL: String
-    let appPort: String
-    let tlsContactEmail: String
-    let installDirectory: String
-    let appDirectory: String
-    let deployerLog: String
-    let appLog: String
-    let primaryDomain: String
-    let aliasDomain: String
-    let certName: String
-    let nginxSiteName: String
-    let nginxSiteAvailable: String
-    let nginxSiteEnabled: String
-    let acmeWebroot: String
-    let certbotRenewHook: String
-    let webhookPath: String
-    let githubWebhookSettingsURL: String
-    let buildFromSource: String
-    let deployerctlBinary: String
-    let deployerctlConfigDirectory: String
-    let deployerctlConfig: String
-    let deployerctlHelperDirectory: String
-    let deployerctlRefreshHelper: String
-    let deployerctlRefreshSudoers: String
+    /// Fully resolved metadata needed to render and install deployerctl without depending on setup-only state.
+    struct Context {
+
+        let serviceUser: String
+        let serviceBackend: String
+        let productName: String
+        let appName: String
+        let appRepositoryURL: String
+        let appPort: String
+        let tlsContactEmail: String
+        let installDirectory: String
+        let appDirectory: String
+        let deployerLog: String
+        let appLog: String
+        let primaryDomain: String
+        let aliasDomain: String
+        let certName: String
+        let nginxSiteName: String
+        let nginxSiteAvailable: String
+        let nginxSiteEnabled: String
+        let acmeWebroot: String
+        let certbotRenewHook: String
+        let webhookPath: String
+        let githubWebhookSettingsURL: String
+        let buildFromSource: String
+        let deployerctlBinary: String
+        let deployerctlConfigDirectory: String
+        let deployerctlConfig: String
+        let deployerctlHelperDirectory: String
+        let deployerctlRefreshHelper: String
+        let deployerctlRefreshSudoers: String
+
+    }
 
 }
 
-extension DeployerctlInstallContext {
+extension DeployerctlInstaller.Context {
 
     init(setup context: SetupContext) throws {
         
         let paths = try context.requirePaths()
+        
         self.init(
             serviceUser: context.serviceUser,
             serviceBackend: context.serviceBackend.rawValue,
@@ -118,18 +123,20 @@ extension DeployerctlInstallContext {
         )
     }
 
+}
+
+extension DeployerctlInstaller.Context {
+
     /// Resolves the system user that runs the deployment service, falling back to the configuration file's owner if undiscovered.
     private static func resolveServiceUser(config: Configuration, discovered: String?) throws -> String {
-        
         if let discovered = discovered?.trimmed,
            !discovered.isEmpty {
-            
             return discovered
         }
 
         let user = URL(fileURLWithPath: config.serviceHome, isDirectory: true).lastPathComponent.trimmed
         guard !user.isEmpty else { throw Host.Error.missingValue("serviceUser") }
-        
+
         return user
     }
 

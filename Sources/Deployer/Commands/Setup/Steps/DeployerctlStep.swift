@@ -18,7 +18,7 @@ struct DeployerctlStep: SetupStep {
 extension DeployerctlStep {
 
     private func installDeployerctl() async throws {
-        try await DeployerctlInstaller.installRoot(context: DeployerctlInstallContext(setup: context))
+        try await DeployerctlInstaller.installRoot(context: DeployerctlInstaller.Context(setup: context))
     }
 
 }
