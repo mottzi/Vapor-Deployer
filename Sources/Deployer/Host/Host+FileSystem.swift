@@ -37,6 +37,12 @@ extension Host {
             try FileManager.default.removeItem(atPath: path)
         }
 
+        /// Confirms directory identity without accepting ordinary files that merely exist at the same path.
+        static func isDirectory(_ path: String) -> Bool {
+            var isDirectory: ObjCBool = false
+            return FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) && isDirectory.boolValue
+        }
+
         /// Replaces a destination by remove-then-copy so template or asset updates never merge with stale previous contents.
         static func copyReplacing(source: String, destination: String) throws {
             try removeIfPresent(destination)

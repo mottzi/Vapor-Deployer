@@ -135,10 +135,7 @@ extension TLSStep {
         let directory = "/etc/letsencrypt/live"
         guard let entries = try? FileManager.default.contentsOfDirectory(atPath: directory) else { return [] }
         
-        return entries.filter { entry in
-            var isDirectory: ObjCBool = false
-            return FileManager.default.fileExists(atPath: "\(directory)/\(entry)", isDirectory: &isDirectory) && isDirectory.boolValue
-        }
+        return entries.filter { Host.FileSystem.isDirectory("\(directory)/\($0)") }
     }
 
     private func lineageFilesOK(_ name: String) async -> Bool {

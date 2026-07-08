@@ -2,18 +2,6 @@ import Foundation
 
 extension DeployerRelease {
 
-    /// Encodes tag names for GitHub's archive route so source-asset fallback works for nontrivial release labels.
-    static func sourceArchiveURL(repository: String = repository, tag: String) throws -> String {
-        
-        var allowed = CharacterSet.urlPathAllowed
-        allowed.remove(charactersIn: "?#")
-        
-        let encodedTag = tag.addingPercentEncoding(withAllowedCharacters: allowed)
-        guard let encodedTag else { throw Error.invalidTag(tag) }
-        
-        return "https://github.com/\(repository)/archive/refs/tags/\(encodedTag).tar.gz"
-    }
-
     /// Queries the GitHub API to determine the appropriate asset download URL for the host machine.
     static func fetchLatestReleaseMetadata(repository: String = repository) async throws -> (tagName: String, downloadURL: String) {
 

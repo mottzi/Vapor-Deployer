@@ -66,6 +66,10 @@ struct ProvisioningShell {
         return try await runAsServiceUser("git", scope + [subcommand] + arguments, environment: environment)
     }
 
+}
+
+extension ProvisioningShell {
+
     private func serviceUserEnvironment(merging overrides: [String: String]?) -> [String: String] {
         let base = [
             "HOME": serviceUserHomeDirectory,
@@ -77,4 +81,5 @@ struct ProvisioningShell {
     private var serviceUserHomeDirectory: String {
         (try? context.requirePaths().serviceHome) ?? "/home/\(context.serviceUser)"
     }
+
 }

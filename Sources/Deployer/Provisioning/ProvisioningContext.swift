@@ -27,6 +27,7 @@ extension ProvisioningContext {
 
         let intUID = try Host.User.uid(for: serviceUser, errorLabel: "serviceUserUID")
         serviceUserUID = intUID
+        
         return intUID
     }
 

@@ -11,8 +11,7 @@ enum ProvisioningPreconditions {
     /// Guards distro-specific provisioning (`apt`, `systemd`, Certbot paths) that assumes Ubuntu naming and layout.
     static func requireUbuntu() throws {
 
-        let releaseFileText =
-            (try? String(contentsOfFile: "/etc/os-release", encoding: .utf8)) ?? ""
+        let releaseFileText = (try? String(contentsOfFile: "/etc/os-release", encoding: .utf8)) ?? ""
 
         let lines = releaseFileText.split(whereSeparator: \.isNewline)
         let line = lines.first(where: { $0.hasPrefix("ID=") })

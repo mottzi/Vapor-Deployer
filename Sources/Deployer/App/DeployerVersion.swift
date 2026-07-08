@@ -6,16 +6,14 @@ enum DeployerVersion {
     /// Public GitHub project page (HTTPS, no `.git`); used for the panel wordmark and as the base of the clone URL in setup.
     static let repositoryWebPageURL = "https://github.com/mottzi/Vapor-Deployer"
 
+    /// Fallback label used when no release, source-control, or bundle version can be discovered.
     private static let unknownVersion = "unknown"
-    private static let releaseTagEnvironmentKey = "DEPLOYER_RELEASE_TAG"
 
+    /// Environment override injected by release packaging so unpacked binaries preserve their exact tag.
+    private static let releaseTagEnvironmentKey = "DEPLOYER_RELEASE_TAG"
+    
     /// Determines the best available version string for the active deployer binary.
     static func current() async -> String {
-
-        if let environmentVersion = ProcessInfo.processInfo.environment[releaseTagEnvironmentKey]?.trimmed,
-           !environmentVersion.isEmpty {
-            return environmentVersion
-        }
 
         guard let executableURL = try? Configuration.getExecutableURL() else {
             return bundleVersion() ?? unknownVersion
@@ -23,8 +21,8 @@ enum DeployerVersion {
 
         let executableDirectory = executableURL.deletingLastPathComponent()
 
-        if let fileVersion = readVersionFile(in: executableDirectory) {
-            return fileVersion
+        if let releaseTag = releaseTag(in: executableDirectory) {
+            return releaseTag
         }
 
         if let gitVersion = await readGitVersion(near: executableDirectory) {
@@ -32,6 +30,15 @@ enum DeployerVersion {
         }
 
         return bundleVersion() ?? unknownVersion
+    }
+    
+    /// Reads release identity from the environment or install-time marker for a concrete deployer payload directory.
+    static func releaseTag(in directory: URL) -> String? {
+        
+        let environmentTag = ProcessInfo.processInfo.environment[releaseTagEnvironmentKey]?.trimmed
+        if let environmentTag, !environmentTag.isEmpty { return environmentTag }
+
+        return readVersionFile(in: directory)
     }
 
 }

@@ -79,7 +79,7 @@ extension StageDeployerStep {
         let executableDirectory = currentExecutableURL.deletingLastPathComponent()
         let publicDirectory = executableDirectory.appendingPathComponent("Public", isDirectory: true)
         let resourcesDirectory = executableDirectory.appendingPathComponent("Resources", isDirectory: true)
-        let localReleaseTag = DeployerRelease.localReleaseTag(in: executableDirectory)
+        let localReleaseTag = DeployerVersion.releaseTag(in: executableDirectory)
         context.releaseVersion = localReleaseTag
         
         if FileManager.default.fileExists(atPath: publicDirectory.path),

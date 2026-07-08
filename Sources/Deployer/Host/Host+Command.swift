@@ -80,14 +80,6 @@ extension Host {
             )
         }
 
-        /// Exposes the per-user runtime and DBus variables required for reliable `systemctl --user` calls outside interactive login sessions.
-        static func systemdUserEnvironment(uid: Int) -> [String: String] {
-            [
-                "XDG_RUNTIME_DIR": "/run/user/\(uid)",
-                "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/\(uid)/bus"
-            ]
-        }
-
         /// Waits for the user systemd bus socket so service operations do not race startup of `user@<uid>.service`.
         static func waitForUserBus(uid: Int, timeout: Duration = .seconds(5)) async throws {
 
@@ -109,6 +101,14 @@ extension Host {
 }
 
 extension Host.Command {
+
+    /// Exposes the per-user runtime and DBus variables required for reliable `systemctl --user` calls outside interactive login sessions.
+    private static func systemdUserEnvironment(uid: Int) -> [String: String] {
+        [
+            "XDG_RUNTIME_DIR": "/run/user/\(uid)",
+            "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/\(uid)/bus"
+        ]
+    }
     
     /// Bypasses runuser isolation only if the current process is not root and matches the target user identity.
     private static func shouldRunDirectly(as user: String) -> Bool {

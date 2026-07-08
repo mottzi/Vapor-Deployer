@@ -4,6 +4,5 @@ import Foundation
 enum DeployerRelease {
 
     static let repository = "mottzi/Vapor-Deployer"
-    static let releaseTagEnvironmentKey = "DEPLOYER_RELEASE_TAG"
 
 }
