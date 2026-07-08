@@ -10,11 +10,11 @@ enum DeployerctlInstaller {
     static func installRoot(context: DeployerctlInstallContext) async throws {
         
         try await Host.FileSystem.installDirectory(context.deployerctlConfigDirectory, owner: "root", group: "root")
-        try await Host.FileSystem.writeFile(DeployerctlTemplate.wrapperConfig(context: context), to: context.deployerctlConfig)
-        try await Host.FileSystem.writeFile(DeployerctlTemplate.wrapperScript(), to: context.deployerctlBinary, mode: "0755")
+        try await Host.FileSystem.writeFile(DeployerctlTemplate.configuration(context: context), to: context.deployerctlConfig)
+        try await Host.FileSystem.writeFile(DeployerctlTemplate.script(), to: context.deployerctlBinary, mode: "0755")
 
         try await Host.FileSystem.installDirectory(context.deployerctlHelperDirectory, owner: "root", group: "root")
-        try await Host.FileSystem.writeFile(DeployerctlTemplate.refreshHelperScript(context: context), to: context.deployerctlRefreshHelper, mode: "0755")
+        try await Host.FileSystem.writeFile(DeployerctlTemplate.refreshScript(context: context), to: context.deployerctlRefreshHelper, mode: "0755")
         try await Host.FileSystem.installDirectory(URL(fileURLWithPath: context.deployerctlRefreshSudoers).deletingLastPathComponent().path, owner: "root", group: "root")
         try await Host.FileSystem.writeFile(DeployerctlTemplate.refreshSudoers(context: context), to: context.deployerctlRefreshSudoers, mode: "0440")
     }
@@ -48,8 +48,8 @@ extension DeployerctlInstaller {
         let wrapperURL = installDirectoryURL.appendingPathComponent(stagedWrapperName, isDirectory: false)
         let configURL = installDirectoryURL.appendingPathComponent(stagedConfigName, isDirectory: false)
 
-        try DeployerctlTemplate.wrapperScript().write(to: wrapperURL, atomically: true, encoding: .utf8)
-        try DeployerctlTemplate.wrapperConfig(context: context).write(to: configURL, atomically: true, encoding: .utf8)
+        try DeployerctlTemplate.script().write(to: wrapperURL, atomically: true, encoding: .utf8)
+        try DeployerctlTemplate.configuration(context: context).write(to: configURL, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: Int16(0o600))], ofItemAtPath: wrapperURL.path)
         try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: Int16(0o600))], ofItemAtPath: configURL.path)
     }
