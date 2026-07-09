@@ -1,5 +1,9 @@
 ## Unreleased changes main...HEAD(dev)
 
+- Display the commit SHA on all responsive size classes instead of only the desktop view.
+- In the medium breakpoint, place the commit SHA in the right column underneath the build/binary details, and vertically center the row actions dropdown button.
+- In the mobile breakpoint, position the commit SHA next to the row actions button to prevent layout wrapping, styling it to match adjacent metadata elements.
+- Implement an interactive copy UX for commit SHAs: clicking copies the full SHA and animates the label to green "Copied" text for 2 seconds across all size classes.
 - Route self-update system logs to the shared `deployer.log` file without leaking them into the operator-facing CLI transcript, while still printing concise command failures to the operator and consistently treating already-live deploy/run requests as successful no-ops.
 - Show automatic pushes waiting for the active deployment to finish as `queued` instead of the misleading `canceled` status.
 - Unify deployment-operation eligibility into one pure policy (`Deployment+OperationEligibility`) shared by panel presentation and engine enforcement, and split `OperationEngine+Pipeline` into promotion, build, test, maintenance, and pipeline-support files with a shared live-activation helper.
