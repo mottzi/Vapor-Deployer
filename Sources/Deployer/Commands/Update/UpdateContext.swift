@@ -1,16 +1,13 @@
 import Vapor
 
-/// Shared mutable state for one update run, holding the identity, paths, and metadata needed to update an installation.
+/// Owns the immutable dependencies and evolving state shared by one update transaction.
 final class UpdateContext {
 
     let application: Application
+    let config: Configuration
+    let serviceManager: any ServiceManager
+    let serviceUser: String
     let installDirectory: URL
-
-    var serviceUser = ""
-    var serviceUserUID: Int?
-
-    var serviceBackend = ServiceBackend.systemd
-    var deployerBranch = ""
 
     let stagedBinaryURL: URL
     let backupBinaryURL: URL
@@ -21,21 +18,29 @@ final class UpdateContext {
     var downloadURL: String?
     var stagingDir: String?
     var releaseAssets: DeployerRelease.AssetDirectories?
-    var assetBackup: ReleaseAssetBackup?
+    var assetBackup: UpdateAssetBackup?
     var currentVersion: String?
     var previousVersionFileExisted = false
     var previousVersionFileData: Data?
     var versionMarkerAdvanced = false
     var isUpToDate = false
-    var isSourceInstall = false
 
-    var managerServiceUser: String? {
-        let trimmed = serviceUser.trimmed
-        return trimmed.isEmpty ? nil : trimmed
-    }
+    var deployerBranch: String { config.deployerBranch }
+    var isSourceInstall: Bool { config.buildFromSource }
 
-    init(application: Application, installDirectory: URL, executableName: String, serviceName: String) {
+    init(
+        application: Application,
+        config: Configuration,
+        serviceManager: any ServiceManager,
+        serviceUser: String,
+        installDirectory: URL,
+        executableName: String,
+        serviceName: String
+    ) {
         self.application = application
+        self.config = config
+        self.serviceManager = serviceManager
+        self.serviceUser = serviceUser
         self.installDirectory = installDirectory
         self.stagedBinaryURL = installDirectory.appendingPathComponent("\(executableName).new")
         self.backupBinaryURL = installDirectory.appendingPathComponent("\(executableName).old")

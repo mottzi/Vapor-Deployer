@@ -17,33 +17,30 @@ struct StartServiceStep: UpdateStep {
         guard context.releaseVersion != context.currentVersion else { return }
 
         console.print("Starting service '\(context.serviceName)'.")
-        
-        let config = try Configuration.load()
-        let manager = try config.serviceBackend.makeManager(serviceUser: context.managerServiceUser)
-        
-        try await manager.start(product: context.serviceName)
 
-        let finalStatus = await manager.waitForStableStatus(product: context.serviceName)
+        try await context.serviceManager.start(product: context.serviceName)
+
+        let finalStatus = await context.serviceManager.waitForStableStatus(product: context.serviceName)
         guard finalStatus.isRunning else { throw UpdateCommand.Error.restartVerificationFailed(finalStatus.label) }
 
-        try await waitForControlHealth(config: config, manager: manager)
+        try await waitForControlHealth()
     }
 
-    private func waitForControlHealth(config: Configuration, manager: any ServiceManager) async throws {
+    private func waitForControlHealth() async throws {
 
         let deadline = Date.now.addingTimeInterval(Self.controlHealthTimeout)
         var firstHealthyResponseAt: Date?
         var lastFailure = "control endpoint did not become healthy"
 
         while Date.now < deadline {
-            let serviceStatus = await manager.status(product: context.serviceName)
+            let serviceStatus = await context.serviceManager.status(product: context.serviceName)
             guard serviceStatus.isRunning else {
                 throw UpdateCommand.Error.restartVerificationFailed("service crashed after start: \(serviceStatus.label)")
             }
 
             let outcome = await ControlPreflight.query(
                 app: context.application,
-                port: config.port,
+                port: context.config.port,
                 installDirectory: context.installDirectory
             )
 

@@ -122,7 +122,7 @@ extension SourceUpdateStep {
     }
 
     /// Copies installed assets into a temp backup so rollback can restore source updates.
-    private func backupInstalledAssets() async throws -> ReleaseAssetBackup {
+    private func backupInstalledAssets() async throws -> UpdateAssetBackup {
         let fileManager = FileManager.default
         let backupRootPath = try await Shell.runThrowing("mktemp", ["-d"]).trimmed
         let backupRoot = URL(fileURLWithPath: backupRootPath, isDirectory: true)
@@ -131,7 +131,7 @@ extension SourceUpdateStep {
 
         let installDirectory = context.stagedBinaryURL.deletingLastPathComponent()
         var backedUpDirectoryNames = Set<String>()
-        for name in ReleaseAssetBackup.directoryNames {
+        for name in UpdateAssetBackup.directoryNames {
             let source = installDirectory.appendingPathComponent(name, isDirectory: true)
             guard fileManager.fileExists(atPath: source.path) else { continue }
 
@@ -140,7 +140,7 @@ extension SourceUpdateStep {
             backedUpDirectoryNames.insert(name)
         }
 
-        return ReleaseAssetBackup(root: backupRoot, backedUpDirectoryNames: backedUpDirectoryNames)
+        return UpdateAssetBackup(root: backupRoot, backedUpDirectoryNames: backedUpDirectoryNames)
     }
 
 }

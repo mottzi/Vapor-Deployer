@@ -13,12 +13,9 @@ struct StopServiceStep: UpdateStep {
         guard context.releaseVersion != context.currentVersion else { return }
 
         console.print("Stopping service '\(context.serviceName)'.")
-        
-        let config = try Configuration.load()
-        let manager = try config.serviceBackend.makeManager(serviceUser: context.managerServiceUser)
-        
-        let wasRunning = await manager.isRunning(product: context.serviceName)
-        if wasRunning { try await manager.stop(product: context.serviceName) }
+
+        let wasRunning = await context.serviceManager.isRunning(product: context.serviceName)
+        if wasRunning { try await context.serviceManager.stop(product: context.serviceName) }
     }
 
 }

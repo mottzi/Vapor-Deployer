@@ -46,18 +46,9 @@ struct UpdateCommand: AsyncCommand {
         let updateLock = try UpdateLock.acquire()
         defer { updateLock.release() }
 
-        let updateContext = UpdateContext(
-            application: context.application,
-            installDirectory: installDirectory,
-            executableName: executableName,
-            serviceName: "deployer"
-        )
-        
-        updateContext.serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: executableURL) ?? ""
-        updateContext.isSourceInstall = config.buildFromSource
-        updateContext.deployerBranch = config.deployerBranch
+        let serviceUser = await ConfigDiscovery.resolveServiceUser(executableURL: executableURL) ?? ""
 
-        if updateContext.isSourceInstall {
+        if config.buildFromSource {
             let gitMarker = installDirectory.appendingPathComponent(".git")
             if !FileManager.default.fileExists(atPath: gitMarker.path) {
                 throw Host.Error.invalidValue(
@@ -66,6 +57,17 @@ struct UpdateCommand: AsyncCommand {
                 )
             }
         }
+
+        let serviceManager = try config.serviceBackend.makeManager(serviceUser: serviceUser)
+        let updateContext = UpdateContext(
+            application: context.application,
+            config: config,
+            serviceManager: serviceManager,
+            serviceUser: serviceUser,
+            installDirectory: installDirectory,
+            executableName: executableName,
+            serviceName: "deployer"
+        )
 
         var stepTypes: [any UpdateStep.Type] = []
         if updateContext.isSourceInstall {
@@ -97,7 +99,7 @@ struct UpdateCommand: AsyncCommand {
             } catch {
                 if step is ActivateReleaseStep || step is PersistVersionStep || step is StartServiceStep {
                     context.console.print("Update failed after service stop. Attempting rollback.")
-                    try await rollback(context: updateContext, originalError: error)
+                    try await UpdateRollback(context: updateContext).run(originalError: error)
                 }
                 throw error
             }
@@ -132,123 +134,6 @@ extension UpdateCommand {
         console.output("  Updates the deployer from release assets or source checkout.")
         console.output("  Automatically restarts the service after staging new assets.")
         console.newLine()
-    }
-
-}
-
-extension UpdateCommand {
-    
-    /// Restores the last known-good binary and requires the service manager to recover before declaring rollback success.
-    private func rollback(context: UpdateContext, originalError: Swift.Error) async throws {
-        
-        context.application.logger.warning("Rollback initiated due to update failure: \(originalError.localizedDescription)")
-        
-        let fileManager = FileManager.default
-        let config = try Configuration.load()
-        let manager = try config.serviceBackend.makeManager(serviceUser: context.managerServiceUser)
-        let executableURL = context.stagedBinaryURL.deletingPathExtension()
-        
-        do {
-            let isRunning = await manager.isRunning(product: context.serviceName)
-            if isRunning { try await manager.stop(product: context.serviceName) }
-            
-            var restoreError: Swift.Error?
-            do {
-                try Self.restoreBackupBinary(context: context, fileManager: fileManager, executableURL: executableURL)
-            } catch {
-                restoreError = error
-            }
-            
-            do {
-                if let assetBackup = context.assetBackup {
-                    try restoreReleaseAssets(from: assetBackup, installDirectory: executableURL.deletingLastPathComponent(), fileManager: fileManager)
-                }
-            } catch {
-                restoreError = restoreError ?? error
-            }
-
-            do {
-                try restoreVersionMarkerIfNeeded(context: context, fileManager: fileManager)
-            } catch {
-                restoreError = restoreError ?? error
-            }
-            
-            if let restoreError { throw restoreError }
-            
-            try await manager.start(product: context.serviceName)
-            
-            let rollbackStatus = await manager.waitForStableStatus(product: context.serviceName)
-            guard rollbackStatus.isRunning else { throw Error.rollbackVerificationFailed(rollbackStatus.label) }
-        } catch {
-            throw Error.rollbackFailed(originalError.localizedDescription, error.localizedDescription)
-        }
-        
-        throw Error.rollbackSucceeded(originalError.localizedDescription)
-    }
-    
-}
-
-extension UpdateCommand {
-    
-    /// Reinstates the last known-good executable after a failed update attempt.
-    static func restoreBackupBinary(context: UpdateContext, fileManager: FileManager, executableURL: URL) throws {
-        let backupBinaryExists = fileManager.fileExists(atPath: context.backupBinaryURL.path)
-        guard backupBinaryExists else { throw Error.binaryNotFound(context.backupBinaryURL.path) }
-
-        try Host.FileSystem.removeIfPresent(executableURL.path)
-        try fileManager.moveItem(at: context.backupBinaryURL, to: executableURL)
-    }
-
-    /// Restores asset directories to the exact pre-update state captured by `backupInstalledAssets`.
-    private func restoreReleaseAssets(from backup: ReleaseAssetBackup, installDirectory: URL, fileManager: FileManager) throws {
-        for name in ReleaseAssetBackup.directoryNames {
-            let destination = installDirectory.appendingPathComponent(name, isDirectory: true)
-            try Host.FileSystem.removeIfPresent(destination.path)
-
-            guard let source = backup.directory(named: name) else { continue }
-            try fileManager.copyItem(at: source, to: destination)
-        }
-    }
-
-    /// Restores the version marker captured before the candidate version was written.
-    private func restoreVersionMarkerIfNeeded(context: UpdateContext, fileManager: FileManager) throws {
-        guard context.versionMarkerAdvanced else { return }
-
-        if context.previousVersionFileExisted {
-            guard let data = context.previousVersionFileData else {
-                throw Error.versionMarkerRollbackFailed(context.versionFileURL.path, "previous marker contents were not captured")
-            }
-
-            do {
-                try data.write(to: context.versionFileURL, options: .atomic)
-            } catch {
-                throw Error.versionMarkerRollbackFailed(context.versionFileURL.path, error.localizedDescription)
-            }
-
-            return
-        }
-
-        do {
-            if fileManager.fileExists(atPath: context.versionFileURL.path) {
-                try fileManager.removeItem(at: context.versionFileURL)
-            }
-        } catch {
-            throw Error.versionMarkerRollbackFailed(context.versionFileURL.path, error.localizedDescription)
-        }
-    }
-
-}
-
-struct ReleaseAssetBackup {
-
-    static let directoryNames = ["Public", "Resources"]
-
-    let root: URL
-    let backedUpDirectoryNames: Set<String>
-
-    func directory(named name: String) -> URL? {
-        guard backedUpDirectoryNames.contains(name) else { return nil }
-        return root.appendingPathComponent(name, isDirectory: true)
     }
 
 }

@@ -68,7 +68,7 @@ extension ActivateReleaseStep {
             try fileManager.copyItem(at: source, to: candidate)
         }
 
-        for name in ReleaseAssetBackup.directoryNames {
+        for name in UpdateAssetBackup.directoryNames {
             let candidate = candidateRoot.appendingPathComponent(name, isDirectory: true)
             let destination = installDirectory.appendingPathComponent(name, isDirectory: true)
             try Host.FileSystem.removeIfPresent(destination.path)
@@ -79,7 +79,7 @@ extension ActivateReleaseStep {
     /// Reinstates the last known-good executable after a failed update attempt.
     private func restoreBackup(fileManager: FileManager) throws {
         let executableURL = context.stagedBinaryURL.deletingPathExtension()
-        try UpdateCommand.restoreBackupBinary(context: context, fileManager: fileManager, executableURL: executableURL)
+        try UpdateRollback.restoreBackupBinary(context: context, fileManager: fileManager, executableURL: executableURL)
     }
 
 }
