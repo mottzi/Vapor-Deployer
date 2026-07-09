@@ -57,14 +57,7 @@ extension OperationCoordinator {
     /// Re-renders deployment rows after global lock state changes.
     private func refreshProductRows() async {
         do {
-            let deployments = try await Deployment.query(on: app.db)
-                .filter(\.$product, .equal, config.target.name)
-                .all()
-
-            for deployment in deployments {
-                guard let id = deployment.id else { continue }
-                await app.mist.models.sync(Deployment.self, id: id)
-            }
+            try await DeploymentRow.syncAll(for: config.target.name, in: app)
         } catch {
             app.logger.error("Failed to refresh deployment rows after operation completion: \(error.localizedDescription)")
         }
