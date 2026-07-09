@@ -92,7 +92,7 @@ A few details that matter if you care about how it works.
 
 - **Serialized operations.**
 
-  An `OperationCoordinator` actor makes sure only one build runs at a time. While a build is in flight, new pushes are recorded as `canceled`. When the build finishes, the automatic drain jumps to the newest canceled push and skips everything in between, so you always end on the latest commit and never build stale work.
+  An `OperationCoordinator` actor makes sure only one build runs at a time. While a build is in flight, new pushes are recorded as `queued`. When the build finishes, the automatic drain jumps to the newest queued push and skips everything in between, so you always end on the latest commit and never build stale work.
 
 - **Atomic binary swap with auto-rollback.**
 

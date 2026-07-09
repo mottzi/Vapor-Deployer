@@ -169,10 +169,10 @@
     border-color: var(--c-failed-border);
 }
 
-.dp-status--canceled {
-    color: var(--c-canceled);
-    background: var(--c-canceled-bg);
-    border-color: var(--c-canceled-border);
+.dp-status--queued {
+    color: var(--c-queued);
+    background: var(--c-queued-bg);
+    border-color: var(--c-queued-border);
 }
 
 .dp-status--stale {

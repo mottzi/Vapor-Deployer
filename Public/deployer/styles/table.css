@@ -165,8 +165,8 @@
     opacity: 1;
 }
 
-.dp-tr.row-canceled::before {
-    background: var(--c-canceled);
+.dp-tr.row-queued::before {
+    background: var(--c-queued);
     opacity: 0.45;
 }
 

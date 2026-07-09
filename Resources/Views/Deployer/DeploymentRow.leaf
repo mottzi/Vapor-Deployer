@@ -13,7 +13,7 @@
     #elseif(context.deployment.displayStatus == "built"):row-built
     #elseif(context.deployment.displayStatus == "running"):row-running
     #elseif(context.deployment.displayStatus == "failed"):row-failed
-    #elseif(context.deployment.displayStatus == "canceled"):row-canceled
+    #elseif(context.deployment.displayStatus == "queued"):row-queued
     #elseif(context.deployment.displayStatus == "stale"):row-stale
     #endif
     #if(context.deployment.hasDetails):dp-tr--interactive#endif
@@ -40,7 +40,7 @@
 
     <!-- Commit message -->
     <td class="dp-td dp-td-commit">
-      #if(context.deployment.displayStatus == "canceled"):
+      #if(context.deployment.displayStatus == "queued"):
         <span class="dp-msg dp-msg--muted">#(context.deployment.commitMessage)</span>
       #else:
         <span class="dp-msg">#(context.deployment.commitMessage)</span>
@@ -91,7 +91,7 @@
           <span class="dp-duration-dash">—</span>
         #elseif(context.deployment.displayStatus == "stale"):
           <span class="dp-duration-dash">—</span>
-        #elseif(context.deployment.displayStatus == "canceled"):
+        #elseif(context.deployment.displayStatus == "queued"):
           <span class="dp-duration-dash">—</span>
         #else:
           <span class="dp-duration">

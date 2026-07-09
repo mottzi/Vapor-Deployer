@@ -264,8 +264,8 @@
               <span class="dp-legend-label">failed</span>
             </span>
             <span class="dp-legend-item">
-              <span class="dp-legend-dot" style="background:var(--c-canceled)"></span>
-              <span class="dp-legend-label">canceled</span>
+              <span class="dp-legend-dot" style="background:var(--c-queued)"></span>
+              <span class="dp-legend-label">queued</span>
             </span>
             <span class="dp-legend-item">
               <span class="dp-legend-dot" style="background:var(--c-stale)"></span>
