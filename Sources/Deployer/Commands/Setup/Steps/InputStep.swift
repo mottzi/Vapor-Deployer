@@ -61,7 +61,15 @@ struct InputStep: SetupStep {
             discoveredPrimary: metadata["PRIMARY_DOMAIN"],
             discoveredEmail: metadata["TLS_CONTACT_EMAIL"]
         )
-        try await evaluateWebhookState(oldSecret: oldSecret)
+        let webhookPlan = try await SetupWebhookPlanner(console: console).collect(
+            owner: context.githubOwner,
+            repository: context.githubRepo,
+            webhookURL: context.webhookURL,
+            previousMetadata: context.previousMetadata,
+            existingSecret: oldSecret
+        )
+        context.webhookSecret = webhookPlan.secret
+        context.githubToken = webhookPlan.githubToken
 
         console.card("Planned configuration", keyedValues: plannedConfiguration())
     }
@@ -270,81 +278,6 @@ extension InputStep {
         )
     }
 
-    private func collectGitHubToken() async throws {
-        
-        console.section("GitHub webhook access")
-        
-        console.card(
-            "How to create the GitHub token",
-            keyedValues: [
-                ("Browser", "https://github.com/settings/tokens"),
-                ("Click", "Generate new token > Generate new token (classic)"),
-                ("Select", "admin:repo_hook")
-            ]
-        )
-        
-        while true {
-//            context.githubToken = console.askSecret("GitHub token")
-            context.githubToken = console.askRequired("GitHub token")
-            do {
-                try await verifyGitHubAccess()
-                return
-            } catch {
-                console.warning(error.localizedDescription)
-            }
-        }
-    }
-    
-    private func evaluateWebhookState(oldSecret: String?) async throws {
-        console.section("GitHub webhook setup")
-        
-        // 1. Current Identity (Lowercased for safe comparison)
-        let currentRepo = "\(context.githubOwner)/\(context.githubRepo)".lowercased()
-        let currentURL = context.webhookURL // Inherently normalized by collectDomain + paths
-        
-        // 2. Previous Identity
-        var previousRepo: String? = nil
-        if let oldRepoURL = context.previousMetadata?["APP_REPO_URL"] {
-            if let parsed = InputValidator.parseGitHubSSHURL(oldRepoURL) {
-                previousRepo = "\(parsed.owner)/\(parsed.repo)".lowercased()
-            } else if oldRepoURL.contains("github.com/") {
-                // HTTPS fallback extraction
-                let parts = oldRepoURL.trimmingSuffix(".git").split(separator: "/")
-                if parts.count >= 2 {
-                    previousRepo = "\(parts[parts.count - 2])/\(parts[parts.count - 1])".lowercased()
-                }
-            }
-        }
-        
-        var previousURL: String? = nil
-        if let oldDomain = context.previousMetadata?["PRIMARY_DOMAIN"], 
-           let oldPath = context.previousMetadata?["WEBHOOK_PATH"] {
-            let normalizedOldBase = InputValidator.normalizeBaseURL("https://\(oldDomain)")
-            previousURL = "\(normalizedOldBase)\(oldPath)"
-        }
-        
-        // 3. Evaluate Condition
-        let identityUnchanged = (currentRepo == previousRepo) && (currentURL == previousURL)
-        let safeOldSecret = oldSecret?.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if identityUnchanged, let secret = safeOldSecret, !secret.isEmpty {
-            console.print("Webhook destination and repository are unchanged.")
-            
-            let forceSync = console.confirm("Force sync webhook with GitHub? (Requires Access Token)", defaultYes: false)
-            
-            if !forceSync {
-                context.webhookSecret = secret
-                context.githubToken = "" // Explicitly empty to flag API bypass
-                console.print("Reusing existing webhook secret. Skipping GitHub API sync.")
-                return
-            }
-        }
-        
-        // 4. Fallback / Force Sync: Generate new secret, require PAT
-        context.webhookSecret = try generateHexSecret()
-        try await collectGitHubToken()
-    }
-    
     private func plannedConfiguration() -> [(String, String)] {
         [
             ("Install directory", paths.installDirectory),
@@ -377,19 +310,6 @@ extension InputStep {
 }
 
 extension InputStep {
-    
-    /// Generates a cryptographically secure 64-character payload used to sign and verify incoming GitHub webhooks.
-    private func generateHexSecret() throws -> String {
-        
-        guard let handle = FileHandle(forReadingAtPath: "/dev/urandom") else {
-            throw SetupCommand.Error.fileOperationFailed("/dev/urandom", CocoaError(.fileReadNoSuchFile))
-        }
-        
-        let data = handle.readData(ofLength: 32)
-        try? handle.close()
-        
-        return data.map { String(format: "%02x", $0) }.joined()
-    }
 
     /// Verifies that a domain actively points to this machine before attempting to provision TLS certificates.
     private func requireResolvableDomain(_ domain: String, label: String) async throws {
@@ -403,18 +323,4 @@ extension InputStep {
         }
     }
 
-    /// Asserts that the provided personal access token has sufficient permissions to manage webhooks for the target repository.
-    private func verifyGitHubAccess() async throws {
-        
-        let urlString = "https://api.github.com/repos/\(context.githubOwner)/\(context.githubRepo)/hooks?per_page=1"
-        guard let url = URL(string: urlString) else {
-            throw SetupCommand.Error.githubAPI("invalid hooks URL")
-        }
-
-        let (_, status) = try await GitHub.API.request(url: url, token: context.githubToken)
-        guard (200..<300).contains(status) else {
-            throw SetupCommand.Error.githubAPI("token check failed for \(context.githubOwner)/\(context.githubRepo) (HTTP \(status))")
-        }
-    }
-    
 }
