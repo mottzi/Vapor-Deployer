@@ -24,12 +24,12 @@
     --c-building: #0284c7;
     --c-restoring: #0891b2;
     --c-pushed: #ea580c;
-    --c-built: #5b7bea;
+    --c-built: #2563eb;
     --c-running: #059669;
     --c-failed: #dc2626;
     --c-queued: #52525b;
     --c-stale: #d97706;
-    --c-testing: #4f46e5;
+    --c-testing: #7c3aed;
 
     --c-tests-pass: #059669;
     --c-tests-fail: #dc2626;
@@ -37,22 +37,22 @@
     --c-building-bg: rgba(56, 189, 248, 0.1);
     --c-restoring-bg: rgba(34, 211, 238, 0.1);
     --c-pushed-bg: rgba(251, 146, 60, 0.1);
-    --c-built-bg: rgba(91, 123, 234, 0.1);
+    --c-built-bg: rgba(37, 99, 235, 0.1);
     --c-running-bg: rgba(52, 211, 153, 0.1);
     --c-failed-bg: rgba(248, 113, 113, 0.1);
     --c-queued-bg: rgba(82, 82, 91, 0.1);
     --c-stale-bg: rgba(251, 191, 36, 0.1);
-    --c-testing-bg: rgba(129, 140, 248, 0.1);
+    --c-testing-bg: rgba(124, 58, 237, 0.1);
 
     --c-building-border: rgba(56, 189, 248, 0.3);
     --c-restoring-border: rgba(34, 211, 238, 0.3);
     --c-pushed-border: rgba(251, 146, 60, 0.28);
-    --c-built-border: rgba(91, 123, 234, 0.28);
+    --c-built-border: rgba(37, 99, 235, 0.28);
     --c-running-border: rgba(52, 211, 153, 0.28);
     --c-failed-border: rgba(248, 113, 113, 0.32);
     --c-queued-border: rgba(82, 82, 91, 0.28);
     --c-stale-border: rgba(251, 191, 36, 0.28);
-    --c-testing-border: rgba(129, 140, 248, 0.3);
+    --c-testing-border: rgba(124, 58, 237, 0.3);
 
     --radius-sm: 4px;
     --radius: 6px;
@@ -96,12 +96,12 @@
         --c-building: #38bdf8;
         --c-restoring: #22d3ee;
         --c-pushed: #fb923c;
-        --c-built: #5b7bea;
+        --c-built: #60a5fa;
         --c-running: #34d399;
         --c-failed: #f87171;
         --c-queued: #71717a;
         --c-stale: #fbbf24;
-        --c-testing: #818cf8;
+        --c-testing: #a78bfa;
 
         --c-tests-pass: #34d399;
         --c-tests-fail: #f87171;
@@ -109,22 +109,22 @@
         --c-building-bg: rgba(56, 189, 248, 0.12);
         --c-restoring-bg: rgba(34, 211, 238, 0.12);
         --c-pushed-bg: rgba(251, 146, 60, 0.12);
-        --c-built-bg: rgba(91, 123, 234, 0.12);
+        --c-built-bg: rgba(96, 165, 250, 0.12);
         --c-running-bg: rgba(52, 211, 153, 0.12);
         --c-failed-bg: rgba(248, 113, 113, 0.12);
         --c-queued-bg: rgba(113, 113, 122, 0.12);
         --c-stale-bg: rgba(251, 191, 36, 0.12);
-        --c-testing-bg: rgba(129, 140, 248, 0.12);
+        --c-testing-bg: rgba(167, 139, 250, 0.12);
 
         --c-building-border: rgba(56, 189, 248, 0.3);
         --c-restoring-border: rgba(34, 211, 238, 0.3);
         --c-pushed-border: rgba(251, 146, 60, 0.28);
-        --c-built-border: rgba(91, 123, 234, 0.3);
+        --c-built-border: rgba(96, 165, 250, 0.3);
         --c-running-border: rgba(52, 211, 153, 0.28);
         --c-failed-border: rgba(248, 113, 113, 0.3);
         --c-queued-border: rgba(113, 113, 122, 0.28);
         --c-stale-border: rgba(251, 191, 36, 0.28);
-        --c-testing-border: rgba(129, 140, 248, 0.3);
+        --c-testing-border: rgba(167, 139, 250, 0.3);
 
         --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
         --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.4);
