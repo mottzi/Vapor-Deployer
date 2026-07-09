@@ -48,7 +48,7 @@
     </td>
 
     <!-- SHA -->
-    <td class="dp-td dp-td-sm-hide dp-td-mobile-hide" mist-action="">
+    <td class="dp-td dp-td-sha" mist-action="">
       <a
         onclick="navigator.clipboard.writeText('#(context.deployment.fullSHA)'); return false;"
         href="##"

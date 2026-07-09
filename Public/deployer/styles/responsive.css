@@ -58,9 +58,9 @@
 
     .dp-tr {
         display: grid;
-        grid-template-columns: 112px minmax(0, 1fr) auto 28px;
+        grid-template-columns: 112px minmax(0, 1fr) auto auto 28px;
         grid-template-rows: auto;
-        grid-template-areas: "status meta time actions";
+        grid-template-areas: "status meta sha time actions";
         column-gap: 14px;
         padding: 12px 16px 12px 20px;
         min-height: 108px;
@@ -79,6 +79,7 @@
 
     .dp-td-status   { grid-area: status; }
     .dp-td-commit   { grid-area: meta; min-width: 0; }
+    .dp-td-sha      { grid-area: sha; align-self: start; }
     .dp-td-started  { grid-area: time; justify-self: end; align-self: start; }
     .dp-td-build    { position: absolute; bottom: 12px; right: calc(16px + 28px + 14px); text-align: right; }
     .dp-td-action   { grid-area: actions; align-self: center; }
@@ -239,7 +240,8 @@
     .dp-td-action   { order: 2; flex: 0 0 auto; margin-left: auto; position: static; transform: none; }
     .dp-td-commit   { order: 3; flex: 0 0 100%; min-width: 0; }
     .dp-td-build    { order: 4; flex: 0 0 auto; align-self: center; position: static; bottom: auto; right: auto; padding-top: 0; }
-    .dp-td-started  { order: 5; flex: 0 0 auto; margin-left: auto; align-self: center; }
+    .dp-td-sha      { order: 5; flex: 0 0 auto; align-self: center; }
+    .dp-td-started  { order: 6; flex: 0 0 auto; margin-left: auto; align-self: center; }
 
     /* Dot separator removed */
 
