@@ -10,6 +10,7 @@ extension Operation {
         case operationIDMissing
         case deploymentIDMissing
         case deploymentNotFound(String)
+        case deploymentCannotDeploy
         case deploymentCannotBuild
         case deploymentCannotRunSavedBinary
         case deploymentCannotTest
@@ -29,6 +30,7 @@ extension Operation {
                 case .operationIDMissing: "Operation ID is missing."
                 case .deploymentIDMissing: "Deployment ID is missing."
                 case .deploymentNotFound(let selector): "No deployment found for '\(selector)'."
+                case .deploymentCannotDeploy: "Deployment not found or can't be deployed."
                 case .deploymentCannotBuild: "Deployment not found or can't be built."
                 case .deploymentCannotRunSavedBinary: "Deployment not found or can't restore its binary."
                 case .deploymentCannotTest: "Deployment not found or can't be tested."

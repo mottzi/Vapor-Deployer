@@ -1,5 +1,6 @@
 ## Unreleased changes main...HEAD(dev)
 
+- Unify deployment-operation eligibility into one pure policy (`Deployment+OperationEligibility`) shared by panel presentation and engine enforcement, and split `OperationEngine+Pipeline` into promotion, build, test, maintenance, and pipeline-support files with a shared live-activation helper.
 - Standardize tablet viewport (480px to 713px) font styles to match the desktop size class, removing redundant responsive font overrides in `responsive.css`.
 - Fix double padding and disjointed console text margins on mobile viewports (≤ 640px) by applying `!important` to `.dp-app-log-body` padding.
 - Standardize log viewer console padding to `16px 20px` across all responsive breakpoints, removing inconsistent padding overrides in `responsive.css`.

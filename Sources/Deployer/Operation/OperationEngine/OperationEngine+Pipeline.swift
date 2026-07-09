@@ -2,254 +2,6 @@ import Vapor
 
 extension OperationEngine {
 
-    /// Promotes exactly the selected deployment without draining newer queued pushes.
-    func runPromote(deployment: Deployment, options: Options, recorder: OperationEventRecorder) async throws {
-
-        if deployment.isLive { return }
-
-        let store = BinaryStore(target: config.target)
-        let hasSavedBinary = deployment.hasSavedBinary || store.hasBinary(for: deployment)
-
-        if hasSavedBinary {
-            guard options.testPolicy != .forceEnabled else { throw Operation.Error.testingSavedBinaryUnsupported }
-            try await runSavedBinary(deployment: deployment, options: options, recorder: recorder)
-            return
-        }
-
-        try await preparePipelineRow(deployment, status: .building, clearOutput: true, recorder: recorder)
-
-        let output = makeOutput(deployment: deployment, recorder: recorder, options: options)
-        let worker = makeWorker(deployment: deployment, output: output, recorder: recorder)
-
-        do {
-            await output.open()
-            try await worker.checkout()
-            try await runInlineTestIfNeeded(deployment: deployment, worker: worker, recorder: recorder, policy: options.testPolicy)
-            try await worker.build()
-            try await worker.move()
-            try await worker.restart()
-
-            if !options.skipHealthCheck {
-                do {
-                    try await worker.verifyHealth()
-                    try await worker.cleanupPredecessorBackup()
-                } catch {
-                    let liveDeployment = try? await Deployment.getCurrent(named: deployment.product, on: app.db)
-                    let predecessorSHA = liveDeployment.flatMap { String($0.commitID.prefix(7)) } ?? "unknown"
-                    let currentSHA = String(deployment.commitID.prefix(7))
-                    
-                    await worker.stream?.appendLabel("Health Check Failure")
-                    await worker.stream?.append("Deployment unhealthy (\(currentSHA))\nRollback to predecessor (\(currentSHA) -> \(predecessorSHA))...\n")
-                    
-                    // Recover backup binary & restart back to original predecessor
-                    try? await worker.restorePredecessorBackup()
-                    try? await worker.restart(overrideSHA: predecessorSHA)
-                    throw error
-                }
-            } else {
-                try await worker.cleanupPredecessorBackup()
-            }
-            
-            try await worker.deploy(to: store)
-
-            deployment.finishedAt = .now
-            deployment.output = await output.transcript
-            await output.close()
-
-            try await deployment.setCurrent(on: app.db)
-            try await store.evict(on: app.db)
-            await recorder.recordProductRowsUpdated(product: deployment.product)
-        } catch {
-            await fail(deployment: deployment, error: error, output: output, recorder: recorder)
-            throw error
-        }
-    }
-
-    /// Builds and archives a deployment without making it live.
-    func runBuild(deployment: Deployment, options: Options, recorder: OperationEventRecorder) async throws {
-
-        guard deployment.canStartBuildOperation else { throw Operation.Error.deploymentCannotBuild }
-
-        let store = BinaryStore(target: config.target)
-        guard !store.hasBinary(for: deployment) else { throw Operation.Error.savedBinaryAlreadyExists }
-
-        try await preparePipelineRow(deployment, status: .building, clearOutput: true, recorder: recorder)
-
-        let output = makeOutput(deployment: deployment, recorder: recorder, options: options)
-        let worker = makeWorker(deployment: deployment, output: output, recorder: recorder)
-
-        do {
-            await output.open()
-            try await worker.checkout()
-            try await worker.build()
-            try await worker.save(to: store)
-
-            deployment.finishedAt = .now
-            deployment.status = .built
-            deployment.output = await output.transcript
-            await output.close()
-            
-            try await deployment.save(on: app.db)
-            await recorder.recordRowUpdated(deploymentID: deployment.id)
-        } catch {
-            await fail(deployment: deployment, error: error, output: output, recorder: recorder)
-            throw error
-        }
-    }
-
-    /// Restores an archived binary and makes that deployment live.
-    func runSavedBinary(deployment: Deployment, options: Options, recorder: OperationEventRecorder) async throws {
-
-        guard deployment.canStartRestoreOperation else { throw Operation.Error.deploymentCannotRunSavedBinary }
-
-        let store = BinaryStore(target: config.target)
-        guard store.hasBinary(for: deployment) else { throw Operation.Error.savedBinaryMissing }
-
-        try await preparePipelineRow(deployment, status: .restoring, clearOutput: false, recorder: recorder)
-
-        let priorOutput = deployment.output ?? ""
-        let output = makeOutput(deployment: deployment, recorder: recorder, options: options, priorTranscript: priorOutput)
-        let worker = makeWorker(deployment: deployment, output: output, recorder: recorder)
-
-        do {
-            await output.open()
-            try await worker.restore(from: store)
-            try await worker.restart()
-
-            if !options.skipHealthCheck {
-                do {
-                    try await worker.verifyHealth()
-                    try await worker.cleanupPredecessorBackup()
-                } catch {
-                    await worker.stream?.appendLabel("Health Check Failure")
-                    await worker.stream?.append("Deployment unhealthy. Triggering auto-rollback to predecessor...\n")
-                    
-                    // Recover backup binary & restart back to original predecessor
-                    try? await worker.restorePredecessorBackup()
-                    try? await worker.restart()
-                    throw error
-                }
-            } else {
-                try await worker.cleanupPredecessorBackup()
-            }
-
-            deployment.finishedAt = .now
-            deployment.output = await output.transcript
-            await output.close()
-
-            try await store.syncMetadata(for: deployment, on: app.db)
-            try await deployment.setCurrent(on: app.db)
-            try await store.evict(on: app.db)
-            await recorder.recordProductRowsUpdated(product: deployment.product)
-        } catch {
-            await fail(deployment: deployment, error: error, output: output, recorder: recorder)
-            throw error
-        }
-    }
-
-    /// Runs `swift test` as an audit and restores the deployment lifecycle status afterwards.
-    func runTest(deployment: Deployment, options: Options, recorder: OperationEventRecorder) async throws {
-
-        guard deployment.canStartTestOperation else { throw Operation.Error.deploymentCannotTest }
-
-        let priorStatus = deployment.status
-        let priorOutput = deployment.output ?? ""
-
-        deployment.status = .testing
-        deployment.testStartedAt = .now
-        try await deployment.save(on: app.db)
-        await recorder.recordRowUpdated(deploymentID: deployment.id)
-
-        let output = makeOutput(deployment: deployment, recorder: recorder, options: options, priorTranscript: priorOutput)
-        let worker = makeWorker(deployment: deployment, output: output, recorder: recorder)
-
-        do {
-            await output.open()
-            try await worker.checkout()
-            try await worker.test()
-
-            deployment.status = priorStatus
-            deployment.testStartedAt = nil
-            deployment.lastTestOutcome = true
-            deployment.output = await output.transcript
-            await output.close()
-            
-            try await deployment.save(on: app.db)
-            await recorder.recordRowUpdated(deploymentID: deployment.id)
-        } catch {
-            await output.appendError(error)
-            deployment.output = await output.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
-            deployment.status = priorStatus
-            deployment.testStartedAt = nil
-            deployment.lastTestOutcome = false
-            await output.close()
-            
-            try? await deployment.save(on: app.db)
-            await recorder.recordRowUpdated(deploymentID: deployment.id)
-            throw error
-        }
-    }
-
-    /// Deletes a deployment row after enforcing live-row protection.
-    func runDelete(deployment: Deployment, recorder: OperationEventRecorder) async throws {
-
-        guard !deployment.isLive else { throw Operation.Error.liveDeploymentCannotBeDeleted }
-        try await deployment.delete(on: app.db)
-        await recorder.recordRowDeleted(deploymentID: deployment.id)
-    }
-
-    /// Removes a saved binary and returns the row to the pushed state.
-    func runRemoveBinary(deployment: Deployment, recorder: OperationEventRecorder) async throws {
-
-        guard !deployment.isLive else { throw Operation.Error.liveDeploymentBinaryCannotBeRemoved }
-        guard deployment.hasSavedBinary else { throw Operation.Error.savedBinaryMissing }
-
-        let store = BinaryStore(target: config.target)
-        guard store.hasBinary(for: deployment) else { throw Operation.Error.savedBinaryMissing }
-
-        try store.deleteBinary(for: deployment)
-        deployment.binarySizeMB = nil
-        deployment.isManuallySaved = false
-        deployment.output = nil
-        deployment.status = .pushed
-        try await deployment.save(on: app.db)
-        await recorder.recordRowUpdated(deploymentID: deployment.id)
-    }
-
-}
-
-extension Deployment {
-
-    /// Engine-level deployability excludes UI-only global lock state because callers already hold the lock.
-    fileprivate var canStartPipelineOperation: Bool {
-        switch displayStatus {
-            case .building, .testing, .restoring, .running: false
-            default: true
-        }
-    }
-
-    /// Engine-level build eligibility for an operation that already owns the global lock.
-    fileprivate var canStartBuildOperation: Bool {
-        !isLive && canStartPipelineOperation && !hasSavedBinary
-    }
-
-    /// Engine-level restore eligibility for an operation that already owns the global lock.
-    fileprivate var canStartRestoreOperation: Bool {
-        !isLive && canStartPipelineOperation && hasSavedBinary
-    }
-
-    /// Engine-level test eligibility for an operation that already owns the global lock.
-    fileprivate var canStartTestOperation: Bool {
-        switch displayStatus {
-            case .building, .testing, .restoring: false
-            default: true
-        }
-    }
-
-}
-
-extension OperationEngine {
-
     /// Applies the transient status used while a mutating pipeline action runs.
     func preparePipelineRow(
         _ deployment: Deployment,
@@ -257,7 +9,7 @@ extension OperationEngine {
         clearOutput: Bool,
         recorder: OperationEventRecorder
     ) async throws {
-        
+
         deployment.startedAt = .now
         deployment.status = status
         deployment.finishedAt = nil
@@ -274,7 +26,7 @@ extension OperationEngine {
         options: Options,
         priorTranscript: String = ""
     ) -> OperationOutputStream {
-        
+
         OperationOutputStream(
             app: app,
             recorder: recorder,
@@ -283,6 +35,39 @@ extension OperationEngine {
             mistSink: origin == .server ? OperationOutputMistSink(app: app, deployment: deployment) : nil,
             consoleSink: options.consoleSink
         )
+    }
+
+    /// Restarts the target, verifies health unless skipped, and rolls back to the predecessor on probe failure.
+    func activateLiveBinary(
+        worker: OperationWorker,
+        deployment: Deployment,
+        options: Options
+    ) async throws {
+
+        try await worker.restart()
+
+        guard !options.skipHealthCheck else {
+            try await worker.cleanupPredecessorBackup()
+            return
+        }
+
+        do {
+            try await worker.verifyHealth()
+            try await worker.cleanupPredecessorBackup()
+        } catch {
+            let liveDeployment = try? await Deployment.getCurrent(named: deployment.product, on: app.db)
+            let predecessorSHA = liveDeployment.flatMap { String($0.commitID.prefix(7)) } ?? "unknown"
+            let currentSHA = String(deployment.commitID.prefix(7))
+
+            await worker.stream?.appendLabel("Health Check Failure")
+            await worker.stream?.append(
+                "Deployment unhealthy (\(currentSHA))\nRollback to predecessor (\(currentSHA) -> \(predecessorSHA))...\n"
+            )
+
+            try? await worker.restorePredecessorBackup()
+            try? await worker.restart(overrideSHA: predecessorSHA)
+            throw error
+        }
     }
 
     /// Runs inline tests according to the target default and per-job override.
@@ -310,9 +95,9 @@ extension OperationEngine {
             deployment.status = .testing
             try await deployment.save(on: app.db)
             await recorder.recordRowUpdated(deploymentID: deployment.id)
-            
+
             try await worker.test()
-            
+
             deployment.lastTestOutcome = true
             deployment.status = .building
             try await deployment.save(on: app.db)
@@ -350,7 +135,7 @@ extension OperationEngine {
         output: OperationOutputStream?,
         recorder: OperationEventRecorder
     ) -> OperationWorker {
-        
+
         OperationWorker(
             deployment: deployment,
             target: config.target,
@@ -364,4 +149,27 @@ extension OperationEngine {
         )
     }
 
+    /// Completes the promotion-finalization sequence by assigning outputs, closing the stream, setting current, evicting the binary store, and notifying the recorder.
+    func completePromotion(
+        _ deployment: Deployment,
+        output: OperationOutputStream,
+        store: BinaryStore,
+        recorder: OperationEventRecorder,
+        syncMetadata: Bool = false
+    ) async throws {
+
+        deployment.finishedAt = .now
+        deployment.output = await output.transcript
+        await output.close()
+
+        if syncMetadata {
+            try await store.syncMetadata(for: deployment, on: app.db)
+        }
+
+        try await deployment.setCurrent(on: app.db)
+        try await store.evict(on: app.db)
+        await recorder.recordProductRowsUpdated(product: deployment.product)
+    }
+
 }
+

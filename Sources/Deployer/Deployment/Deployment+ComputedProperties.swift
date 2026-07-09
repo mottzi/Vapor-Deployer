@@ -30,14 +30,14 @@ extension Deployment {
 }
 
 extension Deployment {
-
+    
     var durationString: String? {
         guard let finishedAt, let startedAt else { return nil }
         return String(format: "%.1fs", finishedAt.timeIntervalSince(startedAt))
     }
-
+    
     static let staleThreshold: TimeInterval = 30 * 60
-
+    
     var displayStatus: Status {
         if (status == .building || status == .restoring || status == .testing),
            let referenceTime = (status == .testing ? (testStartedAt ?? startedAt) : startedAt),
@@ -47,15 +47,15 @@ extension Deployment {
             status
         }
     }
-
+    
     var shortID: String? { id.map { String($0.uuidString.prefix(8)) } }
-
+    
     var fullSHA: String { commitID }
-
+    
     var shortSHA: String { String(commitID.prefix(7)) }
-
+    
     var startedAtUnixMs: Int? { startedAt.map { Int($0.timeIntervalSince1970 * 1000) } }
-
+    
     /// Anchor for the in-row live timer. During `.testing`, ticks against `testStartedAt` so the elapsed
     /// reflects the current test run rather than the deployment's original push/build time. For
     /// `.building` / `.restoring`, `startedAt` is the right anchor.
@@ -63,62 +63,50 @@ extension Deployment {
         let anchor: Date? = status == .testing ? testStartedAt : startedAt
         return anchor.map { Int($0.timeIntervalSince1970 * 1000) }
     }
-
+    
+    /// Presentation adapters over `eligibility(for:holdingLock:)`. Panel always observes the lock.
     var canBeDeployed: Bool {
-        guard !operationLocked else { return false }
-
-        return switch displayStatus {
-            case .building: false
-            case .testing: false
-            case .restoring: false
-            case .running: false
-            default: true
-        }
+        eligibility(for: .deploy, holdingLock: false).isAvailable
     }
-
+    
     var canBuild: Bool {
-        !isLive && canBeDeployed && !hasSavedBinary
+        eligibility(for: .build, holdingLock: false).isAvailable
     }
-
+    
     var hasSavedBinary: Bool {
         binarySizeMB != nil
     }
-
+    
     var canRestoreBinary: Bool {
-        !isLive && canBeDeployed && hasSavedBinary
+        eligibility(for: .runSavedBinary, holdingLock: false).isAvailable
     }
-
+    
     /// Test eligibility — permissive. Allowed on every non-actively-transient state, including
     /// `.running` (the live binary is untouched; tests compile into `.build-tests/`). The operation
     /// lock still serializes execution.
     var canTest: Bool {
-        guard !operationLocked else { return false }
-
-        return switch displayStatus {
-            case .building, .testing, .restoring: false
-            default: true
-        }
+        eligibility(for: .test, holdingLock: false).isAvailable
     }
-
+    
     var canDelete: Bool {
-        !operationLocked && !isLive
+        eligibility(for: .delete, holdingLock: false).isAvailable
     }
-
+    
     var operationLocked: Bool {
         OperationLock.isHeld()
     }
-
+    
     var testsPassed: Bool { lastTestOutcome == true }
     var testsFailed: Bool { lastTestOutcome == false }
-
+    
     var hasDetails: Bool {
         output != nil || hasLiveOutputStream
     }
-
+    
     var hasLiveOutputStream: Bool {
         status == .building || status == .testing || status == .restoring
     }
-
+    
     /// HTML-rendered output: escapes user-facing text and, on failure, wraps the failing pipeline section in a red span.
     var outputHTML: String? {
         guard let output, !output.isEmpty else { return nil }
@@ -126,6 +114,10 @@ extension Deployment {
             ? Self.wrapFailedSection(in: output)
             : Self.htmlEscape(output)
     }
+    
+}
+
+extension Deployment {
 
     private static func htmlEscape(_ text: String) -> String {
         text
@@ -137,11 +129,13 @@ extension Deployment {
     /// Wraps the transcript from the last `──── label ────` marker to the end in a span the CSS can color red.
     /// All content (inside and outside the span) is HTML-escaped; only the controlled `<span>` tags are raw.
     private static func wrapFailedSection(in text: String) -> String {
-        guard let range = text.range(of: "──── ", options: .backwards) else {
-            return htmlEscape(text)
-        }
+        
+        let range = text.range(of: "──── ", options: .backwards)
+        guard let range else { return htmlEscape(text) }
+        
         let before = String(text[..<range.lowerBound])
         let after = String(text[range.lowerBound...])
+        
         return htmlEscape(before)
             + "<span class=\"dp-section--error\">"
             + htmlEscape(after)
