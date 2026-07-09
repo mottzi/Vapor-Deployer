@@ -326,6 +326,25 @@
         }, 2000);
       });
     }
+
+    function copySHA(el, fullSHA) {
+      navigator.clipboard.writeText(fullSHA).then(() => {
+        const label = el.querySelector('.dp-id-label');
+        const icon = el.querySelector('.dp-id-copy');
+        if (!label) return;
+
+        const originalText = label.textContent;
+        el.classList.add('dp-id--copied');
+        label.textContent = 'Copied';
+        if (icon) icon.style.opacity = '0';
+
+        setTimeout(() => {
+          el.classList.remove('dp-id--copied');
+          label.textContent = originalText;
+          if (icon) icon.style.opacity = '';
+        }, 2000);
+      });
+    }
   </script>
 
 </body>
