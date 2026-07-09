@@ -25,11 +25,7 @@ extension DeploymentRow {
                 target: target
             )
             
-            return switch result {
-            case .started: .success("Binary save started")
-            case .operationBusy: .failure("A deployment is already running")
-            case .failure(let message): .failure(message)
-            }
+            return result.actionResult(success: "Binary save started")
         }
         
     }

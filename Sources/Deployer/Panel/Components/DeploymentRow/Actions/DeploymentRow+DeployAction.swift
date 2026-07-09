@@ -20,14 +20,7 @@ extension DeploymentRow {
                 target: app.deployer.operations.config.target
             )
             
-            switch result {
-                case .started:
-                    return .success("Deployment started")
-                case .operationBusy:
-                    return .failure("A deployment is already running")
-                case .failure(let message):
-                    return .failure(message)
-            }
+            return result.actionResult(success: "Deployment started")
         }
         
     }
