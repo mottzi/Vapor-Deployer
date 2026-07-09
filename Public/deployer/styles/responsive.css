@@ -58,9 +58,11 @@
 
     .dp-tr {
         display: grid;
-        grid-template-columns: 112px minmax(0, 1fr) auto auto 28px;
-        grid-template-rows: auto;
-        grid-template-areas: "status meta sha time actions";
+        grid-template-columns: 112px minmax(0, 1fr) auto 28px;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "status meta time actions"
+            "sha    .    .    .";
         column-gap: 14px;
         padding: 12px 16px 12px 20px;
         min-height: 108px;
@@ -243,7 +245,24 @@
     .dp-td-sha      { order: 5; flex: 0 0 auto; align-self: center; }
     .dp-td-started  { order: 6; flex: 0 0 auto; margin-left: auto; align-self: center; }
 
-    /* Dot separator removed */
+    /* Pipe separators between build, SHA, and started on the bottom row */
+    .dp-td-build::after {
+        content: "|";
+        margin-left: 6px;
+        font-size: 11.5px;
+        color: var(--text-subtle);
+        opacity: 0.5;
+    }
+
+    .dp-td-sha .dp-id {
+        font-size: 11.5px;
+        color: var(--text-subtle);
+        gap: 0;
+    }
+
+    .dp-td-sha .dp-id-copy {
+        display: none;
+    }
 
     /* Status: drop the capsule, keep the color and chevron */
     .dp-status {
