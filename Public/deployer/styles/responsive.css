@@ -239,20 +239,11 @@
     }
 
     .dp-td-status   { order: 1; flex: 0 0 auto; }
-    .dp-td-action   { order: 2; flex: 0 0 auto; margin-left: auto; position: static; transform: none; }
-    .dp-td-commit   { order: 3; flex: 0 0 100%; min-width: 0; }
-    .dp-td-build    { order: 4; flex: 0 0 auto; align-self: center; position: static; bottom: auto; right: auto; padding-top: 0; }
-    .dp-td-sha      { order: 5; flex: 0 0 auto; align-self: center; }
+    .dp-td-sha      { order: 2; flex: 0 0 auto; align-self: center; }
+    .dp-td-action   { order: 3; flex: 0 0 auto; margin-left: auto; position: static; transform: none; }
+    .dp-td-commit   { order: 4; flex: 0 0 100%; min-width: 0; }
+    .dp-td-build    { order: 5; flex: 0 0 auto; align-self: center; position: static; bottom: auto; right: auto; padding-top: 0; }
     .dp-td-started  { order: 6; flex: 0 0 auto; margin-left: auto; align-self: center; }
-
-    /* Pipe separators between build, SHA, and started on the bottom row */
-    .dp-td-build::after {
-        content: "|";
-        margin-left: 6px;
-        font-size: 11.5px;
-        color: var(--text-subtle);
-        opacity: 0.5;
-    }
 
     .dp-td-sha .dp-id {
         font-size: 11.5px;
