@@ -23,7 +23,9 @@ extension Application {
         let app = try await Application.make(env)
         app.deployer.useCommands()
 
-        if shouldConfigureServer(for: env) {
+        let configuresServer = shouldConfigureServer(for: env)
+
+        if configuresServer {
             do {
                 try await app.deployer.useServer()
             } catch {
@@ -36,6 +38,10 @@ extension Application {
         do {
             try await app.execute()
         } catch {
+            if !configuresServer {
+                app.console.error(error.localizedDescription)
+            }
+
             try? await app.asyncShutdown()
             exit(1)
         }
