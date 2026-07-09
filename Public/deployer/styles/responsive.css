@@ -81,7 +81,7 @@
 
     .dp-td-status   { grid-area: status; }
     .dp-td-commit   { grid-area: meta; min-width: 0; }
-    .dp-td-sha      { grid-area: sha; align-self: start; }
+    .dp-td-sha      { grid-area: sha; align-self: start; margin-left: 12px; }
     .dp-td-started  { grid-area: time; justify-self: end; align-self: start; }
     .dp-td-build    { position: absolute; bottom: 12px; right: calc(16px + 28px + 14px); text-align: right; }
     .dp-td-action   { grid-area: actions; align-self: center; }
