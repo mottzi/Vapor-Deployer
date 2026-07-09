@@ -2,7 +2,7 @@ import Vapor
 import Mist
 import Elementary
 
-protocol LogViewer: ClientStateManualComponent where FragmentState == Bool {
+protocol LogViewer: ManualComponent where FragmentState == Bool {
     
     static var componentName: String { get }
     static var streamName: String { get }
@@ -37,11 +37,11 @@ extension LogViewer {
     var actions: [any Action] { [ToggleWrapAction()] }
 
     func body(state: Bool) -> some HTML {
-        body(state: state, clientState: defaultState)
+        body(state: state, componentState: defaultState)
     }
 
-    func body(state: Bool, clientState: ComponentState) -> some HTML {
-        let wrapDisabled = clientState["wrapDisabled"]?.bool ?? false
+    func body(state: Bool, componentState: ComponentState) -> some HTML {
+        let wrapDisabled = componentState["wrapDisabled"]?.bool ?? false
         let consoleClass = wrapDisabled
             ? "dp-output-pre dp-output-pre--live dp-output-pre--nowrap dp-app-log-console"
             : "dp-output-pre dp-output-pre--live dp-app-log-console"
@@ -58,11 +58,6 @@ extension LogViewer {
                 .custom(name: "data-mist-stream-limit", value: "\(Self.retainedLineCount)")
             ) {}
         }
-    }
-
-    func renderClientState(app: Application, state componentState: ComponentState) async -> RenderResult {
-        let current = await self.state.current
-        return .rendered(body(state: current, clientState: componentState).render())
     }
 
 }
