@@ -45,3 +45,18 @@
 - Improve the semantic accuracy of the updater polling log, replacing a misleading timeout warning with an info message when the deployer successfully determines no update is needed and exits quickly.
 - Split Panel and Application bootstrap routines into logical extensions to streamline route configuration, login handling, and asset registration.
 - Update the `Vapor-Mist` dependency to the `dev` branch to support state-aware fragment rendering and component streaming.
+
+### User-facing Changelog
+- Add post-deployment health probes (supporting default TCP port checks and configurable HTTP GET path checks) with a 2-second settle check and automated rollback to the predecessor backup binary upon failure or timeout.
+- Add an authenticated target app Logs page that streams the configured app log through Mist with subscriber-driven tailing, bounded 2000-line retention, local Clear/Copy/Wrap-lines actions.
+- Add Deployer daemon service logs to the web panel, exposing the deployer's own `deployer.log` file at `/logs/deployer` with a dedicated Logs button in the status bar, generalized page templates, and improved logging timestamps.
+- Add `deployerctl` CLI (deployment controls): list deployments by short SHA, deploy, build, run saved binaries, test, inspect output, delete rows, and remove saved binaries, largely mirroring the panel capabilities.
+- Add an `--skip-health-check` flag to both `deployerctl deploy` and `deployerctl run` to bypass post-deployment health probes.
+- Add a `refresh-deployerctl` subcommand to `deployerctl` for manually updating the root-owned wrapper script (internal use).
+- Roll back self-updates when the newly started deployer fails post-start control-plane verification instead of accepting the first service-manager `running` status.
+- Share one deployment engine between the panel and CLI, with cross-process operation locking so panel and CLI actions cannot run concurrently.
+- Stream CLI-origin deployment progress back into the live panel through Mist-backed operation events, while keeping CLI deploys usable when the server is offline.
+- Recover stranded/abandoned operations on server boot or CLI startup when the owning process no longer holds the operation lock, transitioning stuck deployments to `.failed` and purging temporary events.
+- Display the commit SHA on all responsive size classes instead of only the desktop view.
+- Polish panel UI layouts: added a "Disconnected" websocket state badge
+- Refresh the root-owned `deployerctl` wrapper during successful self-updates by invoking the newly activated binary's embedded templates after the deployer service restarts.

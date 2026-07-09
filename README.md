@@ -78,6 +78,10 @@ When setup finishes, the panel is listening for the next push. If the managed ap
 
   Tests can run automatically before every build, or only when you press the `Test` button on a deployment. Result output is live streamed into the panel.
 
+- **Live app and deployer logs in the browser.**
+
+  View your target app's logs right from the web panel, streaming via Mist. The deployer's own service logs are also accessible with a dedicated button in the status bar.
+
 - **Edit the app's environment variables in the panel.**
 
   Open the settings page, edit your app's `.env`, hit save. The file is validated and written atomically. Hit restart and the change is live.
@@ -92,15 +96,15 @@ A few details that matter if you care about how it works.
 
 - **Serialized operations.**
 
-  An `OperationCoordinator` actor makes sure only one build runs at a time. While a build is in flight, new pushes are recorded as `queued`. When the build finishes, the automatic drain jumps to the newest queued push and skips everything in between, so you always end on the latest commit and never build stale work.
+  An `OperationCoordinator` actor makes sure only one build runs at a time, using cross-process locking to ensure panel and CLI actions never collide. While a build is in flight, new pushes are recorded as `queued`. When the build finishes, the automatic drain jumps to the newest queued push and skips everything in between, so you always end on the latest commit and never build stale work. CLI-triggered deployments also stream their progress directly into the live panel.
 
 - **Atomic binary swap with auto-rollback.**
 
-  Before the new binary moves in, the live one is set aside as `.old`. If the move fails for any reason, the previous binary is restored before the error bubbles up.
+  Before the new binary moves in, the live one is set aside as `.old`. If the move fails for any reason, or if the newly started app fails its post-deployment health check, the previous binary is restored before the error bubbles up.
 
-- **Boot-drain replay.**
+- **Operation recovery.**
 
-  If the server reboots or the deployer crashes mid-deploy, the next start picks up the most recent stranded push and resumes from there.
+  If the server reboots or the deployer crashes mid-deploy, the next boot or CLI startup detects abandoned operations and transitions them to a failed state.
 
 - **Signed webhooks only.**
 
@@ -140,9 +144,9 @@ sudo deployerctl update              # update deployer to the latest release
 | `logs [target]` | Tail the on-disk log file (Ctrl-C to exit) |
 | `journal [target]` | Recent systemd journal entries (systemd only) |
 | `list [max]` | List recent deployments, defaulting to 20 rows |
-| `deploy <sha> [--testing\|-t] [--skip-tests --yes] [--no-logs]` | Build and deploy a selected commit |
+| `deploy <sha> [--testing\|-t] [--skip-tests] [--skip-health-check] [--yes] [--no-logs]` | Build and deploy a selected commit |
 | `build <sha> [--no-logs]` | Build and save a deployment binary without making it live |
-| `run <sha>` | Run a saved deployment binary |
+| `run <sha> [--skip-health-check]` | Run a saved deployment binary |
 | `test <sha> [--no-logs]` | Run deployment tests |
 | `output <sha>` | Show or follow deployment output |
 | `delete <sha> [--yes]` | Delete a non-live deployment row |
@@ -180,33 +184,37 @@ Runtime settings live in `deployer.json`, beside the deployer binary:
 
 ```json
 {
-    "buildFromSource": false,
-    "dbFile": "deployer.db",
-    "deployerBranch": "main",
-    "deployerDirectory": ".",
-    "panelRoute": "/deployer",
     "port": 8081,
-    "serviceHome": "/home/vapor",
-    "serviceBackend": "systemd",
+    "dbFile": "deployer.db",
+    "deployerDirectory": ".",
     "socketPath": "/deployer/ws",
+    "panelRoute": "/deployer",
+    "serviceHome": "/home/vapor",
     "swiftPath": "/home/vapor/.local/share/swiftly/bin:/usr/local/bin:/usr/bin:/bin",
+    "serviceBackend": "systemd",
+    "buildFromSource": false,
+    "deployerBranch": "main",
+    "webhookSecret": "generated-secret",
     "target": {
-        "appPort": 8080,
+        "name": "MyApp",
+        "repositoryURL": "https://github.com/example/MyApp",
+        "directory": "../apps/MyApp",
+        "buildMode": "release",
+        "pusheventPath": "/pushevent/MyApp",
+        "deploymentMode": "manual",
         "binaryBehaviour": {
             "newest": {
                 "count": 5
             }
         },
+        "appPort": 8080,
         "branch": "main",
-        "buildMode": "release",
-        "directory": "../apps/MyApp",
-        "deploymentMode": "manual",
-        "name": "MyApp",
-        "pusheventPath": "/pushevent/MyApp",
-        "repositoryURL": "https://github.com/example/MyApp",
-        "testing": true
-    },
-    "webhookSecret": "generated-secret"
+        "testing": true,
+        "healthCheckPath": "/health",
+        "healthCheckIntervalMs": 500,
+        "healthCheckMaxRetries": 20,
+        "healthCheckTimeoutMs": 1000
+    }
 }
 ```
 
