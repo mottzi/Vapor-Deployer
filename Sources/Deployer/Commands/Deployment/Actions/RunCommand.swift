@@ -18,13 +18,24 @@ struct RunCommand: AnyAsyncCommand {
         }
 
         let (config, engine) = try await DeploymentCLI.runtime(from: context)
-        let deployment = try await DeploymentSelector.resolveExisting(parsed.positionals[0], config: config, app: context.application)
+        let selector = parsed.positionals[0]
+        let known = try await DeploymentSelector.resolveExisting(selector, config: config, app: context.application)
+
+        if known.isLive {
+            DeploymentCLI.printAlreadyLive(known, console: context.console)
+            return
+        }
 
         let options = OperationEngine.Options(
             skipHealthCheck: parsed.flags.contains("--skip-health-check")
         )
 
         try await DeploymentCLI.runLocked(context: context) {
+            let deployment = try await DeploymentSelector.resolveExisting(selector, config: config, app: context.application)
+            if deployment.isLive {
+                DeploymentCLI.printAlreadyLive(deployment, console: context.console)
+                return
+            }
             try await engine.run(action: .runSavedBinary, deployment: deployment, options: options)
         }
     }

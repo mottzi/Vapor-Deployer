@@ -50,7 +50,7 @@ extension DeployCommand {
         )
 
         if let known, known.isLive {
-            context.console.output("\(known.shortSHA) is already live.")
+            DeploymentCLI.printAlreadyLive(known, console: context.console)
             return
         }
 
@@ -69,7 +69,7 @@ extension DeployCommand {
                 allowCreate: true
             )
             if deployment.isLive {
-                context.console.output("\(deployment.shortSHA) is already live.")
+                DeploymentCLI.printAlreadyLive(deployment, console: context.console)
                 return
             }
             try await engine.run(action: .deploy, deployment: deployment, options: options)

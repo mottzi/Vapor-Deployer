@@ -83,6 +83,11 @@ enum DeploymentCLI {
         }
     }
 
+    /// Reports the shared successful no-op used when a promotion target is already active.
+    static func printAlreadyLive(_ deployment: Deployment, console: any Console) {
+        console.output("\(deployment.shortSHA) is already live.")
+    }
+
     /// Parses testing flags into an explicit test policy, requiring confirmation if tests are being skipped.
     static func testPolicy(parsed: ParsedArguments, target: TargetConfiguration) throws -> OperationEngine.TestPolicy {
         
