@@ -1,5 +1,6 @@
 ## Unreleased changes main...HEAD(dev)
 
+- Route self-update system logs to the shared `deployer.log` file without leaking them into the operator-facing CLI transcript.
 - Show automatic pushes waiting for the active deployment to finish as `queued` instead of the misleading `canceled` status.
 - Unify deployment-operation eligibility into one pure policy (`Deployment+OperationEligibility`) shared by panel presentation and engine enforcement, and split `OperationEngine+Pipeline` into promotion, build, test, maintenance, and pipeline-support files with a shared live-activation helper.
 - Standardize tablet viewport (480px to 713px) font styles to match the desktop size class, removing redundant responsive font overrides in `responsive.css`.

@@ -17,8 +17,6 @@ struct UpdateCommand: AsyncCommand {
 
     private func runPipeline(context: CommandContext) async throws {
 
-        context.application.logger.info("Running self-update pipeline...")
-        
         let executableURL = try Configuration.getExecutableURL()
         let installDirectory = executableURL.deletingLastPathComponent()
         let executableName = executableURL.lastPathComponent
@@ -26,6 +24,9 @@ struct UpdateCommand: AsyncCommand {
         guard !executableName.isEmpty else { throw Error.invalidExecutablePath(executableURL.path) }
 
         let config = try Configuration.load()
+        try context.application.deployer.useCLILogging(config: config)
+
+        context.application.logger.info("Running self-update pipeline...")
 
         // User-typed shell invocations verify the running server is in `.ready` phase before proceeding.
         // Panel-spawned children carry `DEPLOYER_INTERNAL_UPDATE=1` and skip the query — their parent

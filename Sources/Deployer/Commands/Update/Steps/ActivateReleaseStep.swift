@@ -7,13 +7,12 @@ struct ActivateReleaseStep: UpdateStep {
     let console: any Console
 
     let title = "Activating release"
-    private let logger = Logger(label: "codes.mottzi.deployer.update")
 
     func run() async throws {
 
         guard context.releaseVersion != context.currentVersion else { return }
 
-        logger.info("Activating new deployer release (version: \(context.releaseVersion ?? "unknown") from current: \(context.currentVersion ?? "unknown"))...")
+        context.application.logger.info("Activating new deployer release (version: \(context.releaseVersion ?? "unknown") from current: \(context.currentVersion ?? "unknown"))...")
         
         try activateCandidateBinary()
         

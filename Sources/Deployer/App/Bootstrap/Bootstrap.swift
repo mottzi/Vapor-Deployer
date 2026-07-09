@@ -42,12 +42,7 @@ extension Deployer {
 
         let config = try Configuration.load()
 
-        // Route framework and database logs to the shared deployer.log file so they
-        // appear in the panel log viewer instead of leaking into the CLI transcript.
-        if let fileHandle = FileHandle(forWritingAtPath: config.deployerLogFilePath) {
-            fileHandle.seekToEndOfFile()
-            app.logger = Logger(label: "deployer.cli") { _ in FileLogHandler(fileHandle: fileHandle) }
-        }
+        try useCLILogging(config: config)
 
         app.deployer.serviceManager = try config.serviceBackend.makeManager(serviceUser: Host.User.currentName)
 
@@ -55,6 +50,15 @@ extension Deployer {
         await OperationRecovery.repairAbandonedOperations(app: app, config: config)
 
         return config
+    }
+
+    /// Routes non-interactive CLI logs to the shared deployer log while leaving command transcripts on the console.
+    func useCLILogging(config: Configuration) throws {
+
+        let logURL = URL(fileURLWithPath: config.deployerLogFilePath)
+        let fileHandle = try FileHandle(forWritingTo: logURL)
+        fileHandle.seekToEndOfFile()
+        app.logger = Logger(label: "deployer.cli") { _ in FileLogHandler(fileHandle: fileHandle) }
     }
 
 }
