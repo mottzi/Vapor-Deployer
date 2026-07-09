@@ -77,8 +77,13 @@ extension SetupStep {
     fileprivate func waitForTCP(port: Int) async throws {
 
         for _ in 0..<30 {
-            let result = await Shell.run("exec 3<>/dev/tcp/127.0.0.1/\(port)")
-            if result.exitCode == 0 { return }
+            let isListening = await Host.Network.canConnect(
+                host: "127.0.0.1",
+                port: port,
+                timeout: .seconds(1),
+                on: context.eventLoopGroup
+            )
+            if isListening { return }
             try await Task.sleep(for: .seconds(1))
         }
 

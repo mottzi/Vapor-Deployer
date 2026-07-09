@@ -1,6 +1,4 @@
 import Vapor
-import NIOCore
-import NIOPosix
 
 extension OperationWorker {
     
@@ -76,15 +74,12 @@ extension OperationWorker {
 
     /// Attempts a non-blocking TCP connection to confirm the application process is listening on the assigned port.
     private func checkTCPHealth(port: Int, timeoutMs: Int) async -> Bool {
-        
-        let bootstrap = ClientBootstrap(group: app.eventLoopGroup)
-            .connectTimeout(.milliseconds(Int64(timeoutMs)))
-
-        guard let channel = try? await bootstrap.connect(host: "127.0.0.1", port: port).get() else { return false }
-        
-        try? await channel.close().get()
-        
-        return true
+        await Host.Network.canConnect(
+            host: "127.0.0.1",
+            port: port,
+            timeout: .milliseconds(Int64(timeoutMs)),
+            on: app.eventLoopGroup
+        )
     }
 
 }

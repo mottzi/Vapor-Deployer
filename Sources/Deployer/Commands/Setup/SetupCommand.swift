@@ -14,7 +14,7 @@ struct SetupCommand: AsyncCommand {
 
         context.application.logger.info("Starting host provisioning...")
         
-        let setupContext = SetupContext()
+        let setupContext = SetupContext(eventLoopGroup: context.application.eventLoopGroup)
 
         let stepTypes: [any SetupStep.Type] = [
             InputStep.self,

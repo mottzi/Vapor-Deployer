@@ -1,8 +1,10 @@
 import Foundation
+import NIOCore
 
 /// Shared mutable state for one setup run, holding user input, discovered host facts, and derived values for later steps.
 final class SetupContext: ProvisioningContext {
 
+    let eventLoopGroup: any EventLoopGroup
     let deployerRepositoryURL = DeployerVersion.repositoryWebPageURL + ".git"
     var deployerRepositoryBranch = "main"
     let appBranch = "main"
@@ -48,5 +50,9 @@ final class SetupContext: ProvisioningContext {
     var managedAppHealthFailures: [String] = []
 
     var webhookURL: String { publicBaseURL + (paths?.webhookPath ?? "") }
+
+    init(eventLoopGroup: any EventLoopGroup) {
+        self.eventLoopGroup = eventLoopGroup
+    }
 
 }
