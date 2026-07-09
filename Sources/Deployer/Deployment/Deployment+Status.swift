@@ -8,7 +8,7 @@ extension Deployment {
         case testing
         case building
         case restoring
-        case canceled
+        case queued
         case failed
         case built
         case running

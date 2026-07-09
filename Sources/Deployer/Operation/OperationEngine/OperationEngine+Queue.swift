@@ -105,14 +105,14 @@ extension OperationEngine {
         }
     }
 
-    /// Returns the most recent canceled deployment queued after the given one, preserving automatic drain semantics.
+    /// Returns the most recent queued deployment after the given one, preserving automatic drain semantics.
     private func nextQueuedDeployment(after deployment: Deployment) async throws -> Deployment? {
 
         guard let currentTime = deployment.startedAt else { return nil }
 
         let candidate = try await Deployment.query(on: app.db)
             .filter(\.$product, .equal, deployment.product)
-            .filter(\.$status, .equal, .canceled)
+            .filter(\.$status, .equal, .queued)
             .filter(\.$startedAt, .greaterThan, currentTime)
             .sort(\.$startedAt, .descending)
             .first()

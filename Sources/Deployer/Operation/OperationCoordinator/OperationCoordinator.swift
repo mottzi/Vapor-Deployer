@@ -57,7 +57,7 @@ actor OperationCoordinator {
         let isUpdating = await app.deployer.updater.isUpdating
         let isOperationLocked = globalOperationLockHeld()
         let status: Deployment.Status = switch target.deploymentMode {
-            case .automatic: (isDeploying || isUpdating || isOperationLocked) ? .canceled : .building
+            case .automatic: (isDeploying || isUpdating || isOperationLocked) ? .queued : .building
             case .manual: .pushed
         }
         
@@ -73,7 +73,7 @@ actor OperationCoordinator {
             let result = await start(deployment: deployment, target: target, mode: .automaticDeploy)
             if case .started = result { return }
 
-            deployment.status = .canceled
+            deployment.status = .queued
             deployment.startedAt = .now
             try? await deployment.save(on: app.db)
             return
