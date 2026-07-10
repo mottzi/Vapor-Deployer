@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+deployer_dir=${0:A:h:h}
+cd "$deployer_dir"
+
+swift package unedit vapor-mist
+swift package resolve

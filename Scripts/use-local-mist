@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+deployer_dir=${0:A:h:h}
+mist_dir=${deployer_dir:h}/Vapor-Mist
+
+if [[ $(git -C "$deployer_dir" branch --show-current) != dev ]]; then
+    print -u2 "Vapor-Deployer must be on dev to enable the local Mist checkout."
+    exit 1
+fi
+
+if [[ ! -d $mist_dir/.git ]]; then
+    print -u2 "Expected the Mist checkout at $mist_dir."
+    exit 1
+fi
+
+if [[ $(git -C "$mist_dir" branch --show-current) != dev ]]; then
+    print -u2 "Vapor-Mist must be on dev to enable the local checkout."
+    exit 1
+fi
+
+cd "$deployer_dir"
+swift package edit vapor-mist --path "$mist_dir"
