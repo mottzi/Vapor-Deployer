@@ -1,5 +1,6 @@
 import Foundation
 import Fluent
+import Vapor
 
 extension Deployer {
     
@@ -8,6 +9,13 @@ extension Deployer {
         app.databases.use(.sqlite(.file(config.dbFile)), as: .sqlite)
         app.databases.middleware.use(BinaryStore.CleanupMiddleware(target: config.target))
         app.sessions.use(.fluent)
+        let defaultSessions = SessionsConfiguration.default()
+        app.sessions.configuration = .init(cookieName: defaultSessions.cookieName) { sessionID in
+            var cookie = defaultSessions.cookieFactory(sessionID)
+            cookie.isSecure = true
+            cookie.isHTTPOnly = true
+            return cookie
+        }
         app.migrations.add(Deployment.migrations + Operation.migrations + OperationEvent.migrations + [SessionRecord.migration])
         try await app.autoMigrate()
         await seedFirstDeployment(config: config)
