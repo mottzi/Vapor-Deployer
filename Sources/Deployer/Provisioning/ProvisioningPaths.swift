@@ -16,7 +16,6 @@ struct ProvisioningPaths {
     let nginxSiteName: String
     let nginxSiteAvailable: String
     let nginxSiteEnabled: String
-    let nginxCustomSnippet: String
     let acmeWebroot: String
     let certbotRenewHook: String
     let appPublicDirectory: String
@@ -57,7 +56,6 @@ struct ProvisioningPaths {
             nginxSiteName: nginxSiteName,
             nginxSiteAvailable: "/etc/nginx/sites-available/\(nginxSiteName).conf",
             nginxSiteEnabled: "/etc/nginx/sites-enabled/\(nginxSiteName).conf",
-            nginxCustomSnippet: "/etc/nginx/snippets/\(appName)-custom.conf",
             acmeWebroot: "/var/www/certbot/\(appName)",
             certbotRenewHook: "/etc/letsencrypt/renewal-hooks/deploy/\(nginxSiteName)-reload-nginx.sh",
             appPublicDirectory: "\(appDirectory)/Public",
