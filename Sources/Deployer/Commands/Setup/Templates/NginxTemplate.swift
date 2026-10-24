@@ -35,6 +35,9 @@ enum NginxTemplate {
         
         let paths = try context.requirePaths()
         let bootstrapConfig = try bootstrap(context: context)
+        // A glob matching only this filename makes the operator-owned snippet optional.
+        // Unlike `.conf*`, it cannot accidentally load timestamped backup files.
+        let customSnippetPattern = String(paths.nginxCustomSnippet.dropLast(5)) + "[.]conf"
         
         return """
         \(bootstrapConfig)
@@ -64,6 +67,9 @@ enum NginxTemplate {
             ssl_session_cache shared:deployer_tls:10m;
 
             add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+            # Operator-owned server-context rules. Setup and removal leave this file untouched.
+            include \(customSnippetPattern);
 
             location = \(context.panelRoute)/ws {
                 proxy_pass http://127.0.0.1:\(context.deployerPort);

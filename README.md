@@ -239,6 +239,12 @@ sudo deployerctl setup
 
 Setup remembers your previous answers and offers them as defaults. Changing one value is a matter of pressing enter through the rest. You can use the setup command to recover corrupted installations.
 
+### Custom Nginx rules
+
+Setup manages `/etc/nginx/sites-available/deployer-<appName>.conf` and its enabled link. For custom HTTPS routes, create `/etc/nginx/snippets/<appName>-custom.conf`. It is included inside the primary domain's HTTPS `server` block, so it must contain server-context directives such as `location` blocks, not another `server` block. Avoid duplicating the generated panel, webhook, or application locations. An exact `location = /` can override the application's homepage without replacing its fallback routing.
+
+The include uses `<appName>-custom[.]conf`, an optional glob matching only that filename. Missing snippets are allowed; `.bak-*` backups are never loaded. Setup does not create or overwrite the snippet, self-update leaves Nginx configuration alone, and removal preserves the snippet while removing the managed site that includes it. Back up custom rules separately and run `nginx -t` before reloading. Other sites and their certificate renewal configuration remain independently managed.
+
 ## Limitations
 
 - **One target per install.** A deployer manages one app. If you have two apps, run a second deployer for the other one.
