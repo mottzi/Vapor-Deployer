@@ -10,6 +10,7 @@ struct Panel {
     let deployerConfig: DeployerConfig
     let deployerStatus: DeployerStatus
     let panelPath: String
+    var panelPrefix: String { panelPath == "/" ? "" : panelPath }
     let loginPath: String
     let authenticator: Authenticator
 
@@ -58,7 +59,8 @@ extension Panel {
         async let deployerStateRender = deployerStatus.renderCurrent(app: request.application)
 
         let deployer = DeployerContext(
-            panelRoute: config.panelRoute.displayPath,
+            panelRoute: panelPath,
+            panelPrefix: panelPrefix,
             repositoryWebPageURL: DeployerVersion.repositoryWebPageURL,
             infoComponentName: deployerConfig.name,
             infoInitialHTML: await deployerInfoRender.html ?? "",
@@ -94,6 +96,7 @@ extension Panel {
 
     private struct DeployerContext: Encodable {
         let panelRoute: String
+        let panelPrefix: String
         let repositoryWebPageURL: String
         let infoComponentName: String
         let infoInitialHTML: String

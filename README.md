@@ -245,3 +245,23 @@ Setup remembers your previous answers and offers them as defaults. Changing one 
 - **One branch per target.** Pushes on other branches are ignored. No PR previews or per-branch environments today.
 
 The smaller surface is most of the point. If your needs fit inside it, the whole system is something you can read and understand in an afternoon.
+
+### Panel at the domain root
+
+Setup accepts `/` as the panel route for a dedicated panel hostname, such as
+`https://ops.example.com`. Login, assets and the authenticated WebSocket then use
+`/login`, `/deployer.css` and `/ws`. Existing prefixed routes such as `/deployer`
+retain their current behavior.
+
+In root mode, the generated Nginx site routes the hostname to Deployer. It does
+not serve the target app's static files or proxy to its app port. The target app
+continues to run and remains managed by Deployer; give it a separate Nginx site
+if it needs public access. Keep that site outside Deployer's generated file.
+The local `/control/` endpoints are not exposed by the root-mode Nginx site.
+
+Setup still configures the canonical hostname and its `www.` alias. Both must
+resolve to the server for HTTP certificate validation. When moving an existing
+installation, retain its service user, app name, ports, database and target paths.
+Update the existing GitHub webhook URL to the new hostname, and retain any old
+certificate that an independently managed site still uses. Root mode does not
+require a database migration.

@@ -49,6 +49,9 @@ final class SetupContext: ProvisioningContext {
     var releaseVersion: String?
     var managedAppHealthFailures: [String] = []
 
+    var panelPrefix: String { panelRoute == "/" ? "" : panelRoute }
+    var socketPath: String { panelPrefix + "/ws" }
+
     var webhookURL: String { publicBaseURL + (paths?.webhookPath ?? "") }
 
     init(eventLoopGroup: any EventLoopGroup) {

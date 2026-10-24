@@ -54,8 +54,7 @@ enum NginxTemplate {
             listen [::]:443 ssl http2;
             server_name \(context.primaryDomain);
 
-            root \(paths.appPublicDirectory);
-            index index.html;
+            \(context.panelRoute == "/" ? "" : "root \(paths.appPublicDirectory);\n    index index.html;")
 
             ssl_certificate /etc/letsencrypt/live/\(context.certName)/fullchain.pem;
             ssl_certificate_key /etc/letsencrypt/live/\(context.certName)/privkey.pem;
@@ -65,7 +64,7 @@ enum NginxTemplate {
 
             add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
-            location = \(context.panelRoute)/ws {
+            location = \(context.socketPath) {
                 proxy_pass http://127.0.0.1:\(context.deployerPort);
                 proxy_http_version 1.1;
                 proxy_set_header Upgrade $http_upgrade;
@@ -77,6 +76,42 @@ enum NginxTemplate {
                 proxy_read_timeout 300s;
             }
 
+            \(panelHTTPLocations(context: context))
+
+            location = \(paths.webhookPath) {
+                proxy_pass http://127.0.0.1:\(context.deployerPort);
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            \(context.panelRoute == "/" ? "" : appLocations(context: context))
+        }
+        """
+    }
+
+    private static func panelHTTPLocations(context: SetupContext) -> String {
+        if context.panelRoute == "/" {
+            return """
+            # The control endpoint is for local operator commands only.
+            location ^~ /control/ {
+                return 404;
+            }
+
+            location / {
+                proxy_pass http://127.0.0.1:\(context.deployerPort);
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            """
+        }
+
+        return """
             location = \(context.panelRoute) {
                 proxy_pass http://127.0.0.1:\(context.deployerPort);
                 proxy_http_version 1.1;
@@ -94,16 +129,11 @@ enum NginxTemplate {
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                 proxy_set_header X-Forwarded-Proto $scheme;
             }
+            """
+    }
 
-            location = \(paths.webhookPath) {
-                proxy_pass http://127.0.0.1:\(context.deployerPort);
-                proxy_http_version 1.1;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-            }
-
+    private static func appLocations(context: SetupContext) -> String {
+        """
             location / {
                 try_files $uri $uri/ @app_upstream;
             }
@@ -119,8 +149,7 @@ enum NginxTemplate {
                 proxy_set_header X-Forwarded-Proto $scheme;
                 proxy_read_timeout 300s;
             }
-        }
-        """
+            """
     }
 
     static func renewHookScript() -> String {

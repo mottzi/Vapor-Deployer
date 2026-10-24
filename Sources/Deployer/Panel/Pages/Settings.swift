@@ -134,6 +134,7 @@ extension Panel {
     private var settingsDeployerContext: SettingsContext.Deployer {
         SettingsContext.Deployer(
             panelRoute: panelPath,
+            panelPrefix: panelPrefix,
             repositoryWebPageURL: DeployerVersion.repositoryWebPageURL
         )
     }
@@ -160,6 +161,7 @@ extension Panel {
 
         struct Deployer: Encodable {
             let panelRoute: String
+            let panelPrefix: String
             let repositoryWebPageURL: String
         }
 

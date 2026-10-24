@@ -11,7 +11,7 @@ enum DeployerTemplate {
             port: context.deployerPort,
             dbFile: "deployer.db",
             deployerDirectory: ".",
-            socketPath: "\(context.panelRoute)/ws",
+            socketPath: context.socketPath,
             panelRoute: context.panelRoute,
             serviceHome: paths.serviceHome,
             swiftPath: paths.swiftPath,

@@ -10,6 +10,7 @@ extension Panel {
         let context = LogsContext(
             deployer: LogsContext.Deployer(
                 panelRoute: panelPath,
+                panelPrefix: panelPrefix,
                 repositoryWebPageURL: DeployerVersion.repositoryWebPageURL
             ),
             title: "Target App Logs",
@@ -36,6 +37,7 @@ extension Panel {
         let context = LogsContext(
             deployer: LogsContext.Deployer(
                 panelRoute: panelPath,
+                panelPrefix: panelPrefix,
                 repositoryWebPageURL: DeployerVersion.repositoryWebPageURL
             ),
             title: "Deployer Logs",
@@ -71,6 +73,7 @@ extension Panel {
 
         struct Deployer: Encodable {
             let panelRoute: String
+            let panelPrefix: String
             let repositoryWebPageURL: String
         }
 
