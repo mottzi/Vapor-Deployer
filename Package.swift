@@ -26,7 +26,8 @@ let package = Package(
                 .product(name: "Mist", package: "Vapor-Mist"),
                 .product(name: "Elementary", package: "elementary"),
             ],
-        )
+        ),
+        .testTarget(name: "DeployerTests", dependencies: ["deployer"])
     ],
     swiftLanguageModes: [
         .v6

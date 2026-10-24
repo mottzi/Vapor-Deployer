@@ -1,4 +1,4 @@
-# Unreleased changes main...HEAD(dev)
+# Changes for v0.4.0
 
 ### Mist Frontend Resources
 
@@ -9,3 +9,12 @@
 ### Operator Interface & UX
 
 - Fix cleared Deployer and target-app log streams reappearing after toggling Wrap or another component render. Static Mist streams could be registered under separate `undefined` and `null` model-ID keys, leaving a stale retained snapshot behind after Clear. The vendored Mist client now canonicalizes absent model IDs before buffering stream content, so cleared consoles remain empty until new log lines arrive. The fix was deployed in commit `26b65a3` and verified on the VPS.
+
+### Root panel routing
+
+- Allow `/` as the managed panel route on a dedicated hostname. Generate `/ws`
+  consistently and keep target-app routing out of the panel hostname in this mode.
+- Generate root-relative asset, form and navigation URLs without double slashes.
+- Keep prefixed panel routing unchanged and block public access to the local
+  control endpoints in the root-mode Nginx configuration.
+- Mark session cookies Secure and HttpOnly when served over HTTPS.

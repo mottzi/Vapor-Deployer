@@ -7,6 +7,7 @@ extension Panel {
         let loginContext = LoginViewContext(
             error: hasError,
             panelRoute: panelPath,
+            panelPrefix: panelPrefix,
             repositoryWebPageURL: DeployerVersion.repositoryWebPageURL
         )
         return try await request.view.render("Deployer/DeployerPanelLogin", loginContext)
@@ -39,6 +40,7 @@ extension Panel {
     struct LoginViewContext: Encodable {
         let error: Bool
         let panelRoute: String
+        let panelPrefix: String
         let repositoryWebPageURL: String
     }
 

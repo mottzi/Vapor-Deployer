@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Deployer · #(title)</title>
-  <link rel="icon" type="image/png" href="#(deployer.panelRoute)/deployer.ico">
-  <link rel="stylesheet" href="#(deployer.panelRoute)/deployer.css">
+  <link rel="icon" type="image/png" href="#(deployer.panelPrefix)/deployer.ico">
+  <link rel="stylesheet" href="#(deployer.panelPrefix)/deployer.css">
 </head>
 <body class="dp-logs-page">
 
@@ -21,7 +21,7 @@
               </svg>
               Back
             </a>
-            <form class="dp-logout-form" method="POST" action="#(deployer.panelRoute)/logout">
+            <form class="dp-logout-form" method="POST" action="#(deployer.panelPrefix)/logout">
               <button type="submit" class="dp-logout-btn" title="Sign out">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -101,8 +101,8 @@
     </div>
   </div>
 
-  <script src="#(deployer.panelRoute)/morphdom.js"></script>
-  <script src="#(deployer.panelRoute)/mist.js" data-url="#(deployer.panelRoute)/ws"></script>
+  <script src="#(deployer.panelPrefix)/morphdom.js"></script>
+  <script src="#(deployer.panelPrefix)/mist.js" data-url="#(deployer.panelPrefix)/ws"></script>
   <script>
     (function () {
       const logConsole = document.getElementById('#(consoleID)');

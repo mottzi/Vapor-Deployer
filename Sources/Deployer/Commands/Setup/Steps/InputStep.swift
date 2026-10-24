@@ -148,17 +148,10 @@ extension InputStep {
     
     private func collectPanelRoute(discovered: String?) {
         
-        while true {
-            var panelRoute = console.askRequired("Panel route", default: discovered ?? "/deployer")
-            panelRoute = InputValidator.normalizePanelRoute(panelRoute)
-                
-            guard panelRoute != "/" else {
-                console.warning("Panel route '/' is not supported with managed Nginx setup. Use a prefixed route like /deployer.")
-                continue
-            }
-            
-            context.panelRoute = panelRoute
-            break
+        let route = console.askRequired("Panel route", default: discovered ?? "/deployer")
+        context.panelRoute = InputValidator.normalizePanelRoute(route)
+        if context.panelRoute == "/" {
+            console.print("The panel will own this hostname. Serve the target app with a separate Nginx site.")
         }
     }
 
